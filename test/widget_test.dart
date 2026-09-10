@@ -1,30 +1,83 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:smartshrimp_app/main.dart';
+import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('login validates required fields', (tester) async {
+    final repository = _FakeAuthRepository();
+    await tester.pumpWidget(_testApp(repository));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.text('Đăng nhập').last);
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Vui lòng nhập email.'), findsOneWidget);
+    expect(find.text('Vui lòng nhập mật khẩu.'), findsOneWidget);
+    expect(repository.loginCalls, 0);
   });
+
+  testWidgets('successful login redirects to the five-tab home shell', (
+    tester,
+  ) async {
+    final repository = _FakeAuthRepository();
+    await tester.pumpWidget(_testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('login_email_field')),
+      '  KTV@Example.com  ',
+    );
+    await tester.enterText(
+      find.byKey(const Key('login_password_field')),
+      'secret123',
+    );
+    await tester.tap(find.text('Đăng nhập').last);
+    await tester.pumpAndSettle();
+
+    expect(repository.loginCalls, 1);
+    expect(repository.lastEmail, '  KTV@Example.com  ');
+    expect(find.text('Trang chủ'), findsOneWidget);
+    expect(find.text('Vụ nuôi'), findsOneWidget);
+    expect(find.text('Nhiệm vụ'), findsOneWidget);
+    expect(find.text('Thông báo'), findsOneWidget);
+    expect(find.text('Tài khoản'), findsOneWidget);
+  });
+}
+
+Widget _testApp(AuthRepository repository) {
+  return ProviderScope(
+    overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    child: const SmartShrimpApp(),
+  );
+}
+
+final class _FakeAuthRepository implements AuthRepository {
+  int loginCalls = 0;
+  String? lastEmail;
+
+  @override
+  Future<AuthUser> login({
+    required String email,
+    required String password,
+  }) async {
+    loginCalls++;
+    lastEmail = email;
+    return const AuthUser(
+      id: '2ad2294a-8d7d-4a74-b17a-139ba35468e8',
+      email: 'ktv@example.com',
+      fullName: 'Nguyễn Văn Bảo',
+      role: AppUserRole.technician,
+      status: 'ACTIVE',
+    );
+  }
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AuthUser?> restoreSession() async => null;
 }
