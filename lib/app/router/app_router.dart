@@ -6,6 +6,9 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/auth_info_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
+import 'package:smartshrimp_app/features/profile/presentation/pages/change_password_page.dart';
+import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 
@@ -19,6 +22,8 @@ abstract final class AppRoutes {
   static const tasks = '/tasks';
   static const notifications = '/notifications';
   static const account = '/account';
+  static const profileEdit = '/account/edit';
+  static const changePassword = '/account/change-password';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -81,7 +86,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           _emptyBranch(AppRoutes.seasons, 'Vụ nuôi'),
           _emptyBranch(AppRoutes.tasks, 'Nhiệm vụ'),
           _emptyBranch(AppRoutes.notifications, 'Thông báo'),
-          _emptyBranch(AppRoutes.account, 'Tài khoản'),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.account,
+                builder: (_, _) => const AccountPage(),
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, _) => const ProfileEditPage(),
+                  ),
+                  GoRoute(
+                    path: 'change-password',
+                    builder: (_, _) => const ChangePasswordPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],

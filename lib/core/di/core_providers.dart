@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:smartshrimp_app/core/config/app_config.dart';
+import 'package:smartshrimp_app/core/network/authenticated_api_client.dart';
 import 'package:smartshrimp_app/core/storage/device_id_store.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 
@@ -27,6 +28,24 @@ final dioProvider = Provider<Dio>((ref) {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
+    ),
+  );
+});
+
+final authenticatedApiClientProvider = Provider<AuthenticatedApiClient>((ref) {
+  return AuthenticatedApiClient(
+    ref.watch(dioProvider),
+    ref.watch(sessionStoreProvider),
+  );
+});
+
+final cloudinaryDioProvider = Provider<Dio>((ref) {
+  return Dio(
+    BaseOptions(
+      connectTimeout: AppConfig.connectTimeout,
+      receiveTimeout: AppConfig.receiveTimeout,
+      sendTimeout: AppConfig.receiveTimeout,
+      headers: const <String, Object>{'Accept': 'application/json'},
     ),
   );
 });

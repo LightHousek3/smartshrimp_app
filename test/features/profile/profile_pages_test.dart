@@ -1,0 +1,272 @@
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
+import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
+
+void main() {
+  testWidgets('account tab shows the authenticated technician profile', (
+    tester,
+  ) async {
+    final authRepository = _FakeAuthRepository();
+    final profileRepository = _FakeProfileRepository();
+    await tester.pumpWidget(_testApp(authRepository, profileRepository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tài khoản'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trần Quốc Bảo'), findsOneWidget);
+    expect(find.text('Kỹ thuật viên'), findsOneWidget);
+    expect(find.text('bao@smartshrimp.vn'), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
+    expect(find.text('148'), findsOneWidget);
+    expect(find.text('94%'), findsOneWidget);
+    expect(find.text('Nguyễn Văn Chủ'), findsOneWidget);
+    expect(find.byKey(const Key('profile_avatar_button')), findsOneWidget);
+    expect(profileRepository.getCalls, 1);
+  });
+
+  testWidgets('account tab adapts account details for a farm owner', (
+    tester,
+  ) async {
+    final ownerUser = _authUserFor(AppUserRole.farmOwner);
+    final ownerProfile = _profileFor(AppUserRole.farmOwner);
+    await tester.pumpWidget(
+      _testApp(
+        _FakeAuthRepository(user: ownerUser),
+        _FakeProfileRepository(profile: ownerProfile),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tài khoản'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chủ trang trại'), findsNWidgets(2));
+    expect(find.text('Vai trò hệ thống'), findsOneWidget);
+    expect(find.text('Chủ trang trại phụ trách'), findsNothing);
+  });
+
+  testWidgets('profile edit validates and sends normalized values', (
+    tester,
+  ) async {
+    final profileRepository = _FakeProfileRepository();
+    await tester.pumpWidget(_testApp(_FakeAuthRepository(), profileRepository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tài khoản'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Cập nhật thông tin cá nhân'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Cập nhật thông tin cá nhân'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('profile_name_field')),
+      '  Nguyễn Văn An  ',
+    );
+    await tester.enterText(
+      find.byKey(const Key('profile_phone_field')),
+      '0912 345 678',
+    );
+    await tester.tap(find.text('Lưu thay đổi'));
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.byType(Scrollable).last,
+      const Offset(0, 1000),
+      1500,
+    );
+    await tester.pumpAndSettle();
+
+    expect(profileRepository.lastFullName, '  Nguyễn Văn An  ');
+    expect(profileRepository.lastPhone, '0912345678');
+    expect(find.text('Nguyễn Văn An'), findsOneWidget);
+  });
+
+  testWidgets('password change calls backend and logs the user out', (
+    tester,
+  ) async {
+    final authRepository = _FakeAuthRepository();
+    final profileRepository = _FakeProfileRepository();
+    await tester.pumpWidget(_testApp(authRepository, profileRepository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tài khoản'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Đổi mật khẩu'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Đổi mật khẩu'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('current_password_field')),
+      'old-password',
+    );
+    await tester.enterText(
+      find.byKey(const Key('new_password_field')),
+      'new-password',
+    );
+    await tester.enterText(
+      find.byKey(const Key('confirm_password_field')),
+      'new-password',
+    );
+    await tester.tap(find.text('Xác nhận đổi mật khẩu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Đổi mật khẩu thành công'), findsOneWidget);
+    expect(profileRepository.changePasswordCalls, 1);
+    await tester.tap(find.text('Đăng nhập lại'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(authRepository.logoutCalls, 1);
+    expect(find.byKey(const Key('login_email_field')), findsOneWidget);
+  });
+}
+
+Widget _testApp(
+  AuthRepository authRepository,
+  ProfileRepository profileRepository,
+) {
+  return ProviderScope(
+    overrides: [
+      authRepositoryProvider.overrideWithValue(authRepository),
+      profileRepositoryProvider.overrideWithValue(profileRepository),
+    ],
+    child: const SmartShrimpApp(),
+  );
+}
+
+const _authUser = AuthUser(
+  id: 'user-1',
+  email: 'bao@smartshrimp.vn',
+  fullName: 'Trần Quốc Bảo',
+  role: AppUserRole.technician,
+  status: 'ACTIVE',
+);
+
+const _profile = UserProfile(
+  id: 'user-1',
+  email: 'bao@smartshrimp.vn',
+  fullName: 'Trần Quốc Bảo',
+  phone: '0912345678',
+  role: AppUserRole.technician,
+  status: 'ACTIVE',
+  managedByOwnerId: 'owner-1',
+  managedByOwner: ManagedOwner(
+    id: 'owner-1',
+    email: 'owner@smartshrimp.vn',
+    fullName: 'Nguyễn Văn Chủ',
+  ),
+  technicianKpi: TechnicianKpi(
+    seasonsParticipated: 6,
+    completedTasks: 148,
+    onTimeCompletedTasks: 139,
+    onTimeCompletionRatePct: 93.92,
+  ),
+);
+
+AuthUser _authUserFor(AppUserRole role) => AuthUser(
+  id: 'owner-1',
+  email: 'owner@smartshrimp.vn',
+  fullName: 'Nguyễn Văn Chủ',
+  role: role,
+  status: 'ACTIVE',
+);
+
+UserProfile _profileFor(AppUserRole role) => UserProfile(
+  id: 'owner-1',
+  email: 'owner@smartshrimp.vn',
+  fullName: 'Nguyễn Văn Chủ',
+  phone: '0987654321',
+  role: role,
+  status: 'ACTIVE',
+);
+
+final class _FakeAuthRepository implements AuthRepository {
+  _FakeAuthRepository({this.user = _authUser});
+
+  final AuthUser user;
+  int logoutCalls = 0;
+
+  @override
+  Future<AuthUser> login({
+    required String email,
+    required String password,
+  }) async => user;
+
+  @override
+  Future<void> logout() async {
+    logoutCalls++;
+  }
+
+  @override
+  Future<AuthUser?> restoreSession() async => user;
+}
+
+final class _FakeProfileRepository implements ProfileRepository {
+  _FakeProfileRepository({UserProfile? profile})
+    : current = profile ?? _profile;
+
+  int getCalls = 0;
+  int changePasswordCalls = 0;
+  String? lastFullName;
+  String? lastPhone;
+  UserProfile current;
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    changePasswordCalls++;
+  }
+
+  @override
+  Future<UserProfile> getProfile() async {
+    getCalls++;
+    return current;
+  }
+
+  @override
+  Future<UserProfile> updateAvatar({
+    required Uint8List bytes,
+    required String fileName,
+  }) async => current;
+
+  @override
+  Future<UserProfile> updateProfile({
+    required String fullName,
+    String? phone,
+  }) async {
+    lastFullName = fullName;
+    lastPhone = phone;
+    current = UserProfile(
+      id: current.id,
+      email: current.email,
+      fullName: fullName.trim(),
+      phone: phone,
+      role: current.role,
+      status: current.status,
+      managedByOwnerId: current.managedByOwnerId,
+      managedByOwner: current.managedByOwner,
+      technicianKpi: current.technicianKpi,
+    );
+    return current;
+  }
+}
