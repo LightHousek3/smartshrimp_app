@@ -1,12 +1,26 @@
 abstract final class AppConfig {
   static const appName = 'SmartShrimp';
 
-  /// Android Emulator uses 10.0.2.2 for the host machine. Override this for a
-  /// physical device or deployed environment with --dart-define=API_BASE_URL=.
+  static const logoUrl =
+      'https://res.cloudinary.com/dmv1uhpq/image/upload/v1789054756/logo.png';
+
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://j6295vbc-3000.asse.devtunnels.ms/api/v1',
+    defaultValue: '',
   );
+
+  static const cloudinaryCloudName = String.fromEnvironment(
+    'CLOUDINARY_CLOUD_NAME',
+    defaultValue: '',
+  );
+  static const cloudinaryUploadPreset = String.fromEnvironment(
+    'CLOUDINARY_UPLOAD_PRESET',
+    defaultValue: '',
+  );
+  static const cloudinaryAvatarFolder = 'smartshrimp/avatars';
+
+  static String get cloudinaryImageUploadUrl =>
+      'https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload';
 
   static const connectTimeout = Duration(seconds: 15);
   static const receiveTimeout = Duration(seconds: 20);

@@ -54,6 +54,9 @@ final class AuthRepositoryImpl implements AuthRepository {
       if (refreshToken != null && refreshToken.isNotEmpty) {
         await _remoteDataSource.logout(refreshToken);
       }
+    } on Object {
+      // Logging out locally must still succeed if the session was already
+      // revoked (for example, immediately after changing the password).
     } finally {
       await _sessionStore.clear();
     }
