@@ -46,4 +46,9 @@ final class AuthController extends AsyncNotifier<AuthUser?> {
       return null;
     });
   }
+
+  Future<void> expireSession() async {
+    await ref.read(sessionStoreProvider).clear();
+    state = const AsyncData<AuthUser?>(null);
+  }
 }

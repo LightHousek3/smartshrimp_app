@@ -6,12 +6,14 @@ class GradientButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.isLoading = false,
+    this.icon = Icons.check,
     super.key,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +59,7 @@ class GradientButton extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(Icons.check, color: Colors.white, size: 24),
+                        Icon(icon, color: Colors.white, size: 22),
                         const SizedBox(width: 10),
                         Text(
                           label,

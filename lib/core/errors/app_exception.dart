@@ -31,3 +31,9 @@ final class UnsupportedRoleException extends AppException {
         statusCode: 403,
       );
 }
+
+final class SessionExpiredException extends AppException {
+  const SessionExpiredException({
+    String message = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+  }) : super(message, statusCode: 401);
+}
