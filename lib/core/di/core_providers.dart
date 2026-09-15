@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:smartshrimp_app/core/config/app_config.dart';
-import 'package:smartshrimp_app/core/network/authenticated_api_client.dart';
+import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/storage/device_id_store.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 
@@ -18,7 +18,7 @@ final deviceIdStoreProvider = Provider<DeviceIdStore>((ref) {
   return SecureDeviceIdStore(ref.watch(secureStorageProvider));
 });
 
-final dioProvider = Provider<Dio>((ref) {
+final backendDioProvider = Provider<Dio>((ref) {
   return Dio(
     BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
@@ -32,9 +32,9 @@ final dioProvider = Provider<Dio>((ref) {
   );
 });
 
-final authenticatedApiClientProvider = Provider<AuthenticatedApiClient>((ref) {
-  return AuthenticatedApiClient(
-    ref.watch(dioProvider),
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient(
+    ref.watch(backendDioProvider),
     ref.watch(sessionStoreProvider),
   );
 });

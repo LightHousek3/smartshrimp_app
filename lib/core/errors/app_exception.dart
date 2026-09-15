@@ -1,22 +1,23 @@
 sealed class AppException implements Exception {
-  const AppException(this.message, {this.statusCode});
+  const AppException(this.message, {this.statusCode, this.details});
 
   final String message;
   final int? statusCode;
+  final Object? details;
 
   @override
   String toString() => message;
 }
 
-final class NetworkException extends AppException {
-  const NetworkException()
-    : super(
-        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.',
-      );
+final class ApiException extends AppException {
+  const ApiException(super.message, {super.statusCode, super.details});
 }
 
-final class ApiException extends AppException {
-  const ApiException(super.message, {super.statusCode});
+final class NetworkException extends AppException {
+  const NetworkException([
+    super.message =
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.',
+  ]);
 }
 
 final class InvalidResponseException extends AppException {

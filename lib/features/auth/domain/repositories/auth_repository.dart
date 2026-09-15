@@ -1,9 +1,9 @@
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 
 abstract interface class AuthRepository {
-  Future<AuthUser> login({required String email, required String password});
+  Future<AuthAccount> login({required String email, required String password});
 
-  Future<AuthUser?> restoreSession();
+  Future<AuthAccount?> restoreSession();
 
   Future<void> logout();
 }

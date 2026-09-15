@@ -5,14 +5,15 @@ import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
 import 'package:smartshrimp_app/features/profile/data/services/profile_api_service.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 
 final profileRemoteDataSourceProvider = Provider<ProfileRemoteDataSource>((
   ref,
 ) {
-  return ProfileApiService(ref.watch(authenticatedApiClientProvider));
+  return ProfileApiService(ref.watch(apiClientProvider));
 });
 
 final avatarStorageProvider = Provider<AvatarStorage>((ref) {
@@ -27,16 +28,16 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 final profileControllerProvider =
-    AsyncNotifierProvider<ProfileController, UserProfile>(
+    AsyncNotifierProvider<ProfileController, AccountProfile>(
       ProfileController.new,
     );
 
-final class ProfileController extends AsyncNotifier<UserProfile> {
+final class ProfileController extends AsyncNotifier<AccountProfile> {
   @override
-  Future<UserProfile> build() async {
+  Future<AccountProfile> build() async {
     final authState = ref.watch(authControllerProvider);
     if (authState.value == null) {
-      throw StateError('Profile requires an authenticated user.');
+      throw StateError('Profile requires an authenticated account.');
     }
     return _loadProfile();
   }
@@ -49,7 +50,7 @@ final class ProfileController extends AsyncNotifier<UserProfile> {
     }
   }
 
-  Future<UserProfile> updateProfile({
+  Future<AccountProfile> updateProfile({
     required String fullName,
     String? phone,
   }) async {
@@ -62,7 +63,7 @@ final class ProfileController extends AsyncNotifier<UserProfile> {
     return profile;
   }
 
-  Future<UserProfile> updateAvatar({
+  Future<AccountProfile> updateAvatar({
     required Uint8List bytes,
     required String fileName,
   }) async {
@@ -89,7 +90,7 @@ final class ProfileController extends AsyncNotifier<UserProfile> {
     );
   }
 
-  Future<UserProfile> _loadProfile() {
+  Future<AccountProfile> _loadProfile() {
     return _runAuthenticated(ref.read(profileRepositoryProvider).getProfile);
   }
 

@@ -8,10 +8,10 @@ import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
-import 'package:smartshrimp_app/features/profile/data/services/profile_api_service.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
 
 class AccountPage extends ConsumerStatefulWidget {
@@ -67,7 +67,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                   isUploading: _isUploadingAvatar,
                   onAvatarTap: _pickAndUploadAvatar,
                 ),
-                if (profile.role == AppUserRole.technician) ...<Widget>[
+                if (profile.role == AccountRole.technician) ...<Widget>[
                   const SizedBox(height: 14),
                   _TechnicianKpiRow(kpi: profile.technicianKpi),
                 ],
@@ -189,7 +189,7 @@ class _ProfileHero extends StatelessWidget {
     required this.onAvatarTap,
   });
 
-  final UserProfile profile;
+  final AccountProfile profile;
   final bool isUploading;
   final VoidCallback onAvatarTap;
 
@@ -322,7 +322,7 @@ class _ProfileHero extends StatelessWidget {
 class _Avatar extends StatelessWidget {
   const _Avatar({required this.profile, required this.isUploading});
 
-  final UserProfile profile;
+  final AccountProfile profile;
   final bool isUploading;
 
   @override
@@ -397,7 +397,7 @@ class _Initials extends StatelessWidget {
 class _AccountInfoCard extends StatelessWidget {
   const _AccountInfoCard({required this.profile});
 
-  final UserProfile profile;
+  final AccountProfile profile;
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +408,7 @@ class _AccountInfoCard extends StatelessWidget {
         'Số điện thoại',
         profile.phone?.isNotEmpty ?? false ? profile.phone! : 'Chưa cập nhật',
       ),
-      if (profile.role == AppUserRole.technician)
+      if (profile.role == AccountRole.technician)
         _InfoData(
           Icons.business_outlined,
           'Chủ trang trại phụ trách',

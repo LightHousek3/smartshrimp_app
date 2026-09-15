@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 
@@ -60,18 +60,18 @@ final class _FakeAuthRepository implements AuthRepository {
   String? lastEmail;
 
   @override
-  Future<AuthUser> login({
+  Future<AuthAccount> login({
     required String email,
     required String password,
   }) async {
     loginCalls++;
     lastEmail = email;
-    return const AuthUser(
+    return const AuthAccount(
       id: '2ad2294a-8d7d-4a74-b17a-139ba35468e8',
       email: 'ktv@example.com',
       fullName: 'Nguyễn Văn Bảo',
-      role: AppUserRole.technician,
-      status: 'ACTIVE',
+      role: AccountRole.technician,
+      status: AccountStatus.active,
     );
   }
 
@@ -79,5 +79,5 @@ final class _FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<AuthUser?> restoreSession() async => null;
+  Future<AuthAccount?> restoreSession() async => null;
 }

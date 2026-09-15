@@ -1,13 +1,16 @@
 import 'dart:typed_data';
 
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 
 abstract interface class ProfileRepository {
-  Future<UserProfile> getProfile();
+  Future<AccountProfile> getProfile();
 
-  Future<UserProfile> updateProfile({required String fullName, String? phone});
+  Future<AccountProfile> updateProfile({
+    required String fullName,
+    String? phone,
+  });
 
-  Future<UserProfile> updateAvatar({
+  Future<AccountProfile> updateAvatar({
     required Uint8List bytes,
     required String fileName,
   });

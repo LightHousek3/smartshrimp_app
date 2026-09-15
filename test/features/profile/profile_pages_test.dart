@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
 
@@ -37,11 +37,11 @@ void main() {
   testWidgets('account tab adapts account details for a farm owner', (
     tester,
   ) async {
-    final ownerUser = _authUserFor(AppUserRole.farmOwner);
-    final ownerProfile = _profileFor(AppUserRole.farmOwner);
+    final ownerAccount = _authAccountFor(AccountRole.farmOwner);
+    final ownerProfile = _profileFor(AccountRole.farmOwner);
     await tester.pumpWidget(
       _testApp(
-        _FakeAuthRepository(user: ownerUser),
+        _FakeAuthRepository(account: ownerAccount),
         _FakeProfileRepository(profile: ownerProfile),
       ),
     );
@@ -94,7 +94,7 @@ void main() {
     expect(find.text('Nguyễn Văn An'), findsOneWidget);
   });
 
-  testWidgets('password change calls backend and logs the user out', (
+  testWidgets('password change calls backend and logs the account out', (
     tester,
   ) async {
     final authRepository = _FakeAuthRepository();
@@ -152,21 +152,21 @@ Widget _testApp(
   );
 }
 
-const _authUser = AuthUser(
-  id: 'user-1',
+const _authAccount = AuthAccount(
+  id: 'account-1',
   email: 'bao@smartshrimp.vn',
   fullName: 'Trần Quốc Bảo',
-  role: AppUserRole.technician,
-  status: 'ACTIVE',
+  role: AccountRole.technician,
+  status: AccountStatus.active,
 );
 
-const _profile = UserProfile(
-  id: 'user-1',
+const _profile = AccountProfile(
+  id: 'account-1',
   email: 'bao@smartshrimp.vn',
   fullName: 'Trần Quốc Bảo',
   phone: '0912345678',
-  role: AppUserRole.technician,
-  status: 'ACTIVE',
+  role: AccountRole.technician,
+  status: AccountStatus.active,
   managedByOwnerId: 'owner-1',
   managedByOwner: ManagedOwner(
     id: 'owner-1',
@@ -181,34 +181,34 @@ const _profile = UserProfile(
   ),
 );
 
-AuthUser _authUserFor(AppUserRole role) => AuthUser(
+AuthAccount _authAccountFor(AccountRole role) => AuthAccount(
   id: 'owner-1',
   email: 'owner@smartshrimp.vn',
   fullName: 'Nguyễn Văn Chủ',
   role: role,
-  status: 'ACTIVE',
+  status: AccountStatus.active,
 );
 
-UserProfile _profileFor(AppUserRole role) => UserProfile(
+AccountProfile _profileFor(AccountRole role) => AccountProfile(
   id: 'owner-1',
   email: 'owner@smartshrimp.vn',
   fullName: 'Nguyễn Văn Chủ',
   phone: '0987654321',
   role: role,
-  status: 'ACTIVE',
+  status: AccountStatus.active,
 );
 
 final class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({this.user = _authUser});
+  _FakeAuthRepository({this.account = _authAccount});
 
-  final AuthUser user;
+  final AuthAccount account;
   int logoutCalls = 0;
 
   @override
-  Future<AuthUser> login({
+  Future<AuthAccount> login({
     required String email,
     required String password,
-  }) async => user;
+  }) async => account;
 
   @override
   Future<void> logout() async {
@@ -216,18 +216,18 @@ final class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthUser?> restoreSession() async => user;
+  Future<AuthAccount?> restoreSession() async => account;
 }
 
 final class _FakeProfileRepository implements ProfileRepository {
-  _FakeProfileRepository({UserProfile? profile})
+  _FakeProfileRepository({AccountProfile? profile})
     : current = profile ?? _profile;
 
   int getCalls = 0;
   int changePasswordCalls = 0;
   String? lastFullName;
   String? lastPhone;
-  UserProfile current;
+  AccountProfile current;
 
   @override
   Future<void> changePassword({
@@ -238,25 +238,25 @@ final class _FakeProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<UserProfile> getProfile() async {
+  Future<AccountProfile> getProfile() async {
     getCalls++;
     return current;
   }
 
   @override
-  Future<UserProfile> updateAvatar({
+  Future<AccountProfile> updateAvatar({
     required Uint8List bytes,
     required String fileName,
   }) async => current;
 
   @override
-  Future<UserProfile> updateProfile({
+  Future<AccountProfile> updateProfile({
     required String fullName,
     String? phone,
   }) async {
     lastFullName = fullName;
     lastPhone = phone;
-    current = UserProfile(
+    current = AccountProfile(
       id: current.id,
       email: current.email,
       fullName: fullName.trim(),

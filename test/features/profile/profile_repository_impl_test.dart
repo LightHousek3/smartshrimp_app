@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
 import 'package:smartshrimp_app/features/profile/data/services/profile_api_service.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 
 void main() {
   late _FakeProfileRemoteDataSource remote;
@@ -44,12 +45,12 @@ void main() {
   });
 }
 
-const _baseProfile = UserProfile(
-  id: 'user-1',
+const _baseProfile = AccountProfile(
+  id: 'account-1',
   email: 'bao@smartshrimp.vn',
   fullName: 'Trần Quốc Bảo',
-  role: AppUserRole.technician,
-  status: 'ACTIVE',
+  role: AccountRole.technician,
+  status: AccountStatus.active,
 );
 
 final class _FakeProfileRemoteDataSource implements ProfileRemoteDataSource {
@@ -62,12 +63,12 @@ final class _FakeProfileRemoteDataSource implements ProfileRemoteDataSource {
   }) async {}
 
   @override
-  Future<UserProfile> getProfile() async => _baseProfile;
+  Future<AccountProfile> getProfile() async => _baseProfile;
 
   @override
-  Future<UserProfile> updateProfile(Map<String, dynamic> changes) async {
+  Future<AccountProfile> updateProfile(Map<String, dynamic> changes) async {
     lastChanges = changes;
-    return UserProfile(
+    return AccountProfile(
       id: _baseProfile.id,
       email: _baseProfile.email,
       fullName: changes['fullName'] as String? ?? _baseProfile.fullName,
