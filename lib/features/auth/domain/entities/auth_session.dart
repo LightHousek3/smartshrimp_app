@@ -1,32 +1,36 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 
-final class AuthSession {
-  const AuthSession({
-    required this.user,
-    required this.accessToken,
-    required this.refreshToken,
-  });
+part 'auth_session.freezed.dart';
 
-  factory AuthSession.fromLoginData(Map<String, dynamic> data) {
-    final user = data['user'];
+@freezed
+abstract class AuthSession with _$AuthSession {
+  const factory AuthSession({
+    required AuthAccount account,
+    required String accessToken,
+    required String refreshToken,
+  }) = _AuthSession;
+
+  static AuthSession fromLoginData(Map<String, dynamic> data) {
+    final account = data['account'];
     final tokens = data['tokens'];
-    if (user is! Map<String, dynamic> || tokens is! Map<String, dynamic>) {
+    if (account is! Map<String, dynamic> || tokens is! Map<String, dynamic>) {
       throw const InvalidResponseException();
     }
-    return AuthSession._fromParts(user: user, tokens: tokens);
+    return AuthSession._fromParts(account: account, tokens: tokens);
   }
 
-  factory AuthSession.fromRefreshData(Map<String, dynamic> data) {
-    final user = data['user'];
-    if (user is! Map<String, dynamic>) {
+  static AuthSession fromRefreshData(Map<String, dynamic> data) {
+    final account = data['account'];
+    if (account is! Map<String, dynamic>) {
       throw const InvalidResponseException();
     }
-    return AuthSession._fromParts(user: user, tokens: data);
+    return AuthSession._fromParts(account: account, tokens: data);
   }
 
-  factory AuthSession._fromParts({
-    required Map<String, dynamic> user,
+  static AuthSession _fromParts({
+    required Map<String, dynamic> account,
     required Map<String, dynamic> tokens,
   }) {
     final accessToken = tokens['accessToken'];
@@ -38,18 +42,10 @@ final class AuthSession {
       throw const InvalidResponseException();
     }
 
-    try {
-      return AuthSession(
-        user: AuthUser.fromJson(user),
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      );
-    } on FormatException {
-      throw const InvalidResponseException();
-    }
+    return AuthSession(
+      account: AuthAccount.parse(account),
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
   }
-
-  final AuthUser user;
-  final String accessToken;
-  final String refreshToken;
 }

@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
 import 'package:smartshrimp_app/features/profile/data/services/profile_api_service.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 
 final class ProfileRepositoryImpl implements ProfileRepository {
@@ -15,10 +16,13 @@ final class ProfileRepositoryImpl implements ProfileRepository {
   final AvatarStorage _avatarStorage;
 
   @override
-  Future<UserProfile> getProfile() => _remoteDataSource.getProfile();
+  Future<AccountProfile> getProfile() => _remoteDataSource.getProfile();
 
   @override
-  Future<UserProfile> updateProfile({required String fullName, String? phone}) {
+  Future<AccountProfile> updateProfile({
+    required String fullName,
+    String? phone,
+  }) {
     final normalizedPhone = phone?.trim();
     return _remoteDataSource.updateProfile(<String, dynamic>{
       'fullName': fullName.trim(),
@@ -29,7 +33,7 @@ final class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<UserProfile> updateAvatar({
+  Future<AccountProfile> updateAvatar({
     required Uint8List bytes,
     required String fileName,
   }) async {

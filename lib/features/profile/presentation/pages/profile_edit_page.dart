@@ -4,7 +4,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
-import 'package:smartshrimp_app/features/profile/domain/entities/user_profile.dart';
+import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
 import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_screen_header.dart';
@@ -48,7 +48,7 @@ class ProfileEditPage extends ConsumerWidget {
 class _ProfileEditForm extends ConsumerStatefulWidget {
   const _ProfileEditForm({required this.profile, super.key});
 
-  final UserProfile profile;
+  final AccountProfile profile;
 
   @override
   ConsumerState<_ProfileEditForm> createState() => _ProfileEditFormState();

@@ -1,5 +1,4 @@
-import 'package:dio/dio.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_session.dart';
 
 abstract interface class AuthRemoteDataSource {
@@ -15,9 +14,9 @@ abstract interface class AuthRemoteDataSource {
 }
 
 final class AuthApiService implements AuthRemoteDataSource {
-  AuthApiService(this._dio);
+  AuthApiService(this._client);
 
-  final Dio _dio;
+  final ApiClient _client;
 
   @override
   Future<AuthSession> login({
@@ -25,71 +24,34 @@ final class AuthApiService implements AuthRemoteDataSource {
     required String password,
     required String deviceId,
   }) async {
-    final response = await _request(
-      () => _dio.post<Map<String, dynamic>>(
-        '/auth/login',
-        data: <String, dynamic>{
-          'email': email.trim().toLowerCase(),
-          'password': password,
-          'deviceId': deviceId,
-        },
-      ),
+    final response = await _client.post(
+      '/auth/login',
+      authenticated: false,
+      data: <String, dynamic>{
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'deviceId': deviceId,
+      },
     );
-    return AuthSession.fromLoginData(_dataFrom(response));
+    return AuthSession.fromLoginData(response.requireMapData());
   }
 
   @override
   Future<AuthSession> refresh(String refreshToken) async {
-    final response = await _request(
-      () => _dio.post<Map<String, dynamic>>(
-        '/auth/refresh-token',
-        data: <String, dynamic>{'refreshToken': refreshToken},
-      ),
+    final response = await _client.post(
+      '/auth/refresh-token',
+      authenticated: false,
+      data: <String, dynamic>{'refreshToken': refreshToken},
     );
-    return AuthSession.fromRefreshData(_dataFrom(response));
+    return AuthSession.fromRefreshData(response.requireMapData());
   }
 
   @override
   Future<void> logout(String refreshToken) async {
-    await _request(
-      () => _dio.post<Map<String, dynamic>>(
-        '/auth/logout',
-        data: <String, dynamic>{'refreshToken': refreshToken},
-      ),
+    await _client.post(
+      '/auth/logout',
+      authenticated: false,
+      data: <String, dynamic>{'refreshToken': refreshToken},
     );
-  }
-
-  Future<Response<Map<String, dynamic>>> _request(
-    Future<Response<Map<String, dynamic>>> Function() request,
-  ) async {
-    try {
-      return await request();
-    } on DioException catch (error) {
-      if (error.type == DioExceptionType.connectionError ||
-          error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.receiveTimeout ||
-          error.type == DioExceptionType.sendTimeout) {
-        throw const NetworkException();
-      }
-
-      final responseData = error.response?.data;
-      final message =
-          responseData is Map<String, dynamic> &&
-              responseData['message'] is String
-          ? responseData['message']! as String
-          : 'Yêu cầu không thể hoàn tất. Vui lòng thử lại.';
-      throw ApiException(message, statusCode: error.response?.statusCode);
-    }
-  }
-
-  Map<String, dynamic> _dataFrom(Response<Map<String, dynamic>> response) {
-    final body = response.data;
-    final data = body?['data'];
-    if (body == null ||
-        body['success'] != true ||
-        data is! Map<String, dynamic>) {
-      throw const InvalidResponseException();
-    }
-    return data;
   }
 }

@@ -3,7 +3,7 @@ import 'package:smartshrimp_app/core/storage/device_id_store.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/auth/data/services/auth_api_service.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_session.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 
 final class AuthRepositoryImpl implements AuthRepository {
@@ -20,7 +20,7 @@ final class AuthRepositoryImpl implements AuthRepository {
   final DeviceIdStore _deviceIdStore;
 
   @override
-  Future<AuthUser> login({
+  Future<AuthAccount> login({
     required String email,
     required String password,
   }) async {
@@ -33,7 +33,7 @@ final class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthUser?> restoreSession() async {
+  Future<AuthAccount?> restoreSession() async {
     await _sessionStore.initialize();
     final refreshToken = _sessionStore.refreshToken;
     if (refreshToken == null || refreshToken.isEmpty) return null;
@@ -41,9 +41,17 @@ final class AuthRepositoryImpl implements AuthRepository {
     try {
       final session = await _remoteDataSource.refresh(refreshToken);
       return await _acceptSession(session);
-    } on Object {
+    } on ApiException catch (error) {
+      if (error.statusCode == 400 ||
+          error.statusCode == 401 ||
+          error.statusCode == 403) {
+        await _sessionStore.clear();
+        return null;
+      }
+      rethrow;
+    } on InvalidResponseException {
       await _sessionStore.clear();
-      return null;
+      rethrow;
     }
   }
 
@@ -62,11 +70,11 @@ final class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  Future<AuthUser> _acceptSession(
+  Future<AuthAccount> _acceptSession(
     AuthSession session, {
     bool revokeIfUnsupported = false,
   }) async {
-    if (!session.user.canUseMobileApp) {
+    if (!session.account.canUseMobileApp) {
       if (revokeIfUnsupported) {
         try {
           await _remoteDataSource.logout(session.refreshToken);
@@ -82,6 +90,6 @@ final class AuthRepositoryImpl implements AuthRepository {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
     );
-    return session.user;
+    return session.account;
   }
 }

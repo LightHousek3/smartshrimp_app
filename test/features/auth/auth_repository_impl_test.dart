@@ -5,13 +5,13 @@ import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:smartshrimp_app/features/auth/data/services/auth_api_service.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_session.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_user.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 
 void main() {
   test(
     'normalizes email, sends device id and persists accepted session',
     () async {
-      final remote = _FakeRemoteDataSource(_session(AppUserRole.technician));
+      final remote = _FakeRemoteDataSource(_session(AccountRole.technician));
       final store = _FakeSessionStore();
       final repository = AuthRepositoryImpl(
         remoteDataSource: remote,
@@ -19,12 +19,12 @@ void main() {
         deviceIdStore: _FakeDeviceIdStore(),
       );
 
-      final user = await repository.login(
+      final account = await repository.login(
         email: '  KTV@Example.com ',
         password: 'secret',
       );
 
-      expect(user.role, AppUserRole.technician);
+      expect(account.role, AccountRole.technician);
       expect(remote.loginEmail, 'ktv@example.com');
       expect(remote.loginDeviceId, '00000000-0000-4000-8000-000000000001');
       expect(store.accessToken, 'access-token');
@@ -33,7 +33,7 @@ void main() {
   );
 
   test('rejects unsupported roles and revokes their new session', () async {
-    final remote = _FakeRemoteDataSource(_session(AppUserRole.expert));
+    final remote = _FakeRemoteDataSource(_session(AccountRole.expert));
     final store = _FakeSessionStore();
     final repository = AuthRepositoryImpl(
       remoteDataSource: remote,
@@ -51,7 +51,7 @@ void main() {
 
   test('invalid stored refresh token is cleared during restore', () async {
     final remote = _FakeRemoteDataSource(
-      _session(AppUserRole.technician),
+      _session(AccountRole.technician),
       refreshError: const ApiException(
         'Invalid refresh token',
         statusCode: 401,
@@ -67,16 +67,38 @@ void main() {
     expect(await repository.restoreSession(), isNull);
     expect(store.refreshToken, isNull);
   });
+
+  test(
+    'network failure preserves the stored session for a later retry',
+    () async {
+      final remote = _FakeRemoteDataSource(
+        _session(AccountRole.technician),
+        refreshError: const NetworkException(),
+      );
+      final store = _FakeSessionStore()..refreshToken = 'refresh-token';
+      final repository = AuthRepositoryImpl(
+        remoteDataSource: remote,
+        sessionStore: store,
+        deviceIdStore: _FakeDeviceIdStore(),
+      );
+
+      await expectLater(
+        repository.restoreSession(),
+        throwsA(isA<NetworkException>()),
+      );
+      expect(store.refreshToken, 'refresh-token');
+    },
+  );
 }
 
-AuthSession _session(AppUserRole role) {
+AuthSession _session(AccountRole role) {
   return AuthSession(
-    user: AuthUser(
+    account: AuthAccount(
       id: '2ad2294a-8d7d-4a74-b17a-139ba35468e8',
-      email: 'user@example.com',
-      fullName: 'SmartShrimp User',
+      email: 'account@example.com',
+      fullName: 'SmartShrimp Account',
       role: role,
-      status: 'ACTIVE',
+      status: AccountStatus.active,
     ),
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
