@@ -50,4 +50,16 @@ final class AuthController extends AsyncNotifier<AuthAccount?> {
     await ref.read(sessionStoreProvider).clear();
     state = const AsyncData<AuthAccount?>(null);
   }
+
+  void updateAccountDetails({
+    required String? fullName,
+    required String? phone,
+    required String? avatarUrl,
+  }) {
+    final account = state.value;
+    if (account == null) return;
+    state = AsyncData<AuthAccount?>(
+      account.copyWith(fullName: fullName, phone: phone, avatarUrl: avatarUrl),
+    );
+  }
 }

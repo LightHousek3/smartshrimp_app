@@ -24,6 +24,8 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepositoryImpl(
     remoteDataSource: ref.watch(profileRemoteDataSourceProvider),
     avatarStorage: ref.watch(avatarStorageProvider),
+    sessionStore: ref.watch(sessionStoreProvider),
+    deviceIdStore: ref.watch(deviceIdStoreProvider),
   );
 });
 
@@ -35,8 +37,10 @@ final profileControllerProvider =
 final class ProfileController extends AsyncNotifier<AccountProfile> {
   @override
   Future<AccountProfile> build() async {
-    final authState = ref.watch(authControllerProvider);
-    if (authState.value == null) {
+    final authenticatedAccountId = ref.watch(
+      authControllerProvider.select((authState) => authState.value?.id),
+    );
+    if (authenticatedAccountId == null) {
       throw StateError('Profile requires an authenticated account.');
     }
     return _loadProfile();
@@ -60,6 +64,7 @@ final class ProfileController extends AsyncNotifier<AccountProfile> {
           .updateProfile(fullName: fullName, phone: phone),
     );
     state = AsyncData(profile);
+    _syncAuthenticatedAccount(profile);
     return profile;
   }
 
@@ -73,6 +78,7 @@ final class ProfileController extends AsyncNotifier<AccountProfile> {
           .updateAvatar(bytes: bytes, fileName: fileName),
     );
     state = AsyncData(profile);
+    _syncAuthenticatedAccount(profile);
     return profile;
   }
 
@@ -92,6 +98,16 @@ final class ProfileController extends AsyncNotifier<AccountProfile> {
 
   Future<AccountProfile> _loadProfile() {
     return _runAuthenticated(ref.read(profileRepositoryProvider).getProfile);
+  }
+
+  void _syncAuthenticatedAccount(AccountProfile profile) {
+    ref
+        .read(authControllerProvider.notifier)
+        .updateAccountDetails(
+          fullName: profile.fullName,
+          phone: profile.phone,
+          avatarUrl: profile.avatarUrl,
+        );
   }
 
   Future<T> _runAuthenticated<T>(Future<T> Function() operation) async {
