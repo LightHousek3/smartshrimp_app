@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
@@ -34,9 +36,7 @@ class ProfileEditPage extends ConsumerWidget {
             ),
           ),
           data: (profile) => _ProfileEditForm(
-            key: ValueKey<String>(
-              '${profile.id}-${profile.updatedAt?.toIso8601String()}',
-            ),
+            key: ValueKey<String>(profile.id),
             profile: profile,
           ),
         ),
@@ -96,7 +96,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
                     enabled: !_isSaving,
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
-                    maxLength: 255,
+                    maxLength: 50,
                     decoration: const InputDecoration(
                       hintText: 'VD: Trần Quốc Bảo',
                       counterText: '',
@@ -112,7 +112,11 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
                     enabled: !_isSaving,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.done,
-                    decoration: const InputDecoration(hintText: '09xx xxx xxx'),
+                    maxLength: 20,
+                    decoration: const InputDecoration(
+                      hintText: '09xx xxx xxx',
+                      counterText: '',
+                    ),
                     validator: ProfileFormUtils.validatePhone,
                     onFieldSubmitted: (_) => _submit(),
                   ),
@@ -140,14 +144,14 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
       await ref
           .read(profileControllerProvider.notifier)
           .updateProfile(
-            fullName: _nameController.text,
+            fullName: ProfileFormUtils.normalizeFullName(_nameController.text),
             phone: ProfileFormUtils.normalizePhone(_phoneController.text),
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cập nhật hồ sơ thành công.')),
       );
-      Navigator.of(context).pop();
+      context.go(AppRoutes.account);
     } on AppException catch (error) {
       if (mounted) {
         _showError(error.message);

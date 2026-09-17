@@ -70,6 +70,9 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 if (profile.role == AccountRole.technician) ...<Widget>[
                   const SizedBox(height: 14),
                   _TechnicianKpiRow(kpi: profile.technicianKpi),
+                ] else if (profile.role == AccountRole.farmOwner) ...<Widget>[
+                  const SizedBox(height: 14),
+                  _FarmOwnerKpiRow(kpi: profile.farmOwnerKpi),
                 ],
                 const SizedBox(height: 14),
                 const Text(
@@ -455,35 +458,95 @@ class _TechnicianKpiRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rate = kpi?.onTimeCompletionRatePct;
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: _KpiCard(
-            label: 'Vụ tham gia',
-            subtitle: 'Tích lũy',
-            value: '${kpi?.seasonsParticipated ?? 0}',
-          ),
+    return _KpiRow(
+      items: <_KpiData>[
+        _KpiData(
+          label: 'Vụ tham gia',
+          subtitle: 'Tích lũy',
+          value: '${kpi?.seasonsParticipated ?? 0}',
         ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: _KpiCard(
-            label: 'Nhiệm vụ',
-            subtitle: 'Đã hoàn tất',
-            value: '${kpi?.completedTasks ?? 0}',
-          ),
+        _KpiData(
+          label: 'Nhiệm vụ',
+          subtitle: 'Đã hoàn tất',
+          value: '${kpi?.completedTasks ?? 0}',
         ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: _KpiCard(
-            label: 'Đúng hạn',
-            subtitle: 'Chỉ tiêu KPI',
-            value: rate == null ? '—' : '${rate.round()}%',
-            available: rate != null,
-          ),
+        _KpiData(
+          label: 'Đúng hạn',
+          subtitle: 'Chỉ tiêu KPI',
+          value: rate == null ? '—' : '${rate.round()}%',
+          available: rate != null,
         ),
       ],
     );
   }
+}
+
+class _FarmOwnerKpiRow extends StatelessWidget {
+  const _FarmOwnerKpiRow({required this.kpi});
+
+  final FarmOwnerKpi? kpi;
+
+  @override
+  Widget build(BuildContext context) {
+    return _KpiRow(
+      items: <_KpiData>[
+        _KpiData(
+          label: 'Trang trại',
+          subtitle: 'Đang sở hữu',
+          value: '${kpi?.farmsOwned ?? 0}',
+        ),
+        _KpiData(
+          label: 'Ao nuôi',
+          subtitle: 'Đang quản lý',
+          value: '${kpi?.pondsManaged ?? 0}',
+        ),
+        _KpiData(
+          label: 'Vụ nuôi',
+          subtitle: 'Đang hoạt động',
+          value: '${kpi?.activeSeasons ?? 0}',
+        ),
+      ],
+    );
+  }
+}
+
+class _KpiRow extends StatelessWidget {
+  const _KpiRow({required this.items});
+
+  final List<_KpiData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        for (var index = 0; index < items.length; index++) ...<Widget>[
+          if (index > 0) const SizedBox(width: 9),
+          Expanded(
+            child: _KpiCard(
+              label: items[index].label,
+              subtitle: items[index].subtitle,
+              value: items[index].value,
+              available: items[index].available,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _KpiData {
+  const _KpiData({
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    this.available = true,
+  });
+
+  final String label;
+  final String subtitle;
+  final String value;
+  final bool available;
 }
 
 class _KpiCard extends StatelessWidget {

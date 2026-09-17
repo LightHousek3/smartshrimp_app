@@ -53,6 +53,15 @@ void main() {
     expect(find.text('Chủ trang trại'), findsNWidgets(2));
     expect(find.text('Vai trò hệ thống'), findsOneWidget);
     expect(find.text('Chủ trang trại phụ trách'), findsNothing);
+    expect(find.text('TRANG TRẠI'), findsOneWidget);
+    expect(find.text('AO NUÔI'), findsOneWidget);
+    expect(find.text('VỤ NUÔI'), findsOneWidget);
+    expect(find.text('Đang sở hữu'), findsOneWidget);
+    expect(find.text('Đang quản lý'), findsOneWidget);
+    expect(find.text('Đang hoạt động'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('8'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
   });
 
   testWidgets('profile edit validates and sends normalized values', (
@@ -89,12 +98,53 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(profileRepository.lastFullName, '  Nguyễn Văn An  ');
+    expect(profileRepository.lastFullName, 'Nguyễn Văn An');
     expect(profileRepository.lastPhone, '0912345678');
+    expect(find.text('Cập nhật thông tin'), findsNothing);
+    expect(find.text('Thông tin tài khoản'), findsOneWidget);
     expect(find.text('Nguyễn Văn An'), findsOneWidget);
   });
 
-  testWidgets('password change calls backend and logs the account out', (
+  testWidgets('farm owner returns to account page after profile edit', (
+    tester,
+  ) async {
+    final ownerAccount = _authAccountFor(AccountRole.farmOwner);
+    final ownerProfile = _profileFor(AccountRole.farmOwner);
+    final profileRepository = _FakeProfileRepository(profile: ownerProfile);
+    await tester.pumpWidget(
+      _testApp(_FakeAuthRepository(account: ownerAccount), profileRepository),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tài khoản'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Cập nhật thông tin cá nhân'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Cập nhật thông tin cá nhân'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('profile_name_field')),
+      '  Nguyễn Văn Chủ Mới  ',
+    );
+    await tester.tap(find.text('Lưu thay đổi'));
+    await tester.pumpAndSettle();
+
+    expect(profileRepository.lastFullName, 'Nguyễn Văn Chủ Mới');
+    expect(find.text('Cập nhật thông tin'), findsNothing);
+    expect(find.text('Thông tin tài khoản'), findsOneWidget);
+    await tester.fling(
+      find.byType(Scrollable).last,
+      const Offset(0, 1000),
+      1500,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nguyễn Văn Chủ Mới'), findsOneWidget);
+  });
+
+  testWidgets('password change keeps the renewed current session signed in', (
     tester,
   ) async {
     final authRepository = _FakeAuthRepository();
@@ -128,14 +178,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Đổi mật khẩu thành công'), findsOneWidget);
+    expect(find.text('Mật khẩu đã thay đổi thành công'), findsOneWidget);
     expect(profileRepository.changePasswordCalls, 1);
-    await tester.tap(find.text('Đăng nhập lại'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
 
-    expect(authRepository.logoutCalls, 1);
-    expect(find.byKey(const Key('login_email_field')), findsOneWidget);
+    expect(authRepository.logoutCalls, 0);
+    expect(find.byKey(const Key('login_email_field')), findsNothing);
+    expect(find.text('Thông tin tài khoản'), findsOneWidget);
   });
 }
 
@@ -196,6 +245,9 @@ AccountProfile _profileFor(AccountRole role) => AccountProfile(
   phone: '0987654321',
   role: role,
   status: AccountStatus.active,
+  farmOwnerKpi: role == AccountRole.farmOwner
+      ? const FarmOwnerKpi(farmsOwned: 2, pondsManaged: 8, activeSeasons: 3)
+      : null,
 );
 
 final class _FakeAuthRepository implements AuthRepository {
@@ -225,6 +277,7 @@ final class _FakeProfileRepository implements ProfileRepository {
 
   int getCalls = 0;
   int changePasswordCalls = 0;
+  int updateProfileCalls = 0;
   String? lastFullName;
   String? lastPhone;
   AccountProfile current;
@@ -254,6 +307,7 @@ final class _FakeProfileRepository implements ProfileRepository {
     required String fullName,
     String? phone,
   }) async {
+    updateProfileCalls++;
     lastFullName = fullName;
     lastPhone = phone;
     current = AccountProfile(
@@ -266,6 +320,9 @@ final class _FakeProfileRepository implements ProfileRepository {
       managedByOwnerId: current.managedByOwnerId,
       managedByOwner: current.managedByOwner,
       technicianKpi: current.technicianKpi,
+      expertKpi: current.expertKpi,
+      farmOwnerKpi: current.farmOwnerKpi,
+      updatedAt: DateTime.utc(2026, 9, 17, 0, 0, updateProfileCalls),
     );
     return current;
   }
