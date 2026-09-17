@@ -16,6 +16,12 @@ final class ApiClient {
   final SessionStore _sessionStore;
   Future<String>? _refreshingAccessToken;
 
+  /// Socket.IO requests fresh credentials for each connection and reconnect.
+  Future<String> accessTokenForRealtime() async {
+    await _sessionStore.initialize();
+    return _refreshAccessToken();
+  }
+
   Future<ApiResponse> get(
     String path, {
     Map<String, dynamic>? queryParameters,

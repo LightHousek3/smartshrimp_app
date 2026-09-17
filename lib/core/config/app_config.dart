@@ -9,6 +9,11 @@ abstract final class AppConfig {
     defaultValue: '',
   );
 
+  static String? get socketBaseUrl {
+    final uri = Uri.tryParse(apiBaseUrl);
+    return uri != null && uri.hasScheme && uri.hasAuthority ? uri.origin : null;
+  }
+
   static const cloudinaryCloudName = String.fromEnvironment(
     'CLOUDINARY_CLOUD_NAME',
     defaultValue: '',
