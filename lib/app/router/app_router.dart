@@ -6,6 +6,8 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/auth_info_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/change_password_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
@@ -85,7 +87,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           _emptyBranch(AppRoutes.home, 'Trang chủ'),
           _emptyBranch(AppRoutes.seasons, 'Vụ nuôi'),
           _emptyBranch(AppRoutes.tasks, 'Nhiệm vụ'),
-          _emptyBranch(AppRoutes.notifications, 'Thông báo'),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.notifications,
+                builder: (_, _) => const NotificationListPage(),
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: ':notificationId',
+                    builder: (_, state) => NotificationDetailPage(
+                      notificationId: state.pathParameters['notificationId']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
