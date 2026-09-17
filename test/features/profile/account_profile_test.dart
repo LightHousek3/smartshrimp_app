@@ -61,6 +61,40 @@ void main() {
     expect(profile.technicianKpi, isNull);
   });
 
+  test('parses Farm Owner and Expert role-specific KPI contracts', () {
+    final owner = AccountProfile.parse(<String, dynamic>{
+      'id': 'owner-1',
+      'email': 'owner@smartshrimp.vn',
+      'role': 'FARM_OWNER',
+      'status': 'ACTIVE',
+      'farmOwnerKpi': <String, dynamic>{
+        'farmsOwned': 2,
+        'pondsManaged': 8,
+        'activeSeasons': 3,
+      },
+    });
+    final expert = AccountProfile.parse(<String, dynamic>{
+      'id': 'expert-1',
+      'email': 'expert@smartshrimp.vn',
+      'role': 'EXPERT',
+      'status': 'ACTIVE',
+      'expertKpi': <String, dynamic>{
+        'seasonsParticipated': 7,
+        'diseaseCasesHandled': 12,
+        'diseaseCasesResolved': 9,
+        'avgResolutionHours': 18.5,
+      },
+    });
+
+    expect(owner.farmOwnerKpi?.farmsOwned, 2);
+    expect(owner.farmOwnerKpi?.pondsManaged, 8);
+    expect(owner.farmOwnerKpi?.activeSeasons, 3);
+    expect(expert.expertKpi?.seasonsParticipated, 7);
+    expect(expert.expertKpi?.diseaseCasesHandled, 12);
+    expect(expert.expertKpi?.diseaseCasesResolved, 9);
+    expect(expert.expertKpi?.avgResolutionHours, 18.5);
+  });
+
   test('generated copyWith can explicitly clear nullable profile fields', () {
     const profile = AccountProfile(
       id: 'account-1',
@@ -93,6 +127,17 @@ void main() {
         onTimeCompletedTasks: 9,
         onTimeCompletionRatePct: 90,
       ),
+      expertKpi: ExpertKpi(
+        seasonsParticipated: 7,
+        diseaseCasesHandled: 12,
+        diseaseCasesResolved: 9,
+        avgResolutionHours: 18.5,
+      ),
+      farmOwnerKpi: FarmOwnerKpi(
+        farmsOwned: 2,
+        pondsManaged: 8,
+        activeSeasons: 3,
+      ),
     );
 
     final json = profile.toJson();
@@ -101,6 +146,8 @@ void main() {
     expect(json['status'], 'ACTIVE');
     expect(json['managedByOwner'], isA<Map<String, dynamic>>());
     expect(json['technicianKpi'], isA<Map<String, dynamic>>());
+    expect(json['expertKpi'], isA<Map<String, dynamic>>());
+    expect(json['farmOwnerKpi'], isA<Map<String, dynamic>>());
   });
 
   test('rejects malformed nested profile data at the parsing boundary', () {

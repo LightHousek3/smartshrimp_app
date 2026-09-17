@@ -31,6 +31,12 @@ _AccountProfile _$AccountProfileFromJson(
   technicianKpi: json['technicianKpi'] == null
       ? null
       : TechnicianKpi.fromJson(json['technicianKpi'] as Map<String, dynamic>),
+  expertKpi: json['expertKpi'] == null
+      ? null
+      : ExpertKpi.fromJson(json['expertKpi'] as Map<String, dynamic>),
+  farmOwnerKpi: json['farmOwnerKpi'] == null
+      ? null
+      : FarmOwnerKpi.fromJson(json['farmOwnerKpi'] as Map<String, dynamic>),
   activatedAt: json['activatedAt'] == null
       ? null
       : DateTime.parse(json['activatedAt'] as String),
@@ -57,6 +63,8 @@ Map<String, dynamic> _$AccountProfileToJson(_AccountProfile instance) =>
       'managedByOwnerId': instance.managedByOwnerId,
       'managedByOwner': instance.managedByOwner?.toJson(),
       'technicianKpi': instance.technicianKpi?.toJson(),
+      'expertKpi': instance.expertKpi?.toJson(),
+      'farmOwnerKpi': instance.farmOwnerKpi?.toJson(),
       'activatedAt': instance.activatedAt?.toIso8601String(),
       'lastLoginAt': instance.lastLoginAt?.toIso8601String(),
       'createdAt': instance.createdAt?.toIso8601String(),
@@ -110,4 +118,33 @@ Map<String, dynamic> _$TechnicianKpiToJson(_TechnicianKpi instance) =>
       'completedTasks': instance.completedTasks,
       'onTimeCompletedTasks': instance.onTimeCompletedTasks,
       'onTimeCompletionRatePct': instance.onTimeCompletionRatePct,
+    };
+
+_ExpertKpi _$ExpertKpiFromJson(Map<String, dynamic> json) => _ExpertKpi(
+  seasonsParticipated: (json['seasonsParticipated'] as num).toInt(),
+  diseaseCasesHandled: (json['diseaseCasesHandled'] as num).toInt(),
+  diseaseCasesResolved: (json['diseaseCasesResolved'] as num).toInt(),
+  avgResolutionHours: (json['avgResolutionHours'] as num?)?.toDouble(),
+);
+
+Map<String, dynamic> _$ExpertKpiToJson(_ExpertKpi instance) =>
+    <String, dynamic>{
+      'seasonsParticipated': instance.seasonsParticipated,
+      'diseaseCasesHandled': instance.diseaseCasesHandled,
+      'diseaseCasesResolved': instance.diseaseCasesResolved,
+      'avgResolutionHours': instance.avgResolutionHours,
+    };
+
+_FarmOwnerKpi _$FarmOwnerKpiFromJson(Map<String, dynamic> json) =>
+    _FarmOwnerKpi(
+      farmsOwned: (json['farmsOwned'] as num).toInt(),
+      pondsManaged: (json['pondsManaged'] as num).toInt(),
+      activeSeasons: (json['activeSeasons'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$FarmOwnerKpiToJson(_FarmOwnerKpi instance) =>
+    <String, dynamic>{
+      'farmsOwned': instance.farmsOwned,
+      'pondsManaged': instance.pondsManaged,
+      'activeSeasons': instance.activeSeasons,
     };

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
-import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
+import 'package:smartshrimp_app/features/profile/domain/profile_rules.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
 import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_screen_header.dart';
 
@@ -142,38 +144,18 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             newPassword: _newController.text,
           );
       if (!mounted) return;
-
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          icon: const Icon(
-            Icons.check_circle_outline_rounded,
-            color: Color(0xFF0F9B8E),
-            size: 42,
-          ),
-          title: const Text('Đổi mật khẩu thành công'),
-          content: const Text(
-            'Các phiên đăng nhập đã được thu hồi. Vui lòng đăng nhập lại bằng mật khẩu mới.',
-            textAlign: TextAlign.center,
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: <Widget>[
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Đăng nhập lại'),
-            ),
-          ],
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu đã thay đổi thành công')),
       );
-      await ref.read(authControllerProvider.notifier).logout();
+      context.go(AppRoutes.account);
     } on AppException catch (error) {
       if (!mounted) return;
       final message = error.message.toLowerCase();
       if (message.contains('hiện tại') && message.contains('không chính xác')) {
         setState(() => _currentServerError = error.message);
         _formKey.currentState?.validate();
-      } else if (message.contains('không được trùng')) {
+      } else if (message.contains('không được trùng') ||
+          message.contains('phải khác')) {
         setState(() => _newServerError = error.message);
         _formKey.currentState?.validate();
       } else {
@@ -282,19 +264,20 @@ class _PasswordStrength extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (password.isEmpty) return const SizedBox.shrink();
-    final strength = _strength(password);
+    final strength = ProfileFormUtils.passwordStrength(password);
     final color = switch (strength) {
-      1 => AppColors.error,
-      2 => const Color(0xFFE0A000),
-      3 => const Color(0xFF0F9B8E),
-      _ => const Color(0xFF15945D),
+      PasswordStrength.tooShort => AppColors.error,
+      PasswordStrength.medium => const Color(0xFFE0A000),
+      PasswordStrength.fairlyStrong => const Color(0xFF0F9B8E),
+      PasswordStrength.strong => const Color(0xFF15945D),
     };
     final label = switch (strength) {
-      1 => 'Quá ngắn',
-      2 => 'Trung bình',
-      3 => 'Khá mạnh',
-      _ => 'Rất mạnh',
+      PasswordStrength.tooShort => 'Quá ngắn',
+      PasswordStrength.medium => 'Trung bình',
+      PasswordStrength.fairlyStrong => 'Khá mạnh',
+      PasswordStrength.strong => 'Mạnh',
     };
+    final strengthLevel = strength.index + 1;
 
     return Padding(
       padding: const EdgeInsets.only(top: 9),
@@ -309,7 +292,9 @@ class _PasswordStrength extends StatelessWidget {
                   height: 5,
                   margin: EdgeInsets.only(right: index == 3 ? 0 : 6),
                   decoration: BoxDecoration(
-                    color: index < strength ? color : const Color(0xDDECF0F5),
+                    color: index < strengthLevel
+                        ? color
+                        : const Color(0xDDECF0F5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -328,17 +313,5 @@ class _PasswordStrength extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static int _strength(String password) {
-    if (password.length < 6) return 1;
-    if (password.length < 10) return 2;
-    final hasMixedCase =
-        RegExp(r'[A-Z]').hasMatch(password) &&
-        RegExp(r'[a-z]').hasMatch(password);
-    final hasNumber = RegExp(r'\d').hasMatch(password);
-    final hasSymbol = RegExp(r'[^A-Za-z0-9]').hasMatch(password);
-    if (hasMixedCase && hasNumber && hasSymbol) return 4;
-    return 3;
   }
 }

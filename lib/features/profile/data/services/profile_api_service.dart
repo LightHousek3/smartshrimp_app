@@ -1,4 +1,5 @@
 import 'package:smartshrimp_app/core/network/api_client.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_session.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 
 abstract interface class ProfileRemoteDataSource {
@@ -6,9 +7,10 @@ abstract interface class ProfileRemoteDataSource {
 
   Future<AccountProfile> updateProfile(Map<String, dynamic> changes);
 
-  Future<void> changePassword({
+  Future<AuthSession> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String deviceId,
   });
 }
 
@@ -34,17 +36,20 @@ final class ProfileApiService implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<void> changePassword({
+  Future<AuthSession> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String deviceId,
   }) async {
-    await _client.patch(
+    final response = await _client.patch(
       '/profile/password',
       authenticated: true,
       data: <String, dynamic>{
         'currentPassword': currentPassword,
         'newPassword': newPassword,
+        'deviceId': deviceId,
       },
     );
+    return AuthSession.fromLoginData(response.requireMapData());
   }
 }
