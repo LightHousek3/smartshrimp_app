@@ -49,5 +49,18 @@ void main() {
 
       expect(response.requireMapData, throwsA(isA<InvalidResponseException>()));
     });
+
+    test('validates list data without leaking dynamic values', () {
+      final response = ApiResponse.parse(<String, dynamic>{
+        'success': true,
+        'message': 'Fetched successfully',
+        'data': <Object?>[
+          <String, dynamic>{'id': 'farm-1'},
+        ],
+      });
+
+      expect(response.requireListData(), hasLength(1));
+      expect(response.requireMapData, throwsA(isA<InvalidResponseException>()));
+    });
   });
 }

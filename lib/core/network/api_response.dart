@@ -43,4 +43,12 @@ abstract class ApiResponse with _$ApiResponse {
     }
     return value;
   }
+
+  List<Object?> requireListData() {
+    final value = data;
+    if (value is! List<dynamic>) {
+      throw const InvalidResponseException();
+    }
+    return value.cast<Object?>();
+  }
 }

@@ -6,6 +6,11 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/auth_info_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
+import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_detail_page.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_form_page.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
@@ -21,7 +26,9 @@ abstract final class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const home = '/';
   static const seasons = '/seasons';
+  static const farms = '/farms';
   static const tasks = '/tasks';
+  static const approvals = '/approvals';
   static const notifications = '/notifications';
   static const account = '/account';
   static const profileEdit = '/account/edit';
@@ -58,6 +65,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
+      final account = authState.value;
+      if (location.startsWith(AppRoutes.farms) &&
+          account?.role != AccountRole.farmOwner) {
+        return AppRoutes.home;
+      }
       return null;
     },
     routes: <RouteBase>[
@@ -85,7 +97,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
         branches: <StatefulShellBranch>[
           _emptyBranch(AppRoutes.home, 'Trang chủ'),
-          _emptyBranch(AppRoutes.seasons, 'Vụ nuôi'),
+          StatefulShellBranch(
+            initialLocation: AppRoutes.seasons,
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.seasons,
+                builder: (_, _) => const EmptyTabPage(semanticLabel: 'Vụ nuôi'),
+              ),
+              GoRoute(
+                path: AppRoutes.farms,
+                builder: (_, _) => const FarmListPage(),
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: 'create',
+                    builder: (_, _) => const FarmFormPage(),
+                  ),
+                  GoRoute(
+                    path: ':farmId',
+                    builder: (_, state) =>
+                        FarmDetailPage(farmId: state.pathParameters['farmId']!),
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'edit',
+                        builder: (_, state) => FarmEditPage(
+                          farmId: state.pathParameters['farmId']!,
+                          initialFarm: state.extra is Farm
+                              ? state.extra! as Farm
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
           _emptyBranch(AppRoutes.tasks, 'Nhiệm vụ'),
           StatefulShellBranch(
             routes: <RouteBase>[
@@ -100,6 +146,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                 ],
+              ),
+              GoRoute(
+                path: AppRoutes.approvals,
+                builder: (_, _) =>
+                    const EmptyTabPage(semanticLabel: 'Phê duyệt'),
               ),
             ],
           ),
