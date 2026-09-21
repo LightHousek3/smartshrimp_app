@@ -13,6 +13,10 @@ import 'package:smartshrimp_app/features/farm/presentation/pages/farm_form_page.
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
+import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
+import 'package:smartshrimp_app/features/pond/presentation/pages/pond_detail_page.dart';
+import 'package:smartshrimp_app/features/pond/presentation/pages/pond_form_page.dart';
+import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/change_password_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
@@ -117,6 +121,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) =>
                         FarmDetailPage(farmId: state.pathParameters['farmId']!),
                     routes: <RouteBase>[
+                      GoRoute(
+                        path: 'ponds',
+                        builder: (_, state) => PondListPage(
+                          farmId: state.pathParameters['farmId']!,
+                        ),
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: 'create',
+                            builder: (_, state) => PondFormPage(
+                              farmId: state.pathParameters['farmId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':pondId',
+                            builder: (_, state) => PondDetailPage(
+                              farmId: state.pathParameters['farmId']!,
+                              pondId: state.pathParameters['pondId']!,
+                            ),
+                            routes: <RouteBase>[
+                              GoRoute(
+                                path: 'edit',
+                                builder: (_, state) => PondEditPage(
+                                  farmId: state.pathParameters['farmId']!,
+                                  pondId: state.pathParameters['pondId']!,
+                                  initialPond: state.extra is Pond
+                                      ? state.extra! as Pond
+                                      : null,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                       GoRoute(
                         path: 'edit',
                         builder: (_, state) => FarmEditPage(
