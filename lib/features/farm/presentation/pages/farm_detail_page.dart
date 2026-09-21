@@ -146,7 +146,7 @@ class _FarmDetailContent extends ConsumerWidget {
                 ),
               ),
               TextButton.icon(
-                onPressed: () => _notInScope(context, 'Chức năng thêm ao'),
+                onPressed: () => context.push('/farms/${farm.id}/ponds/create'),
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Thêm ao', style: TextStyle(fontSize: 12.5)),
               ),
@@ -159,9 +159,21 @@ class _FarmDetailContent extends ConsumerWidget {
             ...farm.ponds.map(
               (pond) => Padding(
                 padding: const EdgeInsets.only(bottom: 11),
-                child: _PondCard(pond: pond),
+                child: _PondCard(
+                  pond: pond,
+                  onTap: () =>
+                      context.push('/farms/${farm.id}/ponds/${pond.id}'),
+                ),
               ),
             ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => context.push('/farms/${farm.id}/ponds'),
+              icon: const Icon(Icons.manage_search_rounded),
+              label: const Text('Tìm kiếm và lọc ao'),
+            ),
+          ),
           const SizedBox(height: 7),
           _InventoryCard(
             onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
@@ -177,14 +189,25 @@ class _FarmDetailContent extends ConsumerWidget {
                   _changeArchiveStatus(context, ref, restore: true),
             )
           else
-            FarmActionButton(
-              label: farm.canArchive
-                  ? 'Lưu trữ trang trại'
-                  : 'Không thể lưu trữ khi có vụ đang mở',
-              icon: Icons.archive_outlined,
-              enabled: farm.canArchive && !mutation.isLoading,
-              onPressed: () =>
-                  _changeArchiveStatus(context, ref, restore: false),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: farm.canArchive && !mutation.isLoading
+                    ? () => _changeArchiveStatus(context, ref, restore: false)
+                    : null,
+                child: Text(
+                  farm.canArchive
+                      ? 'Lưu trữ trang trại'
+                      : 'Không thể lưu trữ khi có vụ đang mở',
+                ),
+              ),
             ),
         ],
       ),
@@ -321,8 +344,9 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _PondCard extends StatelessWidget {
-  const _PondCard({required this.pond});
+  const _PondCard({required this.pond, required this.onTap});
   final FarmPond pond;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -353,109 +377,116 @@ class _PondCard extends StatelessWidget {
       PondType.waterTreatment => 'Ao xử lý nước',
       PondType.unknown => 'Loại ao chưa xác định',
     };
-    return Container(
-      padding: const EdgeInsets.fromLTRB(15, 14, 13, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xF7FFFFFF),
+    return Material(
+      color: const Color(0xF7FFFFFF),
+      borderRadius: BorderRadius.circular(13),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white),
-        boxShadow: farmCardShadow,
-      ),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6F4FF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.water_drop_rounded,
-              size: 21,
-              color: AppColors.ocean,
-            ),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(15, 14, 13, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: Colors.white),
+            boxShadow: farmCardShadow,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F4FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.water_drop_rounded,
+                  size: 21,
+                  color: AppColors.ocean,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        pond.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            pond.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.ink,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
-                      ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: status.$2,
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Text(
+                            status.$1,
+                            style: TextStyle(
+                              color: status.$3,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: status.$2,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        status.$1,
-                        style: TextStyle(
-                          color: status.$3,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 5,
+                      children: <Widget>[
+                        Text(
+                          type,
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 10.5,
+                          ),
                         ),
-                      ),
+                        if (pond.areaM2 != null)
+                          Text(
+                            '• ${formatCompactNumber(pond.areaM2)} m²',
+                            style: const TextStyle(
+                              color: AppColors.inkMuted,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        if (pond.currentSeason?.dayOfCulture != null)
+                          Text(
+                            'DOC ${pond.currentSeason!.dayOfCulture}',
+                            style: const TextStyle(
+                              color: AppColors.ocean,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 7),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 5,
-                  children: <Widget>[
-                    Text(
-                      type,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 10.5,
-                      ),
-                    ),
-                    if (pond.areaM2 != null)
-                      Text(
-                        '• ${formatCompactNumber(pond.areaM2)} m²',
-                        style: const TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 10.5,
-                        ),
-                      ),
-                    if (pond.currentSeason?.dayOfCulture != null)
-                      Text(
-                        'DOC ${pond.currentSeason!.dayOfCulture}',
-                        style: const TextStyle(
-                          color: AppColors.ocean,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 5),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: AppColors.inkMuted,
+              ),
+            ],
           ),
-          const SizedBox(width: 5),
-          const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: AppColors.inkMuted,
-          ),
-        ],
+        ),
       ),
     );
   }
