@@ -91,15 +91,15 @@ _Farm _$FarmFromJson(Map<String, dynamic> json) => _Farm(
   totalAreaHectares: (json['totalAreaHectares'] as num?)?.toDouble(),
   pondCount: (json['pondCount'] as num?)?.toInt() ?? 0,
   activeSeasonCount: (json['activeSeasonCount'] as num?)?.toInt() ?? 0,
-  canArchive: json['canArchive'] as bool? ?? true,
+  canDelete: json['canDelete'] as bool? ?? true,
   ponds:
       (json['ponds'] as List<dynamic>?)
           ?.map((e) => FarmPond.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <FarmPond>[],
-  archivedAt: json['archivedAt'] == null
+  deletedAt: json['deletedAt'] == null
       ? null
-      : DateTime.parse(json['archivedAt'] as String),
+      : DateTime.parse(json['deletedAt'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -118,9 +118,9 @@ Map<String, dynamic> _$FarmToJson(_Farm instance) => <String, dynamic>{
   'totalAreaHectares': instance.totalAreaHectares,
   'pondCount': instance.pondCount,
   'activeSeasonCount': instance.activeSeasonCount,
-  'canArchive': instance.canArchive,
+  'canDelete': instance.canDelete,
   'ponds': instance.ponds,
-  'archivedAt': instance.archivedAt?.toIso8601String(),
+  'deletedAt': instance.deletedAt?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),
 };

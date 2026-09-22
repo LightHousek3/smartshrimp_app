@@ -7,8 +7,7 @@ abstract interface class FarmRemoteDataSource {
   Future<Farm> getFarm(String farmId);
   Future<Farm> createFarm(Map<String, dynamic> data);
   Future<Farm> updateFarm(String farmId, Map<String, dynamic> data);
-  Future<Farm> archiveFarm(String farmId);
-  Future<Farm> restoreFarm(String farmId);
+  Future<Farm> deleteFarm(String farmId);
 }
 
 final class FarmApiService implements FarmRemoteDataSource {
@@ -67,16 +66,9 @@ final class FarmApiService implements FarmRemoteDataSource {
   }
 
   @override
-  Future<Farm> archiveFarm(String farmId) =>
-      _changeArchiveStatus(farmId, 'archive');
-
-  @override
-  Future<Farm> restoreFarm(String farmId) =>
-      _changeArchiveStatus(farmId, 'restore');
-
-  Future<Farm> _changeArchiveStatus(String farmId, String action) async {
-    final response = await _client.patch(
-      '$_basePath/$farmId/$action',
+  Future<Farm> deleteFarm(String farmId) async {
+    final response = await _client.delete(
+      '$_basePath/$farmId',
       authenticated: true,
     );
     return Farm.parse(response.requireMapData());

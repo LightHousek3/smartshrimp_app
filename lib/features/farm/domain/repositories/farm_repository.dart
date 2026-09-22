@@ -1,7 +1,5 @@
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 
-enum FarmArchiveFilter { active, archived }
-
 abstract interface class FarmRepository {
   Future<List<Farm>> getFarms();
 
@@ -20,7 +18,5 @@ abstract interface class FarmRepository {
     double? totalAreaHectares,
   });
 
-  Future<Farm> archiveFarm(String farmId);
-
-  Future<Farm> restoreFarm(String farmId);
+  Future<Farm> deleteFarm(String farmId);
 }

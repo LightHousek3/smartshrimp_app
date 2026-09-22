@@ -51,7 +51,6 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
   static const _pageSize = 20;
 
   List<Farm> _allFarms = const <Farm>[];
-  FarmArchiveFilter _filter = FarmArchiveFilter.active;
   String _search = '';
   int _currentPage = 1;
   int _generation = 0;
@@ -63,11 +62,7 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
     return _buildPage();
   }
 
-  Future<void> load({
-    required FarmArchiveFilter filter,
-    String search = '',
-  }) async {
-    _filter = filter;
+  Future<void> load({String search = ''}) async {
     _search = search;
     _currentPage = 1;
     state = AsyncData(_buildPage());
@@ -94,13 +89,10 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
     final normalizedSearch = _search.trim().toLowerCase();
     final filtered = _allFarms
         .where((farm) {
-          final matchesArchiveStatus = _filter == FarmArchiveFilter.archived
-              ? farm.isArchived
-              : !farm.isArchived;
           final matchesName =
               normalizedSearch.isEmpty ||
               farm.name.toLowerCase().contains(normalizedSearch);
-          return matchesArchiveStatus && matchesName;
+          return matchesName;
         })
         .toList(growable: false);
     final totalPages = (filtered.length + _pageSize - 1) ~/ _pageSize;
@@ -177,13 +169,8 @@ final class FarmMutationController extends _OwnerFarmController<void> {
     farmId: farmId,
   );
 
-  Future<Farm> archive(String farmId) => _mutate(
-    () => ref.read(farmRepositoryProvider).archiveFarm(farmId),
-    farmId: farmId,
-  );
-
-  Future<Farm> restore(String farmId) => _mutate(
-    () => ref.read(farmRepositoryProvider).restoreFarm(farmId),
+  Future<Farm> deleteFarm(String farmId) => _mutate(
+    () => ref.read(farmRepositoryProvider).deleteFarm(farmId),
     farmId: farmId,
   );
 

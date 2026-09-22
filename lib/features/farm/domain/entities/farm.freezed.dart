@@ -595,7 +595,7 @@ $FarmCurrentSeasonCopyWith<$Res>? get currentSeason {
 /// @nodoc
 mixin _$Farm {
 
- String get id; String get ownerId; String get name; String? get address; double? get latitude; double? get longitude; double? get totalAreaHectares; int get pondCount; int get activeSeasonCount; bool get canArchive; List<FarmPond> get ponds; DateTime? get archivedAt; DateTime? get createdAt; DateTime? get updatedAt;
+ String get id; String get ownerId; String get name; String? get address; double? get latitude; double? get longitude; double? get totalAreaHectares; int get pondCount; int get activeSeasonCount; bool get canDelete; List<FarmPond> get ponds; DateTime? get deletedAt; DateTime? get createdAt; DateTime? get updatedAt;
 /// Create a copy of Farm
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -608,16 +608,16 @@ $FarmCopyWith<Farm> get copyWith => _$FarmCopyWithImpl<Farm>(this as Farm, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Farm&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.totalAreaHectares, totalAreaHectares) || other.totalAreaHectares == totalAreaHectares)&&(identical(other.pondCount, pondCount) || other.pondCount == pondCount)&&(identical(other.activeSeasonCount, activeSeasonCount) || other.activeSeasonCount == activeSeasonCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive)&&const DeepCollectionEquality().equals(other.ponds, ponds)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Farm&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.totalAreaHectares, totalAreaHectares) || other.totalAreaHectares == totalAreaHectares)&&(identical(other.pondCount, pondCount) || other.pondCount == pondCount)&&(identical(other.activeSeasonCount, activeSeasonCount) || other.activeSeasonCount == activeSeasonCount)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&const DeepCollectionEquality().equals(other.ponds, ponds)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerId,name,address,latitude,longitude,totalAreaHectares,pondCount,activeSeasonCount,canArchive,const DeepCollectionEquality().hash(ponds),archivedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,ownerId,name,address,latitude,longitude,totalAreaHectares,pondCount,activeSeasonCount,canDelete,const DeepCollectionEquality().hash(ponds),deletedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Farm(id: $id, ownerId: $ownerId, name: $name, address: $address, latitude: $latitude, longitude: $longitude, totalAreaHectares: $totalAreaHectares, pondCount: $pondCount, activeSeasonCount: $activeSeasonCount, canArchive: $canArchive, ponds: $ponds, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Farm(id: $id, ownerId: $ownerId, name: $name, address: $address, latitude: $latitude, longitude: $longitude, totalAreaHectares: $totalAreaHectares, pondCount: $pondCount, activeSeasonCount: $activeSeasonCount, canDelete: $canDelete, ponds: $ponds, deletedAt: $deletedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -628,7 +628,7 @@ abstract mixin class $FarmCopyWith<$Res>  {
   factory $FarmCopyWith(Farm value, $Res Function(Farm) _then) = _$FarmCopyWithImpl;
 @useResult
 $Res call({
- String id, String ownerId, String name, String? address, double? latitude, double? longitude, double? totalAreaHectares, int pondCount, int activeSeasonCount, bool canArchive, List<FarmPond> ponds, DateTime? archivedAt, DateTime? createdAt, DateTime? updatedAt
+ String id, String ownerId, String name, String? address, double? latitude, double? longitude, double? totalAreaHectares, int pondCount, int activeSeasonCount, bool canDelete, List<FarmPond> ponds, DateTime? deletedAt, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -645,7 +645,7 @@ class _$FarmCopyWithImpl<$Res>
 
 /// Create a copy of Farm
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerId = null,Object? name = null,Object? address = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? totalAreaHectares = freezed,Object? pondCount = null,Object? activeSeasonCount = null,Object? canArchive = null,Object? ponds = null,Object? archivedAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerId = null,Object? name = null,Object? address = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? totalAreaHectares = freezed,Object? pondCount = null,Object? activeSeasonCount = null,Object? canDelete = null,Object? ponds = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
@@ -656,9 +656,9 @@ as double?,longitude: freezed == longitude ? _self.longitude : longitude // igno
 as double?,totalAreaHectares: freezed == totalAreaHectares ? _self.totalAreaHectares : totalAreaHectares // ignore: cast_nullable_to_non_nullable
 as double?,pondCount: null == pondCount ? _self.pondCount : pondCount // ignore: cast_nullable_to_non_nullable
 as int,activeSeasonCount: null == activeSeasonCount ? _self.activeSeasonCount : activeSeasonCount // ignore: cast_nullable_to_non_nullable
-as int,canArchive: null == canArchive ? _self.canArchive : canArchive // ignore: cast_nullable_to_non_nullable
+as int,canDelete: null == canDelete ? _self.canDelete : canDelete // ignore: cast_nullable_to_non_nullable
 as bool,ponds: null == ponds ? _self.ponds : ponds // ignore: cast_nullable_to_non_nullable
-as List<FarmPond>,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
+as List<FarmPond>,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -746,10 +746,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canArchive,  List<FarmPond> ponds,  DateTime? archivedAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canDelete,  List<FarmPond> ponds,  DateTime? deletedAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Farm() when $default != null:
-return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canArchive,_that.ponds,_that.archivedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canDelete,_that.ponds,_that.deletedAt,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -767,10 +767,10 @@ return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canArchive,  List<FarmPond> ponds,  DateTime? archivedAt,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canDelete,  List<FarmPond> ponds,  DateTime? deletedAt,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Farm():
-return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canArchive,_that.ponds,_that.archivedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canDelete,_that.ponds,_that.deletedAt,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -787,10 +787,10 @@ return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canArchive,  List<FarmPond> ponds,  DateTime? archivedAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerId,  String name,  String? address,  double? latitude,  double? longitude,  double? totalAreaHectares,  int pondCount,  int activeSeasonCount,  bool canDelete,  List<FarmPond> ponds,  DateTime? deletedAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Farm() when $default != null:
-return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canArchive,_that.ponds,_that.archivedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_that.longitude,_that.totalAreaHectares,_that.pondCount,_that.activeSeasonCount,_that.canDelete,_that.ponds,_that.deletedAt,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -802,7 +802,7 @@ return $default(_that.id,_that.ownerId,_that.name,_that.address,_that.latitude,_
 @JsonSerializable()
 
 class _Farm extends Farm {
-  const _Farm({required this.id, required this.ownerId, required this.name, this.address, this.latitude, this.longitude, this.totalAreaHectares, this.pondCount = 0, this.activeSeasonCount = 0, this.canArchive = true, final  List<FarmPond> ponds = const <FarmPond>[], this.archivedAt, this.createdAt, this.updatedAt}): _ponds = ponds,super._();
+  const _Farm({required this.id, required this.ownerId, required this.name, this.address, this.latitude, this.longitude, this.totalAreaHectares, this.pondCount = 0, this.activeSeasonCount = 0, this.canDelete = true, final  List<FarmPond> ponds = const <FarmPond>[], this.deletedAt, this.createdAt, this.updatedAt}): _ponds = ponds,super._();
   factory _Farm.fromJson(Map<String, dynamic> json) => _$FarmFromJson(json);
 
 @override final  String id;
@@ -814,7 +814,7 @@ class _Farm extends Farm {
 @override final  double? totalAreaHectares;
 @override@JsonKey() final  int pondCount;
 @override@JsonKey() final  int activeSeasonCount;
-@override@JsonKey() final  bool canArchive;
+@override@JsonKey() final  bool canDelete;
  final  List<FarmPond> _ponds;
 @override@JsonKey() List<FarmPond> get ponds {
   if (_ponds is EqualUnmodifiableListView) return _ponds;
@@ -822,7 +822,7 @@ class _Farm extends Farm {
   return EqualUnmodifiableListView(_ponds);
 }
 
-@override final  DateTime? archivedAt;
+@override final  DateTime? deletedAt;
 @override final  DateTime? createdAt;
 @override final  DateTime? updatedAt;
 
@@ -839,16 +839,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Farm&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.totalAreaHectares, totalAreaHectares) || other.totalAreaHectares == totalAreaHectares)&&(identical(other.pondCount, pondCount) || other.pondCount == pondCount)&&(identical(other.activeSeasonCount, activeSeasonCount) || other.activeSeasonCount == activeSeasonCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive)&&const DeepCollectionEquality().equals(other._ponds, _ponds)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Farm&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.totalAreaHectares, totalAreaHectares) || other.totalAreaHectares == totalAreaHectares)&&(identical(other.pondCount, pondCount) || other.pondCount == pondCount)&&(identical(other.activeSeasonCount, activeSeasonCount) || other.activeSeasonCount == activeSeasonCount)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&const DeepCollectionEquality().equals(other._ponds, _ponds)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerId,name,address,latitude,longitude,totalAreaHectares,pondCount,activeSeasonCount,canArchive,const DeepCollectionEquality().hash(_ponds),archivedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,ownerId,name,address,latitude,longitude,totalAreaHectares,pondCount,activeSeasonCount,canDelete,const DeepCollectionEquality().hash(_ponds),deletedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Farm(id: $id, ownerId: $ownerId, name: $name, address: $address, latitude: $latitude, longitude: $longitude, totalAreaHectares: $totalAreaHectares, pondCount: $pondCount, activeSeasonCount: $activeSeasonCount, canArchive: $canArchive, ponds: $ponds, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Farm(id: $id, ownerId: $ownerId, name: $name, address: $address, latitude: $latitude, longitude: $longitude, totalAreaHectares: $totalAreaHectares, pondCount: $pondCount, activeSeasonCount: $activeSeasonCount, canDelete: $canDelete, ponds: $ponds, deletedAt: $deletedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -859,7 +859,7 @@ abstract mixin class _$FarmCopyWith<$Res> implements $FarmCopyWith<$Res> {
   factory _$FarmCopyWith(_Farm value, $Res Function(_Farm) _then) = __$FarmCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String ownerId, String name, String? address, double? latitude, double? longitude, double? totalAreaHectares, int pondCount, int activeSeasonCount, bool canArchive, List<FarmPond> ponds, DateTime? archivedAt, DateTime? createdAt, DateTime? updatedAt
+ String id, String ownerId, String name, String? address, double? latitude, double? longitude, double? totalAreaHectares, int pondCount, int activeSeasonCount, bool canDelete, List<FarmPond> ponds, DateTime? deletedAt, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -876,7 +876,7 @@ class __$FarmCopyWithImpl<$Res>
 
 /// Create a copy of Farm
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerId = null,Object? name = null,Object? address = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? totalAreaHectares = freezed,Object? pondCount = null,Object? activeSeasonCount = null,Object? canArchive = null,Object? ponds = null,Object? archivedAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerId = null,Object? name = null,Object? address = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? totalAreaHectares = freezed,Object? pondCount = null,Object? activeSeasonCount = null,Object? canDelete = null,Object? ponds = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Farm(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
@@ -887,9 +887,9 @@ as double?,longitude: freezed == longitude ? _self.longitude : longitude // igno
 as double?,totalAreaHectares: freezed == totalAreaHectares ? _self.totalAreaHectares : totalAreaHectares // ignore: cast_nullable_to_non_nullable
 as double?,pondCount: null == pondCount ? _self.pondCount : pondCount // ignore: cast_nullable_to_non_nullable
 as int,activeSeasonCount: null == activeSeasonCount ? _self.activeSeasonCount : activeSeasonCount // ignore: cast_nullable_to_non_nullable
-as int,canArchive: null == canArchive ? _self.canArchive : canArchive // ignore: cast_nullable_to_non_nullable
+as int,canDelete: null == canDelete ? _self.canDelete : canDelete // ignore: cast_nullable_to_non_nullable
 as bool,ponds: null == ponds ? _self._ponds : ponds // ignore: cast_nullable_to_non_nullable
-as List<FarmPond>,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
+as List<FarmPond>,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

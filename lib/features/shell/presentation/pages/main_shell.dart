@@ -31,18 +31,18 @@ class MainShell extends ConsumerWidget {
     _NavigationItem('Trang chủ', Icons.home_outlined, Icons.home_rounded),
     _NavigationItem(
       'Trang trại',
-      Icons.apartment_outlined,
-      Icons.apartment_rounded,
+      Icons.grid_view_outlined,
+      Icons.grid_view_rounded,
     ),
     _NavigationItem(
       'Nhiệm vụ',
-      Icons.checklist_rtl_outlined,
-      Icons.checklist_rtl_rounded,
+      Icons.format_list_bulleted_outlined,
+      Icons.format_list_bulleted_rounded,
     ),
     _NavigationItem(
       'Phê duyệt',
-      Icons.fact_check_outlined,
-      Icons.fact_check_rounded,
+      Icons.verified_user_outlined,
+      Icons.verified_user_rounded,
     ),
     _NavigationItem('Tài khoản', Icons.person_outline, Icons.person_rounded),
   ];

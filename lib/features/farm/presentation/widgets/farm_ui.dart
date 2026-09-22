@@ -13,6 +13,7 @@ class FarmCircleButton extends StatelessWidget {
     this.filled = false,
     this.size = 42,
     this.iconSize = 21,
+    this.borderRadius,
     super.key,
   });
 
@@ -22,9 +23,13 @@ class FarmCircleButton extends StatelessWidget {
   final bool filled;
   final double size;
   final double iconSize;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final borderShape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: borderRadius!)
+        : const CircleBorder() as ShapeBorder;
     return Semantics(
       button: true,
       label: tooltip,
@@ -32,11 +37,11 @@ class FarmCircleButton extends StatelessWidget {
         message: tooltip,
         child: Material(
           color: filled ? const Color(0xFF1D7AD6) : Colors.white,
-          shape: const CircleBorder(),
+          shape: borderShape,
           elevation: filled ? 3 : 0,
           shadowColor: const Color(0x330F62B4),
           child: InkWell(
-            customBorder: const CircleBorder(),
+            customBorder: borderShape,
             onTap: onPressed,
             child: SizedBox(
               width: size,
@@ -60,7 +65,7 @@ class FarmActionButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.enabled = true,
-    this.restore = false,
+    this.destructive = false,
     super.key,
   });
 
@@ -68,20 +73,20 @@ class FarmActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final bool enabled;
-  final bool restore;
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = restore
-        ? const Color(0xFF079455)
-        : enabled
-        ? AppColors.inkSoft
-        : AppColors.inkMuted;
-    final background = restore
-        ? const Color(0xFFE7F8EF)
-        : enabled
-        ? Colors.white
-        : const Color(0xFFE7E9EE);
+    final foreground = !enabled
+        ? AppColors.inkMuted
+        : destructive
+        ? const Color(0xFFB42318)
+        : AppColors.inkSoft;
+    final background = !enabled
+        ? const Color(0xFFE7E9EE)
+        : destructive
+        ? const Color(0xFFFFF1F0)
+        : Colors.white;
     return SizedBox(
       width: double.infinity,
       height: 45,
@@ -97,7 +102,9 @@ class FarmActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           side: BorderSide(
-            color: restore ? const Color(0xFFA7E5C4) : AppColors.line,
+            color: enabled && destructive
+                ? const Color(0xFFF7B4AD)
+                : AppColors.line,
           ),
         ),
         icon: Icon(icon, size: 18),

@@ -61,6 +61,19 @@ final class ApiClient {
     );
   }
 
+  Future<ApiResponse> delete(
+    String path, {
+    Object? data,
+    required bool authenticated,
+  }) {
+    return _request(
+      path: path,
+      method: 'DELETE',
+      data: data,
+      authenticated: authenticated,
+    );
+  }
+
   Future<ApiResponse> _request({
     required String path,
     required String method,

@@ -75,9 +75,9 @@ abstract class Farm with _$Farm {
     double? totalAreaHectares,
     @Default(0) int pondCount,
     @Default(0) int activeSeasonCount,
-    @Default(true) bool canArchive,
+    @Default(true) bool canDelete,
     @Default(<FarmPond>[]) List<FarmPond> ponds,
-    DateTime? archivedAt,
+    DateTime? deletedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _Farm;
@@ -92,7 +92,7 @@ abstract class Farm with _$Farm {
     }
   }
 
-  bool get isArchived => archivedAt != null;
+  bool get isDeleted => deletedAt != null;
 }
 
 @freezed

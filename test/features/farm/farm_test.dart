@@ -13,8 +13,8 @@ void main() {
       'totalAreaHectares': 3.5,
       'pondCount': 1,
       'activeSeasonCount': 1,
-      'canArchive': false,
-      'archivedAt': null,
+      'canDelete': false,
+      'deletedAt': null,
       'ponds': <Object?>[
         <String, dynamic>{
           'id': 'pond-1',
@@ -34,7 +34,8 @@ void main() {
       ],
     });
 
-    expect(farm.isArchived, isFalse);
+    expect(farm.isDeleted, isFalse);
+    expect(farm.canDelete, isFalse);
     expect(farm.ponds.single.type, PondType.aquaculture);
     expect(farm.ponds.single.status, PondStatus.available);
     expect(farm.ponds.single.currentSeason?.dayOfCulture, 72);

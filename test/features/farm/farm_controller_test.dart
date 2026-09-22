@@ -9,7 +9,7 @@ import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_cont
 
 void main() {
   test(
-    'searches, filters and paginates locally after a single API load',
+    'searches and paginates non-deleted farms locally after one API load',
     () async {
       final repository = _CatalogFarmRepository();
       final container = ProviderContainer(
@@ -43,15 +43,7 @@ void main() {
 
       await container
           .read(farmListControllerProvider.notifier)
-          .load(filter: FarmArchiveFilter.archived);
-      expect(
-        container.read(farmListControllerProvider).value?.items.single.name,
-        'Trại đã lưu',
-      );
-
-      await container
-          .read(farmListControllerProvider.notifier)
-          .load(filter: FarmArchiveFilter.active, search: 'TRANG TRẠI 24');
+          .load(search: 'TRANG TRẠI 24');
       expect(
         container.read(farmListControllerProvider).value?.items.single.name,
         'Trang trại 24',
@@ -92,12 +84,6 @@ final class _CatalogFarmRepository implements FarmRepository {
         ownerId: _owner.id,
         name: 'Trang trại ${index.toString().padLeft(2, '0')}',
       ),
-    Farm(
-      id: 'farm-archived',
-      ownerId: _owner.id,
-      name: 'Trại đã lưu',
-      archivedAt: DateTime.utc(2026, 9),
-    ),
   ];
 
   @override
@@ -125,8 +111,5 @@ final class _CatalogFarmRepository implements FarmRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<Farm> archiveFarm(String farmId) => throw UnimplementedError();
-
-  @override
-  Future<Farm> restoreFarm(String farmId) => throw UnimplementedError();
+  Future<Farm> deleteFarm(String farmId) => throw UnimplementedError();
 }
