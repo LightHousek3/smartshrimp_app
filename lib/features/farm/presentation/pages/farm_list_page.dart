@@ -7,7 +7,6 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
-import 'package:smartshrimp_app/features/farm/domain/repositories/farm_repository.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 
@@ -21,7 +20,6 @@ class FarmListPage extends ConsumerStatefulWidget {
 class _FarmListPageState extends ConsumerState<FarmListPage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  FarmArchiveFilter _filter = FarmArchiveFilter.active;
   Timer? _debounce;
 
   @override
@@ -50,18 +48,8 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
     setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
-      ref
-          .read(farmListControllerProvider.notifier)
-          .load(filter: _filter, search: value);
+      ref.read(farmListControllerProvider.notifier).load(search: value);
     });
-  }
-
-  void _changeFilter(FarmArchiveFilter filter) {
-    if (_filter == filter) return;
-    setState(() => _filter = filter);
-    ref
-        .read(farmListControllerProvider.notifier)
-        .load(filter: filter, search: _searchController.text);
   }
 
   @override
@@ -85,10 +73,7 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 sliver: SliverToBoxAdapter(child: _buildSearch()),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                sliver: SliverToBoxAdapter(child: _buildFilters()),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
               ...farms.when(
                 data: (page) => _buildFarmSlivers(page.items, page.hasNextPage),
                 loading: () => const <Widget>[
@@ -198,25 +183,8 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           filled: true,
           size: 40,
           iconSize: 20,
+          borderRadius: BorderRadius.circular(12),
           onPressed: () => context.push('/farms/create'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilters() {
-    return Row(
-      children: <Widget>[
-        _FilterChip(
-          label: 'Đang hoạt động',
-          selected: _filter == FarmArchiveFilter.active,
-          onTap: () => _changeFilter(FarmArchiveFilter.active),
-        ),
-        const SizedBox(width: 8),
-        _FilterChip(
-          label: 'Đã lưu trữ',
-          selected: _filter == FarmArchiveFilter.archived,
-          onTap: () => _changeFilter(FarmArchiveFilter.archived),
         ),
       ],
     );
@@ -229,7 +197,6 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           sliver: SliverToBoxAdapter(
             child: _FarmEmptyState(
-              archived: _filter == FarmArchiveFilter.archived,
               searching: _searchController.text.trim().isNotEmpty,
             ),
           ),
@@ -251,43 +218,6 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
       if (hasNextPage) const SliverToBoxAdapter(child: SizedBox(height: 24)),
     ];
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    child: Material(
-      color: selected ? const Color(0xFF1D7AD6) : const Color(0xB3FFFFFF),
-      borderRadius: BorderRadius.circular(100),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(100),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected ? Colors.white : AppColors.inkSoft,
-              fontSize: 13,
-              height: 1.5,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 class _FarmCard extends StatelessWidget {
@@ -326,7 +256,7 @@ class _FarmCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.apartment_rounded,
+                  Icons.grid_view_rounded,
                   color: Color(0xFF1D7AD6),
                   size: 20,
                 ),
@@ -448,8 +378,7 @@ class _FarmBadge extends StatelessWidget {
 }
 
 class _FarmEmptyState extends StatelessWidget {
-  const _FarmEmptyState({required this.archived, required this.searching});
-  final bool archived;
+  const _FarmEmptyState({required this.searching});
   final bool searching;
 
   @override
@@ -468,18 +397,14 @@ class _FarmEmptyState extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
             child: Icon(
-              searching ? Icons.search_off_rounded : Icons.apartment_rounded,
+              searching ? Icons.search_off_rounded : Icons.grid_view_rounded,
               color: AppColors.inkMuted,
               size: 22,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            searching
-                ? 'Không tìm thấy trang trại'
-                : archived
-                ? 'Không có trang trại lưu trữ'
-                : 'Chưa có trang trại',
+            searching ? 'Không tìm thấy trang trại' : 'Chưa có trang trại',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.ink,
@@ -492,8 +417,6 @@ class _FarmEmptyState extends StatelessWidget {
           Text(
             searching
                 ? 'Hãy thử một từ khóa khác.'
-                : archived
-                ? 'Các trang trại bạn lưu trữ sẽ xuất hiện ở đây.'
                 : 'Nhấn nút + để tạo trang trại đầu tiên.',
             textAlign: TextAlign.center,
             style: const TextStyle(

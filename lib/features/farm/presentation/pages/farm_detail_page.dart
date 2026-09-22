@@ -179,54 +179,29 @@ class _FarmDetailContent extends ConsumerWidget {
             onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
           ),
           const SizedBox(height: 21),
-          if (farm.isArchived)
-            FarmActionButton(
-              label: 'Khôi phục trang trại',
-              icon: Icons.restore_rounded,
-              restore: true,
-              enabled: !mutation.isLoading,
-              onPressed: () =>
-                  _changeArchiveStatus(context, ref, restore: true),
-            )
-          else
-            SizedBox(
-              height: 48,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: farm.canArchive && !mutation.isLoading
-                    ? () => _changeArchiveStatus(context, ref, restore: false)
-                    : null,
-                child: Text(
-                  farm.canArchive
-                      ? 'Lưu trữ trang trại'
-                      : 'Không thể lưu trữ khi có vụ đang mở',
-                ),
-              ),
-            ),
+          FarmActionButton(
+            label: farm.canDelete
+                ? 'Xóa trang trại'
+                : 'Không thể xóa khi có vụ đang mở',
+            icon: Icons.delete_outline_rounded,
+            destructive: true,
+            enabled: farm.canDelete && !mutation.isLoading,
+            onPressed: () => _deleteFarm(context, ref),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _changeArchiveStatus(
-    BuildContext context,
-    WidgetRef ref, {
-    required bool restore,
-  }) async {
+  Future<void> _deleteFarm(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(restore ? 'Khôi phục trang trại?' : 'Lưu trữ trang trại?'),
-        content: Text(
-          restore
-              ? 'Trang trại sẽ xuất hiện lại trong danh sách đang hoạt động.'
-              : 'Bạn có thể khôi phục trang trại này bất cứ lúc nào.',
+        title: const Text('Xóa trang trại?'),
+        content: const Text(
+          'Trang trại và các dữ liệu vận hành trực tiếp sẽ không còn hiển thị '
+          'hoặc được sử dụng cho nghiệp vụ mới. Lịch sử vụ nuôi vẫn được lưu '
+          'để truy vết.',
         ),
         actions: <Widget>[
           TextButton(
@@ -234,31 +209,24 @@ class _FarmDetailContent extends ConsumerWidget {
             child: const Text('Hủy'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB42318),
+            ),
             onPressed: () => dialogContext.pop(true),
-            child: Text(restore ? 'Khôi phục' : 'Lưu trữ'),
+            child: const Text('Xóa'),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      if (restore) {
-        await ref
-            .read(farmMutationControllerProvider.notifier)
-            .restore(farm.id);
-      } else {
-        await ref
-            .read(farmMutationControllerProvider.notifier)
-            .archive(farm.id);
-      }
+      await ref
+          .read(farmMutationControllerProvider.notifier)
+          .deleteFarm(farm.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            restore ? 'Đã khôi phục trang trại.' : 'Đã lưu trữ trang trại.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã xóa trang trại.')));
       context.pop();
     } on AppException catch (error) {
       if (!context.mounted) return;

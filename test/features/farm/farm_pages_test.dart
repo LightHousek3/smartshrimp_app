@@ -32,7 +32,6 @@ void main() {
     expect(find.text('Trại Cà Mau'), findsOneWidget);
     expect(find.text('4 ao'), findsOneWidget);
     expect(find.text('3 vụ nuôi'), findsOneWidget);
-    expect(find.text('Trại đã lưu'), findsNothing);
     expect(repository.getCalls, 1);
 
     await tester.enterText(find.byType(TextField).first, 'không tồn tại');
@@ -42,14 +41,6 @@ void main() {
 
     await tester.tap(find.byTooltip('Xóa tìm kiếm'));
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.text('Đã lưu trữ'));
-    await tester.pump();
-    expect(find.text('Trại đã lưu'), findsOneWidget);
-    expect(find.text('Trại Cà Mau'), findsNothing);
-    expect(repository.getCalls, 1);
-
-    await tester.tap(find.text('Đang hoạt động'));
-    await tester.pump();
 
     await tester.tap(find.byTooltip('Tạo trang trại'));
     await tester.pumpAndSettle();
@@ -60,16 +51,14 @@ void main() {
     expect(repository.createCalls, 0);
   });
 
-  testWidgets('archived tab matches the empty state from the design', (
+  testWidgets('farm list no longer exposes archive status filters', (
     tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
-          farmRepositoryProvider.overrideWithValue(
-            _FakeFarmRepository(includeArchived: false),
-          ),
+          farmRepositoryProvider.overrideWithValue(_FakeFarmRepository()),
         ],
         child: const SmartShrimpApp(),
       ),
@@ -78,14 +67,13 @@ void main() {
 
     await tester.tap(find.text('Trang trại'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Đã lưu trữ'));
-    await tester.pump();
+    expect(find.text('Đang hoạt động'), findsNothing);
+    expect(find.text('Đã lưu trữ'), findsNothing);
 
-    expect(find.text('Không có trang trại lưu trữ'), findsOneWidget);
-    expect(
-      find.text('Các trang trại bạn lưu trữ sẽ xuất hiện ở đây.'),
-      findsOneWidget,
-    );
+    await tester.tap(find.text('Trại Cà Mau'));
+    await tester.pumpAndSettle();
+    expect(find.text('Không thể xóa khi có vụ đang mở'), findsOneWidget);
+    expect(find.text('Lưu trữ trang trại'), findsNothing);
   });
 }
 
@@ -105,14 +93,7 @@ const _farm = Farm(
   totalAreaHectares: 3.5,
   pondCount: 4,
   activeSeasonCount: 3,
-  canArchive: false,
-);
-
-final _archivedFarm = Farm(
-  id: 'farm-2',
-  ownerId: 'owner-1',
-  name: 'Trại đã lưu',
-  archivedAt: DateTime.utc(2026, 9, 1),
+  canDelete: false,
 );
 
 final class _OwnerAuthRepository implements AuthRepository {
@@ -130,14 +111,11 @@ final class _OwnerAuthRepository implements AuthRepository {
 }
 
 final class _FakeFarmRepository implements FarmRepository {
-  _FakeFarmRepository({this.includeArchived = true});
-
-  final bool includeArchived;
   int createCalls = 0;
   int getCalls = 0;
 
   @override
-  Future<Farm> archiveFarm(String farmId) async => _farm;
+  Future<Farm> deleteFarm(String farmId) async => _farm;
 
   @override
   Future<Farm> createFarm({
@@ -155,11 +133,8 @@ final class _FakeFarmRepository implements FarmRepository {
   @override
   Future<List<Farm>> getFarms() async {
     getCalls++;
-    return <Farm>[_farm, if (includeArchived) _archivedFarm];
+    return const <Farm>[_farm];
   }
-
-  @override
-  Future<Farm> restoreFarm(String farmId) async => _farm;
 
   @override
   Future<Farm> updateFarm({

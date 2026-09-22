@@ -166,35 +166,37 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
                   decoration: _decoration('Ví dụ: 3.5'),
                 ),
                 const SizedBox(height: 23),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDEEFF),
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(
-                        Icons.info_outline_rounded,
-                        color: AppColors.ocean,
-                        size: 18,
-                      ),
-                      SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          'Sau khi tạo trang trại, bạn có thể thêm ao nuôi và bắt đầu quản lý vụ nuôi.',
-                          style: TextStyle(
-                            color: AppColors.inkSoft,
-                            fontSize: 11.5,
-                            height: 1.45,
+                if (!_isEditing) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDDEEFF),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: AppColors.ocean,
+                          size: 18,
+                        ),
+                        SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            'Sau khi tạo trang trại, bạn có thể thêm ao nuôi và bắt đầu quản lý vụ nuôi.',
+                            style: TextStyle(
+                              color: AppColors.inkSoft,
+                              fontSize: 11.5,
+                              height: 1.45,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 29),
                 SizedBox(
                   width: double.infinity,

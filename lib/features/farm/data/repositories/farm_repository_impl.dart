@@ -35,12 +35,8 @@ final class FarmRepositoryImpl implements FarmRepository {
   );
 
   @override
-  Future<Farm> archiveFarm(String farmId) =>
-      _remoteDataSource.archiveFarm(farmId);
-
-  @override
-  Future<Farm> restoreFarm(String farmId) =>
-      _remoteDataSource.restoreFarm(farmId);
+  Future<Farm> deleteFarm(String farmId) =>
+      _remoteDataSource.deleteFarm(farmId);
 
   static Map<String, dynamic> _writeData({
     required String name,

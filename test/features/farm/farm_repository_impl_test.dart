@@ -35,16 +35,26 @@ void main() {
     expect(remote.getCalls, 1);
     expect(farms, const <Farm>[_farm]);
   });
+
+  test('delegates soft deletion using the selected farm id', () async {
+    await repository.deleteFarm('farm-1');
+
+    expect(remote.deletedFarmId, 'farm-1');
+  });
 }
 
 const _farm = Farm(id: 'farm-1', ownerId: 'owner-1', name: 'Trại Cà Mau');
 
 final class _FakeFarmRemoteDataSource implements FarmRemoteDataSource {
   Map<String, dynamic>? lastData;
+  String? deletedFarmId;
   int getCalls = 0;
 
   @override
-  Future<Farm> archiveFarm(String farmId) async => _farm;
+  Future<Farm> deleteFarm(String farmId) async {
+    deletedFarmId = farmId;
+    return _farm;
+  }
 
   @override
   Future<Farm> createFarm(Map<String, dynamic> data) async {
@@ -60,9 +70,6 @@ final class _FakeFarmRemoteDataSource implements FarmRemoteDataSource {
     getCalls++;
     return const <Farm>[_farm];
   }
-
-  @override
-  Future<Farm> restoreFarm(String farmId) async => _farm;
 
   @override
   Future<Farm> updateFarm(String farmId, Map<String, dynamic> data) async {

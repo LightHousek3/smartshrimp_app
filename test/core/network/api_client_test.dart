@@ -53,6 +53,25 @@ void main() {
       expect(response.data, isNull);
     });
 
+    test('sends DELETE requests through the shared authenticated pipeline', () async {
+      final store = _FakeSessionStore(accessToken: 'access-token');
+      late RequestOptions capturedRequest;
+      final client = ApiClient(
+        _dioWithHandler((request, handler) {
+          capturedRequest = request;
+          handler.resolve(
+            _success(request, data: <String, dynamic>{'id': 'farm-1'}),
+          );
+        }),
+        store,
+      );
+
+      await client.delete('/owner/farms/farm-1', authenticated: true);
+
+      expect(capturedRequest.method, 'DELETE');
+      expect(capturedRequest.headers['Authorization'], 'Bearer access-token');
+    });
+
     test(
       'attaches the current access token to authenticated requests',
       () async {
