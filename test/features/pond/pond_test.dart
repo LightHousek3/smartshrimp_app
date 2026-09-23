@@ -14,7 +14,7 @@ void main() {
       'volumeM3': 1800,
       'type': 'AQUACULTURE',
       'status': 'AVAILABLE',
-      'archivedAt': null,
+      'deletedAt': null,
       'farm': <String, dynamic>{'id': 'farm-1', 'name': 'Trại Cà Mau'},
       'currentSeason': <String, dynamic>{
         'id': 'season-1',
@@ -27,7 +27,7 @@ void main() {
     expect(pond.status, PondStatus.available);
     expect(pond.farm?.name, 'Trại Cà Mau');
     expect(pond.hasOpenSeason, isTrue);
-    expect(pond.isArchived, isFalse);
+    expect(pond.isDeleted, isFalse);
   });
 
   test('uses safe enum fallbacks and rejects malformed required fields', () {

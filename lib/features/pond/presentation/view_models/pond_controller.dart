@@ -54,7 +54,6 @@ final class PondListController extends _OwnerPondController<PondPage> {
   String _search = '';
   PondStatus? _status;
   PondType? _type;
-  bool _archived = false;
   bool _loadingMore = false;
   int _generation = 0;
 
@@ -68,7 +67,6 @@ final class PondListController extends _OwnerPondController<PondPage> {
     String? search,
     PondStatus? status,
     PondType? type,
-    bool? archived,
     bool clearStatus = false,
     bool clearType = false,
   }) async {
@@ -83,7 +81,6 @@ final class PondListController extends _OwnerPondController<PondPage> {
     } else if (type != null) {
       _type = type;
     }
-    if (archived != null) _archived = archived;
     await refresh();
   }
 
@@ -123,7 +120,6 @@ final class PondListController extends _OwnerPondController<PondPage> {
           search: _search,
           status: _status,
           type: _type,
-          archived: _archived,
         ),
   );
 }
@@ -185,13 +181,8 @@ final class PondMutationController extends _OwnerPondController<void> {
     pondId: pondId,
   );
 
-  Future<Pond> archive(String pondId) => _mutate(
-    () => ref.read(pondRepositoryProvider).archivePond(farmId, pondId),
-    pondId: pondId,
-  );
-
-  Future<Pond> restore(String pondId) => _mutate(
-    () => ref.read(pondRepositoryProvider).restorePond(farmId, pondId),
+  Future<Pond> delete(String pondId) => _mutate(
+    () => ref.read(pondRepositoryProvider).deletePond(farmId, pondId),
     pondId: pondId,
   );
 

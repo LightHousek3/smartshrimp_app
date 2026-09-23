@@ -11,8 +11,7 @@ abstract interface class PondRemoteDataSource {
     String pondId,
     Map<String, dynamic> data,
   );
-  Future<Pond> archivePond(String farmId, String pondId);
-  Future<Pond> restorePond(String farmId, String pondId);
+  Future<Pond> deletePond(String farmId, String pondId);
 }
 
 final class PondApiService implements PondRemoteDataSource {
@@ -96,20 +95,9 @@ final class PondApiService implements PondRemoteDataSource {
   }
 
   @override
-  Future<Pond> archivePond(String farmId, String pondId) =>
-      _changeArchiveStatus(farmId, pondId, 'archive');
-
-  @override
-  Future<Pond> restorePond(String farmId, String pondId) =>
-      _changeArchiveStatus(farmId, pondId, 'restore');
-
-  Future<Pond> _changeArchiveStatus(
-    String farmId,
-    String pondId,
-    String action,
-  ) async {
-    final response = await _client.patch(
-      '${_path(farmId)}/$pondId/$action',
+  Future<Pond> deletePond(String farmId, String pondId) async {
+    final response = await _client.delete(
+      '${_path(farmId)}/$pondId',
       authenticated: true,
     );
     return Pond.parse(response.requireMapData());
