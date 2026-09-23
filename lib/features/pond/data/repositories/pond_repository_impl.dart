@@ -15,14 +15,12 @@ final class PondRepositoryImpl implements PondRepository {
     String search = '',
     PondStatus? status,
     PondType? type,
-    bool archived = false,
   }) => _remote.getPonds(farmId, <String, dynamic>{
     'page': page,
     'limit': limit,
     'search': PondRules.normalizeName(search),
     if (status != null) 'status': _statusValue(status),
     if (type != null) 'type': _typeValue(type),
-    'archived': archived,
   });
 
   @override
@@ -85,10 +83,6 @@ final class PondRepositoryImpl implements PondRepository {
   };
 
   @override
-  Future<Pond> archivePond(String farmId, String pondId) =>
-      _remote.archivePond(farmId, pondId);
-
-  @override
-  Future<Pond> restorePond(String farmId, String pondId) =>
-      _remote.restorePond(farmId, pondId);
+  Future<Pond> deletePond(String farmId, String pondId) =>
+      _remote.deletePond(farmId, pondId);
 }

@@ -35,7 +35,7 @@ abstract class PondFarm with _$PondFarm {
   const factory PondFarm({
     required String id,
     required String name,
-    DateTime? archivedAt,
+    DateTime? deletedAt,
   }) = _PondFarm;
 
   factory PondFarm.fromJson(Map<String, dynamic> json) =>
@@ -68,7 +68,7 @@ abstract class Pond with _$Pond {
     double? volumeM3,
     @JsonKey(unknownEnumValue: PondType.unknown) required PondType type,
     @JsonKey(unknownEnumValue: PondStatus.unknown) required PondStatus status,
-    DateTime? archivedAt,
+    DateTime? deletedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
     PondFarm? farm,
@@ -85,7 +85,7 @@ abstract class Pond with _$Pond {
     }
   }
 
-  bool get isArchived => archivedAt != null;
+  bool get isDeleted => deletedAt != null;
   bool get hasOpenSeason => currentSeason != null;
 }
 

@@ -91,7 +91,7 @@ class _PondDetailContent extends ConsumerWidget {
               FarmCircleButton(
                 icon: Icons.edit_outlined,
                 tooltip: 'Chỉnh sửa ao',
-                onPressed: pond.isArchived || mutation.isLoading
+                onPressed: mutation.isLoading
                     ? null
                     : () => context.push(
                         '/farms/${pond.farmId}/ponds/${pond.id}/edit',
@@ -107,26 +107,20 @@ class _PondDetailContent extends ConsumerWidget {
             height: 48,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: pond.isArchived
-                    ? AppColors.ocean
-                    : AppColors.error,
-                side: BorderSide(
-                  color: pond.isArchived ? AppColors.ocean : AppColors.error,
-                ),
+                foregroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed:
-                  mutation.isLoading || (!pond.isArchived && pond.hasOpenSeason)
+                  mutation.isLoading || pond.hasOpenSeason
                   ? null
-                  : () => _changeArchive(context, ref),
+                  : () => _delete(context, ref),
               child: Text(
-                pond.isArchived
-                    ? 'Khôi phục ao'
-                    : pond.hasOpenSeason
-                    ? 'Không thể lưu trữ khi có vụ đang mở'
-                    : 'Lưu trữ ao',
+                pond.hasOpenSeason
+                    ? 'Không thể xóa khi có vụ đang mở'
+                    : 'Xóa ao',
               ),
             ),
           ),
@@ -135,16 +129,13 @@ class _PondDetailContent extends ConsumerWidget {
     );
   }
 
-  Future<void> _changeArchive(BuildContext context, WidgetRef ref) async {
-    final restore = pond.isArchived;
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(restore ? 'Khôi phục ao?' : 'Lưu trữ ao?'),
-        content: Text(
-          restore
-              ? 'Tên ao sẽ được kiểm tra lại trước khi khôi phục.'
-              : 'Dữ liệu vụ nuôi và lịch sử sẽ được giữ nguyên.',
+        title: const Text('Xóa ao?'),
+        content: const Text(
+          'Ao sẽ bị xóa khỏi hệ thống và không thể khôi phục. Dữ liệu lịch sử vẫn được giữ nguyên.',
         ),
         actions: <Widget>[
           TextButton(
@@ -153,7 +144,7 @@ class _PondDetailContent extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => dialogContext.pop(true),
-            child: Text(restore ? 'Khôi phục' : 'Lưu trữ'),
+            child: const Text('Xóa'),
           ),
         ],
       ),
@@ -163,17 +154,12 @@ class _PondDetailContent extends ConsumerWidget {
       final notifier = ref.read(
         pondMutationControllerProvider(pond.farmId).notifier,
       );
-      if (restore) {
-        await notifier.restore(pond.id);
-      } else {
-        await notifier.archive(pond.id);
-      }
+      await notifier.delete(pond.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(restore ? 'Đã khôi phục ao.' : 'Đã lưu trữ ao.'),
-          ),
+          const SnackBar(content: Text('Đã xóa ao.')),
         );
+        context.go('/farms/${pond.farmId}/ponds');
       }
     } on AppException catch (error) {
       if (context.mounted) {
