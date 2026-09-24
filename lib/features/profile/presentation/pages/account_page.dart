@@ -10,6 +10,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
@@ -46,8 +47,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
           ),
           data: (profile) => RefreshIndicator(
             color: AppColors.ocean,
-            onRefresh: () =>
-                ref.read(profileControllerProvider.notifier).refresh(),
+            onRefresh: () async {
+              if (profile.role == AccountRole.farmOwner) {
+                ref.invalidate(activePersonnelCountProvider);
+              }
+              await ref.read(profileControllerProvider.notifier).refresh();
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
@@ -73,6 +78,26 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ] else if (profile.role == AccountRole.farmOwner) ...<Widget>[
                   const SizedBox(height: 14),
                   _FarmOwnerKpiRow(kpi: profile.farmOwnerKpi),
+                ],
+                if (profile.role == AccountRole.farmOwner) ...<Widget>[
+                  const SizedBox(height: 14),
+                  _ActionCard(
+                    children: <Widget>[
+                      _ActionRow(
+                        key: const Key('account_personnel_entry'),
+                        icon: Icons.person_outline,
+                        label: 'Nhân sự',
+                        subtitle: ref
+                            .watch(activePersonnelCountProvider)
+                            .when(
+                              data: (count) => '$count đang hoạt động',
+                              loading: () => 'Đang tải số nhân sự...',
+                              error: (_, _) => 'Xem danh sách nhân sự',
+                            ),
+                        onTap: () => context.go(AppRoutes.personnel),
+                      ),
+                    ],
+                  ),
                 ],
                 const SizedBox(height: 14),
                 const Text(
@@ -720,14 +745,17 @@ class _ActionCard extends StatelessWidget {
 
 class _ActionRow extends StatelessWidget {
   const _ActionRow({
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,
+    this.subtitle,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -742,13 +770,28 @@ class _ActionRow extends StatelessWidget {
               _SquareIcon(icon: icon),
               const SizedBox(width: 11),
               Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (subtitle != null) ...<Widget>[
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const Icon(

@@ -11,12 +11,15 @@ import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_detail_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_form_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.dart';
+import 'package:smartshrimp_app/features/home/presentation/pages/home_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_detail_page.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_form_page.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_detail_page.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_list_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/change_password_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
@@ -32,6 +35,7 @@ abstract final class AppRoutes {
   static const seasons = '/seasons';
   static const farms = '/farms';
   static const tasks = '/tasks';
+  static const personnel = '/personnel';
   static const approvals = '/approvals';
   static const notifications = '/notifications';
   static const account = '/account';
@@ -70,7 +74,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
       final account = authState.value;
-      if (location.startsWith(AppRoutes.farms) &&
+      if ((location.startsWith(AppRoutes.farms) ||
+              location.startsWith(AppRoutes.personnel)) &&
           account?.role != AccountRole.farmOwner) {
         return AppRoutes.home;
       }
@@ -100,7 +105,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MainShell(navigationShell: navigationShell);
         },
         branches: <StatefulShellBranch>[
-          _emptyBranch(AppRoutes.home, 'Trang chủ'),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (_, _) => const HomePage(),
+              ),
+            ],
+          ),
           StatefulShellBranch(
             initialLocation: AppRoutes.seasons,
             routes: <RouteBase>[
@@ -169,7 +181,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          _emptyBranch(AppRoutes.tasks, 'Nhiệm vụ'),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.tasks,
+                builder: (_, _) =>
+                    const EmptyTabPage(semanticLabel: 'Nhiệm vụ'),
+              ),
+              GoRoute(
+                path: AppRoutes.personnel,
+                builder: (_, _) => const PersonnelListPage(),
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: ':personnelId',
+                    builder: (_, state) => PersonnelDetailPage(
+                      personnelId: state.pathParameters['personnelId']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
@@ -226,17 +258,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
-
-StatefulShellBranch _emptyBranch(String path, String label) {
-  return StatefulShellBranch(
-    routes: <RouteBase>[
-      GoRoute(
-        path: path,
-        builder: (_, _) => EmptyTabPage(semanticLabel: label),
-      ),
-    ],
-  );
-}
 
 final class _RouterRefreshNotifier extends ChangeNotifier {
   void refresh() => notifyListeners();

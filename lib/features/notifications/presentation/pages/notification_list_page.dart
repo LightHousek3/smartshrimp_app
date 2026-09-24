@@ -212,6 +212,12 @@ class _ListHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
       child: Row(
         children: <Widget>[
+          IconButton.filledTonal(
+            tooltip: 'Về Trang chủ',
+            onPressed: () => context.go(AppRoutes.home),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+          const SizedBox(width: 10),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
