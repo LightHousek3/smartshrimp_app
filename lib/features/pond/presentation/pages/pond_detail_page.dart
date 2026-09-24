@@ -71,6 +71,8 @@ class _PondDetailContent extends ConsumerWidget {
                   children: <Widget>[
                     Text(
                       pond.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppColors.ink,
                         fontSize: 18,
@@ -113,8 +115,7 @@ class _PondDetailContent extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed:
-                  mutation.isLoading || pond.hasOpenSeason
+              onPressed: mutation.isLoading || pond.hasOpenSeason
                   ? null
                   : () => _delete(context, ref),
               child: Text(
@@ -156,9 +157,9 @@ class _PondDetailContent extends ConsumerWidget {
       );
       await notifier.delete(pond.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã xóa ao.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Đã xóa ao.')));
         context.go('/farms/${pond.farmId}/ponds');
       }
     } on AppException catch (error) {

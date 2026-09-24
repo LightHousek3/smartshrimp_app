@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -77,6 +78,15 @@ class PondFormPage extends ConsumerStatefulWidget {
 }
 
 class _PondFormPageState extends ConsumerState<PondFormPage> {
+  static final _decimalInputFormatter = TextInputFormatter.withFunction((
+    oldValue,
+    newValue,
+  ) {
+    return RegExp(r'^\d*(?:[.,]\d{0,2})?$').hasMatch(newValue.text)
+        ? newValue
+        : oldValue;
+  });
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _area;
@@ -143,6 +153,8 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                 TextFormField(
                   controller: _name,
                   maxLength: PondRules.nameMaxLength,
+                  maxLengthEnforcement: MaxLengthEnforcement.none,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: PondRules.validateName,
                   decoration: const InputDecoration(
                     hintText: 'VD: Ao A1, Ao Lắng...',
@@ -283,6 +295,8 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
       TextFormField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: <TextInputFormatter>[_decimalInputFormatter],
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         onChanged: (_) {
           if (_volumeError != null) setState(() => _volumeError = null);
         },

@@ -284,13 +284,12 @@ class _PondListCard extends StatelessWidget {
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: const Color(0xFFE6F4FF),
-        child: Icon(
-          Icons.water_drop_rounded,
-          color: AppColors.ocean,
-        ),
+        child: Icon(Icons.water_drop_rounded, color: AppColors.ocean),
       ),
       title: Text(
         pond.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
       subtitle: Text(

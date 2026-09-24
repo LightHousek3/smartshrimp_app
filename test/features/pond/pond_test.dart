@@ -55,6 +55,14 @@ void main() {
   test('normalizes names and validates positive decimals', () {
     expect(PondRules.normalizeName('  Ao   số 1 '), 'Ao số 1');
     expect(PondRules.validateName('   '), isNotNull);
+    expect(
+      PondRules.validateName(List<String>.filled(254, 'a').join()),
+      isNull,
+    );
+    expect(
+      PondRules.validateName(List<String>.filled(255, 'a').join()),
+      isNotNull,
+    );
     expect(PondRules.validatePositiveNumber('1,50', 'Độ sâu'), isNull);
     expect(PondRules.parseNumber('1,50'), 1.5);
     expect(PondRules.validatePositiveNumber('0', 'Độ sâu'), isNotNull);
