@@ -8,7 +8,6 @@ abstract interface class PondRepository {
     String search = '',
     PondStatus? status,
     PondType? type,
-    bool archived = false,
   });
 
   Future<Pond> getPond(String farmId, String pondId);
@@ -32,6 +31,5 @@ abstract interface class PondRepository {
     required PondStatus status,
   });
 
-  Future<Pond> archivePond(String farmId, String pondId);
-  Future<Pond> restorePond(String farmId, String pondId);
+  Future<Pond> deletePond(String farmId, String pondId);
 }

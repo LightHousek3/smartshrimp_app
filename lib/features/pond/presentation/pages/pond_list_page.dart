@@ -22,7 +22,6 @@ class _PondListPageState extends ConsumerState<PondListPage> {
   final _searchController = TextEditingController();
   PondStatus? _status;
   PondType? _type;
-  bool _archived = false;
 
   @override
   void dispose() {
@@ -214,15 +213,6 @@ class _PondListPageState extends ConsumerState<PondListPage> {
                   _applyFilters();
                 },
               ),
-              const SizedBox(width: 8),
-              FilterChip(
-                selected: _archived,
-                label: const Text('Đã lưu trữ'),
-                onSelected: (value) {
-                  setState(() => _archived = value);
-                  _applyFilters();
-                },
-              ),
             ],
           ),
         ),
@@ -238,7 +228,6 @@ class _PondListPageState extends ConsumerState<PondListPage> {
           search: _searchController.text,
           status: _status,
           type: _type,
-          archived: _archived,
           clearStatus: _status == null,
           clearType: _type == null,
         );
@@ -295,13 +284,12 @@ class _PondListCard extends StatelessWidget {
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: const Color(0xFFE6F4FF),
-        child: Icon(
-          pond.isArchived ? Icons.archive_outlined : Icons.water_drop_rounded,
-          color: AppColors.ocean,
-        ),
+        child: Icon(Icons.water_drop_rounded, color: AppColors.ocean),
       ),
       title: Text(
         pond.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
       subtitle: Text(
