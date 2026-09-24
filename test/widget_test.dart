@@ -20,7 +20,7 @@ void main() {
     expect(repository.loginCalls, 0);
   });
 
-  testWidgets('successful login redirects to the five-tab home shell', (
+  testWidgets('successful login redirects to the four-tab home shell', (
     tester,
   ) async {
     final repository = _FakeAuthRepository();
@@ -43,7 +43,8 @@ void main() {
     expect(find.text('Trang chủ'), findsOneWidget);
     expect(find.text('Vụ nuôi'), findsOneWidget);
     expect(find.text('Nhiệm vụ'), findsOneWidget);
-    expect(find.text('Thông báo'), findsOneWidget);
+    expect(find.text('Thông báo'), findsNothing);
+    expect(find.byTooltip('Mở thông báo'), findsOneWidget);
     expect(find.text('Tài khoản'), findsOneWidget);
   });
 }

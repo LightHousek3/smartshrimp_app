@@ -7,6 +7,9 @@ import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
+import 'package:smartshrimp_app/features/personnel/domain/repositories/personnel_repository.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
@@ -62,6 +65,8 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+    expect(find.byKey(const Key('account_personnel_entry')), findsOneWidget);
+    expect(find.text('5 đang hoạt động'), findsOneWidget);
   });
 
   testWidgets('profile edit validates and sends normalized values', (
@@ -196,6 +201,7 @@ Widget _testApp(
     overrides: [
       authRepositoryProvider.overrideWithValue(authRepository),
       profileRepositoryProvider.overrideWithValue(profileRepository),
+      personnelRepositoryProvider.overrideWithValue(_FakePersonnelRepository()),
     ],
     child: const SmartShrimpApp(),
   );
@@ -326,4 +332,24 @@ final class _FakeProfileRepository implements ProfileRepository {
     );
     return current;
   }
+}
+
+final class _FakePersonnelRepository implements PersonnelRepository {
+  @override
+  Future<ManagedPersonnelPage> getPersonnel({
+    String? cursor,
+    int limit = 20,
+    AccountRole? role,
+    AccountStatus? status,
+    String? search,
+  }) async => ManagedPersonnelPage(
+    items: const <ManagedPersonnel>[],
+    limit: limit,
+    totalResults: status == AccountStatus.active ? 5 : 0,
+    hasNextPage: false,
+  );
+
+  @override
+  Future<ManagedPersonnel> getPersonnelById(String personnelId) =>
+      throw UnimplementedError();
 }
