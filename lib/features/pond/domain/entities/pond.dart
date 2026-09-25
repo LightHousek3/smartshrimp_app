@@ -46,6 +46,7 @@ abstract class PondFarm with _$PondFarm {
 abstract class PondCurrentSeason with _$PondCurrentSeason {
   const factory PondCurrentSeason({
     required String id,
+    required String name,
     @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)
     required PondSeasonStatus status,
     DateTime? stockingDate,

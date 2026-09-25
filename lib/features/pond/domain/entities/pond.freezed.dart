@@ -284,7 +284,7 @@ as DateTime?,
 /// @nodoc
 mixin _$PondCurrentSeason {
 
- String get id;@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus get status; DateTime? get stockingDate;
+ String get id; String get name;@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus get status; DateTime? get stockingDate;
 /// Create a copy of PondCurrentSeason
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $PondCurrentSeasonCopyWith<PondCurrentSeason> get copyWith => _$PondCurrentSeaso
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PondCurrentSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PondCurrentSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,stockingDate);
+int get hashCode => Object.hash(runtimeType,id,name,status,stockingDate);
 
 @override
 String toString() {
-  return 'PondCurrentSeason(id: $id, status: $status, stockingDate: $stockingDate)';
+  return 'PondCurrentSeason(id: $id, name: $name, status: $status, stockingDate: $stockingDate)';
 }
 
 
@@ -317,7 +317,7 @@ abstract mixin class $PondCurrentSeasonCopyWith<$Res>  {
   factory $PondCurrentSeasonCopyWith(PondCurrentSeason value, $Res Function(PondCurrentSeason) _then) = _$PondCurrentSeasonCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus status, DateTime? stockingDate
+ String id, String name,@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus status, DateTime? stockingDate
 });
 
 
@@ -334,9 +334,10 @@ class _$PondCurrentSeasonCopyWithImpl<$Res>
 
 /// Create a copy of PondCurrentSeason
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,Object? stockingDate = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? stockingDate = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as PondSeasonStatus,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -424,10 +425,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PondCurrentSeason() when $default != null:
-return $default(_that.id,_that.status,_that.stockingDate);case _:
+return $default(_that.id,_that.name,_that.status,_that.stockingDate);case _:
   return orElse();
 
 }
@@ -445,10 +446,10 @@ return $default(_that.id,_that.status,_that.stockingDate);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)  $default,) {final _that = this;
 switch (_that) {
 case _PondCurrentSeason():
-return $default(_that.id,_that.status,_that.stockingDate);case _:
+return $default(_that.id,_that.name,_that.status,_that.stockingDate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -465,10 +466,10 @@ return $default(_that.id,_that.status,_that.stockingDate);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown)  PondSeasonStatus status,  DateTime? stockingDate)?  $default,) {final _that = this;
 switch (_that) {
 case _PondCurrentSeason() when $default != null:
-return $default(_that.id,_that.status,_that.stockingDate);case _:
+return $default(_that.id,_that.name,_that.status,_that.stockingDate);case _:
   return null;
 
 }
@@ -480,10 +481,11 @@ return $default(_that.id,_that.status,_that.stockingDate);case _:
 @JsonSerializable()
 
 class _PondCurrentSeason implements PondCurrentSeason {
-  const _PondCurrentSeason({required this.id, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown) required this.status, this.stockingDate});
+  const _PondCurrentSeason({required this.id, required this.name, @JsonKey(unknownEnumValue: PondSeasonStatus.unknown) required this.status, this.stockingDate});
   factory _PondCurrentSeason.fromJson(Map<String, dynamic> json) => _$PondCurrentSeasonFromJson(json);
 
 @override final  String id;
+@override final  String name;
 @override@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) final  PondSeasonStatus status;
 @override final  DateTime? stockingDate;
 
@@ -500,16 +502,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PondCurrentSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PondCurrentSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,stockingDate);
+int get hashCode => Object.hash(runtimeType,id,name,status,stockingDate);
 
 @override
 String toString() {
-  return 'PondCurrentSeason(id: $id, status: $status, stockingDate: $stockingDate)';
+  return 'PondCurrentSeason(id: $id, name: $name, status: $status, stockingDate: $stockingDate)';
 }
 
 
@@ -520,7 +522,7 @@ abstract mixin class _$PondCurrentSeasonCopyWith<$Res> implements $PondCurrentSe
   factory _$PondCurrentSeasonCopyWith(_PondCurrentSeason value, $Res Function(_PondCurrentSeason) _then) = __$PondCurrentSeasonCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus status, DateTime? stockingDate
+ String id, String name,@JsonKey(unknownEnumValue: PondSeasonStatus.unknown) PondSeasonStatus status, DateTime? stockingDate
 });
 
 
@@ -537,9 +539,10 @@ class __$PondCurrentSeasonCopyWithImpl<$Res>
 
 /// Create a copy of PondCurrentSeason
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,Object? stockingDate = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? stockingDate = freezed,}) {
   return _then(_PondCurrentSeason(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as PondSeasonStatus,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,

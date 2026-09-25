@@ -23,6 +23,10 @@ import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/change_password_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
+import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
+import 'package:smartshrimp_app/features/season/presentation/pages/season_form_page.dart';
+import 'package:smartshrimp_app/features/season/presentation/pages/season_list_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 
@@ -161,6 +165,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                       ? state.extra! as Pond
                                       : null,
                                 ),
+                              ),
+                              GoRoute(
+                                path: 'seasons',
+                                builder: (_, state) => SeasonListPage(
+                                  farmId: state.pathParameters['farmId']!,
+                                  pondId: state.pathParameters['pondId']!,
+                                ),
+                                routes: <RouteBase>[
+                                  GoRoute(
+                                    path: 'create',
+                                    builder: (_, state) => SeasonCreatePage(
+                                      farmId: state.pathParameters['farmId']!,
+                                      pondId: state.pathParameters['pondId']!,
+                                      initialPond: state.extra is Pond
+                                          ? state.extra! as Pond
+                                          : null,
+                                    ),
+                                  ),
+                                  GoRoute(
+                                    path: ':seasonId',
+                                    builder: (_, state) => SeasonDetailPage(
+                                      farmId: state.pathParameters['farmId']!,
+                                      pondId: state.pathParameters['pondId']!,
+                                      seasonId:
+                                          state.pathParameters['seasonId']!,
+                                    ),
+                                    routes: <RouteBase>[
+                                      GoRoute(
+                                        path: 'edit',
+                                        builder: (_, state) => SeasonEditPage(
+                                          farmId:
+                                              state.pathParameters['farmId']!,
+                                          seasonId:
+                                              state.pathParameters['seasonId']!,
+                                          initialSeason:
+                                              state.extra is AquacultureSeason
+                                              ? state.extra!
+                                                    as AquacultureSeason
+                                              : null,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ],
                           ),
