@@ -84,7 +84,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
         .value;
     final canCreate =
         pond != null &&
-        !pond.isArchived &&
+        !pond.isDeleted &&
         !pond.hasOpenSeason &&
         pond.type == PondType.aquaculture &&
         pond.status == PondStatus.available;

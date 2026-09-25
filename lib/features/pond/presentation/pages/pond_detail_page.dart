@@ -183,7 +183,7 @@ class _SeasonManagementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = pond.currentSeason;
     final canCreate =
-        !pond.isArchived &&
+        !pond.isDeleted &&
         !pond.hasOpenSeason &&
         pond.type == PondType.aquaculture &&
         pond.status == PondStatus.available;
@@ -235,13 +235,24 @@ class _SeasonManagementCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
+                              current.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.ink,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
                               current.status == PondSeasonStatus.active
                                   ? 'Vụ nuôi đang hoạt động'
                                   : 'Vụ nuôi đang chuẩn bị',
                               style: const TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
+                                color: AppColors.ocean,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 3),

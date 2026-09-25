@@ -23,6 +23,7 @@ Map<String, dynamic> _$PondFarmToJson(_PondFarm instance) => <String, dynamic>{
 _PondCurrentSeason _$PondCurrentSeasonFromJson(Map<String, dynamic> json) =>
     _PondCurrentSeason(
       id: json['id'] as String,
+      name: json['name'] as String,
       status: $enumDecode(
         _$PondSeasonStatusEnumMap,
         json['status'],
@@ -36,6 +37,7 @@ _PondCurrentSeason _$PondCurrentSeasonFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$PondCurrentSeasonToJson(_PondCurrentSeason instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'name': instance.name,
       'status': _$PondSeasonStatusEnumMap[instance.status]!,
       'stockingDate': instance.stockingDate?.toIso8601String(),
     };
