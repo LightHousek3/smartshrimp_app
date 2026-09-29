@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
-import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({required this.navigationShell, super.key});
@@ -25,6 +25,12 @@ class MainShell extends ConsumerWidget {
       '/tasks',
       Icons.checklist_rtl_outlined,
       Icons.checklist_rtl_rounded,
+    ),
+    _NavigationItem(
+      'Thông báo',
+      '/notifications',
+      Icons.notifications_none_rounded,
+      Icons.notifications_rounded,
     ),
     _NavigationItem(
       'Tài khoản',
@@ -49,10 +55,10 @@ class MainShell extends ConsumerWidget {
       Icons.format_list_bulleted_rounded,
     ),
     _NavigationItem(
-      'Phê duyệt',
-      '/approvals',
-      Icons.verified_user_outlined,
-      Icons.verified_user_rounded,
+      'Thông báo',
+      '/notifications',
+      Icons.notifications_none_rounded,
+      Icons.notifications_rounded,
     ),
     _NavigationItem(
       'Tài khoản',
@@ -69,81 +75,19 @@ class MainShell extends ConsumerWidget {
         ref.watch(authControllerProvider).value?.role == AccountRole.farmOwner;
     final items = isOwner ? _ownerItems : _technicianItems;
     final location = GoRouterState.of(context).uri.path;
-    final unreadNotifications = location == '/'
-        ? ref.watch(notificationListProvider(NotificationReadStatus.unread))
-        : null;
-    final badgeText = switch (unreadNotifications) {
-      AsyncData(:final value) => '${value.totalResults}',
+    final unreadNotifications = ref.watch(
+      notificationListProvider(NotificationReadStatus.unread),
+    );
+    final notificationBadgeText = switch (unreadNotifications) {
+      AsyncData(:final value) when value.totalResults > 99 => '99+',
+      AsyncData(:final value) when value.totalResults > 0 =>
+        '${value.totalResults}',
       AsyncError() => '!',
-      _ => '…',
+      _ => null,
     };
-    final badgeDescription = switch (unreadNotifications) {
-      AsyncData(:final value) => '${value.totalResults} thông báo chưa đọc',
-      AsyncError() => 'Không thể tải số thông báo chưa đọc',
-      _ => 'Đang tải số thông báo chưa đọc',
-    };
+
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          navigationShell,
-          if (location == '/')
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 16,
-              right: 16,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: <Widget>[
-                  Material(
-                    color: Colors.white,
-                    elevation: 2,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: 'Mở thông báo',
-                      icon: const Icon(Icons.notifications_none_rounded),
-                      color: AppColors.ocean,
-                      iconSize: 26,
-                      padding: const EdgeInsets.all(12),
-                      onPressed: () => context.go('/notifications'),
-                    ),
-                  ),
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: IgnorePointer(
-                      child: Semantics(
-                        label: badgeDescription,
-                        child: Container(
-                          key: const Key('home_unread_notification_badge'),
-                          constraints: const BoxConstraints(
-                            minWidth: 22,
-                            minHeight: 22,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: Text(
-                            badgeText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+      body: navigationShell,
       bottomNavigationBar: DecoratedBox(
         decoration: const BoxDecoration(
           color: Color(0xFAFFFFFF),
@@ -159,7 +103,7 @@ class MainShell extends ConsumerWidget {
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: isOwner ? 64 : 72,
+            height: 64,
             child: Row(
               children: List<Widget>.generate(items.length, (index) {
                 final item = items[index];
@@ -167,10 +111,9 @@ class MainShell extends ConsumerWidget {
                     location == item.path ||
                     (item.path != '/' &&
                         location.startsWith('${item.path}/')) ||
-                    (item.path == '/' &&
-                        location.startsWith('/notifications')) ||
                     (item.path == '/account' &&
                         location.startsWith('/personnel'));
+                final isNotificationTab = item.path == '/notifications';
                 return Expanded(
                   child: Semantics(
                     selected: selected,
@@ -183,11 +126,11 @@ class MainShell extends ConsumerWidget {
                         children: <Widget>[
                           if (selected)
                             Container(
-                              width: isOwner ? 32 : 34,
+                              width: 32,
                               height: 4,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: AppColors.ocean,
-                                borderRadius: const BorderRadius.vertical(
+                                borderRadius: BorderRadius.vertical(
                                   bottom: Radius.circular(5),
                                 ),
                               ),
@@ -196,22 +139,70 @@ class MainShell extends ConsumerWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                Icon(
-                                  selected ? item.selectedIcon : item.icon,
-                                  color: selected
-                                      ? AppColors.ocean
-                                      : AppColors.inkMuted,
-                                  size: isOwner ? 22 : 27,
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: <Widget>[
+                                    Icon(
+                                      selected ? item.selectedIcon : item.icon,
+                                      color: selected
+                                          ? AppColors.ocean
+                                          : AppColors.inkMuted,
+                                      size: 22,
+                                    ),
+                                    if (isNotificationTab &&
+                                        notificationBadgeText != null)
+                                      Positioned(
+                                        top: -7,
+                                        right: -12,
+                                        child: Semantics(
+                                          label: notificationBadgeText == '!'
+                                              ? 'Không thể tải số thông báo chưa đọc'
+                                              : '$notificationBadgeText thông báo chưa đọc',
+                                          child: Container(
+                                            key: const Key(
+                                              'notif_tab_unread_badge',
+                                            ),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 18,
+                                              minHeight: 18,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                            ),
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.error,
+                                              borderRadius:
+                                                  BorderRadius.circular(99),
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              notificationBadgeText,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w800,
+                                                height: 1,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   item.label,
                                   maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: selected
                                         ? AppColors.ocean
                                         : AppColors.inkMuted,
-                                    fontSize: isOwner ? 10 : 11.5,
+                                    fontSize: 10,
                                     fontWeight: selected
                                         ? FontWeight.w700
                                         : FontWeight.w600,
