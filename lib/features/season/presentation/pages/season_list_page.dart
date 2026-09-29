@@ -26,8 +26,9 @@ class SeasonListPage extends ConsumerStatefulWidget {
 class _SeasonListPageState extends ConsumerState<SeasonListPage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  Timer? _debounce;
-  SeasonStatus? _status;
+  Timer? _searchDebounce;
+  SeasonStatus _status = SeasonStatus.active;
+  bool _showSearch = false;
 
   SeasonListScope get _scope => (farmId: widget.farmId, pondId: widget.pondId);
 
@@ -35,11 +36,17 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_loadMore);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(seasonListControllerProvider(_scope).notifier)
+          .applyFilters(status: _status);
+    });
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _scrollController
       ..removeListener(_loadMore)
@@ -55,20 +62,20 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
 
   void _search(String value) {
     setState(() {});
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
       ref
           .read(seasonListControllerProvider(_scope).notifier)
           .applyFilters(search: value);
     });
   }
 
-  void _filter(SeasonStatus? status) {
+  void _filter(SeasonStatus status) {
     if (_status == status) return;
     setState(() => _status = status);
     ref
         .read(seasonListControllerProvider(_scope).notifier)
-        .applyFilters(status: status, clearStatus: status == null);
+        .applyFilters(status: status);
   }
 
   @override
@@ -92,6 +99,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
+          top: false,
           bottom: false,
           child: RefreshIndicator(
             color: AppColors.ocean,
@@ -103,15 +111,21 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    seasonScreenTopPadding(context),
+                    18,
+                    0,
+                  ),
                   sliver: SliverToBoxAdapter(child: _header(pond, canCreate)),
                 ),
+                if (_showSearch)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    sliver: SliverToBoxAdapter(child: _searchBar()),
+                  ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-                  sliver: SliverToBoxAdapter(child: _searchBar()),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 12, 0, 14),
+                  padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
                   sliver: SliverToBoxAdapter(child: _filters()),
                 ),
                 ...state.when(
@@ -151,7 +165,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
   Widget _header(Pond? pond, bool canCreate) => Row(
     children: <Widget>[
       FarmCircleButton(
-        icon: Icons.arrow_back_ios_new_rounded,
+        icon: Icons.adaptive.arrow_back,
         tooltip: 'Quay lại',
         onPressed: context.pop,
       ),
@@ -175,14 +189,28 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
           ],
         ),
       ),
+      FarmCircleButton(
+        icon: _showSearch ? Icons.close_rounded : Icons.search_rounded,
+        tooltip: _showSearch ? 'Đóng tìm kiếm' : 'Tìm kiếm vụ nuôi',
+        onPressed: () {
+          setState(() => _showSearch = !_showSearch);
+          if (!_showSearch && _searchController.text.isNotEmpty) {
+            _searchController.clear();
+            _search('');
+          }
+        },
+      ),
       if (canCreate)
-        FarmCircleButton(
-          icon: Icons.add_rounded,
-          tooltip: 'Tạo vụ nuôi',
-          filled: true,
-          onPressed: () => context.push(
-            '/farms/${widget.farmId}/ponds/${widget.pondId}/seasons/create',
-            extra: pond,
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: FarmCircleButton(
+            icon: Icons.add_rounded,
+            tooltip: 'Tạo vụ nuôi',
+            filled: true,
+            onPressed: () => context.push(
+              '/farms/${widget.farmId}/ponds/${widget.pondId}/seasons/create',
+              extra: pond,
+            ),
           ),
         ),
     ],
@@ -192,9 +220,10 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
     height: 44,
     child: TextField(
       controller: _searchController,
+      autofocus: true,
       onChanged: _search,
       decoration: InputDecoration(
-        hintText: 'Tìm tên vụ nuôi...',
+        hintText: 'Tìm tên vụ nuôi…',
         prefixIcon: const Icon(Icons.search_rounded, size: 20),
         suffixIcon: _searchController.text.isEmpty
             ? null
@@ -211,30 +240,35 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
     ),
   );
 
-  Widget _filters() => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: <Widget>[
-        _StatusFilter(
-          label: 'Tất cả',
-          selected: _status == null,
-          onTap: () => _filter(null),
-        ),
-        for (final status in const <SeasonStatus>[
-          SeasonStatus.planning,
-          SeasonStatus.active,
-          SeasonStatus.completed,
-          SeasonStatus.cancelled,
-        ]) ...<Widget>[
-          const SizedBox(width: 8),
-          _StatusFilter(
-            label: seasonStatusLabel(status),
-            selected: _status == status,
-            onTap: () => _filter(status),
-          ),
+  Widget _filters() => Container(
+    height: 52,
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: const Color(0xB3D3E8FF),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          for (final status in const <SeasonStatus>[
+            SeasonStatus.active,
+            SeasonStatus.planning,
+            SeasonStatus.completed,
+            SeasonStatus.cancelled,
+          ]) ...<Widget>[
+            _StatusFilter(
+              label: switch (status) {
+                SeasonStatus.completed => 'Hoàn tất',
+                _ => seasonStatusLabel(status),
+              },
+              selected: _status == status,
+              onTap: () => _filter(status),
+            ),
+            if (status != SeasonStatus.cancelled) const SizedBox(width: 4),
+          ],
         ],
-        const SizedBox(width: 18),
-      ],
+      ),
     ),
   );
 
@@ -243,13 +277,23 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _SeasonEmpty(searching: _searchController.text.isNotEmpty),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+            child: SeasonEmptyState(
+              title: _searchController.text.isEmpty
+                  ? 'Không có vụ nuôi'
+                  : 'Không tìm thấy vụ nuôi',
+              hint: _searchController.text.isEmpty
+                  ? 'Chưa có vụ nào ở trạng thái "${seasonStatusLabel(_status)}".'
+                  : 'Hãy thử từ khóa hoặc trạng thái khác.',
+            ),
+          ),
         ),
       ];
     }
     return <Widget>[
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
         sliver: SliverList.separated(
           itemCount: page.items.length,
           separatorBuilder: (_, _) => const SizedBox(height: 11),
@@ -293,69 +337,99 @@ class _SeasonCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: SeasonSectionCard(
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE7F4FF),
-                    borderRadius: BorderRadius.circular(12),
+            Container(
+              width: 36,
+              height: 36,
+              margin: const EdgeInsets.only(top: 1),
+              decoration: BoxDecoration(
+                color: _seasonIconBackground(season.status),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.layers_rounded,
+                color: _seasonIconForeground(season.status),
+                size: 17,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          season.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      SeasonStatusBadge(status: season.status),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.waves_rounded,
-                    color: AppColors.ocean,
-                    size: 21,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    season.name,
+                  const SizedBox(height: 3),
+                  Text(
+                    '${season.pond.farm?.name ?? 'Trang trại'} · ${season.pond.name} · ${shrimpTypeLabel(season.shrimpType)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                      color: AppColors.inkMuted,
+                      fontSize: 11.5,
                     ),
                   ),
-                ),
-                SeasonStatusBadge(status: season.status),
-              ],
-            ),
-            const SizedBox(height: 13),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: _CardInfo(
-                    label: 'LOẠI TÔM',
-                    value: shrimpTypeLabel(season.shrimpType),
-                  ),
-                ),
-                Expanded(
-                  child: _CardInfo(
-                    label: 'NGÀY THẢ',
-                    value: seasonDateLabel(season.stockingDate),
-                  ),
-                ),
-              ],
-            ),
-            if (season.status == SeasonStatus.active &&
-                season.dayOfCulture != null) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                'Ngày nuôi thứ ${season.dayOfCulture}',
-                style: const TextStyle(
-                  color: AppColors.ocean,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+                  if (season.status == SeasonStatus.active) ...<Widget>[
+                    const SizedBox(height: 5),
+                    Text(
+                      <String>[
+                        if (season.dayOfCulture != null)
+                          'DOC ${season.dayOfCulture}',
+                        if (season.initialQuantity != null)
+                          'Thả ${seasonIntegerLabel(season.initialQuantity)} con',
+                      ].join(' · '),
+                      style: const TextStyle(
+                        color: AppColors.ocean,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                  if (season.status == SeasonStatus.planning) ...<Widget>[
+                    const SizedBox(height: 5),
+                    Text(
+                      season.approvedProductionProtocol == null
+                          ? 'Chưa có phác đồ được duyệt'
+                          : 'Phác đồ đã duyệt',
+                      style: TextStyle(
+                        color: season.approvedProductionProtocol == null
+                            ? const Color(0xFFB86808)
+                            : const Color(0xFF7B5BD6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
+            const Padding(
+              padding: EdgeInsets.only(left: 7, top: 4),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.inkMuted,
+              ),
+            ),
           ],
         ),
       ),
@@ -363,37 +437,19 @@ class _SeasonCard extends StatelessWidget {
   );
 }
 
-class _CardInfo extends StatelessWidget {
-  const _CardInfo({required this.label, required this.value});
-  final String label;
-  final String value;
+Color _seasonIconBackground(SeasonStatus status) => switch (status) {
+  SeasonStatus.active => const Color(0xFFE2F6F3),
+  SeasonStatus.planning => const Color(0xFFEFEAFC),
+  SeasonStatus.cancelled => const Color(0xFFFBE6EA),
+  _ => const Color(0xFFEEF1F6),
+};
 
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.inkMuted,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: AppColors.inkSoft,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ],
-  );
-}
+Color _seasonIconForeground(SeasonStatus status) => switch (status) {
+  SeasonStatus.active => const Color(0xFF0F9B8E),
+  SeasonStatus.planning => const Color(0xFF7B5BD6),
+  SeasonStatus.cancelled => AppColors.error,
+  _ => const Color(0xFF64748B),
+};
 
 class _StatusFilter extends StatelessWidget {
   const _StatusFilter({
@@ -407,51 +463,31 @@ class _StatusFilter extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ChoiceChip(
-    label: Text(label),
+  Widget build(BuildContext context) => Semantics(
+    button: true,
     selected: selected,
-    onSelected: (_) => onTap(),
-    showCheckmark: false,
-    backgroundColor: const Color(0xCFFFFFFF),
-    selectedColor: AppColors.ocean,
-    side: BorderSide(color: selected ? AppColors.ocean : AppColors.line),
-    labelStyle: TextStyle(
-      color: selected ? Colors.white : AppColors.inkSoft,
-      fontSize: 12,
-      fontWeight: FontWeight.w700,
-    ),
-  );
-}
-
-class _SeasonEmpty extends StatelessWidget {
-  const _SeasonEmpty({required this.searching});
-  final bool searching;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(Icons.waves_outlined, size: 48, color: AppColors.inkMuted),
-          const SizedBox(height: 12),
-          Text(
-            searching ? 'Không tìm thấy vụ nuôi' : 'Ao chưa có vụ nuôi',
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w700,
+    child: Material(
+      color: selected ? const Color(0xFF1D7AD6) : const Color(0xA6FFFFFF),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? Colors.white : AppColors.inkSoft,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 5),
-          Text(
-            searching
-                ? 'Hãy thử từ khóa hoặc trạng thái khác.'
-                : 'Nhấn nút + để tạo vụ nuôi đầu tiên.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-          ),
-        ],
+        ),
       ),
     ),
   );

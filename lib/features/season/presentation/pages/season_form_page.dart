@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
@@ -159,78 +160,84 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
+          top: false,
+          bottom: false,
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(19, 14, 19, 30),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                seasonScreenTopPadding(context),
+                16,
+                40,
+              ),
               children: <Widget>[
                 _header(loading),
-                const SizedBox(height: 20),
-                SeasonSectionCard(child: _pondSummary()),
-                const SizedBox(height: 16),
+                const SizedBox(height: 28),
                 _label('Tên vụ nuôi', required: true),
-                const SizedBox(height: 7),
+                const SizedBox(height: 6),
                 TextFormField(
                   controller: _name,
                   maxLength: SeasonRules.nameMaxLength,
                   validator: SeasonRules.validateName,
                   enabled: !loading,
-                  decoration: const InputDecoration(
-                    hintText: 'VD: Vụ tôm tháng 9',
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 14,
+                    height: 1.5,
+                    fontFamily: 'monospace',
+                  ),
+                  decoration: _inputDecoration(
+                    hintText: 'VD: Vụ Đông Xuân 2026',
                     counterText: '',
                   ),
                 ),
-                const SizedBox(height: 15),
-                _label('Loại tôm', required: true),
-                const SizedBox(height: 7),
-                DropdownButtonFormField<ShrimpType>(
-                  initialValue: _shrimpType,
-                  decoration: const InputDecoration(),
-                  items:
-                      const <ShrimpType>[
+                if (!_editing) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _label('Loại tôm', required: true),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: <Widget>[
+                      for (final type in const <ShrimpType>[
                         ShrimpType.whiteleg,
                         ShrimpType.blackTiger,
-                      ].map((value) {
-                        return DropdownMenuItem(
-                          value: value,
-                          child: Text(shrimpTypeLabel(value)),
-                        );
-                      }).toList(),
-                  onChanged: loading
-                      ? null
-                      : (value) => setState(() => _shrimpType = value!),
+                      ]) ...<Widget>[
+                        Expanded(
+                          child: _ShrimpTypeOption(
+                            label: shrimpTypeLabel(type),
+                            selected: _shrimpType == type,
+                            enabled: !loading,
+                            onTap: () => setState(() => _shrimpType = type),
+                          ),
+                        ),
+                        if (type == ShrimpType.whiteleg)
+                          const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                _DateField(
+                  label: _editing ? 'Ngày thả giống' : 'Ngày thả giống *',
+                  value: _stockingDate,
+                  enabled: !loading,
+                  onChanged: (value) => setState(() {
+                    _stockingDate = value;
+                    _dateError = null;
+                  }),
                 ),
-                const SizedBox(height: 15),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: _DateField(
-                        label: 'Ngày thả giống',
-                        value: _stockingDate,
-                        enabled: !loading,
-                        onChanged: (value) => setState(() {
-                          _stockingDate = value;
-                          _dateError = null;
-                        }),
-                      ),
-                    ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: _DateField(
-                        label: 'Ngày kết thúc dự kiến',
-                        value: _expectedEndDate,
-                        enabled: !loading,
-                        onChanged: (value) => setState(() {
-                          _expectedEndDate = value;
-                          _dateError = null;
-                        }),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 16),
+                _DateField(
+                  label: 'Ngày kết thúc dự kiến',
+                  value: _expectedEndDate,
+                  enabled: !loading,
+                  onChanged: (value) => setState(() {
+                    _expectedEndDate = value;
+                    _dateError = null;
+                  }),
                 ),
                 if (_dateError != null) ...<Widget>[
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   Text(
                     _dateError!,
                     style: const TextStyle(
@@ -240,64 +247,23 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 17),
-                const Text(
-                  'Thông tin thả giống',
-                  style: TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+                const SizedBox(height: 16),
+                _numberField(
+                  controller: _quantity,
+                  label: 'Số lượng thả (con)',
+                  hint: 'VD: 480000',
+                  validator: SeasonRules.validateQuantity,
+                  decimal: false,
+                  enabled: !loading,
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Có thể bổ sung sau khi tạo, nhưng bắt buộc trước khi kích hoạt.',
-                  style: TextStyle(color: AppColors.inkMuted, fontSize: 11.5),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: _numberField(
-                        controller: _quantity,
-                        label: 'Số lượng (con)',
-                        hint: '100000',
-                        validator: SeasonRules.validateQuantity,
-                        decimal: false,
-                        enabled: !loading,
-                      ),
-                    ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: _numberField(
-                        controller: _averageWeight,
-                        label: 'Khối lượng TB (g)',
-                        hint: '0.02',
-                        validator: SeasonRules.validateAverageWeight,
-                        decimal: true,
-                        enabled: !loading,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _calculationPreview(),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: loading ? null : _submit,
-                    child: loading
-                        ? const SizedBox.square(
-                            dimension: 19,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(_editing ? 'Lưu thay đổi' : 'Tạo vụ nuôi'),
-                  ),
+                const SizedBox(height: 16),
+                _densityPreviewField(),
+                const SizedBox(height: 24),
+                SeasonPrimaryButton(
+                  label: _editing ? 'Lưu thay đổi' : 'Tạo vụ nuôi',
+                  icon: Icons.check_rounded,
+                  loading: loading,
+                  onPressed: loading ? null : _submit,
                 ),
               ],
             ),
@@ -307,57 +273,10 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
     );
   }
 
-  Widget _header(bool loading) => Row(
-    children: <Widget>[
-      FarmCircleButton(
-        icon: Icons.arrow_back_ios_new_rounded,
-        tooltip: 'Quay lại',
-        onPressed: loading ? null : context.pop,
-      ),
-      const SizedBox(width: 12),
-      Text(
-        _editing ? 'Cập nhật vụ nuôi' : 'Tạo vụ nuôi',
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    ],
-  );
-
-  Widget _pondSummary() => Row(
-    children: <Widget>[
-      Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: const Color(0xFFE7F4FF),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.water_drop_rounded, color: AppColors.ocean),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.pond.name,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              '${widget.pond.farm?.name ?? 'Trang trại'} • ${seasonDecimalLabel(widget.pond.areaM2)} m²',
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    ],
+  Widget _header(bool loading) => SeasonScreenHeader(
+    title: _editing ? 'Chỉnh sửa vụ nuôi' : 'Tạo vụ nuôi mới',
+    subtitle: '${widget.pond.name} · ${widget.pond.farm?.name ?? 'Trang trại'}',
+    onBack: loading ? null : context.pop,
   );
 
   Widget _numberField({
@@ -371,53 +290,104 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       _label(label),
-      const SizedBox(height: 7),
+      const SizedBox(height: 6),
       TextFormField(
         controller: controller,
         enabled: enabled,
         keyboardType: TextInputType.numberWithOptions(decimal: decimal),
         validator: validator,
         onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(hintText: hint),
+        style: const TextStyle(
+          color: AppColors.ink,
+          fontSize: 14,
+          height: 1.5,
+          fontFamily: 'monospace',
+        ),
+        decoration: _inputDecoration(hintText: hint),
       ),
     ],
   );
 
-  Widget _calculationPreview() {
+  InputDecoration _inputDecoration({
+    required String hintText,
+    String? counterText,
+  }) => InputDecoration(
+    hintText: hintText,
+    counterText: counterText,
+    isDense: true,
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    hintStyle: const TextStyle(color: AppColors.inkMuted, fontSize: 14),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.line),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.line),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.oceanLight),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.error),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.error),
+    ),
+  );
+
+  Widget _densityPreviewField() {
     final quantity = SeasonRules.parseQuantity(_quantity.text);
-    final weight = SeasonRules.parseWeight(_averageWeight.text);
     final area = widget.pond.areaM2;
-    final biomass = quantity == null || weight == null
-        ? null
-        : quantity * weight / 1000;
-    final density = quantity == null || area == null || area <= 0
-        ? null
-        : quantity / area;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xDFFFFFFF),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: _PreviewMetric(
-              label: 'Sinh khối dự kiến',
-              value: '${seasonDecimalLabel(biomass, digits: 3)} kg',
+    final density = SeasonRules.calculateDensity(quantity, area);
+    final missingArea = quantity != null && (area == null || area <= 0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _label('Mật độ thả (con/m²)'),
+        const SizedBox(height: 6),
+        Semantics(
+          readOnly: true,
+          label: 'Mật độ thả tự tính',
+          value: density == null
+              ? ''
+              : '${seasonDecimalLabel(density)} con trên mét vuông',
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(minHeight: 43),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: missingArea ? AppColors.error : AppColors.line,
+              ),
+            ),
+            child: Text(
+              missingArea
+                  ? 'Chưa có diện tích ao'
+                  : density == null
+                  ? 'VD: 150'
+                  : seasonDecimalLabel(density),
+              style: TextStyle(
+                color: missingArea
+                    ? AppColors.error
+                    : density == null
+                    ? AppColors.inkMuted
+                    : AppColors.ink,
+                fontSize: 14,
+                height: 1.5,
+                fontFamily: 'monospace',
+              ),
             ),
           ),
-          Container(width: 1, height: 34, color: AppColors.line),
-          const SizedBox(width: 14),
-          Expanded(
-            child: _PreviewMetric(
-              label: 'Mật độ dự kiến',
-              value: '${seasonDecimalLabel(density)} con/m²',
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -441,6 +411,10 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_editing && _stockingDate == null) {
+      setState(() => _dateError = 'Vui lòng chọn ngày thả giống.');
+      return;
+    }
     final dateError = SeasonRules.validateDateRange(
       _stockingDate,
       _expectedEndDate,
@@ -451,9 +425,9 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
     }
     if (_dateError != null) setState(() => _dateError = null);
 
+    final current = widget.initialSeason;
     try {
       final notifier = ref.read(seasonMutationControllerProvider.notifier);
-      final current = widget.initialSeason;
       final saved = current == null
           ? await notifier.create(
               farmId: widget.farmId,
@@ -476,12 +450,11 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
               initialAvgWeightG: SeasonRules.parseWeight(_averageWeight.text),
             );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            current == null ? 'Đã tạo vụ nuôi.' : 'Đã cập nhật vụ nuôi.',
-          ),
-        ),
+      AppNoticeService.success(
+        context,
+        current == null
+            ? 'Vụ nuôi mới đã được tạo và lưu ở trạng thái đang chuẩn bị.'
+            : 'Thông tin vụ nuôi đã được cập nhật thành công.',
       );
       if (current == null) {
         context.go(
@@ -492,12 +465,65 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
       }
     } on AppException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppNoticeService.danger(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+          error.message,
+          title: current == null
+              ? 'Không thể tạo vụ nuôi'
+              : 'Không thể cập nhật vụ nuôi',
+        );
       }
     }
   }
+}
+
+class _ShrimpTypeOption extends StatelessWidget {
+  const _ShrimpTypeOption({
+    required this.label,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    child: Material(
+      color: selected ? const Color(0xFFEAF4FF) : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 46),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? const Color(0xFF3F97E8) : AppColors.line,
+            ),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selected ? const Color(0xFF0C4E8F) : AppColors.inkMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _DateField extends StatelessWidget {
@@ -525,26 +551,67 @@ class _DateField extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
-      const SizedBox(height: 7),
-      InkWell(
-        onTap: enabled ? () => _pick(context) : null,
-        borderRadius: BorderRadius.circular(16),
-        child: InputDecorator(
-          decoration: InputDecoration(
-            enabled: enabled,
-            suffixIcon: value == null
-                ? const Icon(Icons.calendar_month_outlined, size: 19)
-                : IconButton(
-                    tooltip: 'Xóa ngày',
-                    onPressed: enabled ? () => onChanged(null) : null,
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                  ),
+      const SizedBox(height: 6),
+      Semantics(
+        button: true,
+        label: value == null
+            ? 'Chọn $label'
+            : '$label ${seasonDateLabel(value)}',
+        child: Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.line),
           ),
-          child: Text(
-            value == null ? 'Chọn ngày' : seasonDateLabel(value),
-            style: TextStyle(
-              color: value == null ? AppColors.inkMuted : AppColors.ink,
-              fontSize: 13,
+          child: InkWell(
+            onTap: enabled ? () => _pick(context) : null,
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 43,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        value == null
+                            ? 'dd / mm / yyyy'
+                            : seasonDateLabel(value),
+                        style: TextStyle(
+                          color: value == null
+                              ? AppColors.inkMuted
+                              : AppColors.ink,
+                          fontSize: 14,
+                          height: 1.5,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    if (value == null)
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        color: AppColors.ink,
+                        size: 14,
+                      )
+                    else if (enabled)
+                      IconButton(
+                        tooltip: 'Xóa ngày',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 30,
+                          minHeight: 43,
+                        ),
+                        onPressed: () => onChanged(null),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.inkMuted,
+                          size: 16,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -564,32 +631,6 @@ class _DateField extends StatelessWidget {
   }
 }
 
-class _PreviewMetric extends StatelessWidget {
-  const _PreviewMetric({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(
-        label,
-        style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    ],
-  );
-}
-
 class _LoadError extends StatelessWidget {
   const _LoadError({required this.message, required this.onRetry});
   final String message;
@@ -607,7 +648,7 @@ class _LoadError extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: FarmCircleButton(
-                  icon: Icons.arrow_back_rounded,
+                  icon: Icons.adaptive.arrow_back,
                   tooltip: 'Quay lại',
                   onPressed: context.pop,
                 ),

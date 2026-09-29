@@ -54,6 +54,11 @@ abstract final class SeasonRules {
       ? null
       : double.tryParse(value.trim().replaceAll(',', '.'));
 
+  static double? calculateDensity(int? quantity, double? areaM2) =>
+      quantity == null || areaM2 == null || areaM2 <= 0
+      ? null
+      : quantity / areaM2;
+
   static String dateOnly(DateTime value) =>
       '${value.year.toString().padLeft(4, '0')}-'
       '${value.month.toString().padLeft(2, '0')}-'
