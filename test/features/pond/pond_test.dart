@@ -18,6 +18,7 @@ void main() {
       'farm': <String, dynamic>{'id': 'farm-1', 'name': 'Trại Cà Mau'},
       'currentSeason': <String, dynamic>{
         'id': 'season-1',
+        'name': 'Vụ nuôi 09/2026',
         'status': 'ACTIVE',
         'stockingDate': '2026-09-01T00:00:00.000Z',
       },
@@ -25,6 +26,7 @@ void main() {
 
     expect(pond.type, PondType.aquaculture);
     expect(pond.status, PondStatus.available);
+    expect(pond.currentSeason?.name, 'Vụ nuôi 09/2026');
     expect(pond.farm?.name, 'Trại Cà Mau');
     expect(pond.hasOpenSeason, isTrue);
     expect(pond.isDeleted, isFalse);
