@@ -99,15 +99,15 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
               const SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 26, 16, 0),
+                padding: EdgeInsets.fromLTRB(12, 8, 16, 0),
                 sliver: SliverToBoxAdapter(child: _Header()),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 sliver: SliverToBoxAdapter(child: _buildSearch()),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 sliver: SliverToBoxAdapter(child: _buildFilters()),
               ),
               ...state.when(
@@ -146,10 +146,10 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
       onChanged: _search,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Tìm tên, email hoặc số điện thoại...',
+        hintText: 'Tìm kiếm theo tên',
         prefixIcon: const Icon(
-          Icons.search_rounded,
-          size: 20,
+          Icons.groups_outlined,
+          size: 17,
           color: AppColors.inkMuted,
         ),
         suffixIcon: _searchController.text.isEmpty
@@ -177,84 +177,145 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
     ),
   );
 
-  Widget _buildFilters() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+  Widget _buildFilters() => LayoutBuilder(
+    builder: (context, constraints) {
+      final roleFilters = Container(
+        key: const Key('personnel_role_filters'),
+        height: 48,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xB3D3E8FF),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Row(
           children: <Widget>[
-            _RoleChip(
-              label: 'Tất cả',
-              selected: _roleFilter == PersonnelRoleFilter.all,
-              onTap: () => _changeRole(PersonnelRoleFilter.all),
+            Expanded(
+              child: _RoleChip(
+                label: 'Tất cả',
+                selected: _roleFilter == PersonnelRoleFilter.all,
+                onTap: () => _changeRole(PersonnelRoleFilter.all),
+              ),
             ),
-            const SizedBox(width: 8),
-            _RoleChip(
-              label: 'Kỹ thuật viên',
-              selected: _roleFilter == PersonnelRoleFilter.technician,
-              onTap: () => _changeRole(PersonnelRoleFilter.technician),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _RoleChip(
+                label: 'KTV',
+                selected: _roleFilter == PersonnelRoleFilter.technician,
+                onTap: () => _changeRole(PersonnelRoleFilter.technician),
+              ),
             ),
-            const SizedBox(width: 8),
-            _RoleChip(
-              label: 'Chuyên gia',
-              selected: _roleFilter == PersonnelRoleFilter.expert,
-              onTap: () => _changeRole(PersonnelRoleFilter.expert),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _RoleChip(
+                label: 'Chuyên gia',
+                selected: _roleFilter == PersonnelRoleFilter.expert,
+                onTap: () => _changeRole(PersonnelRoleFilter.expert),
+              ),
             ),
           ],
         ),
-      ),
-      const SizedBox(height: 10),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: PopupMenuButton<PersonnelStatusFilter>(
-          tooltip: 'Lọc trạng thái',
-          initialValue: _statusFilter,
-          onSelected: _changeStatus,
-          itemBuilder: (_) => PersonnelStatusFilter.values
-              .map(
-                (status) => PopupMenuItem<PersonnelStatusFilter>(
-                  value: status,
-                  child: Text(_statusFilterLabel(status)),
+      );
+      return SizedBox(
+        height: 48,
+        child: Row(
+          children: <Widget>[
+            if (constraints.maxWidth >= 600)
+              SizedBox(width: 300, child: roleFilters)
+            else
+              Expanded(child: roleFilters),
+            const SizedBox(width: 5),
+            SizedBox(
+              key: const Key('personnel_status_filter'),
+              width: 124,
+              height: 48,
+              child: PopupMenuButton<PersonnelStatusFilter>(
+                tooltip: 'Lọc trạng thái',
+                initialValue: _statusFilter,
+                onSelected: _changeStatus,
+                color: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                shadowColor: const Color(0x260F1C2E),
+                elevation: 10,
+                position: PopupMenuPosition.under,
+                offset: const Offset(0, 6),
+                constraints: const BoxConstraints.tightFor(width: 190),
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: AppColors.line),
                 ),
-              )
-              .toList(growable: false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xCFFFFFFF),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(
-                  Icons.tune_rounded,
-                  size: 16,
-                  color: AppColors.inkMuted,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _statusFilterLabel(_statusFilter),
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                itemBuilder: (_) => PersonnelStatusFilter.values
+                    .map((status) {
+                      final selected = status == _statusFilter;
+                      return PopupMenuItem<PersonnelStatusFilter>(
+                        value: status,
+                        height: 42,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _statusFilterLabel(status),
+                                style: TextStyle(
+                                  color: selected
+                                      ? AppColors.ocean
+                                      : AppColors.inkSoft,
+                                  fontSize: 12,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            if (selected) ...<Widget>[
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 17,
+                                color: AppColors.ocean,
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
+                child: Container(
+                  padding: const EdgeInsets.only(left: 11, right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          _statusFilterLabel(_statusFilter),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.inkSoft,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: AppColors.inkMuted,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 5),
-                const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 17,
-                  color: AppColors.inkMuted,
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
-      ),
-    ],
+      );
+    },
   );
 
   List<Widget> _buildData(ManagedPersonnelPage page) {
@@ -273,19 +334,6 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
     }
 
     return <Widget>[
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        sliver: SliverToBoxAdapter(
-          child: Text(
-            '${page.totalResults} nhân sự',
-            style: const TextStyle(
-              color: AppColors.inkMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         sliver: SliverList.separated(
@@ -338,31 +386,23 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: <Widget>[
-      IconButton.filledTonal(
+      IconButton(
         tooltip: 'Về Tài khoản',
         onPressed: () => context.go(AppRoutes.account),
+        color: AppColors.inkSoft,
+        iconSize: 20,
         icon: const Icon(Icons.arrow_back_rounded),
       ),
-      const SizedBox(width: 10),
+      const SizedBox(width: 2),
       const Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Nhân sự',
-              style: TextStyle(
-                color: Color(0xFF0B1F3A),
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.55,
-              ),
-            ),
-            SizedBox(height: 3),
-            Text(
-              'Theo dõi đội ngũ kỹ thuật và chuyên gia',
-              style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
-            ),
-          ],
+        child: Text(
+          'Nhân sự',
+          style: TextStyle(
+            color: AppColors.ink,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
         ),
       ),
     ],
@@ -385,19 +425,25 @@ class _RoleChip extends StatelessWidget {
     button: true,
     selected: selected,
     child: Material(
-      color: selected ? AppColors.ocean : const Color(0xB3FFFFFF),
-      borderRadius: BorderRadius.circular(100),
+      color: selected
+          ? const Color(0xFF1D7AD6)
+          : Colors.white.withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected ? Colors.white : AppColors.inkSoft,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+        child: SizedBox(
+          height: 40,
+          child: Center(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected ? Colors.white : AppColors.inkSoft,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -426,14 +472,14 @@ class _PersonnelCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white),
             boxShadow: const <BoxShadow>[
               BoxShadow(
-                color: Color(0x0F000000),
-                blurRadius: 7,
+                color: Color(0x0F0F1C2E),
+                blurRadius: 12,
                 offset: Offset(0, 2),
               ),
             ],
@@ -456,23 +502,15 @@ class _PersonnelCard extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      personnel.email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 4),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
                       children: <Widget>[
                         PersonnelPill(
-                          label: PersonnelVisuals.roleLabel(personnel.role),
+                          label: PersonnelVisuals.roleBadgeLabel(
+                            personnel.role,
+                          ),
                           foreground: PersonnelVisuals.roleForeground(
                             personnel.role,
                           ),
@@ -489,15 +527,20 @@ class _PersonnelCard extends StatelessWidget {
                             personnel.status,
                           ),
                         ),
-                        PersonnelPill(
-                          label:
-                              '${personnel.currentSeasonAssignments} vụ đang phụ trách',
-                          foreground: AppColors.inkSoft,
-                          background: const Color(0xFFEEF1F6),
-                          icon: Icons.layers_outlined,
-                        ),
                       ],
                     ),
+                    if (personnel.currentSeasonAssignments > 0) ...<Widget>[
+                      const SizedBox(height: 5),
+                      Text(
+                        'Đang phụ trách ${personnel.currentSeasonAssignments} vụ nuôi',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -505,7 +548,7 @@ class _PersonnelCard extends StatelessWidget {
               const Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.inkMuted,
-                size: 20,
+                size: 16,
               ),
             ],
           ),

@@ -6,7 +6,13 @@ import 'package:smartshrimp_app/features/personnel/domain/entities/managed_perso
 abstract final class PersonnelVisuals {
   static String roleLabel(AccountRole role) => switch (role) {
     AccountRole.technician => 'Kỹ thuật viên',
-    AccountRole.expert => 'Chuyên gia',
+    AccountRole.expert => 'Chuyên gia thủy sản',
+    _ => 'Nhân sự',
+  };
+
+  static String roleBadgeLabel(AccountRole role) => switch (role) {
+    AccountRole.technician => 'KTV',
+    AccountRole.expert => 'Expert',
     _ => 'Nhân sự',
   };
 
@@ -35,15 +41,21 @@ abstract final class PersonnelVisuals {
   };
 
   static Color roleForeground(AccountRole role) => switch (role) {
-    AccountRole.technician => const Color(0xFF155DA5),
-    AccountRole.expert => const Color(0xFF6F3EB3),
+    AccountRole.technician => const Color(0xFF0C4E8F),
+    AccountRole.expert => const Color(0xFF0F9B8E),
     _ => AppColors.inkMuted,
   };
 
   static Color roleBackground(AccountRole role) => switch (role) {
-    AccountRole.technician => const Color(0xFFE6F2FF),
-    AccountRole.expert => const Color(0xFFF1E9FF),
+    AccountRole.technician => const Color(0xFFEAF4FF),
+    AccountRole.expert => const Color(0xFFE2F6F3),
     _ => const Color(0xFFEEF1F6),
+  };
+
+  static Color avatarBackground(AccountRole role) => switch (role) {
+    AccountRole.technician => const Color(0xFF1D7AD6),
+    AccountRole.expert => const Color(0xFF0F9B8E),
+    _ => const Color(0xFF64748B),
   };
 
   static String formatDateTime(DateTime? value) {
@@ -69,7 +81,8 @@ class PersonnelAvatar extends StatelessWidget {
       label: 'Ảnh đại diện của ${personnel.displayName}',
       child: CircleAvatar(
         radius: radius,
-        backgroundColor: PersonnelVisuals.roleBackground(personnel.role),
+        key: Key('personnel_avatar_${personnel.id}'),
+        backgroundColor: PersonnelVisuals.avatarBackground(personnel.role),
         child: ClipOval(
           child: avatarUrl == null || avatarUrl.isEmpty
               ? _Initials(personnel: personnel, radius: radius)
@@ -98,9 +111,14 @@ class _Initials extends StatelessWidget {
     dimension: radius * 2,
     child: Center(
       child: Text(
-        personnel.initials,
+        personnel.displayName
+            .split(RegExp(r'\s+'))
+            .where((part) => part.isNotEmpty)
+            .last
+            .substring(0, 1)
+            .toUpperCase(),
         style: TextStyle(
-          color: PersonnelVisuals.roleForeground(personnel.role),
+          color: Colors.white,
           fontSize: radius * 0.72,
           fontWeight: FontWeight.w800,
         ),
@@ -125,7 +143,7 @@ class PersonnelPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
       color: background,
       borderRadius: BorderRadius.circular(100),
@@ -143,7 +161,7 @@ class PersonnelPill extends StatelessWidget {
             color: foreground,
             fontSize: 11,
             height: 1.1,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

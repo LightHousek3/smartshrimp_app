@@ -37,6 +37,7 @@ final class NotificationSocket {
       ..onConnect((_) => _onChanged())
       ..on('notification:new', (_) => _onChanged())
       ..on('notification:read', (_) => _onChanged())
+      ..on('notification:read-all', (_) => _onChanged())
       ..onConnectError((error) {
         if (_disposed || !error.toString().contains('Unauthorized')) return;
         _retry?.cancel();

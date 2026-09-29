@@ -10,6 +10,8 @@ import 'package:smartshrimp_app/features/notifications/domain/repositories/notif
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
 
+enum _NotificationFilter { all, unread, action, warning }
+
 class NotificationListPage extends ConsumerStatefulWidget {
   const NotificationListPage({super.key});
 
@@ -19,14 +21,46 @@ class NotificationListPage extends ConsumerStatefulWidget {
 }
 
 class _NotificationListPageState extends ConsumerState<NotificationListPage> {
-  NotificationReadStatus _filter = NotificationReadStatus.all;
+  _NotificationFilter _filter = _NotificationFilter.all;
   bool _loadingMore = false;
+  bool _markingAllAsRead = false;
   String? _loadMoreError;
+
+  NotificationReadStatus get _readStatus => switch (_filter) {
+    _NotificationFilter.all => NotificationReadStatus.all,
+    _NotificationFilter.unread => NotificationReadStatus.unread,
+    _NotificationFilter.action => NotificationReadStatus.unread,
+    _NotificationFilter.warning => NotificationReadStatus.all,
+  };
+
+  List<AppNotification> _applyClientFilter(List<AppNotification> items) =>
+      switch (_filter) {
+        _NotificationFilter.action =>
+          items
+              .where(
+                (notification) =>
+                    notification.isUnread && notification.referenceId != null,
+              )
+              .toList(growable: false),
+        _NotificationFilter.warning =>
+          items
+              .where(
+                (notification) =>
+                    NotificationVisuals.isWarning(notification.type),
+              )
+              .toList(growable: false),
+        _ => items,
+      };
 
   @override
   Widget build(BuildContext context) {
-    final provider = notificationListProvider(_filter);
+    final provider = notificationListProvider(_readStatus);
     final listState = ref.watch(provider);
+    final unreadState = ref.watch(
+      notificationListProvider(NotificationReadStatus.unread),
+    );
+    final unreadCount = unreadState.asData?.value.totalResults;
+    final hasUnread = (unreadCount ?? 0) > 0;
 
     return AppGradientBackground(
       child: SafeArea(
@@ -34,34 +68,25 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            const _ListHeader(),
+            _ListHeader(
+              unreadCount: unreadCount,
+              markingAllAsRead: _markingAllAsRead,
+              onMarkAllAsRead: hasUnread && !_markingAllAsRead
+                  ? () => _markAllAsRead(provider)
+                  : null,
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 3, 16, 18),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: <Widget>[
-                    for (final filter in NotificationReadStatus.values) ...[
-                      _FilterChip(
-                        label: switch (filter) {
-                          NotificationReadStatus.all => 'Tất cả',
-                          NotificationReadStatus.unread => 'Chưa đọc',
-                          NotificationReadStatus.read => 'Đã đọc',
-                        },
-                        selected: _filter == filter,
-                        onTap: () {
-                          if (_filter == filter) return;
-                          setState(() {
-                            _filter = filter;
-                            _loadMoreError = null;
-                            _loadingMore = false;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
-                ),
+              padding: const EdgeInsets.fromLTRB(16, 3, 16, 12),
+              child: _FilterChips(
+                selected: _filter,
+                onSelect: (filter) {
+                  if (_filter == filter) return;
+                  setState(() {
+                    _filter = filter;
+                    _loadMoreError = null;
+                    _loadingMore = false;
+                  });
+                },
               ),
             ),
             Expanded(
@@ -70,101 +95,114 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
                   child: CircularProgressIndicator(color: AppColors.ocean),
                 ),
                 error: (error, _) => _MessageState(
-                  icon: Icons.cloud_off_outlined,
+                  icon: Icons.cloud_off_rounded,
                   title: 'Không thể tải thông báo',
                   message: _errorMessage(error),
                   actionLabel: 'Thử lại',
+                  actionIcon: Icons.refresh_rounded,
                   onAction: () => ref.read(provider.notifier).refresh(),
                 ),
-                data: (page) => page.items.isEmpty
-                    ? _MessageState(
-                        icon: _filter == NotificationReadStatus.unread
-                            ? Icons.mark_email_read_outlined
-                            : Icons.notifications_none_rounded,
-                        title: _filter == NotificationReadStatus.unread
-                            ? 'Bạn đã xem hết thông báo'
-                            : 'Chưa có thông báo',
-                        message: _filter == NotificationReadStatus.read
-                            ? 'Các thông báo đã xem sẽ xuất hiện ở đây.'
-                            : _filter == NotificationReadStatus.unread
-                            ? 'Hiện không có thông báo nào chưa đọc.'
-                            : 'Thông báo mới sẽ xuất hiện tại đây.',
-                      )
-                    : RefreshIndicator(
-                        color: AppColors.ocean,
-                        onRefresh: () => ref.read(provider.notifier).refresh(),
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 11),
-                              child: Row(
-                                children: <Widget>[
-                                  const Expanded(
-                                    child: Text(
-                                      'Hoạt động gần đây',
-                                      style: TextStyle(
-                                        color: AppColors.ink,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${page.totalResults} thông báo',
-                                    style: const TextStyle(
-                                      color: AppColors.inkMuted,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            for (final notification in page.items) ...[
-                              _NotificationCard(
-                                notification: notification,
-                                onTap: () => context.push(
-                                  '${AppRoutes.notifications}/${notification.id}',
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                            if (_loadMoreError != null) ...[
-                              Text(
-                                _loadMoreError!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppColors.error),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            if (page.hasNextPage)
-                              Center(
-                                child: OutlinedButton.icon(
-                                  onPressed: _loadingMore
-                                      ? null
-                                      : () => _loadMore(provider),
-                                  icon: _loadingMore
-                                      ? const SizedBox.square(
-                                          dimension: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.expand_more_rounded),
-                                  label: Text(
-                                    _loadingMore ? 'Đang tải...' : 'Xem thêm',
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                data: (page) => _buildList(provider, page),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildList(
+    AsyncNotifierProvider<NotificationListController, NotificationPage>
+    provider,
+    NotificationPage page,
+  ) {
+    final displayItems = _applyClientFilter(page.items);
+    if (displayItems.isEmpty) {
+      return RefreshIndicator(
+        color: AppColors.ocean,
+        onRefresh: () => ref.read(provider.notifier).refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
+          children: <Widget>[
+            SizedBox(
+              height: 430,
+              child: _MessageState(
+                icon: switch (_filter) {
+                  _NotificationFilter.unread => Icons.mark_email_read_rounded,
+                  _NotificationFilter.warning => Icons.warning_amber_rounded,
+                  _NotificationFilter.action => Icons.check_circle_rounded,
+                  _NotificationFilter.all => Icons.notifications_none_rounded,
+                },
+                title: switch (_filter) {
+                  _NotificationFilter.unread => 'Bạn đã xem hết thông báo',
+                  _NotificationFilter.action => 'Không có mục cần xử lý',
+                  _NotificationFilter.warning => 'Không có cảnh báo nào',
+                  _NotificationFilter.all => 'Chưa có thông báo',
+                },
+                message: page.hasNextPage
+                    ? 'Tiếp tục tải để kiểm tra các thông báo cũ hơn.'
+                    : switch (_filter) {
+                        _NotificationFilter.unread =>
+                          'Hiện không có thông báo nào chưa đọc.',
+                        _NotificationFilter.action =>
+                          'Tất cả thông báo cần xử lý đã được giải quyết.',
+                        _NotificationFilter.warning =>
+                          'Không có cảnh báo nào cần chú ý.',
+                        _NotificationFilter.all =>
+                          'Thông báo mới sẽ xuất hiện tại đây.',
+                      },
+                actionLabel: page.hasNextPage
+                    ? (_loadingMore ? 'Đang tải...' : 'Xem thêm')
+                    : null,
+                actionIcon: Icons.expand_more_rounded,
+                onAction: page.hasNextPage && !_loadingMore
+                    ? () => _loadMore(provider)
+                    : null,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: AppColors.ocean,
+      onRefresh: () => ref.read(provider.notifier).refresh(),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
+        children: <Widget>[
+          for (final notification in displayItems) ...<Widget>[
+            _NotificationCard(
+              notification: notification,
+              onTap: () =>
+                  context.push('${AppRoutes.notifications}/${notification.id}'),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (_loadMoreError != null) ...<Widget>[
+            Text(
+              _loadMoreError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.error, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (page.hasNextPage)
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: _loadingMore ? null : () => _loadMore(provider),
+                icon: _loadingMore
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.expand_more_rounded),
+                label: Text(_loadingMore ? 'Đang tải...' : 'Xem thêm'),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -198,62 +236,190 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
     }
   }
 
+  Future<void> _markAllAsRead(
+    AsyncNotifierProvider<NotificationListController, NotificationPage>
+    provider,
+  ) async {
+    if (_markingAllAsRead) return;
+    setState(() => _markingAllAsRead = true);
+    try {
+      final updatedCount = await ref.read(provider.notifier).markAllAsRead();
+      if (!mounted) return;
+      _showNotice(
+        updatedCount > 0
+            ? 'Đã đánh dấu tất cả thông báo là đã đọc.'
+            : 'Không có thông báo chưa đọc.',
+      );
+    } on AppException catch (error) {
+      if (mounted) _showNotice(error.message, isError: true);
+    } on Object {
+      if (mounted) {
+        _showNotice(
+          'Không thể đánh dấu đã đọc. Vui lòng thử lại.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _markingAllAsRead = false);
+    }
+  }
+
+  void _showNotice(String message, {bool isError = false}) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.white,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          content: Row(
+            children: <Widget>[
+              Icon(
+                isError
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_rounded,
+                color: isError ? AppColors.error : const Color(0xFF0F9B8E),
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+
   static String _errorMessage(Object error) => error is AppException
       ? error.message
       : 'Có lỗi xảy ra. Vui lòng thử lại.';
 }
 
 class _ListHeader extends StatelessWidget {
-  const _ListHeader();
+  const _ListHeader({
+    required this.unreadCount,
+    required this.markingAllAsRead,
+    required this.onMarkAllAsRead,
+  });
+
+  final int? unreadCount;
+  final bool markingAllAsRead;
+  final VoidCallback? onMarkAllAsRead;
 
   @override
   Widget build(BuildContext context) {
+    final subtitle = unreadCount == null
+        ? 'Đang cập nhật thông báo'
+        : unreadCount! > 0
+        ? '$unreadCount thông báo chưa đọc'
+        : 'Bạn đã đọc hết';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
       child: Row(
         children: <Widget>[
-          IconButton.filledTonal(
-            tooltip: 'Về Trang chủ',
-            onPressed: () => context.go(AppRoutes.home),
-            icon: const Icon(Icons.arrow_back_rounded),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
+                const Text(
                   'Thông báo',
                   style: TextStyle(
                     color: AppColors.ink,
-                    fontSize: 27,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.35,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
-                  'Theo dõi những cập nhật dành cho bạn',
-                  style: TextStyle(color: AppColors.inkSoft, fontSize: 13),
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.inkMuted,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.86),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.white),
+          TextButton(
+            key: const Key('mark_all_notifications_read'),
+            onPressed: onMarkAllAsRead,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.ocean,
+              disabledForegroundColor: AppColors.inkMuted,
+              backgroundColor: Colors.white.withValues(alpha: 0.7),
+              disabledBackgroundColor: Colors.white.withValues(alpha: 0.55),
+              minimumSize: const Size(0, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            child: const Icon(
-              Icons.notifications_active_outlined,
-              color: AppColors.ocean,
-              size: 24,
-            ),
+            child: markingAllAsRead
+                ? const SizedBox.square(
+                    dimension: 15,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Đọc tất cả'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({required this.selected, required this.onSelect});
+
+  final _NotificationFilter selected;
+  final void Function(_NotificationFilter) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('notification_filters'),
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xB3D3E8FF),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: <Widget>[
+          for (final filter in _NotificationFilter.values) ...<Widget>[
+            Expanded(
+              child: _FilterChip(
+                label: switch (filter) {
+                  _NotificationFilter.all => 'Tất cả',
+                  _NotificationFilter.unread => 'Chưa đọc',
+                  _NotificationFilter.action => 'Cần xử lý',
+                  _NotificationFilter.warning => 'Cảnh báo',
+                },
+                selected: selected == filter,
+                onTap: () => onSelect(filter),
+              ),
+            ),
+            if (filter != _NotificationFilter.values.last)
+              const SizedBox(width: 4),
+          ],
         ],
       ),
     );
@@ -278,20 +444,26 @@ class _FilterChip extends StatelessWidget {
       selected: selected,
       child: Material(
         color: selected
-            ? AppColors.ocean
-            : Colors.white.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(24),
+            ? const Color(0xFF1D7AD6)
+            : Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : AppColors.inkSoft,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+          child: SizedBox(
+            height: 40,
+            child: Center(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: selected ? Colors.white : AppColors.inkSoft,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                ),
               ),
             ),
           ),
@@ -311,6 +483,7 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final unread = notification.isUnread;
     final accent = NotificationVisuals.color(notification.type);
+    final content = notification.content?.trim();
     return Semantics(
       button: true,
       onTap: onTap,
@@ -321,34 +494,43 @@ class _NotificationCard extends StatelessWidget {
           '${NotificationVisuals.fullTime(notification.createdAt)}',
       child: ExcludeSemantics(
         child: Material(
-          color: unread ? const Color(0xFFFFFAEF) : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           child: InkWell(
             key: Key('notification_${notification.id}'),
             borderRadius: BorderRadius.circular(18),
             onTap: onTap,
             child: Container(
+              key: Key('notification_surface_${notification.id}'),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: unread ? const Color(0xFFF2DEAA) : AppColors.line,
-                ),
+                border: Border.all(color: AppColors.line),
+                boxShadow: const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x100F1C2E),
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.11),
-                      borderRadius: BorderRadius.circular(13),
+                      color: NotificationVisuals.backgroundColor(
+                        notification.type,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       NotificationVisuals.icon(notification.type),
                       color: accent,
-                      size: 21,
+                      size: 17,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -358,27 +540,40 @@ class _NotificationCard extends StatelessWidget {
                       children: <Widget>[
                         Row(
                           children: <Widget>[
-                            Expanded(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: NotificationVisuals.backgroundColor(
+                                  notification.type,
+                                ),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
                               child: Text(
                                 NotificationVisuals.label(notification.type),
                                 style: TextStyle(
-                                  color: accent,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
+                                  color: NotificationVisuals.badgeTextColor(
+                                    notification.type,
+                                  ),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              NotificationVisuals.shortTime(
-                                notification.createdAt,
-                                DateTime.now(),
+                            if (unread) ...<Widget>[
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF1D7AD6),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              style: const TextStyle(
-                                color: AppColors.inkMuted,
-                                fontSize: 11,
-                              ),
-                            ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -388,30 +583,62 @@ class _NotificationCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: unread ? AppColors.ink : AppColors.inkSoft,
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: unread
-                                ? FontWeight.w800
+                                ? FontWeight.w700
                                 : FontWeight.w600,
                             height: 1.3,
                           ),
                         ),
+                        if (content != null && content.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 3),
+                          Text(
+                            content,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.inkSoft,
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 7),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                NotificationVisuals.fullTime(
+                                  notification.createdAt,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.inkMuted,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                            if (notification.referenceId != null) ...<Widget>[
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Xem chi tiết',
+                                style: TextStyle(
+                                  color: AppColors.ocean,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: AppColors.ocean,
+                                size: 13,
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 3),
-                    child: unread
-                        ? const Icon(
-                            Icons.priority_high_rounded,
-                            size: 16,
-                            color: Color(0xFFE5A32D),
-                          )
-                        : const Icon(
-                            Icons.check_rounded,
-                            size: 15,
-                            color: Color(0xFF159168),
-                          ),
                   ),
                 ],
               ),
@@ -429,6 +656,7 @@ class _MessageState extends StatelessWidget {
     required this.title,
     required this.message,
     this.actionLabel,
+    this.actionIcon,
     this.onAction,
   });
 
@@ -436,6 +664,7 @@ class _MessageState extends StatelessWidget {
   final String title;
   final String message;
   final String? actionLabel;
+  final IconData? actionIcon;
   final VoidCallback? onAction;
 
   @override
@@ -447,21 +676,21 @@ class _MessageState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEAF4FF),
-                shape: BoxShape.circle,
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(icon, color: AppColors.ocean, size: 34),
+              child: Icon(icon, color: AppColors.inkMuted, size: 30),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.ink,
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -469,13 +698,13 @@ class _MessageState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.inkSoft),
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
             ),
-            if (onAction != null && actionLabel != null) ...[
+            if (onAction != null && actionLabel != null) ...<Widget>[
               const SizedBox(height: 16),
-              FilledButton.icon(
+              OutlinedButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.refresh_rounded),
+                icon: Icon(actionIcon ?? Icons.refresh_rounded),
                 label: Text(actionLabel!),
               ),
             ],

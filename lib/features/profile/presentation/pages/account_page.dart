@@ -81,12 +81,26 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ],
                 if (profile.role == AccountRole.farmOwner) ...<Widget>[
                   const SizedBox(height: 14),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 1),
+                    child: Text(
+                      'Nhân sự',
+                      style: TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   _ActionCard(
                     children: <Widget>[
                       _ActionRow(
                         key: const Key('account_personnel_entry'),
-                        icon: Icons.person_outline,
-                        label: 'Nhân sự',
+                        icon: Icons.groups_outlined,
+                        iconForeground: const Color(0xFF0F9B8E),
+                        iconBackground: const Color(0xFFE2F6F3),
+                        label: 'KTV · Chuyên gia',
                         subtitle: ref
                             .watch(activePersonnelCountProvider)
                             .when(
@@ -750,12 +764,16 @@ class _ActionRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.subtitle,
+    this.iconForeground = AppColors.ocean,
+    this.iconBackground = const Color(0xFFEAF4FF),
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final String? subtitle;
+  final Color iconForeground;
+  final Color iconBackground;
 
   @override
   Widget build(BuildContext context) {
@@ -767,7 +785,11 @@ class _ActionRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           child: Row(
             children: <Widget>[
-              _SquareIcon(icon: icon),
+              _SquareIcon(
+                icon: icon,
+                foreground: iconForeground,
+                background: iconBackground,
+              ),
               const SizedBox(width: 11),
               Expanded(
                 child: Column(
@@ -808,9 +830,15 @@ class _ActionRow extends StatelessWidget {
 }
 
 class _SquareIcon extends StatelessWidget {
-  const _SquareIcon({required this.icon});
+  const _SquareIcon({
+    required this.icon,
+    this.foreground = AppColors.ocean,
+    this.background = const Color(0xFFEAF4FF),
+  });
 
   final IconData icon;
+  final Color foreground;
+  final Color background;
 
   @override
   Widget build(BuildContext context) {
@@ -818,10 +846,10 @@ class _SquareIcon extends StatelessWidget {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF4FF),
+        color: background,
         borderRadius: BorderRadius.circular(11),
       ),
-      child: Icon(icon, color: AppColors.ocean, size: 17),
+      child: Icon(icon, color: foreground, size: 17),
     );
   }
 }

@@ -3,13 +3,21 @@ import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/config/app_config.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
-import 'package:smartshrimp_app/features/notifications/data/notification_api_repository.dart';
-import 'package:smartshrimp_app/features/notifications/data/notification_socket.dart';
+import 'package:smartshrimp_app/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:smartshrimp_app/features/notifications/data/services/notification_api_service.dart';
+import 'package:smartshrimp_app/features/notifications/data/services/notification_socket.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 
+final notificationRemoteDataSourceProvider =
+    Provider<NotificationRemoteDataSource>((ref) {
+      return NotificationApiService(ref.watch(apiClientProvider));
+    });
+
 final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
-  return NotificationApiRepository(ref.watch(apiClientProvider));
+  return NotificationRepositoryImpl(
+    ref.watch(notificationRemoteDataSourceProvider),
+  );
 });
 
 final notificationSocketProvider = Provider.autoDispose<NotificationSocket?>((
@@ -52,6 +60,7 @@ final class NotificationListController extends AsyncNotifier<NotificationPage> {
   final NotificationReadStatus readStatus;
   bool _loadingMore = false;
   bool _refreshing = false;
+  bool _markingAllAsRead = false;
   int _generation = 0;
 
   @override
@@ -114,6 +123,19 @@ final class NotificationListController extends AsyncNotifier<NotificationPage> {
       );
     } finally {
       _loadingMore = false;
+    }
+  }
+
+  Future<int> markAllAsRead() async {
+    if (_markingAllAsRead) return 0;
+    _markingAllAsRead = true;
+    try {
+      return await _runAuthenticated(
+        () => ref.read(notificationRepositoryProvider).markAllAsRead(),
+      );
+    } finally {
+      _markingAllAsRead = false;
+      if (ref.mounted) ref.invalidate(notificationListProvider);
     }
   }
 

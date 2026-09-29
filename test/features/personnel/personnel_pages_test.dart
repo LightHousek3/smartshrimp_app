@@ -19,6 +19,12 @@ import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page
 
 void main() {
   testWidgets('owner can filter personnel and open details', (tester) async {
+    tester.view.physicalSize = const Size(1245, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
     final repository = _FakePersonnelRepository();
     await tester.pumpWidget(
       ProviderScope(
@@ -38,16 +44,55 @@ void main() {
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
     expect(find.text('1 đang hoạt động'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('account_personnel_entry')),
+        matching: find.byIcon(Icons.groups_outlined),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('account_personnel_entry')));
     await tester.pumpAndSettle();
 
     expect(find.byType(PersonnelListPage), findsOneWidget);
+    expect(find.byIcon(Icons.groups_outlined), findsOneWidget);
+    expect(find.text('KTV'), findsWidgets);
+    expect(find.text('Chuyên gia'), findsOneWidget);
+    expect(find.text('Mọi trạng thái'), findsOneWidget);
     expect(
-      find.text('Theo dõi đội ngũ kỹ thuật và chuyên gia'),
-      findsOneWidget,
+      tester.getSize(find.byType(TextField).first).width,
+      greaterThan(1000),
     );
+    expect(
+      tester.getSize(find.byKey(const Key('personnel_role_filters'))).width,
+      300,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('personnel_status_filter'))).width,
+      124,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('personnel_status_filter'))).height,
+      48,
+    );
+    final statusMenu = tester.widget<PopupMenuButton<PersonnelStatusFilter>>(
+      find.byType(PopupMenuButton<PersonnelStatusFilter>),
+    );
+    expect(statusMenu.color, Colors.white);
+    expect(statusMenu.surfaceTintColor, Colors.transparent);
+    expect(statusMenu.position, PopupMenuPosition.under);
+
+    await tester.tap(find.byKey(const Key('personnel_status_filter')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    await tester.tap(find.text('Mọi trạng thái').last);
+    await tester.pumpAndSettle();
     expect(find.text('Nguyễn Văn Kỹ Thuật'), findsOneWidget);
-    expect(find.text('2 vụ đang phụ trách'), findsOneWidget);
+    expect(find.text('Đang phụ trách 2 vụ nuôi'), findsOneWidget);
+    final avatar = tester.widget<CircleAvatar>(
+      find.byKey(const Key('personnel_avatar_personnel-1')),
+    );
+    expect(avatar.backgroundColor, const Color(0xFF1D7AD6));
 
     await tester.enterText(find.byType(TextField).first, '  kỹ thuật  ');
     await tester.pump(const Duration(milliseconds: 400));
@@ -82,13 +127,13 @@ void main() {
 
     expect(find.text('Nhân sự'), findsNothing);
     expect(find.text('Nhiệm vụ'), findsOneWidget);
-    expect(find.text('Thông báo'), findsNothing);
+    expect(find.text('Thông báo'), findsOneWidget);
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('account_personnel_entry')), findsNothing);
   });
 
-  testWidgets('owner bottom tabs omit personnel and notifications', (
+  testWidgets('owner bottom tabs show notifications and omit personnel', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -107,20 +152,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Nhân sự'), findsNothing);
-    expect(find.text('Thông báo'), findsNothing);
+    expect(find.text('Thông báo'), findsOneWidget);
 
     await tester.tap(find.text('Nhiệm vụ'));
     await tester.pumpAndSettle();
     expect(
       tester.widget<EmptyTabPage>(find.byType(EmptyTabPage)).semanticLabel,
       'Nhiệm vụ',
-    );
-
-    await tester.tap(find.text('Phê duyệt'));
-    await tester.pumpAndSettle();
-    expect(
-      tester.widget<EmptyTabPage>(find.byType(EmptyTabPage)).semanticLabel,
-      'Phê duyệt',
     );
 
     await tester.tap(find.text('Tài khoản'));

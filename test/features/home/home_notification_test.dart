@@ -15,10 +15,10 @@ void main() {
     AccountRole.farmOwner,
     AccountRole.technician,
   ]) {
-    testWidgets('home bell opens notifications for ${role.name}', (
+    testWidgets('notification tab opens notifications for ${role.name}', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(1533, 728);
+      tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(() {
         tester.view.resetPhysicalSize();
@@ -37,30 +37,25 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final bell = find.byTooltip('Mở thông báo');
-      expect(bell, findsOneWidget);
-      expect(
-        find.byKey(const Key('home_unread_notification_badge')),
-        findsOneWidget,
-      );
+      final notificationTab = find.text('Thông báo');
+      expect(notificationTab, findsOneWidget);
+      expect(find.byKey(const Key('notif_tab_unread_badge')), findsOneWidget);
       expect(find.text('25'), findsOneWidget);
-      expect(find.text('Thông báo'), findsNothing);
+      expect(find.byType(NotificationListPage), findsNothing);
       expect(find.text('Nhân sự'), findsNothing);
-      expect(tester.getTopRight(bell).dx, greaterThan(1450));
-      expect(tester.getTopRight(bell).dy, lessThan(100));
 
-      await tester.tap(bell);
+      await tester.tap(notificationTab);
       await tester.pumpAndSettle();
       expect(find.byType(NotificationListPage), findsOneWidget);
-      expect(find.byTooltip('Mở thông báo'), findsNothing);
-      await tester.tap(find.byTooltip('Về Trang chủ'));
+      await tester.tap(find.text('Trang chủ'));
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Mở thông báo'), findsOneWidget);
+      expect(find.byType(NotificationListPage), findsNothing);
+      expect(find.text('Thông báo'), findsOneWidget);
       expect(find.text('25'), findsOneWidget);
     });
   }
 
-  testWidgets('home bell shows zero when there are no unread items', (
+  testWidgets('notification tab hides badge when there are no unread items', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -78,35 +73,33 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Mở thông báo'), findsOneWidget);
-    expect(
-      find.byKey(const Key('home_unread_notification_badge')),
-      findsOneWidget,
-    );
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('Thông báo'), findsOneWidget);
+    expect(find.byKey(const Key('notif_tab_unread_badge')), findsNothing);
   });
 
-  testWidgets('home bell shows an error marker when unread count fails', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(
-            const _AuthRepository(AccountRole.farmOwner),
-          ),
-          notificationRepositoryProvider.overrideWithValue(
-            const _NotificationRepository(unreadCount: 0, fail: true),
-          ),
-        ],
-        child: const SmartShrimpApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'notification tab shows an error marker when unread count fails',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(
+              const _AuthRepository(AccountRole.farmOwner),
+            ),
+            notificationRepositoryProvider.overrideWithValue(
+              const _NotificationRepository(unreadCount: 0, fail: true),
+            ),
+          ],
+          child: const SmartShrimpApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byTooltip('Mở thông báo'), findsOneWidget);
-    expect(find.text('!'), findsOneWidget);
-  });
+      expect(find.text('Thông báo'), findsOneWidget);
+      expect(find.byKey(const Key('notif_tab_unread_badge')), findsOneWidget);
+      expect(find.text('!'), findsOneWidget);
+    },
+  );
 }
 
 final class _AuthRepository implements AuthRepository {
@@ -158,4 +151,7 @@ final class _NotificationRepository implements NotificationRepository {
   @override
   Future<AppNotification> getNotification(String id) =>
       throw UnimplementedError();
+
+  @override
+  Future<int> markAllAsRead() async => unreadCount;
 }

@@ -10,4 +10,7 @@ abstract interface class NotificationRepository {
 
   /// The backend records the first read time when this detail request succeeds.
   Future<AppNotification> getNotification(String id);
+
+  /// Marks every currently unread notification and returns the affected count.
+  Future<int> markAllAsRead();
 }
