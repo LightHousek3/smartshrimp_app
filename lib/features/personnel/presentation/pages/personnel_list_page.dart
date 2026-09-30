@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
@@ -49,9 +50,7 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
       await ref.read(personnelListControllerProvider.notifier).loadMore();
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorMessage(error, loadingMore: true))),
-      );
+      AppFeedback.danger(context, _errorMessage(error, loadingMore: true));
     } finally {
       if (mounted) setState(() => _loadingMore = false);
     }

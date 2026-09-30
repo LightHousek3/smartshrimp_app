@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -346,12 +347,9 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
             status: _status,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.initialPond == null ? 'Đã tạo ao.' : 'Đã cập nhật ao.',
-          ),
-        ),
+      AppFeedback.success(
+        context,
+        widget.initialPond == null ? 'Đã tạo ao.' : 'Đã cập nhật ao.',
       );
       if (widget.initialPond == null) {
         context.go('/farms/${widget.farmId}/ponds/${pond.id}');
@@ -360,9 +358,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
       }
     } on AppException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        AppFeedback.danger(context, error.message);
       }
     }
   }

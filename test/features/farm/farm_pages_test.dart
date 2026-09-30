@@ -13,6 +13,11 @@ void main() {
   testWidgets('owner can open the farm list and create form validates name', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final repository = _FakeFarmRepository();
     await tester.pumpWidget(
       ProviderScope(
@@ -44,7 +49,10 @@ void main() {
 
     await tester.tap(find.byTooltip('Tạo trang trại'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Tạo trang trại'));
+    final submitButton = find.widgetWithText(FilledButton, 'Tạo trang trại');
+    await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
+    await tester.tap(submitButton);
     await tester.pump();
 
     expect(find.text('Vui lòng nhập tên trang trại.'), findsOneWidget);
@@ -72,7 +80,15 @@ void main() {
 
     await tester.tap(find.text('Trại Cà Mau'));
     await tester.pumpAndSettle();
-    expect(find.text('Không thể xóa khi có vụ đang mở'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Xóa trang trại'), 300);
+    await tester.tap(find.text('Xóa trang trại'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chưa thể xóa trang trại'), findsOneWidget);
+    expect(
+      find.text('3 vụ nuôi đang ở trạng thái chuẩn bị hoặc đang nuôi.'),
+      findsOneWidget,
+    );
+    expect(find.text('Xác nhận xóa'), findsNothing);
     expect(find.text('Lưu trữ trang trại'), findsNothing);
   });
 }
@@ -121,6 +137,8 @@ final class _FakeFarmRepository implements FarmRepository {
   Future<Farm> createFarm({
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) async {
     createCalls++;
@@ -141,6 +159,8 @@ final class _FakeFarmRepository implements FarmRepository {
     required String farmId,
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) async => _farm;
 }

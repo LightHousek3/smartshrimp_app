@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 
 class FarmListPage extends ConsumerStatefulWidget {
-  const FarmListPage({super.key});
+  const FarmListPage({this.showCreateSuccess = false, super.key});
+
+  final bool showCreateSuccess;
 
   @override
   ConsumerState<FarmListPage> createState() => _FarmListPageState();
@@ -21,11 +25,23 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
+  bool _successShown = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
+    if (widget.showCreateSuccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showCreateSuccess());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant FarmListPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showCreateSuccess && !oldWidget.showCreateSuccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showCreateSuccess());
+    }
   }
 
   @override
@@ -52,6 +68,17 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
     });
   }
 
+  void _showCreateSuccess() {
+    if (!mounted || _successShown) return;
+    _successShown = true;
+    AppFeedback.success(
+      context,
+      'Trang trại mới đã sẵn sàng để quản lý.',
+      title: 'Tạo trang trại thành công',
+    );
+    context.replace('/farms');
+  }
+
   @override
   Widget build(BuildContext context) {
     final farms = ref.watch(farmListControllerProvider);
@@ -65,9 +92,12 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
-                sliver: SliverToBoxAdapter(child: _buildHeader()),
+              const StickyPageHeader(
+                title: 'Trang trại',
+                subtitle: 'Quản lý trại, ao và vụ nuôi',
+                showBack: false,
+                height: 80,
+                titleSize: 22,
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -102,28 +132,6 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Trang trại',
-          style: TextStyle(
-            color: Color(0xFF0B1F3A),
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            height: 1.25,
-            letterSpacing: -0.55,
-          ),
-        ),
-        Text(
-          'Quản lý trại, ao và vụ nuôi',
-          style: TextStyle(color: AppColors.inkSoft, fontSize: 13, height: 1.5),
-        ),
-      ],
     );
   }
 
@@ -236,6 +244,7 @@ class _FarmCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const <BoxShadow>[
               BoxShadow(
@@ -299,13 +308,12 @@ class _FarmCard extends StatelessWidget {
                           background: const Color(0xFFEAF4FF),
                           foreground: const Color(0xFF0C4E8F),
                         ),
-                        if (farm.activeSeasonCount > 0)
-                          _FarmBadge(
-                            '${farm.activeSeasonCount} vụ nuôi',
-                            background: const Color(0xFFE2F6F3),
-                            foreground: const Color(0xFF0F9B8E),
-                            showDot: true,
-                          ),
+                        _FarmBadge(
+                          '${farm.activeSeasonCount} vụ nuôi',
+                          background: const Color(0xFFE2F6F3),
+                          foreground: const Color(0xFF0F9B8E),
+                          showDot: true,
+                        ),
                         if (farm.totalAreaHectares != null)
                           _FarmBadge(
                             '${formatCompactNumber(farm.totalAreaHectares)} ha',

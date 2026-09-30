@@ -99,6 +99,8 @@ final class _CatalogFarmRepository implements FarmRepository {
   Future<Farm> createFarm({
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => throw UnimplementedError();
 
@@ -107,6 +109,8 @@ final class _CatalogFarmRepository implements FarmRepository {
     required String farmId,
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => throw UnimplementedError();
 

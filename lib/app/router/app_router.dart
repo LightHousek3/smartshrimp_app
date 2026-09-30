@@ -126,7 +126,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: AppRoutes.farms,
-                builder: (_, _) => const FarmListPage(),
+                builder: (_, state) => FarmListPage(
+                  showCreateSuccess:
+                      state.uri.queryParameters['created'] == '1',
+                ),
                 routes: <RouteBase>[
                   GoRoute(
                     path: 'create',

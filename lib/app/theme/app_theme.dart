@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppColors {
   static const ink = Color(0xFF0F1C2E);
@@ -13,6 +14,32 @@ abstract final class AppColors {
   static const backgroundBottom = Color(0xFFFFF1EB);
 }
 
+abstract final class AppTypography {
+  static TextStyle display({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) => GoogleFonts.sora(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+  );
+
+  static TextStyle mono({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+  }) => GoogleFonts.jetBrainsMono(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+  );
+}
+
 abstract final class AppTheme {
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
@@ -23,25 +50,31 @@ abstract final class AppTheme {
       surface: Colors.white,
     );
 
+    final bodyTextTheme = GoogleFonts.plusJakartaSansTextTheme();
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: Colors.transparent,
-      fontFamily: 'Arial',
-      textTheme: const TextTheme(
-        headlineSmall: TextStyle(
+      textTheme: bodyTextTheme.copyWith(
+        headlineSmall: AppTypography.display(
           color: AppColors.ink,
           fontSize: 26,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.5,
         ),
-        titleLarge: TextStyle(
+        titleLarge: AppTypography.display(
           color: AppColors.ink,
           fontSize: 22,
           fontWeight: FontWeight.w800,
         ),
-        bodyLarge: TextStyle(color: AppColors.inkSoft, fontSize: 16),
-        bodyMedium: TextStyle(color: AppColors.inkSoft, fontSize: 14),
+        bodyLarge: bodyTextTheme.bodyLarge?.copyWith(
+          color: AppColors.inkSoft,
+          fontSize: 16,
+        ),
+        bodyMedium: bodyTextTheme.bodyMedium?.copyWith(
+          color: AppColors.inkSoft,
+          fontSize: 14,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
