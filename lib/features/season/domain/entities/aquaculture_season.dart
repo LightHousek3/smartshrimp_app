@@ -96,6 +96,12 @@ final class SeasonAssignment {
   final SeasonAccount account;
 }
 
+typedef SeasonPersonnelReplacementResult = ({
+  SeasonAssignment assignment,
+  int transferredTaskCount,
+  int transferredDiseaseCaseCount,
+});
+
 final class SeasonPersonnel {
   const SeasonPersonnel({this.technician, this.expert});
 

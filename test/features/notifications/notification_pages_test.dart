@@ -70,6 +70,27 @@ void main() {
     );
   });
 
+  test('notification action labels depend on the notification type', () {
+    expect(
+      NotificationVisuals.actionLabel(
+        NotificationType.treatmentProtocolPending,
+      ),
+      'Xem và duyệt',
+    );
+    expect(
+      NotificationVisuals.actionLabel(NotificationType.taskCompleted),
+      'Xem nhiệm vụ',
+    );
+    expect(
+      NotificationVisuals.actionLabel(NotificationType.inventoryLow),
+      'Xem kho',
+    );
+    expect(
+      NotificationVisuals.actionLabel(NotificationType.waterThresholdExceeded),
+      'Xem vụ nuôi',
+    );
+  });
+
   for (final role in <AccountRole>[
     AccountRole.farmOwner,
     AccountRole.technician,
@@ -151,11 +172,23 @@ void main() {
 
       expect(find.text('Chi tiết thông báo'), findsOneWidget);
       expect(
+        find.byKey(const Key('notification_detail_sheet')),
+        findsOneWidget,
+      );
+      expect(
         find.text('Chỉ số NO2 đã vượt ngưỡng cho phép, cần xử lý sớm.'),
         findsOneWidget,
       );
-      expect(find.text('Đã đọc lúc'), findsOneWidget);
+      expect(find.text('Xem vụ nuôi'), findsOneWidget);
+      expect(find.text('Đã đọc lúc'), findsNothing);
       expect(repository.detailCalls, 1);
+
+      await tester.tap(find.byKey(const Key('notification_action_button')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('notification_detail_sheet')),
+        findsOneWidget,
+      );
     });
 
     testWidgets(

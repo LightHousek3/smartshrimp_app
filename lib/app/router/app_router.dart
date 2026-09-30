@@ -27,6 +27,7 @@ import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_seas
 import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_form_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_list_page.dart';
+import 'package:smartshrimp_app/features/season/presentation/pages/season_personnel_assignment_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 
@@ -205,6 +206,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                                     as AquacultureSeason
                                               : null,
                                         ),
+                                      ),
+                                      GoRoute(
+                                        path: 'personnel-assignments',
+                                        builder: (_, state) =>
+                                            SeasonPersonnelAssignmentPage(
+                                              farmId: state
+                                                  .pathParameters['farmId']!,
+                                              seasonId: state
+                                                  .pathParameters['seasonId']!,
+                                            ),
                                       ),
                                     ],
                                   ),

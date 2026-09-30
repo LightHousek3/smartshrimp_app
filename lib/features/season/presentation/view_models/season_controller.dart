@@ -4,6 +4,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
+import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 import 'package:smartshrimp_app/features/season/data/repositories/season_repository_impl.dart';
 import 'package:smartshrimp_app/features/season/data/services/season_api_service.dart';
@@ -34,6 +36,45 @@ final seasonMutationControllerProvider =
     AsyncNotifierProvider.autoDispose<SeasonMutationController, void>(
       SeasonMutationController.new,
     );
+
+final assignablePersonnelProvider = FutureProvider.autoDispose
+    .family<List<ManagedPersonnel>, AccountRole>((ref, role) async {
+      if (role != AccountRole.technician && role != AccountRole.expert) {
+        throw ArgumentError.value(role, 'role', 'Vai trò không hợp lệ');
+      }
+      if (ref.watch(authControllerProvider).value?.role !=
+          AccountRole.farmOwner) {
+        throw const UnsupportedRoleException();
+      }
+
+      final result = <ManagedPersonnel>[];
+      final knownIds = <String>{};
+      final seenCursors = <String>{};
+      String? cursor;
+      try {
+        do {
+          final page = await ref
+              .read(personnelRepositoryProvider)
+              .getPersonnel(
+                cursor: cursor,
+                limit: 100,
+                role: role,
+                status: AccountStatus.active,
+              );
+          result.addAll(page.items.where((item) => knownIds.add(item.id)));
+          if (!page.hasNextPage) break;
+          final nextCursor = page.nextCursor;
+          if (nextCursor == null || !seenCursors.add(nextCursor)) {
+            throw const InvalidResponseException();
+          }
+          cursor = nextCursor;
+        } while (true);
+        return result;
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
 
 abstract base class _OwnerSeasonController<T> extends AsyncNotifier<T> {
   void requireOwner() {
@@ -219,11 +260,57 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
     seasonId: current.id,
   );
 
+  Future<SeasonAssignment> assignPersonnel({
+    required String farmId,
+    required AquacultureSeason current,
+    required String accountId,
+    required AccountRole role,
+  }) => _mutate(
+    () => ref
+        .read(seasonRepositoryProvider)
+        .assignPersonnel(
+          seasonId: current.id,
+          accountId: accountId,
+          role: role,
+        ),
+    farmId: farmId,
+    pondId: current.pondId,
+    seasonId: current.id,
+    invalidatePersonnel: true,
+    invalidateSeasonDetail: false,
+  );
+
+  Future<SeasonPersonnelReplacementResult> replacePersonnel({
+    required String farmId,
+    required AquacultureSeason current,
+    required String accountId,
+    required AccountRole role,
+    required String expectedAssignmentId,
+    required String reason,
+  }) => _mutate(
+    () => ref
+        .read(seasonRepositoryProvider)
+        .replacePersonnel(
+          seasonId: current.id,
+          accountId: accountId,
+          role: role,
+          expectedAssignmentId: expectedAssignmentId,
+          reason: reason,
+        ),
+    farmId: farmId,
+    pondId: current.pondId,
+    seasonId: current.id,
+    invalidatePersonnel: true,
+    invalidateSeasonDetail: false,
+  );
+
   Future<R> _mutate<R>(
     Future<R> Function() operation, {
     required String farmId,
     required String pondId,
     String? seasonId,
+    bool invalidatePersonnel = false,
+    bool invalidateSeasonDetail = true,
   }) async {
     if (state.isLoading) {
       throw const ApiException('Thao tác trước đang được xử lý.');
@@ -238,8 +325,14 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
         ..invalidate(
           pondDetailControllerProvider((farmId: farmId, pondId: pondId)),
         );
-      if (seasonId != null) {
+      if (seasonId != null && invalidateSeasonDetail) {
         ref.invalidate(seasonDetailControllerProvider(seasonId));
+      }
+      if (invalidatePersonnel) {
+        ref
+          ..invalidate(assignablePersonnelProvider)
+          ..invalidate(personnelListControllerProvider)
+          ..invalidate(activePersonnelCountProvider);
       }
       return result;
     } on Object catch (error, stackTrace) {

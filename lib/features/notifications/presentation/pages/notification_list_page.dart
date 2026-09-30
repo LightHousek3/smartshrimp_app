@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
 
@@ -176,8 +175,10 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
           for (final notification in displayItems) ...<Widget>[
             _NotificationCard(
               notification: notification,
-              onTap: () =>
-                  context.push('${AppRoutes.notifications}/${notification.id}'),
+              onTap: () => showNotificationDetailSheet(
+                context: context,
+                notificationId: notification.id,
+              ),
             ),
             const SizedBox(height: 10),
           ],

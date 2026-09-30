@@ -95,6 +95,12 @@ final class _FakeSeasonRemoteDataSource implements SeasonRemoteDataSource {
   }
 
   @override
+  Future<SeasonAssignment> assignPersonnel(
+    String seasonId,
+    Map<String, dynamic> data,
+  ) => throw UnimplementedError();
+
+  @override
   Future<SeasonCancellationResult> cancelSeason(
     String seasonId,
     Map<String, dynamic> data,
@@ -120,6 +126,13 @@ final class _FakeSeasonRemoteDataSource implements SeasonRemoteDataSource {
         totalResults: 0,
         hasNextPage: false,
       );
+
+  @override
+  Future<SeasonPersonnelReplacementResult> replacePersonnel(
+    String seasonId,
+    String role,
+    Map<String, dynamic> data,
+  ) => throw UnimplementedError();
 
   @override
   Future<AquacultureSeason> updateSeason(

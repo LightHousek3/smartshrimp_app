@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/season/data/services/season_api_service.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
@@ -85,6 +86,36 @@ final class SeasonRepositoryImpl implements SeasonRepository {
     'reason': SeasonRules.normalizeText(reason),
     'expectedUpdatedAt': current.updatedAt.toUtc().toIso8601String(),
   });
+
+  @override
+  Future<SeasonAssignment> assignPersonnel({
+    required String seasonId,
+    required String accountId,
+    required AccountRole role,
+  }) => _remote.assignPersonnel(seasonId, <String, dynamic>{
+    'accountId': accountId,
+    'role': _assignmentRole(role),
+  });
+
+  @override
+  Future<SeasonPersonnelReplacementResult> replacePersonnel({
+    required String seasonId,
+    required String accountId,
+    required AccountRole role,
+    required String expectedAssignmentId,
+    required String reason,
+  }) => _remote
+      .replacePersonnel(seasonId, _assignmentRole(role), <String, dynamic>{
+        'accountId': accountId,
+        'expectedAssignmentId': expectedAssignmentId,
+        'reason': SeasonRules.normalizeText(reason),
+      });
+
+  static String _assignmentRole(AccountRole role) => switch (role) {
+    AccountRole.technician => 'TECHNICIAN',
+    AccountRole.expert => 'EXPERT',
+    _ => throw ArgumentError.value(role, 'role', 'Vai trò không hợp lệ'),
+  };
 
   static Map<String, dynamic> _writeData({
     String? pondId,

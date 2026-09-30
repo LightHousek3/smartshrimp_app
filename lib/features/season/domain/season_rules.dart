@@ -1,5 +1,6 @@
 abstract final class SeasonRules {
   static const nameMaxLength = 255;
+  static const replacementReasonMaxLength = 2000;
 
   static String normalizeText(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -46,6 +47,15 @@ abstract final class SeasonRules {
 
   static String? validateCancellationReason(String? value) =>
       normalizeText(value ?? '').isEmpty ? 'Vui lòng nhập lý do hủy.' : null;
+
+  static String? validateReplacementReason(String? value) {
+    final normalized = normalizeText(value ?? '');
+    if (normalized.isEmpty) return 'Vui lòng nhập lý do thay nhân sự.';
+    if (normalized.length > replacementReasonMaxLength) {
+      return 'Lý do không được quá $replacementReasonMaxLength ký tự.';
+    }
+    return null;
+  }
 
   static int? parseQuantity(String value) =>
       value.trim().isEmpty ? null : int.tryParse(value.trim());
