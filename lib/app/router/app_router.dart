@@ -7,6 +7,8 @@ import 'package:smartshrimp_app/features/auth/presentation/pages/auth_info_page.
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_detail_page.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_list_page.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_detail_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_form_page.dart';
@@ -123,7 +125,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: <RouteBase>[
               GoRoute(
                 path: AppRoutes.seasons,
-                builder: (_, _) => const EmptyTabPage(semanticLabel: 'Vụ nuôi'),
+                builder: (_, _) => const AssignedSeasonListPage(),
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: ':seasonId',
+                    builder: (_, state) => AssignedSeasonDetailPage(
+                      seasonId: state.pathParameters['seasonId']!,
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: AppRoutes.farms,
