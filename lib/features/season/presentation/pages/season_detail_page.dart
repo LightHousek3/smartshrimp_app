@@ -110,7 +110,7 @@ class _SeasonDetailContent extends ConsumerWidget {
             _activationChecklist(),
           ],
           const SizedBox(height: 16),
-          _personnel(context),
+          _personnel(context, ref, mutation.isLoading),
           const SizedBox(height: 16),
           _actions(context, ref, mutation.isLoading),
         ],
@@ -380,7 +380,7 @@ class _SeasonDetailContent extends ConsumerWidget {
     onTap: () => _comingSoon(context, 'Ca bệnh'),
   );
 
-  Widget _personnel(BuildContext context) {
+  Widget _personnel(BuildContext context, WidgetRef ref, bool loading) {
     final personnel = season.personnelForDisplay;
     final historical =
         season.status == SeasonStatus.cancelled ||
@@ -403,9 +403,13 @@ class _SeasonDetailContent extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (season.status == SeasonStatus.planning)
+              if (season.status == SeasonStatus.planning ||
+                  season.status == SeasonStatus.active)
                 InkWell(
-                  onTap: () => context.go('/personnel'),
+                  key: const Key('open_personnel_assignment'),
+                  onTap: loading
+                      ? null
+                      : () => _openPersonnelAssignment(context, ref),
                   borderRadius: BorderRadius.circular(8),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -435,6 +439,31 @@ class _SeasonDetailContent extends ConsumerWidget {
           historical: historical,
         ),
       ],
+    );
+  }
+
+  Future<void> _openPersonnelAssignment(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final message = await context.push<String>(
+      '/farms/$farmId/ponds/$pondId/seasons/${season.id}/personnel-assignments',
+    );
+    if (message == null || !context.mounted) return;
+    await ref
+        .read(seasonDetailControllerProvider(season.id).notifier)
+        .refresh();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: <Widget>[
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 9),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
     );
   }
 

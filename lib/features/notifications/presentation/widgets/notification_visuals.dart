@@ -157,6 +157,42 @@ final class NotificationVisuals {
     _ => false,
   };
 
+  static String actionLabel(NotificationType type) => switch (type) {
+    NotificationType.productionProtocolPending ||
+    NotificationType.treatmentProtocolPending => 'Xem và duyệt',
+    NotificationType.productionProtocolReviewed ||
+    NotificationType.treatmentProtocolReviewed ||
+    NotificationType.treatmentProtocolAborted ||
+    NotificationType.treatmentScheduleReady ||
+    NotificationType.treatmentScheduleCompleted => 'Xem phác đồ',
+    NotificationType.taskAssigned ||
+    NotificationType.taskUpdated ||
+    NotificationType.taskDueSoon ||
+    NotificationType.taskOverdue ||
+    NotificationType.taskCompleted => 'Xem nhiệm vụ',
+    NotificationType.inventoryLow ||
+    NotificationType.inventoryInsufficient => 'Xem kho',
+    NotificationType.diseaseCaseCreated ||
+    NotificationType.diseaseCaseResponse ||
+    NotificationType.diseaseCaseWaitingInfo ||
+    NotificationType.diseaseCaseMonitoring ||
+    NotificationType.diseaseCaseResolved ||
+    NotificationType.emergencyCaseUpdate => 'Xem ca bệnh',
+    NotificationType.operationDue ||
+    NotificationType.operationOverdue ||
+    NotificationType.operationCancelled => 'Xem hoạt động',
+    NotificationType.managedAccountActivated ||
+    NotificationType.accountStatusChanged => 'Xem nhân sự',
+    NotificationType.waterThresholdExceeded ||
+    NotificationType.scheduleGenerationFailed ||
+    NotificationType.seasonAssignmentCreated ||
+    NotificationType.seasonAssignmentReplaced ||
+    NotificationType.seasonStatusChanged ||
+    NotificationType.harvestDue ||
+    NotificationType.seasonCompleted => 'Xem vụ nuôi',
+    NotificationType.system || NotificationType.unknown => 'Xem chi tiết',
+  };
+
   static String shortTime(DateTime value, DateTime now) {
     final local = value.toLocal();
     final difference = now.difference(local);

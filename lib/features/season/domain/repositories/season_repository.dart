@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
 abstract interface class SeasonRepository {
@@ -36,6 +37,20 @@ abstract interface class SeasonRepository {
 
   Future<SeasonCancellationResult> cancelSeason({
     required AquacultureSeason current,
+    required String reason,
+  });
+
+  Future<SeasonAssignment> assignPersonnel({
+    required String seasonId,
+    required String accountId,
+    required AccountRole role,
+  });
+
+  Future<SeasonPersonnelReplacementResult> replacePersonnel({
+    required String seasonId,
+    required String accountId,
+    required AccountRole role,
+    required String expectedAssignmentId,
     required String reason,
   });
 }

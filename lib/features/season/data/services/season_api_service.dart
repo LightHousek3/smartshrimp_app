@@ -18,6 +18,15 @@ abstract interface class SeasonRemoteDataSource {
     String seasonId,
     Map<String, dynamic> data,
   );
+  Future<SeasonAssignment> assignPersonnel(
+    String seasonId,
+    Map<String, dynamic> data,
+  );
+  Future<SeasonPersonnelReplacementResult> replacePersonnel(
+    String seasonId,
+    String role,
+    Map<String, dynamic> data,
+  );
 }
 
 final class SeasonApiService implements SeasonRemoteDataSource {
@@ -121,5 +130,48 @@ final class SeasonApiService implements SeasonRemoteDataSource {
       authenticated: true,
     );
     return SeasonCancellationResult.fromJson(response.requireMapData());
+  }
+
+  @override
+  Future<SeasonAssignment> assignPersonnel(
+    String seasonId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _client.post(
+      '$_basePath/${Uri.encodeComponent(seasonId)}/personnel-assignments',
+      data: data,
+      authenticated: true,
+    );
+    return SeasonAssignment.fromJson(response.requireMapData());
+  }
+
+  @override
+  Future<SeasonPersonnelReplacementResult> replacePersonnel(
+    String seasonId,
+    String role,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _client.post(
+      '$_basePath/${Uri.encodeComponent(seasonId)}/personnel-assignments/'
+      '${Uri.encodeComponent(role)}/replace',
+      data: data,
+      authenticated: true,
+    );
+    final body = response.requireMapData();
+    final assignment = body['assignment'];
+    final taskCount = body['transferredTaskCount'];
+    final diseaseCaseCount = body['transferredDiseaseCaseCount'];
+    if (assignment is! Map<String, dynamic> ||
+        taskCount is! int ||
+        taskCount < 0 ||
+        diseaseCaseCount is! int ||
+        diseaseCaseCount < 0) {
+      throw const InvalidResponseException();
+    }
+    return (
+      assignment: SeasonAssignment.fromJson(assignment),
+      transferredTaskCount: taskCount,
+      transferredDiseaseCaseCount: diseaseCaseCount,
+    );
   }
 }
