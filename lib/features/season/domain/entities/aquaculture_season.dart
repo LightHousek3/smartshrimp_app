@@ -77,6 +77,7 @@ final class SeasonAssignment {
     required this.role,
     required this.assignedAt,
     required this.account,
+    this.unassignedAt,
   });
 
   factory SeasonAssignment.fromJson(Map<String, dynamic> json) =>
@@ -84,12 +85,14 @@ final class SeasonAssignment {
         id: _requiredString(json, 'id'),
         role: _requiredString(json, 'role'),
         assignedAt: _requiredDateTime(json, 'assignedAt'),
+        unassignedAt: _nullableDateTime(json['unassignedAt']),
         account: SeasonAccount.fromJson(_requiredMap(json, 'account')),
       );
 
   final String id;
   final String role;
   final DateTime assignedAt;
+  final DateTime? unassignedAt;
   final SeasonAccount account;
 }
 
@@ -207,6 +210,7 @@ final class AquacultureSeason {
     this.cancellationReason,
     this.dayOfCulture,
     this.personnel,
+    this.lastAssignedPersonnel,
     this.approvedProductionProtocol,
     this.activationEligibility,
     this.availableActions,
@@ -215,6 +219,7 @@ final class AquacultureSeason {
   factory AquacultureSeason.fromJson(Map<String, dynamic> json) {
     try {
       final personnel = _nullableMap(json['personnel']);
+      final lastAssignedPersonnel = _nullableMap(json['lastAssignedPersonnel']);
       final protocol = _nullableMap(json['approvedProductionProtocol']);
       final eligibility = _nullableMap(json['activationEligibility']);
       final actions = _nullableMap(json['availableActions']);
@@ -240,6 +245,9 @@ final class AquacultureSeason {
         personnel: personnel == null
             ? null
             : SeasonPersonnel.fromJson(personnel),
+        lastAssignedPersonnel: lastAssignedPersonnel == null
+            ? null
+            : SeasonPersonnel.fromJson(lastAssignedPersonnel),
         approvedProductionProtocol: protocol == null
             ? null
             : SeasonProtocol.fromJson(protocol),
@@ -276,6 +284,7 @@ final class AquacultureSeason {
   final int? dayOfCulture;
   final Pond pond;
   final SeasonPersonnel? personnel;
+  final SeasonPersonnel? lastAssignedPersonnel;
   final SeasonProtocol? approvedProductionProtocol;
   final ActivationEligibility? activationEligibility;
   final SeasonActions? availableActions;
@@ -286,6 +295,12 @@ final class AquacultureSeason {
   bool get canCancel =>
       availableActions?.cancel ??
       (status == SeasonStatus.planning || status == SeasonStatus.active);
+
+  SeasonPersonnel? get personnelForDisplay => switch (status) {
+    SeasonStatus.completed ||
+    SeasonStatus.cancelled => lastAssignedPersonnel ?? personnel,
+    _ => personnel,
+  };
 }
 
 final class SeasonPage {

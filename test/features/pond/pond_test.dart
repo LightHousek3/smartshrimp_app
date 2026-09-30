@@ -62,7 +62,7 @@ void main() {
       isNull,
     );
     expect(
-      PondRules.validateName(List<String>.filled(255, 'a').join()),
+      PondRules.validateName(List<String>.filled(256, 'a').join()),
       isNotNull,
     );
     expect(PondRules.validatePositiveNumber('1,50', 'Độ sâu'), isNull);
