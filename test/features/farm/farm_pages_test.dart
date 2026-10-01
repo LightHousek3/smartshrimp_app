@@ -2,14 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/domain/repositories/farm_repository.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_detail_page.dart';
+import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart'
+    as pond_domain;
+import 'package:smartshrimp_app/features/pond/domain/repositories/pond_repository.dart';
+import 'package:smartshrimp_app/features/pond/presentation/pages/pond_detail_page.dart';
+import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
+import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
+import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 
 void main() {
+  testWidgets(
+    'creating a pond opens its detail and back returns to farm detail',
+    (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final ponds = _FakePondRepository();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
+            farmRepositoryProvider.overrideWithValue(_FakeFarmRepository()),
+            pondRepositoryProvider.overrideWithValue(ponds),
+            seasonRepositoryProvider.overrideWithValue(
+              _EmptySeasonRepository(),
+            ),
+          ],
+          child: const SmartShrimpApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trang trại'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trại Cà Mau'));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byType(CustomScrollView).last,
+        const Offset(0, -450),
+      );
+      await tester.pumpAndSettle();
+      final add = find.text('Thêm ao');
+      await tester.ensureVisible(add);
+      await tester.pumpAndSettle();
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Ao mới');
+      await tester.enterText(find.byType(TextFormField).at(1), '1200');
+      await tester.enterText(find.byType(TextFormField).at(2), '1.5');
+      final submit = find.widgetWithText(FilledButton, 'Tạo ao');
+      await tester.ensureVisible(submit);
+      await tester.pumpAndSettle();
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(ponds.createCalls, 1);
+      expect(find.byType(PondDetailPage), findsOneWidget);
+      final router = ProviderScope.containerOf(
+        tester.element(find.byType(PondDetailPage)),
+      ).read(appRouterProvider);
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        '/farms/farm-1/ponds/new-pond',
+      );
+      await tester.tap(find.byTooltip('Quay lại').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(FarmDetailPage), findsOneWidget);
+      expect(find.byType(PondDetailPage), findsNothing);
+      expect(router.routeInformationProvider.value.uri.path, '/farms/farm-1');
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('owner can open the farm list and create form validates name', (
     tester,
   ) async {
@@ -230,6 +301,57 @@ final class _OwnerAuthRepository implements AuthRepository {
 
   @override
   Future<AuthAccount?> restoreSession() async => _owner;
+}
+
+final class _FakePondRepository implements PondRepository {
+  int createCalls = 0;
+  final pond = const pond_domain.Pond(
+    id: 'new-pond',
+    farmId: 'farm-1',
+    name: 'Ao mới',
+    areaM2: 1200,
+    depthM: 1.5,
+    volumeM3: 1800,
+    type: pond_domain.PondType.aquaculture,
+    status: pond_domain.PondStatus.available,
+  );
+  @override
+  Future<pond_domain.Pond> getPond(String farmId, String pondId) async => pond;
+  @override
+  Future<pond_domain.Pond> createPond({
+    required String farmId,
+    required String name,
+    required double areaM2,
+    required double depthM,
+    double? volumeM3,
+    required pond_domain.PondType type,
+    required pond_domain.PondStatus status,
+  }) async {
+    createCalls++;
+    return pond;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _EmptySeasonRepository implements SeasonRepository {
+  @override
+  Future<SeasonPage> getSeasons({
+    String? farmId,
+    String? pondId,
+    SeasonStatus? status,
+    String search = '',
+    String? cursor,
+    int limit = 20,
+  }) async => const SeasonPage(
+    items: [],
+    limit: 20,
+    totalResults: 0,
+    hasNextPage: false,
+  );
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 final class _FakeFarmRepository implements FarmRepository {

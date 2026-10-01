@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
+import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
 
@@ -233,45 +238,81 @@ class _NotificationInformation extends StatelessWidget {
   }
 }
 
-class _ActionFooter extends StatelessWidget {
+class _ActionFooter extends ConsumerWidget {
   const _ActionFooter({required this.notification});
 
   final AppNotification notification;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    minimum: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[AppColors.oceanLight, AppColors.tealLight],
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: const Key('notification_action_button'),
-          // The destination will be wired when the related feature is ready.
-          onTap: () {},
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(authControllerProvider).value?.role;
+    final referenceId = notification.referenceId?.trim();
+    final canOpenSeason =
+        (role == AccountRole.technician || role == AccountRole.expert) &&
+        notification.referenceType == 'aquaculture_season' &&
+        referenceId != null &&
+        referenceId.isNotEmpty &&
+        switch (notification.type) {
+          NotificationType.seasonAssignmentCreated ||
+          NotificationType.seasonAssignmentReplaced ||
+          NotificationType.seasonStatusChanged ||
+          NotificationType.waterThresholdExceeded ||
+          NotificationType.scheduleGenerationFailed ||
+          NotificationType.harvestDue ||
+          NotificationType.seasonCompleted => true,
+          _ => false,
+        };
+    final canOpenPersonnel =
+        role == AccountRole.farmOwner &&
+        notification.type == NotificationType.managedAccountActivated;
+    final destination = canOpenSeason
+        ? '${AppRoutes.seasons}/${Uri.encodeComponent(referenceId)}'
+        : canOpenPersonnel
+        ? notification.referenceType == 'account' &&
+                  referenceId != null &&
+                  referenceId.isNotEmpty
+              ? '${AppRoutes.personnel}/${Uri.encodeComponent(referenceId)}'
+              : AppRoutes.personnel
+        : null;
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: <Color>[AppColors.oceanLight, AppColors.tealLight],
+          ),
           borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 46,
-            width: double.infinity,
-            child: Center(
-              child: Text(
-                NotificationVisuals.actionLabel(notification.type),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const Key('notification_action_button'),
+            onTap: destination != null
+                ? () {
+                    final router = GoRouter.of(context);
+                    Navigator.of(context).pop();
+                    router.push(destination);
+                  }
+                : null,
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 46,
+              width: double.infinity,
+              child: Center(
+                child: Text(
+                  NotificationVisuals.actionLabel(notification.type),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

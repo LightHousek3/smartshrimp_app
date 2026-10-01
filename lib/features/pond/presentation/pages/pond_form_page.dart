@@ -9,7 +9,7 @@ import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
-import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
+import 'package:smartshrimp_app/features/pond/presentation/widgets/pond_ui.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 
 class PondEditPage extends ConsumerWidget {
