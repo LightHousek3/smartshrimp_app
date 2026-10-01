@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -142,7 +143,7 @@ class _PondListPageState extends ConsumerState<PondListPage> {
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
     child: Row(
       children: <Widget>[
-        FarmCircleButton(
+        AppCircleButton(
           icon: Icons.arrow_back_rounded,
           tooltip: 'Quay lại',
           onPressed: context.pop,

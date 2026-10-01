@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 
+const _buttonRadius = 16.0;
+
 class GradientButton extends StatelessWidget {
   const GradientButton({
     required this.label,
     required this.onPressed,
     this.isLoading = false,
-    this.icon = Icons.check,
+    this.icon = Icons.check_rounded,
     super.key,
   });
 
@@ -29,7 +31,7 @@ class GradientButton extends StatelessWidget {
                 ]
               : const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_buttonRadius),
         boxShadow: enabled
             ? const <BoxShadow>[
                 BoxShadow(
@@ -44,8 +46,9 @@ class GradientButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(_buttonRadius),
           child: SizedBox(
+            width: double.infinity,
             height: 58,
             child: Center(
               child: isLoading

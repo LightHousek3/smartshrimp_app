@@ -20,17 +20,17 @@ void main() {
       ),
       (
         AppNoticeLevel.info,
-        'Thông tin',
+        'Thông báo',
         (context) => AppNoticeService.info(context, 'Thông tin tham khảo.'),
       ),
       (
         AppNoticeLevel.warning,
-        'Cảnh báo',
+        'Cần kiểm tra',
         (context) => AppNoticeService.warning(context, 'Cần kiểm tra lại.'),
       ),
       (
         AppNoticeLevel.danger,
-        'Có lỗi xảy ra',
+        'Không thể thực hiện',
         (context) => AppNoticeService.danger(context, 'Không thể lưu dữ liệu.'),
       ),
     ];

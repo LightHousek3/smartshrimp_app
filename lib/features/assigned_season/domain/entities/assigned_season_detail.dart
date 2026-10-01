@@ -1,81 +1,62 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 
-final class AssignedSeasonPersonnel {
-  const AssignedSeasonPersonnel({
-    required this.role,
-    required this.name,
-    this.avatarUrl,
-  });
-  final String role, name;
-  final String? avatarUrl;
+part 'assigned_season_detail.freezed.dart';
+
+@freezed
+abstract class AssignedSeasonPersonnel with _$AssignedSeasonPersonnel {
+  const factory AssignedSeasonPersonnel({
+    required String role,
+    required String name,
+    String? avatarUrl,
+  }) = _AssignedSeasonPersonnel;
 }
 
-final class OtherAssignedSeason {
-  const OtherAssignedSeason({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.assignedAt,
-    required this.pondId,
-    required this.pondName,
-    required this.pondStatus,
-    this.pondAreaM2,
-    this.pondVolumeM3,
-  });
-  final String id, name, status, pondId, pondName, pondStatus;
-  final DateTime assignedAt;
-  final double? pondAreaM2, pondVolumeM3;
+@freezed
+abstract class OtherAssignedSeason with _$OtherAssignedSeason {
+  const factory OtherAssignedSeason({
+    required String id,
+    required String name,
+    required String status,
+    required DateTime assignedAt,
+    required String pondId,
+    required String pondName,
+    required String pondStatus,
+    double? pondAreaM2,
+    double? pondVolumeM3,
+  }) = _OtherAssignedSeason;
 }
 
-final class AssignedSeasonDetail {
-  const AssignedSeasonDetail({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.shrimpType,
-    required this.pondId,
-    required this.pondName,
-    required this.pondType,
-    required this.pondStatus,
-    required this.farmId,
-    required this.farmName,
-    required this.personnel,
-    required this.otherAssignedSeasons,
-    required this.assignedAt,
-    this.farmAddress,
-    this.stockingDate,
-    this.expectedEndDate,
-    this.initialQuantity,
-    this.initialAvgWeightG,
-    this.initialBiomassKg,
-    this.initialDensityPerM2,
-    this.areaM2,
-    this.depthM,
-    this.volumeM3,
-  });
-  final String id,
-      name,
-      shrimpType,
-      pondId,
-      pondName,
-      pondType,
-      pondStatus,
-      farmId,
-      farmName;
-  final AssignedSeasonStatus status;
-  final String? farmAddress;
-  final DateTime? stockingDate, expectedEndDate;
-  final int? initialQuantity;
-  final double? initialAvgWeightG,
-      initialBiomassKg,
-      initialDensityPerM2,
-      areaM2,
-      depthM,
-      volumeM3;
-  final List<AssignedSeasonPersonnel> personnel;
-  final List<OtherAssignedSeason> otherAssignedSeasons;
-  final DateTime assignedAt;
+@freezed
+abstract class AssignedSeasonDetail with _$AssignedSeasonDetail {
+  const AssignedSeasonDetail._();
+
+  const factory AssignedSeasonDetail({
+    required String id,
+    required String name,
+    required AssignedSeasonStatus status,
+    required String shrimpType,
+    required String pondId,
+    required String pondName,
+    required String pondType,
+    required String pondStatus,
+    required String farmId,
+    required String farmName,
+    required List<AssignedSeasonPersonnel> personnel,
+    required List<OtherAssignedSeason> otherAssignedSeasons,
+    required DateTime assignedAt,
+    String? farmAddress,
+    DateTime? stockingDate,
+    DateTime? expectedEndDate,
+    int? initialQuantity,
+    double? initialAvgWeightG,
+    double? initialBiomassKg,
+    double? initialDensityPerM2,
+    double? areaM2,
+    double? depthM,
+    double? volumeM3,
+  }) = _AssignedSeasonDetail;
 
   int? get dayOfCulture =>
       stockingDate == null || status != AssignedSeasonStatus.active

@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -164,7 +164,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
 
   Widget _header(Pond? pond, bool canCreate) => Row(
     children: <Widget>[
-      FarmCircleButton(
+      AppCircleButton(
         icon: Icons.adaptive.arrow_back,
         tooltip: 'Quay lại',
         onPressed: context.pop,
@@ -189,7 +189,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
           ],
         ),
       ),
-      FarmCircleButton(
+      AppCircleButton(
         icon: _showSearch ? Icons.close_rounded : Icons.search_rounded,
         tooltip: _showSearch ? 'Đóng tìm kiếm' : 'Tìm kiếm vụ nuôi',
         onPressed: () {
@@ -203,7 +203,7 @@ class _SeasonListPageState extends ConsumerState<SeasonListPage> {
       if (canCreate)
         Padding(
           padding: const EdgeInsets.only(left: 8),
-          child: FarmCircleButton(
+          child: AppCircleButton(
             icon: Icons.add_rounded,
             tooltip: 'Tạo vụ nuôi',
             filled: true,

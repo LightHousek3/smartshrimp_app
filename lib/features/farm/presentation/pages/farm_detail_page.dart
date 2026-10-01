@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
@@ -90,7 +92,7 @@ class _FarmDetailContent extends ConsumerWidget {
                 ? farm.address
                 : 'Chưa cập nhật địa chỉ',
             onBack: context.pop,
-            trailing: FarmCircleButton(
+            trailing: AppCircleButton(
               icon: Icons.edit_outlined,
               tooltip: 'Chỉnh sửa trang trại',
               size: 36,
@@ -251,16 +253,16 @@ class _FarmDetailContent extends ConsumerWidget {
           .read(farmMutationControllerProvider.notifier)
           .deleteFarm(farm.id);
       if (!context.mounted) return;
-      AppFeedback.success(context, 'Đã xóa trang trại.');
+      AppNoticeService.success(context, 'Đã xóa trang trại.');
       context.pop();
     } on AppException catch (error) {
       if (!context.mounted) return;
-      AppFeedback.danger(context, error.message);
+      AppNoticeService.danger(context, error.message);
     }
   }
 
   static void _notInScope(BuildContext context, String feature) {
-    AppFeedback.info(
+    AppNoticeService.info(
       context,
       '$feature sẽ được hoàn thiện ở hạng mục tương ứng.',
     );

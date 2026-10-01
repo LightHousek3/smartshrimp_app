@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
@@ -145,7 +145,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             newPassword: _newController.text,
           );
       if (!mounted) return;
-      AppFeedback.success(context, 'Mật khẩu đã thay đổi thành công');
+      AppNoticeService.success(context, 'Mật khẩu đã thay đổi thành công');
       context.go(AppRoutes.account);
     } on AppException catch (error) {
       if (!mounted) return;
@@ -172,7 +172,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   }
 
   void _showError(String message) {
-    AppFeedback.danger(context, message);
+    AppNoticeService.danger(context, message);
   }
 }
 

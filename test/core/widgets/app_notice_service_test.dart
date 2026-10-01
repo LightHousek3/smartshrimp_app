@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 
 void main() {
-  testWidgets('renders the shared success toast with title and message', (
+  tearDown(AppNoticeService.hide);
+
+  testWidgets('renders a styled success notice with title and message', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -11,7 +14,7 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => FilledButton(
-              onPressed: () => AppFeedback.success(
+              onPressed: () => AppNoticeService.success(
                 context,
                 'Trang trại mới đã sẵn sàng để quản lý.',
                 title: 'Tạo trang trại thành công',
@@ -26,32 +29,53 @@ void main() {
     await tester.tap(find.text('Hiện thông báo'));
     await tester.pump();
 
-    expect(find.byType(AppToast), findsOneWidget);
+    expect(find.byKey(const ValueKey('app_notice_success')), findsOneWidget);
     expect(find.text('Tạo trang trại thành công'), findsOneWidget);
     expect(find.text('Trang trại mới đã sẵn sàng để quản lý.'), findsOneWidget);
     expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
   });
 
-  testWidgets('blocked confirm dialog lists blockers and hides delete action', (
+  testWidgets('blocked confirm helper lists blockers and prevents deletion', (
     tester,
   ) async {
+    bool? result;
+
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: AppConfirmDialog(
-            entityLabel: 'trang trại',
-            entityName: 'Trại Cà Mau',
-            retentionMessage: 'Giữ lịch sử.',
-            blockers: <String>['1 vụ nuôi đang mở.'],
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () async {
+                result = await showAppConfirmDialog(
+                  context,
+                  entityLabel: 'trang trại',
+                  entityName: 'Trại Cà Mau',
+                  retentionMessage: 'Giữ lịch sử.',
+                  blockers: const <String>['1 vụ nuôi đang mở.'],
+                );
+              },
+              child: const Text('Mở xác nhận'),
+            ),
           ),
         ),
       ),
     );
 
+    await tester.tap(find.text('Mở xác nhận'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('app_dialog_warning')),
+      findsOneWidget,
+    );
     expect(find.text('Chưa thể xóa trang trại'), findsOneWidget);
     expect(find.text('1 vụ nuôi đang mở.'), findsOneWidget);
     expect(find.text('Đã hiểu'), findsOneWidget);
     expect(find.text('Xác nhận xóa'), findsNothing);
+
+    await tester.tap(find.text('Đã hiểu'));
+    await tester.pumpAndSettle();
+    expect(result, isFalse);
   });
 
   testWidgets('danger form banner constrains long content', (tester) async {

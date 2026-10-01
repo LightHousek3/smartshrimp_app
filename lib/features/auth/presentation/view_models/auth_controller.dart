@@ -26,16 +26,15 @@ final class AuthController extends AsyncNotifier<AuthAccount?> {
     return ref.read(authRepositoryProvider).restoreSession();
   }
 
-  Future<bool> login({required String email, required String password}) async {
-    if (state.isLoading) return false;
-
-    state = const AsyncLoading<AuthAccount?>();
-    state = await AsyncValue.guard<AuthAccount?>(() {
-      return ref
-          .read(authRepositoryProvider)
-          .login(email: email, password: password);
-    });
-    return state.hasValue && state.value != null;
+  Future<AuthAccount> login({
+    required String email,
+    required String password,
+  }) async {
+    final account = await ref
+        .read(authRepositoryProvider)
+        .login(email: email, password: password);
+    state = AsyncData<AuthAccount?>(account);
+    return account;
   }
 
   Future<void> logout() async {

@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
@@ -132,7 +132,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    FarmCircleButton(
+                    AppCircleButton(
                       icon: Icons.arrow_back_ios_new_rounded,
                       tooltip: 'Quay lại',
                       onPressed: loading ? null : context.pop,
@@ -347,7 +347,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
             status: _status,
           );
       if (!mounted) return;
-      AppFeedback.success(
+      AppNoticeService.success(
         context,
         widget.initialPond == null ? 'Đã tạo ao.' : 'Đã cập nhật ao.',
       );
@@ -358,7 +358,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
       }
     } on AppException catch (error) {
       if (mounted) {
-        AppFeedback.danger(context, error.message);
+        AppNoticeService.danger(context, error.message);
       }
     }
   }

@@ -5,60 +5,6 @@ const farmCardShadow = <BoxShadow>[
   BoxShadow(color: Color(0x160F1C2E), blurRadius: 22, offset: Offset(0, 8)),
 ];
 
-class FarmCircleButton extends StatelessWidget {
-  const FarmCircleButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.filled = false,
-    this.size = 42,
-    this.iconSize = 21,
-    this.borderRadius,
-    super.key,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final bool filled;
-  final double size;
-  final double iconSize;
-  final BorderRadius? borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderShape = borderRadius != null
-        ? RoundedRectangleBorder(borderRadius: borderRadius!)
-        : const CircleBorder() as ShapeBorder;
-    return Semantics(
-      button: true,
-      label: tooltip,
-      child: Tooltip(
-        message: tooltip,
-        child: Material(
-          color: filled ? const Color(0xFF1D7AD6) : Colors.white,
-          shape: borderShape,
-          elevation: filled ? 3 : 0,
-          shadowColor: const Color(0x330F62B4),
-          child: InkWell(
-            customBorder: borderShape,
-            onTap: onPressed,
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: Icon(
-                icon,
-                size: iconSize,
-                color: filled ? Colors.white : AppColors.inkSoft,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class FarmActionButton extends StatelessWidget {
   const FarmActionButton({
     required this.label,

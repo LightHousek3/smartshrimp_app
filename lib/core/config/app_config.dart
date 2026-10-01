@@ -1,9 +1,6 @@
 abstract final class AppConfig {
   static const appName = 'SmartShrimp';
 
-  static const logoUrl =
-      'https://res.cloudinary.com/dmv1uhpq/image/upload/v1789054756/logo.png';
-
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000/api/v1',
