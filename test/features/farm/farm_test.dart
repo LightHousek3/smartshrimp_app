@@ -76,10 +76,12 @@ void main() {
       expect(FarmRules.normalizeText('  Trại   Cà Mau  '), 'Trại Cà Mau');
     });
 
-    test('accepts comma decimals and enforces two decimal places', () {
+    test('accepts and rounds comma decimals to two places', () {
       expect(FarmRules.validateArea('3,50'), isNull);
       expect(FarmRules.parseArea('3,50'), 3.5);
-      expect(FarmRules.validateArea('3.501'), isNotNull);
+      expect(FarmRules.validateArea('3.501'), isNull);
+      expect(FarmRules.parseArea('3.501'), 3.5);
+      expect(FarmRules.parseArea('3.506'), 3.51);
       expect(FarmRules.validateArea('0'), isNotNull);
     });
   });

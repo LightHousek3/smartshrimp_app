@@ -1,15 +1,42 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/config/app_config.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/farm/data/repositories/farm_repository_impl.dart';
 import 'package:smartshrimp_app/features/farm/data/services/farm_api_service.dart';
+import 'package:smartshrimp_app/features/farm/data/services/device_location_service.dart';
+import 'package:smartshrimp_app/features/farm/data/services/farm_geocoding_service.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/domain/repositories/farm_repository.dart';
 
 final farmRemoteDataSourceProvider = Provider<FarmRemoteDataSource>((ref) {
   return FarmApiService(ref.watch(apiClientProvider));
+});
+
+final farmGeocodingDioProvider = Provider<Dio>((ref) {
+  return Dio(
+    BaseOptions(
+      baseUrl: AppConfig.osmNominatimBaseUrl,
+      connectTimeout: AppConfig.connectTimeout,
+      receiveTimeout: AppConfig.receiveTimeout,
+      headers: const <String, Object>{
+        'Accept': 'application/json',
+        'Accept-Language': 'vi',
+        'User-Agent': AppConfig.osmUserAgent,
+      },
+    ),
+  );
+});
+
+final farmGeocodingServiceProvider = Provider<FarmGeocodingService>((ref) {
+  return NominatimFarmGeocodingService(ref.watch(farmGeocodingDioProvider));
+});
+
+final deviceLocationServiceProvider = Provider<DeviceLocationService>((ref) {
+  return const GeolocatorDeviceLocationService();
 });
 
 final farmRepositoryProvider = Provider<FarmRepository>((ref) {
@@ -141,6 +168,8 @@ final class FarmMutationController extends _OwnerFarmController<void> {
   Future<Farm> create({
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => _mutate(
     () => ref
@@ -148,6 +177,8 @@ final class FarmMutationController extends _OwnerFarmController<void> {
         .createFarm(
           name: name,
           address: address,
+          latitude: latitude,
+          longitude: longitude,
           totalAreaHectares: totalAreaHectares,
         ),
   );
@@ -156,6 +187,8 @@ final class FarmMutationController extends _OwnerFarmController<void> {
     required String farmId,
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => _mutate(
     () => ref
@@ -164,6 +197,8 @@ final class FarmMutationController extends _OwnerFarmController<void> {
           farmId: farmId,
           name: name,
           address: address,
+          latitude: latitude,
+          longitude: longitude,
           totalAreaHectares: totalAreaHectares,
         ),
     farmId: farmId,

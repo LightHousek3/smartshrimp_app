@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
@@ -148,9 +149,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
             phone: ProfileFormUtils.normalizePhone(_phoneController.text),
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cập nhật hồ sơ thành công.')),
-      );
+      AppFeedback.success(context, 'Cập nhật hồ sơ thành công.');
       context.go(AppRoutes.account);
     } on AppException catch (error) {
       if (mounted) {
@@ -168,9 +167,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.error),
-    );
+    AppFeedback.danger(context, message);
   }
 }
 

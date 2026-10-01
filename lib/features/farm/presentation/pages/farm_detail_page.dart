@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_map_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 
@@ -21,22 +24,49 @@ class FarmDetailPage extends ConsumerWidget {
         bottom: false,
         child: state.when(
           data: (farm) => _FarmDetailContent(farm: farm),
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.ocean),
-          ),
-          error: (error, _) => _DetailError(
-            message: error is AppException
-                ? error.message
-                : 'Không thể tải thông tin trang trại.',
+          loading: () => _FarmDetailStatePage(
+            title: 'Trang trại',
             onBack: context.pop,
-            onRetry: ref
-                .read(farmDetailControllerProvider(farmId).notifier)
-                .refresh,
+            child: const Center(
+              child: CircularProgressIndicator(color: AppColors.ocean),
+            ),
+          ),
+          error: (error, _) => _FarmDetailStatePage(
+            title: 'Trang trại',
+            onBack: context.pop,
+            child: _DetailError(
+              message: error is AppException
+                  ? error.message
+                  : 'Không thể tải thông tin trang trại.',
+              onRetry: ref
+                  .read(farmDetailControllerProvider(farmId).notifier)
+                  .refresh,
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _FarmDetailStatePage extends StatelessWidget {
+  const _FarmDetailStatePage({
+    required this.title,
+    required this.onBack,
+    required this.child,
+  });
+
+  final String title;
+  final VoidCallback onBack;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => CustomScrollView(
+    slivers: <Widget>[
+      StickyPageHeader(title: title, onBack: onBack),
+      SliverFillRemaining(hasScrollBody: false, child: child),
+    ],
+  );
 }
 
 class _FarmDetailContent extends ConsumerWidget {
@@ -51,238 +81,236 @@ class _FarmDetailContent extends ConsumerWidget {
       onRefresh: ref
           .read(farmDetailControllerProvider(farm.id).notifier)
           .refresh,
-      child: ListView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(21, 18, 21, 28),
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              FarmCircleButton(
-                icon: Icons.arrow_back_rounded,
-                tooltip: 'Quay lại',
-                onPressed: context.pop,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        slivers: <Widget>[
+          StickyPageHeader(
+            title: farm.name,
+            subtitle: farm.address?.trim().isNotEmpty == true
+                ? farm.address
+                : 'Chưa cập nhật địa chỉ',
+            onBack: context.pop,
+            trailing: FarmCircleButton(
+              icon: Icons.edit_outlined,
+              tooltip: 'Chỉnh sửa trang trại',
+              size: 36,
+              iconSize: 17,
+              onPressed: mutation.isLoading
+                  ? null
+                  : () => context.push('/farms/${farm.id}/edit', extra: farm),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+            sliver: SliverList.list(
+              children: <Widget>[
+                Row(
                   children: <Widget>[
-                    Text(
-                      farm.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: _MetricCard(
+                        value: formatCompactNumber(farm.totalAreaHectares),
+                        label: 'Diện tích',
+                        unit: 'ha',
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      farm.address?.trim().isNotEmpty == true
-                          ? farm.address!
-                          : 'Chưa cập nhật địa chỉ',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 11.5,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricCard(
+                        value: '${farm.pondCount}',
+                        label: 'Số ao',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricCard(
+                        value: '${farm.activeSeasonCount}',
+                        label: 'Đang nuôi',
                       ),
                     ),
                   ],
                 ),
-              ),
-              FarmCircleButton(
-                icon: Icons.edit_outlined,
-                tooltip: 'Chỉnh sửa trang trại',
-                onPressed: mutation.isLoading
-                    ? null
-                    : () => context.push('/farms/${farm.id}/edit', extra: farm),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _MetricCard(
-                  icon: Icons.straighten_rounded,
-                  value: formatCompactNumber(farm.totalAreaHectares),
-                  label: 'Tổng diện tích',
-                  unit: 'ha',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricCard(
-                  icon: Icons.water_drop_outlined,
-                  value: '${farm.pondCount}',
-                  label: 'Số ao',
-                  unit: 'ao',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricCard(
-                  icon: Icons.autorenew_rounded,
-                  value: '${farm.activeSeasonCount}',
-                  label: 'Đang nuôi',
-                  unit: 'vụ',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 25),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Danh sách ao (${farm.ponds.length})',
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                if (farm.address?.trim().isNotEmpty == true ||
+                    (farm.latitude != null &&
+                        farm.longitude != null)) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _FarmLocationCard(
+                    farm: farm,
+                    onOpenMap: farm.latitude == null || farm.longitude == null
+                        ? null
+                        : () => _openMap(context),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    'Kho',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.display(
+                      color: AppColors.ink,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () => context.push('/farms/${farm.id}/ponds/create'),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Thêm ao', style: TextStyle(fontSize: 12.5)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          if (farm.ponds.isEmpty)
-            const _EmptyPonds()
-          else
-            ...farm.ponds.map(
-              (pond) => Padding(
-                padding: const EdgeInsets.only(bottom: 11),
-                child: _PondCard(
-                  pond: pond,
-                  onTap: () =>
-                      context.push('/farms/${farm.id}/ponds/${pond.id}'),
+                const SizedBox(height: 8),
+                _InventoryCard(
+                  onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
                 ),
-              ),
+                const SizedBox(height: 25),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        'Danh sách ao (${farm.ponds.length})',
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.push('/farms/${farm.id}/ponds/create'),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text(
+                        'Thêm ao',
+                        style: TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 9),
+                if (farm.ponds.isEmpty)
+                  const _EmptyPonds()
+                else
+                  ...farm.ponds.map(
+                    (pond) => Padding(
+                      padding: const EdgeInsets.only(bottom: 11),
+                      child: _PondCard(
+                        pond: pond,
+                        onTap: () =>
+                            context.push('/farms/${farm.id}/ponds/${pond.id}'),
+                      ),
+                    ),
+                  ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/farms/${farm.id}/ponds'),
+                    icon: const Icon(Icons.manage_search_rounded),
+                    label: const Text('Tìm kiếm và lọc ao'),
+                  ),
+                ),
+                const SizedBox(height: 21),
+                FarmActionButton(
+                  label: 'Xóa trang trại',
+                  icon: Icons.delete_outline_rounded,
+                  destructive: true,
+                  enabled: !mutation.isLoading,
+                  onPressed: () => _deleteFarm(context, ref),
+                ),
+              ],
             ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => context.push('/farms/${farm.id}/ponds'),
-              icon: const Icon(Icons.manage_search_rounded),
-              label: const Text('Tìm kiếm và lọc ao'),
-            ),
-          ),
-          const SizedBox(height: 7),
-          _InventoryCard(
-            onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
-          ),
-          const SizedBox(height: 21),
-          FarmActionButton(
-            label: farm.canDelete
-                ? 'Xóa trang trại'
-                : 'Không thể xóa khi có vụ đang mở',
-            icon: Icons.delete_outline_rounded,
-            destructive: true,
-            enabled: farm.canDelete && !mutation.isLoading,
-            onPressed: () => _deleteFarm(context, ref),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openMap(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => FarmMapPage(
+          latitude: farm.latitude!,
+          longitude: farm.longitude!,
+          farmName: farm.name,
+        ),
       ),
     );
   }
 
   Future<void> _deleteFarm(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa trang trại?'),
-        content: const Text(
-          'Trang trại và các dữ liệu vận hành trực tiếp sẽ không còn hiển thị '
-          'hoặc được sử dụng cho nghiệp vụ mới. Lịch sử vụ nuôi vẫn được lưu '
-          'để truy vết.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => dialogContext.pop(false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB42318),
-            ),
-            onPressed: () => dialogContext.pop(true),
-            child: const Text('Xóa'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      entityLabel: 'trang trại',
+      entityName: farm.name,
+      retentionMessage:
+          'Trang trại sẽ không còn xuất hiện trong vận hành. Dữ liệu lịch sử vẫn được giữ lại để truy vết.',
+      blockers: farm.canDelete
+          ? const <String>[]
+          : <String>[
+              '${farm.activeSeasonCount} vụ nuôi đang ở trạng thái chuẩn bị hoặc đang nuôi.',
+            ],
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     try {
       await ref
           .read(farmMutationControllerProvider.notifier)
           .deleteFarm(farm.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đã xóa trang trại.')));
+      AppFeedback.success(context, 'Đã xóa trang trại.');
       context.pop();
     } on AppException catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      AppFeedback.danger(context, error.message);
     }
   }
 
   static void _notInScope(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature sẽ được hoàn thiện ở hạng mục tương ứng.'),
-      ),
+    AppFeedback.info(
+      context,
+      '$feature sẽ được hoàn thiện ở hạng mục tương ứng.',
     );
   }
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.unit,
-  });
-  final IconData icon;
+  const _MetricCard({required this.value, required this.label, this.unit});
   final String value;
   final String label;
-  final String unit;
+  final String? unit;
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 93,
+    height: 72,
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xF2FFFFFF),
-      borderRadius: BorderRadius.circular(13),
-      border: Border.all(color: Colors.white),
-      boxShadow: farmCardShadow,
+      color: const Color(0xCCFFFFFF),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.line),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        Icon(icon, size: 19, color: AppColors.ocean),
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.inkMuted,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.35,
+          ),
+        ),
+        const SizedBox(height: 5),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
             Flexible(
               child: Text(
                 value,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: AppTypography.display(
+                  color: label == 'Đang nuôi'
+                      ? const Color(0xFF0B9A8A)
+                      : AppColors.ink,
                   fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -290,7 +318,7 @@ class _MetricCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Text(
-                unit,
+                unit ?? '',
                 style: const TextStyle(
                   color: AppColors.inkMuted,
                   fontSize: 9.5,
@@ -300,14 +328,154 @@ class _MetricCard extends StatelessWidget {
             ),
           ],
         ),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 9.5),
+      ],
+    ),
+  );
+}
+
+class _FarmLocationCard extends StatelessWidget {
+  const _FarmLocationCard({required this.farm, required this.onOpenMap});
+
+  final Farm farm;
+  final VoidCallback? onOpenMap;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: const <BoxShadow>[
+        BoxShadow(
+          color: Color(0x16000000),
+          blurRadius: 12,
+          offset: Offset(0, 2),
         ),
       ],
     ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Vị trí trang trại',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.display(
+            color: AppColors.ink,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (farm.address?.trim().isNotEmpty == true) ...<Widget>[
+          const SizedBox(height: 12),
+          _LocationInfoRow(
+            icon: Icons.location_on_outlined,
+            color: const Color(0xFF1D7AD6),
+            label: 'Địa chỉ',
+            value: farm.address!,
+          ),
+        ],
+        if (farm.latitude != null && farm.longitude != null) ...<Widget>[
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                child: _LocationInfoRow(
+                  icon: Icons.location_on_outlined,
+                  color: const Color(0xFF0B9A8A),
+                  label: 'Tọa độ GPS',
+                  value:
+                      '${farm.latitude!.toStringAsFixed(4)}, ${farm.longitude!.toStringAsFixed(4)}',
+                  monospaced: true,
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 40,
+                child: FilledButton(
+                  onPressed: onOpenMap,
+                  style: FilledButton.styleFrom(
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 13),
+                    backgroundColor: const Color(0xFFEAF4FF),
+                    foregroundColor: const Color(0xFF0C4E8F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Mở bản đồ',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _LocationInfoRow extends StatelessWidget {
+  const _LocationInfoRow({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+    this.monospaced = false,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  final bool monospaced;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Icon(icon, size: 15, color: color),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: monospaced
+                  ? AppTypography.mono(
+                      color: AppColors.ink,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    )
+                  : const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 
@@ -499,33 +667,53 @@ class _InventoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: const Color(0xF7FFFFFF),
-    borderRadius: BorderRadius.circular(13),
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: Colors.white),
-          boxShadow: farmCardShadow,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x10000000),
+              blurRadius: 12,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-        child: const Row(
+        child: Row(
           children: <Widget>[
-            Icon(Icons.inventory_2_outlined, color: AppColors.ocean, size: 21),
-            SizedBox(width: 11),
-            Expanded(
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2EDFF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                color: Color(0xFF7455D9),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
               child: Text(
-                'Quản lý kho',
+                'Kho vật tư',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: AppColors.ink,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            Icon(
+            const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.inkMuted,
               size: 20,
@@ -538,13 +726,8 @@ class _InventoryCard extends StatelessWidget {
 }
 
 class _DetailError extends StatelessWidget {
-  const _DetailError({
-    required this.message,
-    required this.onBack,
-    required this.onRetry,
-  });
+  const _DetailError({required this.message, required this.onRetry});
   final String message;
-  final VoidCallback onBack;
   final Future<void> Function() onRetry;
 
   @override
@@ -553,11 +736,6 @@ class _DetailError extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        FarmCircleButton(
-          icon: Icons.arrow_back_rounded,
-          tooltip: 'Quay lại',
-          onPressed: onBack,
-        ),
         Expanded(
           child: Center(
             child: Column(

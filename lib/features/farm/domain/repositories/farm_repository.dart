@@ -8,6 +8,8 @@ abstract interface class FarmRepository {
   Future<Farm> createFarm({
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   });
 
@@ -15,6 +17,8 @@ abstract interface class FarmRepository {
     required String farmId,
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   });
 

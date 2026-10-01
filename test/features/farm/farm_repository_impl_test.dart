@@ -18,12 +18,16 @@ void main() {
       await repository.createFarm(
         name: '  Trại   Cà Mau  ',
         address: '   ',
+        latitude: 10.4892,
+        longitude: 107.1647,
         totalAreaHectares: null,
       );
 
       expect(remote.lastData, <String, dynamic>{
         'name': 'Trại Cà Mau',
         'address': null,
+        'latitude': 10.4892,
+        'longitude': 107.1647,
         'totalAreaHectares': null,
       });
     },

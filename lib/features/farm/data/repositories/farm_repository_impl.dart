@@ -18,9 +18,17 @@ final class FarmRepositoryImpl implements FarmRepository {
   Future<Farm> createFarm({
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => _remoteDataSource.createFarm(
-    _writeData(name: name, address: address, area: totalAreaHectares),
+    _writeData(
+      name: name,
+      address: address,
+      latitude: latitude,
+      longitude: longitude,
+      area: totalAreaHectares,
+    ),
   );
 
   @override
@@ -28,10 +36,18 @@ final class FarmRepositoryImpl implements FarmRepository {
     required String farmId,
     required String name,
     String? address,
+    double? latitude,
+    double? longitude,
     double? totalAreaHectares,
   }) => _remoteDataSource.updateFarm(
     farmId,
-    _writeData(name: name, address: address, area: totalAreaHectares),
+    _writeData(
+      name: name,
+      address: address,
+      latitude: latitude,
+      longitude: longitude,
+      area: totalAreaHectares,
+    ),
   );
 
   @override
@@ -41,13 +57,17 @@ final class FarmRepositoryImpl implements FarmRepository {
   static Map<String, dynamic> _writeData({
     required String name,
     required String? address,
+    required double? latitude,
+    required double? longitude,
     required double? area,
   }) {
     final normalizedAddress = FarmRules.normalizeText(address ?? '');
     return <String, dynamic>{
       'name': FarmRules.normalizeText(name),
       'address': normalizedAddress.isEmpty ? null : normalizedAddress,
-      'totalAreaHectares': area,
+      'latitude': latitude,
+      'longitude': longitude,
+      'totalAreaHectares': FarmRules.roundArea(area),
     };
   }
 }

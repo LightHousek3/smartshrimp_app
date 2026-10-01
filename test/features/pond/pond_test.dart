@@ -58,7 +58,7 @@ void main() {
     expect(PondRules.normalizeName('  Ao   số 1 '), 'Ao số 1');
     expect(PondRules.validateName('   '), isNotNull);
     expect(
-      PondRules.validateName(List<String>.filled(254, 'a').join()),
+      PondRules.validateName(List<String>.filled(255, 'a').join()),
       isNull,
     );
     expect(
