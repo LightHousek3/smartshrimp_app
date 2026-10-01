@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
-import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/widgets/personnel_visuals.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -333,7 +333,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: <Widget>[
-      FarmCircleButton(
+      AppCircleButton(
         icon: Icons.arrow_back_ios_new_rounded,
         tooltip: 'Quay lại',
         onPressed: loading ? null : context.pop,
@@ -775,7 +775,7 @@ class _AssignmentMessage extends StatelessWidget {
       children: <Widget>[
         Align(
           alignment: Alignment.centerLeft,
-          child: FarmCircleButton(
+          child: AppCircleButton(
             icon: Icons.arrow_back_ios_new_rounded,
             tooltip: 'Quay lại',
             onPressed: context.pop,

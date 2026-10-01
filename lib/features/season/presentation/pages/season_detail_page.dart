@@ -8,7 +8,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
-import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
@@ -551,10 +552,10 @@ class _SeasonDetailContent extends ConsumerWidget {
   Widget _actions(BuildContext context, WidgetRef ref, bool loading) => Column(
     children: <Widget>[
       if (season.status == SeasonStatus.planning && season.canActivate)
-        SeasonPrimaryButton(
+        GradientButton(
           label: 'Kích hoạt vụ nuôi',
           icon: Icons.check_rounded,
-          loading: loading,
+          isLoading: loading,
           onPressed: loading ? null : () => _activate(context, ref),
         ),
       if (season.canCancel) ...<Widget>[
@@ -1316,7 +1317,7 @@ class _DetailError extends StatelessWidget {
       children: <Widget>[
         Align(
           alignment: Alignment.centerLeft,
-          child: FarmCircleButton(
+          child: AppCircleButton(
             icon: Icons.adaptive.arrow_back,
             tooltip: 'Quay lại',
             onPressed: context.pop,

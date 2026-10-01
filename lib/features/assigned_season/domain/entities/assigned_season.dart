@@ -1,4 +1,7 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+
+part 'assigned_season.freezed.dart';
 
 enum AssignedSeasonStatus { planning, active, completed, cancelled }
 
@@ -10,27 +13,24 @@ AssignedSeasonStatus _status(Object? value) => switch (value) {
   _ => throw const InvalidResponseException(),
 };
 
-final class AssignedSeason {
-  const AssignedSeason({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.shrimpType,
-    required this.pondId,
-    required this.pondName,
-    required this.farmId,
-    required this.farmName,
-    required this.assignedAt,
-    this.stockingDate,
-    this.expectedEndDate,
-    this.initialBiomassKg,
-  });
+@freezed
+abstract class AssignedSeason with _$AssignedSeason {
+  const AssignedSeason._();
 
-  final String id, name, shrimpType, pondId, pondName, farmId, farmName;
-  final AssignedSeasonStatus status;
-  final DateTime assignedAt;
-  final DateTime? stockingDate, expectedEndDate;
-  final double? initialBiomassKg;
+  const factory AssignedSeason({
+    required String id,
+    required String name,
+    required AssignedSeasonStatus status,
+    required String shrimpType,
+    required String pondId,
+    required String pondName,
+    required String farmId,
+    required String farmName,
+    required DateTime assignedAt,
+    DateTime? stockingDate,
+    DateTime? expectedEndDate,
+    double? initialBiomassKg,
+  }) = _AssignedSeason;
 
   int? get dayOfCulture {
     if (stockingDate == null || status != AssignedSeasonStatus.active) {
@@ -64,21 +64,18 @@ final class AssignedSeason {
   }
 }
 
-final class AssignedSeasonPage {
-  const AssignedSeasonPage({
-    required this.items,
-    required this.totalResults,
-    required this.activeResults,
-    required this.allResults,
-    required this.hasNextPage,
-    this.nextCursor,
-  });
-  final List<AssignedSeason> items;
-  final int totalResults;
-  final int activeResults;
-  final int allResults;
-  final bool hasNextPage;
-  final String? nextCursor;
+@freezed
+abstract class AssignedSeasonPage with _$AssignedSeasonPage {
+  const AssignedSeasonPage._();
+
+  const factory AssignedSeasonPage({
+    required List<AssignedSeason> items,
+    required int totalResults,
+    required int activeResults,
+    required int allResults,
+    required bool hasNextPage,
+    String? nextCursor,
+  }) = _AssignedSeasonPage;
 
   AssignedSeasonPage append(AssignedSeasonPage next) => AssignedSeasonPage(
     items: <AssignedSeason>[...items, ...next.items],

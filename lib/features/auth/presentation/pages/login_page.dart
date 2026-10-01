@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_logo.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 
@@ -26,6 +27,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocusNode = FocusNode();
 
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
+  String? _loginError;
 
   @override
   void dispose() {
@@ -38,10 +41,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.isLoading;
-    final errorMessage = authState.hasError
+    final isLoading = authState.isLoading || _isSubmitting;
+    final restoreError = authState.hasError
         ? _messageFor(authState.error!)
         : null;
+    final errorMessage = _loginError ?? restoreError;
+    final errorTitle = _loginError != null
+        ? 'Không thể đăng nhập'
+        : 'Không thể khôi phục phiên';
 
     return Scaffold(
       body: AppGradientBackground(
@@ -85,6 +92,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 passwordFocusNode: _passwordFocusNode,
                                 obscurePassword: _obscurePassword,
                                 isLoading: isLoading,
+                                errorTitle: errorTitle,
                                 errorMessage: errorMessage,
                                 onTogglePassword: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
@@ -117,16 +125,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
+
     FocusManager.instance.primaryFocus?.unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final success = await ref
-        .read(authControllerProvider.notifier)
-        .login(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-    if (success) TextInput.finishAutofillContext();
+    setState(() {
+      _isSubmitting = true;
+      _loginError = null;
+    });
+
+    try {
+      await ref
+          .read(authControllerProvider.notifier)
+          .login(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+      TextInput.finishAutofillContext();
+    } catch (error) {
+      if (mounted) setState(() => _loginError = _messageFor(error));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   String _messageFor(Object error) {
@@ -142,6 +163,7 @@ class _LoginCard extends StatelessWidget {
     required this.passwordFocusNode,
     required this.obscurePassword,
     required this.isLoading,
+    required this.errorTitle,
     required this.errorMessage,
     required this.onTogglePassword,
     required this.onSubmit,
@@ -152,6 +174,7 @@ class _LoginCard extends StatelessWidget {
   final FocusNode passwordFocusNode;
   final bool obscurePassword;
   final bool isLoading;
+  final String errorTitle;
   final String? errorMessage;
   final VoidCallback onTogglePassword;
   final VoidCallback onSubmit;
@@ -231,36 +254,9 @@ class _LoginCard extends StatelessWidget {
                 : Padding(
                     key: ValueKey<String>(errorMessage!),
                     padding: const EdgeInsets.only(top: 14, bottom: 10),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFBE6EA),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            const Icon(
-                              Icons.error_outline_rounded,
-                              color: AppColors.error,
-                              size: 19,
-                            ),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              child: Text(
-                                errorMessage!,
-                                style: const TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    child: AppFormErrorBanner(
+                      title: errorTitle,
+                      message: errorMessage!,
                     ),
                   ),
           ),

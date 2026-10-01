@@ -219,3 +219,96 @@ class _DialogActionButton extends StatelessWidget {
     );
   }
 }
+
+Future<bool> showAppConfirmDialog(
+  BuildContext context, {
+  required String entityLabel,
+  required String entityName,
+  required String retentionMessage,
+  List<String> blockers = const <String>[],
+  String confirmLabel = 'Xác nhận xóa',
+}) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierColor: AppColors.ink.withValues(alpha: 0.35),
+      builder: (dialogContext) {
+        if (blockers.isNotEmpty) {
+          return AppDialog(
+            level: AppNoticeLevel.warning,
+            title: 'Chưa thể xóa $entityLabel',
+            description: 'Hoàn tất các mục bên dưới rồi thử lại.',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                for (final blocker in blockers)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _BlockerItem(message: blocker),
+                  ),
+              ],
+            ),
+            actions: <Widget>[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Đã hiểu'),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return AppConfirmDialog(
+          title: 'Xóa “$entityName”?',
+          description: retentionMessage,
+          confirmLabel: confirmLabel,
+          level: AppNoticeLevel.danger,
+          destructive: true,
+          onConfirm: () => Navigator.of(dialogContext).pop(true),
+        );
+      },
+    ) ??
+    false;
+
+class _BlockerItem extends StatelessWidget {
+  const _BlockerItem({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF8E6),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Padding(
+          padding: EdgeInsets.only(top: 1),
+          child: Icon(
+            Icons.warning_amber_rounded,
+            size: 15,
+            color: Color(0xFFB66A00),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            message,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF8A5500),
+              fontSize: 11,
+              height: 1.45,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}

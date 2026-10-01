@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
@@ -71,7 +72,7 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
   void _showCreateSuccess() {
     if (!mounted || _successShown) return;
     _successShown = true;
-    AppFeedback.success(
+    AppNoticeService.success(
       context,
       'Trang trại mới đã sẵn sàng để quản lý.',
       title: 'Tạo trang trại thành công',
@@ -185,7 +186,7 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           ),
         ),
         const SizedBox(width: 8),
-        FarmCircleButton(
+        AppCircleButton(
           icon: Icons.add_rounded,
           tooltip: 'Tạo trang trại',
           filled: true,

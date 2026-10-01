@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/config/app_config.dart';
 
+const _logoAssetPath = 'assets/images/logo_smartshrimp.png';
+
 class AppLogo extends StatelessWidget {
   const AppLogo({this.width = 250, super.key});
 
@@ -8,8 +10,8 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      AppConfig.logoUrl,
+    return Image.asset(
+      _logoAssetPath,
       width: width,
       fit: BoxFit.contain,
       semanticLabel: 'SmartShrimp',

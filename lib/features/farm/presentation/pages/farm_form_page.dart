@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
@@ -711,7 +711,7 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
             );
       if (!mounted) return;
       if (_isEditing) {
-        AppFeedback.success(context, 'Cập nhật trang trại thành công.');
+        AppNoticeService.success(context, 'Cập nhật trang trại thành công.');
         context.pop(result);
       } else {
         context.go('/farms?created=1');

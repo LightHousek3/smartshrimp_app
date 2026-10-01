@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_feedback.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -195,7 +195,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
           .read(profileControllerProvider.notifier)
           .updateAvatar(bytes: bytes, fileName: image.name);
       if (!mounted) return;
-      AppFeedback.success(context, 'Cập nhật ảnh đại diện thành công.');
+      AppNoticeService.success(context, 'Cập nhật ảnh đại diện thành công.');
     } on AppException catch (error) {
       if (mounted) {
         _showError(error.message);
@@ -212,7 +212,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
   }
 
   void _showError(String message) {
-    AppFeedback.danger(context, message);
+    AppNoticeService.danger(context, message);
   }
 
   static String _messageFor(Object error) {

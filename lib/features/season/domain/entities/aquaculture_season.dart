@@ -1,5 +1,8 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
+
+part 'aquaculture_season.freezed.dart';
 
 enum SeasonStatus { planning, active, completed, cancelled, unknown }
 
@@ -47,14 +50,15 @@ String shrimpTypeLabel(ShrimpType value) => switch (value) {
   ShrimpType.unknown => 'Không xác định',
 };
 
-final class SeasonAccount {
-  const SeasonAccount({
-    required this.id,
-    required this.email,
-    required this.fullName,
-    this.phone,
-    required this.status,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonAccount with _$SeasonAccount {
+  const factory SeasonAccount({
+    required String id,
+    required String email,
+    required String fullName,
+    String? phone,
+    required String status,
+  }) = _SeasonAccount;
 
   factory SeasonAccount.fromJson(Map<String, dynamic> json) => SeasonAccount(
     id: _requiredString(json, 'id'),
@@ -63,22 +67,17 @@ final class SeasonAccount {
     phone: _nullableString(json['phone']),
     status: _requiredString(json, 'status'),
   );
-
-  final String id;
-  final String email;
-  final String fullName;
-  final String? phone;
-  final String status;
 }
 
-final class SeasonAssignment {
-  const SeasonAssignment({
-    required this.id,
-    required this.role,
-    required this.assignedAt,
-    required this.account,
-    this.unassignedAt,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonAssignment with _$SeasonAssignment {
+  const factory SeasonAssignment({
+    required String id,
+    required String role,
+    required DateTime assignedAt,
+    required SeasonAccount account,
+    DateTime? unassignedAt,
+  }) = _SeasonAssignment;
 
   factory SeasonAssignment.fromJson(Map<String, dynamic> json) =>
       SeasonAssignment(
@@ -88,12 +87,6 @@ final class SeasonAssignment {
         unassignedAt: _nullableDateTime(json['unassignedAt']),
         account: SeasonAccount.fromJson(_requiredMap(json, 'account')),
       );
-
-  final String id;
-  final String role;
-  final DateTime assignedAt;
-  final DateTime? unassignedAt;
-  final SeasonAccount account;
 }
 
 typedef SeasonPersonnelReplacementResult = ({
@@ -102,8 +95,12 @@ typedef SeasonPersonnelReplacementResult = ({
   int transferredDiseaseCaseCount,
 });
 
-final class SeasonPersonnel {
-  const SeasonPersonnel({this.technician, this.expert});
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonPersonnel with _$SeasonPersonnel {
+  const factory SeasonPersonnel({
+    SeasonAssignment? technician,
+    SeasonAssignment? expert,
+  }) = _SeasonPersonnel;
 
   factory SeasonPersonnel.fromJson(Map<String, dynamic> json) {
     final technician = _nullableMap(json['technician']);
@@ -115,19 +112,17 @@ final class SeasonPersonnel {
       expert: expert == null ? null : SeasonAssignment.fromJson(expert),
     );
   }
-
-  final SeasonAssignment? technician;
-  final SeasonAssignment? expert;
 }
 
-final class SeasonProtocol {
-  const SeasonProtocol({
-    required this.id,
-    required this.title,
-    required this.versionNo,
-    required this.status,
-    this.reviewedAt,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonProtocol with _$SeasonProtocol {
+  const factory SeasonProtocol({
+    required String id,
+    required String title,
+    required int versionNo,
+    required String status,
+    DateTime? reviewedAt,
+  }) = _SeasonProtocol;
 
   factory SeasonProtocol.fromJson(Map<String, dynamic> json) => SeasonProtocol(
     id: _requiredString(json, 'id'),
@@ -136,19 +131,14 @@ final class SeasonProtocol {
     status: _requiredString(json, 'status'),
     reviewedAt: _nullableDateTime(json['reviewedAt']),
   );
-
-  final String id;
-  final String title;
-  final int versionNo;
-  final String status;
-  final DateTime? reviewedAt;
 }
 
-final class ActivationEligibility {
-  const ActivationEligibility({
-    required this.canActivate,
-    required this.missingConditions,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class ActivationEligibility with _$ActivationEligibility {
+  const factory ActivationEligibility({
+    required bool canActivate,
+    required List<String> missingConditions,
+  }) = _ActivationEligibility;
 
   factory ActivationEligibility.fromJson(Map<String, dynamic> json) {
     final conditions = json['missingConditions'];
@@ -165,17 +155,15 @@ final class ActivationEligibility {
           .toList(growable: false),
     );
   }
-
-  final bool canActivate;
-  final List<String> missingConditions;
 }
 
-final class SeasonActions {
-  const SeasonActions({
-    required this.update,
-    required this.activate,
-    required this.cancel,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonActions with _$SeasonActions {
+  const factory SeasonActions({
+    required bool update,
+    required bool activate,
+    required bool cancel,
+  }) = _SeasonActions;
 
   factory SeasonActions.fromJson(Map<String, dynamic> json) {
     if (json['update'] is! bool ||
@@ -189,38 +177,37 @@ final class SeasonActions {
       cancel: json['cancel']! as bool,
     );
   }
-
-  final bool update;
-  final bool activate;
-  final bool cancel;
 }
 
-final class AquacultureSeason {
-  const AquacultureSeason({
-    required this.id,
-    required this.pondId,
-    required this.name,
-    required this.shrimpType,
-    required this.status,
-    required this.createdBy,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.pond,
-    this.stockingDate,
-    this.expectedEndDate,
-    this.actualEndDate,
-    this.initialQuantity,
-    this.initialAvgWeightG,
-    this.initialBiomassKg,
-    this.initialDensityPerM2,
-    this.cancellationReason,
-    this.dayOfCulture,
-    this.personnel,
-    this.lastAssignedPersonnel,
-    this.approvedProductionProtocol,
-    this.activationEligibility,
-    this.availableActions,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class AquacultureSeason with _$AquacultureSeason {
+  const AquacultureSeason._();
+
+  const factory AquacultureSeason({
+    required String id,
+    required String pondId,
+    required String name,
+    required ShrimpType shrimpType,
+    required SeasonStatus status,
+    required String createdBy,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    required Pond pond,
+    DateTime? stockingDate,
+    DateTime? expectedEndDate,
+    DateTime? actualEndDate,
+    int? initialQuantity,
+    double? initialAvgWeightG,
+    double? initialBiomassKg,
+    double? initialDensityPerM2,
+    String? cancellationReason,
+    int? dayOfCulture,
+    SeasonPersonnel? personnel,
+    SeasonPersonnel? lastAssignedPersonnel,
+    SeasonProtocol? approvedProductionProtocol,
+    ActivationEligibility? activationEligibility,
+    SeasonActions? availableActions,
+  }) = _AquacultureSeason;
 
   factory AquacultureSeason.fromJson(Map<String, dynamic> json) {
     try {
@@ -271,30 +258,6 @@ final class AquacultureSeason {
     }
   }
 
-  final String id;
-  final String pondId;
-  final String name;
-  final ShrimpType shrimpType;
-  final DateTime? stockingDate;
-  final DateTime? expectedEndDate;
-  final DateTime? actualEndDate;
-  final int? initialQuantity;
-  final double? initialAvgWeightG;
-  final double? initialBiomassKg;
-  final double? initialDensityPerM2;
-  final SeasonStatus status;
-  final String? cancellationReason;
-  final String createdBy;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final int? dayOfCulture;
-  final Pond pond;
-  final SeasonPersonnel? personnel;
-  final SeasonPersonnel? lastAssignedPersonnel;
-  final SeasonProtocol? approvedProductionProtocol;
-  final ActivationEligibility? activationEligibility;
-  final SeasonActions? availableActions;
-
   bool get canUpdate =>
       availableActions?.update ?? status == SeasonStatus.planning;
   bool get canActivate => availableActions?.activate ?? false;
@@ -309,20 +272,17 @@ final class AquacultureSeason {
   };
 }
 
-final class SeasonPage {
-  const SeasonPage({
-    required this.items,
-    required this.limit,
-    required this.totalResults,
-    required this.hasNextPage,
-    this.nextCursor,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonPage with _$SeasonPage {
+  const SeasonPage._();
 
-  final List<AquacultureSeason> items;
-  final int limit;
-  final int totalResults;
-  final bool hasNextPage;
-  final String? nextCursor;
+  const factory SeasonPage({
+    required List<AquacultureSeason> items,
+    required int limit,
+    required int totalResults,
+    required bool hasNextPage,
+    String? nextCursor,
+  }) = _SeasonPage;
 
   SeasonPage append(SeasonPage next) => SeasonPage(
     items: <AquacultureSeason>[...items, ...next.items],
@@ -333,20 +293,18 @@ final class SeasonPage {
   );
 }
 
-final class SeasonCancellationResult {
-  const SeasonCancellationResult({
-    required this.season,
-    required this.cancelledScheduleCount,
-  });
+@Freezed(fromJson: false, toJson: false)
+abstract class SeasonCancellationResult with _$SeasonCancellationResult {
+  const factory SeasonCancellationResult({
+    required AquacultureSeason season,
+    required int cancelledScheduleCount,
+  }) = _SeasonCancellationResult;
 
   factory SeasonCancellationResult.fromJson(Map<String, dynamic> json) =>
       SeasonCancellationResult(
         season: AquacultureSeason.fromJson(_requiredMap(json, 'season')),
         cancelledScheduleCount: _requiredInt(json, 'cancelledScheduleCount'),
       );
-
-  final AquacultureSeason season;
-  final int cancelledScheduleCount;
 }
 
 Map<String, dynamic> _requiredMap(Map<String, dynamic> json, String key) {
