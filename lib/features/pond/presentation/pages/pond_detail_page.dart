@@ -11,7 +11,7 @@ import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
-import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
+import 'package:smartshrimp_app/features/pond/presentation/widgets/pond_ui.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';

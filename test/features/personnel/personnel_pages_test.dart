@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -15,6 +17,10 @@ import 'package:smartshrimp_app/features/profile/domain/entities/account_profile
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
+import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
+import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
+import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 
 void main() {
@@ -26,11 +32,13 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
     final repository = _FakePersonnelRepository();
+    final seasonRepository = _UnavailableSeasonRepository();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           personnelRepositoryProvider.overrideWithValue(repository),
+          seasonRepositoryProvider.overrideWithValue(seasonRepository),
           profileRepositoryProvider.overrideWithValue(
             _FakeProfileRepository(AccountRole.farmOwner),
           ),
@@ -132,6 +140,28 @@ void main() {
     expect(find.byIcon(Icons.layers_rounded), findsOneWidget);
     expect(find.text('0912345678'), findsOneWidget);
     expect(repository.detailCalls, 1);
+
+    final historyCard = find.byKey(
+      const Key('personnel_assignment_history_assignment-a3'),
+    );
+    await tester.ensureVisible(historyCard);
+    await tester.pumpAndSettle();
+    await tester.tap(historyCard);
+    await tester.pumpAndSettle();
+
+    final seasonPage = tester.widget<SeasonDetailPage>(
+      find.byType(SeasonDetailPage),
+    );
+    expect(seasonPage.farmId, 'farm-1');
+    expect(seasonPage.pondId, 'pond-a3');
+    expect(seasonPage.seasonId, 'season-a3');
+    expect(seasonRepository.requestedSeasonId, 'season-a3');
+    expect(find.text('Không tìm thấy vụ nuôi thử nghiệm.'), findsOneWidget);
+
+    final context = tester.element(find.byType(SeasonDetailPage));
+    ProviderScope.containerOf(context).read(appRouterProvider).pop();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('personnel_detail_name')), findsOneWidget);
   });
 
   testWidgets('technician does not receive the owner personnel tab', (
@@ -268,6 +298,22 @@ final _personnelDetail = ManagedPersonnelDetail(
     ),
   ],
 );
+
+final class _UnavailableSeasonRepository implements SeasonRepository {
+  String? requestedSeasonId;
+
+  @override
+  Future<AquacultureSeason> getSeason(String seasonId) async {
+    requestedSeasonId = seasonId;
+    throw const ApiException(
+      'Không tìm thấy vụ nuôi thử nghiệm.',
+      statusCode: 404,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 final class _OwnerAuthRepository implements AuthRepository {
   @override

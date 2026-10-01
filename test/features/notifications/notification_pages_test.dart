@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_detail_page.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
@@ -10,8 +16,125 @@ import 'package:smartshrimp_app/features/notifications/domain/entities/app_notif
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
+import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
+import 'package:smartshrimp_app/features/personnel/domain/repositories/personnel_repository.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_detail_page.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_list_page.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 
 void main() {
+  for (final hasReference in [true, false]) {
+    testWidgets(
+      'owner opens activated personnel with reference=$hasReference',
+      (tester) async {
+        final personnel = _PersonnelRepository();
+        final notification = AppNotification(
+          id: 'activation-notification',
+          title: 'Nhân sự đã kích hoạt tài khoản',
+          type: NotificationType.managedAccountActivated,
+          referenceType: hasReference ? 'account' : null,
+          referenceId: hasReference ? 'staff-id' : null,
+          createdAt: DateTime(2026, 10, 2),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authRepositoryProvider.overrideWithValue(
+                const _AuthRepository(AccountRole.farmOwner),
+              ),
+              notificationRepositoryProvider.overrideWithValue(
+                _NotificationRepository(assignment: notification),
+              ),
+              personnelRepositoryProvider.overrideWithValue(personnel),
+            ],
+            child: const SmartShrimpApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Thông báo'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(notification.title));
+        await tester.pumpAndSettle();
+        expect(find.text('Xem nhân sự'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('notification_action_button')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('notification_detail_sheet')),
+          findsNothing,
+        );
+        if (hasReference) {
+          expect(
+            tester
+                .widget<PersonnelDetailPage>(find.byType(PersonnelDetailPage))
+                .personnelId,
+            'staff-id',
+          );
+          expect(personnel.requestedPersonnelId, 'staff-id');
+          expect(find.text('Nhân sự không còn khả dụng.'), findsOneWidget);
+        } else {
+          expect(find.byType(PersonnelListPage), findsOneWidget);
+          expect(personnel.requestedPersonnelId, isNull);
+        }
+      },
+    );
+  }
+  for (final type in <NotificationType>[
+    NotificationType.seasonAssignmentCreated,
+    NotificationType.seasonAssignmentReplaced,
+  ]) {
+    testWidgets('technician opens assigned season from ${type.name}', (
+      tester,
+    ) async {
+      final seasons = _AssignedSeasonRepository();
+      final notification = AppNotification(
+        id: 'assignment-notification',
+        title: 'Bạn được phân công vào vụ nuôi',
+        type: type,
+        referenceType: 'aquaculture_season',
+        referenceId: 'assigned-season-1',
+        createdAt: DateTime(2026, 10, 2),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(
+              const _AuthRepository(AccountRole.technician),
+            ),
+            notificationRepositoryProvider.overrideWithValue(
+              _NotificationRepository(assignment: notification),
+            ),
+            assignedSeasonRepositoryProvider.overrideWithValue(seasons),
+          ],
+          child: const SmartShrimpApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thông báo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(notification.title));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('notification_action_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('notification_detail_sheet')), findsNothing);
+      expect(
+        tester
+            .widget<AssignedSeasonDetailPage>(
+              find.byType(AssignedSeasonDetailPage),
+            )
+            .seasonId,
+        'assigned-season-1',
+      );
+      expect(seasons.requestedSeasonId, 'assigned-season-1');
+      expect(find.text('Ao thử nghiệm'), findsNWidgets(2));
+
+      ProviderScope.containerOf(
+        tester.element(find.byType(AssignedSeasonDetailPage)),
+      ).read(appRouterProvider).pop();
+      await tester.pumpAndSettle();
+      expect(find.text(notification.title), findsOneWidget);
+    });
+  }
   test('notification categories use the rounded icons from the UI sample', () {
     expect(
       NotificationVisuals.icon(NotificationType.waterThresholdExceeded),
@@ -187,6 +310,14 @@ void main() {
       expect(find.text('Xem vụ nuôi'), findsOneWidget);
       expect(find.text('Đã đọc lúc'), findsNothing);
       expect(repository.detailCalls, 0);
+      expect(
+        tester
+            .widget<InkWell>(
+              find.byKey(const Key('notification_action_button')),
+            )
+            .onTap,
+        isNull,
+      );
 
       await tester.tap(find.byKey(const Key('notification_action_button')));
       await tester.pumpAndSettle();
@@ -234,6 +365,69 @@ void main() {
   }
 }
 
+final class _PersonnelRepository implements PersonnelRepository {
+  String? requestedPersonnelId;
+
+  @override
+  Future<ManagedPersonnelPage> getPersonnel({
+    String? cursor,
+    int limit = 20,
+    AccountRole? role,
+    AccountStatus? status,
+    String? search,
+  }) async => const ManagedPersonnelPage(
+    items: [],
+    limit: 20,
+    totalResults: 0,
+    hasNextPage: false,
+  );
+
+  @override
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) async {
+    requestedPersonnelId = personnelId;
+    throw const ApiException('Nhân sự không còn khả dụng.', statusCode: 404);
+  }
+}
+
+final class _AssignedSeasonRepository implements AssignedSeasonRepository {
+  String? requestedSeasonId;
+
+  @override
+  Future<AssignedSeasonPage> getAssignedSeasons({
+    AssignedSeasonStatus? status,
+    String? search,
+    String? farmId,
+    String? cursor,
+    int limit = 20,
+  }) async => const AssignedSeasonPage(
+    items: [],
+    totalResults: 0,
+    activeResults: 0,
+    allResults: 0,
+    hasNextPage: false,
+  );
+
+  @override
+  Future<AssignedSeasonDetail> getAssignedSeason(String seasonId) async {
+    requestedSeasonId = seasonId;
+    return AssignedSeasonDetail(
+      id: seasonId,
+      name: 'Vụ thử nghiệm',
+      status: AssignedSeasonStatus.planning,
+      shrimpType: 'WHITELEG',
+      pondId: 'pond-1',
+      pondName: 'Ao thử nghiệm',
+      pondType: 'AQUACULTURE',
+      pondStatus: 'AVAILABLE',
+      farmId: 'farm-1',
+      farmName: 'Trang trại thử nghiệm',
+      personnel: [],
+      otherAssignedSeasons: [],
+      assignedAt: DateTime(2026, 10, 2),
+    );
+  }
+}
+
 final class _AuthRepository implements AuthRepository {
   const _AuthRepository(this.role);
 
@@ -260,9 +454,10 @@ final class _AuthRepository implements AuthRepository {
 }
 
 final class _NotificationRepository implements NotificationRepository {
-  _NotificationRepository({this.failMarkAll = false});
+  _NotificationRepository({this.failMarkAll = false, this.assignment});
 
   final bool failMarkAll;
+  final AppNotification? assignment;
   int detailCalls = 0;
   int markAllCalls = 0;
   bool _allRead = false;
@@ -290,9 +485,10 @@ final class _NotificationRepository implements NotificationRepository {
     String? cursor,
     int limit = 10,
   }) async {
+    final source = assignment ?? _warning;
     final warning = _allRead
-        ? _warning.copyWith(readAt: DateTime(2026, 9, 27, 7))
-        : _warning;
+        ? source.copyWith(readAt: DateTime(2026, 9, 27, 7))
+        : source;
     final readItems = switch (readStatus) {
       NotificationReadStatus.all => <AppNotification>[warning, _completedTask],
       NotificationReadStatus.unread => <AppNotification>[

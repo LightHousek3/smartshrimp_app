@@ -559,7 +559,8 @@ class _HistoryAssignmentCard extends StatelessWidget {
         key: Key('personnel_assignment_history_${assignment.id}'),
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push(
-          '/farms/${assignment.farmId}/ponds/${assignment.pondId}',
+          '/farms/${assignment.farmId}/ponds/${assignment.pondId}/seasons/'
+          '${assignment.seasonId}',
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
