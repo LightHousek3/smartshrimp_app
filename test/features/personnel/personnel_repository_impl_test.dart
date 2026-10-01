@@ -53,6 +53,16 @@ final _personnel = ManagedPersonnel(
   createdAt: _createdAt,
 );
 final _createdAt = DateTime(2026, 9, 1);
+final _detail = ManagedPersonnelDetail(
+  personnel: _personnel,
+  kpi: const PersonnelKpi(
+    seasonsParticipated: 0,
+    completedTasks: 0,
+    onTimeCompletedTasks: 0,
+  ),
+  currentAssignments: const <PersonnelSeasonAssignment>[],
+  assignmentHistory: const <PersonnelSeasonAssignment>[],
+);
 
 final class _FakePersonnelRemoteDataSource
     implements PersonnelRemoteDataSource {
@@ -71,8 +81,8 @@ final class _FakePersonnelRemoteDataSource
   }
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) async {
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) async {
     lastPersonnelId = personnelId;
-    return _personnel;
+    return _detail;
   }
 }

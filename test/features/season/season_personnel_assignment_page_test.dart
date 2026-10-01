@@ -208,6 +208,6 @@ final class _PersonnelRepository implements PersonnelRepository {
   );
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) async =>
-      _technician;
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) =>
+      throw UnimplementedError();
 }

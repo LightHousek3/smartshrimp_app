@@ -350,6 +350,6 @@ final class _FakePersonnelRepository implements PersonnelRepository {
   );
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) =>
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) =>
       throw UnimplementedError();
 }

@@ -10,5 +10,5 @@ abstract interface class PersonnelRepository {
     String? search,
   });
 
-  Future<ManagedPersonnel> getPersonnelById(String personnelId);
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId);
 }
