@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
@@ -20,192 +21,226 @@ class NotificationListPage extends ConsumerStatefulWidget {
 }
 
 class _NotificationListPageState extends ConsumerState<NotificationListPage> {
+  final _scrollController = ScrollController();
   _NotificationFilter _filter = _NotificationFilter.all;
   bool _loadingMore = false;
   bool _markingAllAsRead = false;
   String? _loadMoreError;
 
-  NotificationReadStatus get _readStatus => switch (_filter) {
-    _NotificationFilter.all => NotificationReadStatus.all,
-    _NotificationFilter.unread => NotificationReadStatus.unread,
-    _NotificationFilter.action => NotificationReadStatus.unread,
-    _NotificationFilter.warning => NotificationReadStatus.all,
+  NotificationListQuery get _query => switch (_filter) {
+    _NotificationFilter.all => (
+      readStatus: NotificationReadStatus.all,
+      category: NotificationCategory.all,
+    ),
+    _NotificationFilter.unread => (
+      readStatus: NotificationReadStatus.unread,
+      category: NotificationCategory.all,
+    ),
+    _NotificationFilter.action => (
+      readStatus: NotificationReadStatus.unread,
+      category: NotificationCategory.action,
+    ),
+    _NotificationFilter.warning => (
+      readStatus: NotificationReadStatus.all,
+      category: NotificationCategory.warning,
+    ),
   };
 
-  List<AppNotification> _applyClientFilter(List<AppNotification> items) =>
-      switch (_filter) {
-        _NotificationFilter.action =>
-          items
-              .where(
-                (notification) =>
-                    notification.isUnread && notification.referenceId != null,
-              )
-              .toList(growable: false),
-        _NotificationFilter.warning =>
-          items
-              .where(
-                (notification) =>
-                    NotificationVisuals.isWarning(notification.type),
-              )
-              .toList(growable: false),
-        _ => items,
-      };
+  static const NotificationListQuery _unreadQuery = (
+    readStatus: NotificationReadStatus.unread,
+    category: NotificationCategory.all,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients ||
+        _scrollController.position.extentAfter >= 280) {
+      return;
+    }
+    final provider = notificationListProvider(_query);
+    final page = ref.read(provider).value;
+    if (page?.hasNextPage ?? false) _loadMore(provider);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final provider = notificationListProvider(_readStatus);
+    final provider = notificationListProvider(_query);
     final listState = ref.watch(provider);
-    final unreadState = ref.watch(
-      notificationListProvider(NotificationReadStatus.unread),
-    );
+    final unreadState = ref.watch(notificationListProvider(_unreadQuery));
     final unreadCount = unreadState.asData?.value.totalResults;
     final hasUnread = (unreadCount ?? 0) > 0;
+    final subtitle = unreadCount == null
+        ? 'Đang cập nhật thông báo'
+        : unreadCount > 0
+        ? '$unreadCount thông báo chưa đọc'
+        : 'Bạn đã đọc hết';
 
     return AppGradientBackground(
       child: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            _ListHeader(
-              unreadCount: unreadCount,
-              markingAllAsRead: _markingAllAsRead,
-              onMarkAllAsRead: hasUnread && !_markingAllAsRead
-                  ? () => _markAllAsRead(provider)
-                  : null,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 3, 16, 12),
-              child: _FilterChips(
-                selected: _filter,
-                onSelect: (filter) {
-                  if (_filter == filter) return;
-                  setState(() {
-                    _filter = filter;
-                    _loadMoreError = null;
-                    _loadingMore = false;
-                  });
-                },
-              ),
-            ),
-            Expanded(
-              child: listState.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.ocean),
+        child: RefreshIndicator(
+          color: AppColors.ocean,
+          onRefresh: () => ref.read(provider.notifier).refresh(),
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[
+              StickyPageHeader(
+                title: 'Thông báo',
+                subtitle: subtitle,
+                showBack: false,
+                titleSize: 22,
+                bottomHeight: 63,
+                bottom: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 3, 16, 12),
+                  child: _FilterChips(
+                    selected: _filter,
+                    onSelect: (filter) {
+                      if (_filter == filter) return;
+                      setState(() {
+                        _filter = filter;
+                        _loadMoreError = null;
+                        _loadingMore = false;
+                      });
+                    },
+                  ),
                 ),
-                error: (error, _) => _MessageState(
-                  icon: Icons.cloud_off_rounded,
-                  title: 'Không thể tải thông báo',
-                  message: _errorMessage(error),
-                  actionLabel: 'Thử lại',
-                  actionIcon: Icons.refresh_rounded,
-                  onAction: () => ref.read(provider.notifier).refresh(),
+                trailing: _MarkAllButton(
+                  markingAllAsRead: _markingAllAsRead,
+                  onPressed: hasUnread && !_markingAllAsRead
+                      ? () => _markAllAsRead(provider)
+                      : null,
                 ),
-                data: (page) => _buildList(provider, page),
               ),
-            ),
-          ],
+              ...listState.when(
+                loading: () => const <Widget>[
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.ocean),
+                    ),
+                  ),
+                ],
+                error: (error, _) => <Widget>[
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _MessageState(
+                      icon: Icons.cloud_off_rounded,
+                      title: 'Không thể tải thông báo',
+                      message: _errorMessage(error),
+                      actionLabel: 'Thử lại',
+                      actionIcon: Icons.refresh_rounded,
+                      onAction: () => ref.read(provider.notifier).refresh(),
+                    ),
+                  ),
+                ],
+                data: (page) => _buildSlivers(provider, page),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildList(
+  List<Widget> _buildSlivers(
     AsyncNotifierProvider<NotificationListController, NotificationPage>
     provider,
     NotificationPage page,
   ) {
-    final displayItems = _applyClientFilter(page.items);
-    if (displayItems.isEmpty) {
-      return RefreshIndicator(
-        color: AppColors.ocean,
-        onRefresh: () => ref.read(provider.notifier).refresh(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
-          children: <Widget>[
-            SizedBox(
-              height: 430,
-              child: _MessageState(
-                icon: switch (_filter) {
-                  _NotificationFilter.unread => Icons.mark_email_read_rounded,
-                  _NotificationFilter.warning => Icons.warning_amber_rounded,
-                  _NotificationFilter.action => Icons.check_circle_rounded,
-                  _NotificationFilter.all => Icons.notifications_none_rounded,
-                },
-                title: switch (_filter) {
-                  _NotificationFilter.unread => 'Bạn đã xem hết thông báo',
-                  _NotificationFilter.action => 'Không có mục cần xử lý',
-                  _NotificationFilter.warning => 'Không có cảnh báo nào',
-                  _NotificationFilter.all => 'Chưa có thông báo',
-                },
-                message: page.hasNextPage
-                    ? 'Tiếp tục tải để kiểm tra các thông báo cũ hơn.'
-                    : switch (_filter) {
-                        _NotificationFilter.unread =>
-                          'Hiện không có thông báo nào chưa đọc.',
-                        _NotificationFilter.action =>
-                          'Tất cả thông báo cần xử lý đã được giải quyết.',
-                        _NotificationFilter.warning =>
-                          'Không có cảnh báo nào cần chú ý.',
-                        _NotificationFilter.all =>
-                          'Thông báo mới sẽ xuất hiện tại đây.',
-                      },
-                actionLabel: page.hasNextPage
-                    ? (_loadingMore ? 'Đang tải...' : 'Xem thêm')
-                    : null,
-                actionIcon: Icons.expand_more_rounded,
-                onAction: page.hasNextPage && !_loadingMore
-                    ? () => _loadMore(provider)
-                    : null,
-              ),
-            ),
-          ],
+    if (page.hasNextPage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _loadingMore || !_scrollController.hasClients) return;
+        if (_scrollController.position.extentAfter < 280) _loadMore(provider);
+      });
+    }
+    if (page.items.isEmpty) {
+      return <Widget>[
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _MessageState(
+            icon: switch (_filter) {
+              _NotificationFilter.unread => Icons.mark_email_read_rounded,
+              _NotificationFilter.warning => Icons.warning_amber_rounded,
+              _NotificationFilter.action => Icons.check_circle_rounded,
+              _NotificationFilter.all => Icons.notifications_none_rounded,
+            },
+            title: switch (_filter) {
+              _NotificationFilter.unread => 'Bạn đã xem hết thông báo',
+              _NotificationFilter.action => 'Không có mục cần xử lý',
+              _NotificationFilter.warning => 'Không có cảnh báo nào',
+              _NotificationFilter.all => 'Chưa có thông báo',
+            },
+            message: switch (_filter) {
+              _NotificationFilter.unread =>
+                'Hiện không có thông báo nào chưa đọc.',
+              _NotificationFilter.action =>
+                'Tất cả thông báo cần xử lý đã được giải quyết.',
+              _NotificationFilter.warning => 'Không có cảnh báo nào cần chú ý.',
+              _NotificationFilter.all => 'Thông báo mới sẽ xuất hiện tại đây.',
+            },
+          ),
         ),
-      );
+      ];
     }
 
-    return RefreshIndicator(
-      color: AppColors.ocean,
-      onRefresh: () => ref.read(provider.notifier).refresh(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
-        children: <Widget>[
-          for (final notification in displayItems) ...<Widget>[
-            _NotificationCard(
+    return <Widget>[
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        sliver: SliverList.separated(
+          itemCount: page.items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, index) {
+            final notification = page.items[index];
+            return _NotificationCard(
               notification: notification,
               onTap: () => showNotificationDetailSheet(
                 context: context,
-                notificationId: notification.id,
+                notification: notification,
               ),
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (_loadMoreError != null) ...<Widget>[
-            Text(
-              _loadMoreError!,
+            );
+          },
+        ),
+      ),
+      if (_loadMoreError case final error?)
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              error,
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.error, fontSize: 12),
             ),
-            const SizedBox(height: 8),
-          ],
-          if (page.hasNextPage)
-            Center(
-              child: OutlinedButton.icon(
-                onPressed: _loadingMore ? null : () => _loadMore(provider),
-                icon: _loadingMore
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.expand_more_rounded),
-                label: Text(_loadingMore ? 'Đang tải...' : 'Xem thêm'),
+          ),
+        ),
+      if (_loadingMore)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.only(top: 4, bottom: 20),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-        ],
-      ),
-    );
+          ),
+        )
+      else
+        const SliverToBoxAdapter(child: SizedBox(height: 26)),
+    ];
   }
 
   Future<void> _loadMore(
@@ -309,82 +344,36 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
       : 'Có lỗi xảy ra. Vui lòng thử lại.';
 }
 
-class _ListHeader extends StatelessWidget {
-  const _ListHeader({
-    required this.unreadCount,
+class _MarkAllButton extends StatelessWidget {
+  const _MarkAllButton({
     required this.markingAllAsRead,
-    required this.onMarkAllAsRead,
+    required this.onPressed,
   });
 
-  final int? unreadCount;
   final bool markingAllAsRead;
-  final VoidCallback? onMarkAllAsRead;
+  final VoidCallback? onPressed;
 
   @override
-  Widget build(BuildContext context) {
-    final subtitle = unreadCount == null
-        ? 'Đang cập nhật thông báo'
-        : unreadCount! > 0
-        ? '$unreadCount thông báo chưa đọc'
-        : 'Bạn đã đọc hết';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  'Thông báo',
-                  style: TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.35,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          TextButton(
-            key: const Key('mark_all_notifications_read'),
-            onPressed: onMarkAllAsRead,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.ocean,
-              disabledForegroundColor: AppColors.inkMuted,
-              backgroundColor: Colors.white.withValues(alpha: 0.7),
-              disabledBackgroundColor: Colors.white.withValues(alpha: 0.55),
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              shape: const StadiumBorder(),
-              textStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            child: markingAllAsRead
-                ? const SizedBox.square(
-                    dimension: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Đọc tất cả'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => TextButton(
+    key: const Key('mark_all_notifications_read'),
+    onPressed: onPressed,
+    style: TextButton.styleFrom(
+      foregroundColor: AppColors.ocean,
+      disabledForegroundColor: AppColors.inkMuted,
+      backgroundColor: Colors.white.withValues(alpha: 0.7),
+      disabledBackgroundColor: Colors.white.withValues(alpha: 0.55),
+      minimumSize: const Size(0, 34),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      shape: const StadiumBorder(),
+      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+    ),
+    child: markingAllAsRead
+        ? const SizedBox.square(
+            dimension: 15,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Text('Đọc tất cả'),
+  );
 }
 
 class _FilterChips extends StatelessWidget {

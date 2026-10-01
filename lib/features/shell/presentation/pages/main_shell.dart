@@ -76,7 +76,10 @@ class MainShell extends ConsumerWidget {
     final items = isOwner ? _ownerItems : _technicianItems;
     final location = GoRouterState.of(context).uri.path;
     final unreadNotifications = ref.watch(
-      notificationListProvider(NotificationReadStatus.unread),
+      notificationListProvider((
+        readStatus: NotificationReadStatus.unread,
+        category: NotificationCategory.all,
+      )),
     );
     final notificationBadgeText = switch (unreadNotifications) {
       AsyncData(:final value) when value.totalResults > 99 => '99+',

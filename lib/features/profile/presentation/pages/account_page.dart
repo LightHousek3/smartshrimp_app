@@ -50,7 +50,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             color: AppColors.ocean,
             onRefresh: () async {
               if (profile.role == AccountRole.farmOwner) {
-                ref.invalidate(activePersonnelCountProvider);
+                ref.invalidate(activePersonnelSummaryProvider);
               }
               await ref.read(profileControllerProvider.notifier).refresh();
             },
@@ -101,11 +101,20 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         icon: Icons.groups_outlined,
                         iconForeground: const Color(0xFF0F9B8E),
                         iconBackground: const Color(0xFFE2F6F3),
-                        label: 'KTV · Chuyên gia',
-                        subtitle: ref
-                            .watch(activePersonnelCountProvider)
+                        label: ref
+                            .watch(activePersonnelSummaryProvider)
                             .when(
-                              data: (count) => '$count đang hoạt động',
+                              data: (summary) =>
+                                  '${summary.technicians} KTV · '
+                                  '${summary.experts} Chuyên gia',
+                              loading: () => 'KTV · Chuyên gia',
+                              error: (_, _) => 'KTV · Chuyên gia',
+                            ),
+                        subtitle: ref
+                            .watch(activePersonnelSummaryProvider)
+                            .when(
+                              data: (summary) =>
+                                  '${summary.total} đang hoạt động',
                               loading: () => 'Đang tải số nhân sự...',
                               error: (_, _) => 'Xem danh sách nhân sự',
                             ),

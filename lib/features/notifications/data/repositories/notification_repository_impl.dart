@@ -10,9 +10,15 @@ final class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Future<NotificationPage> getNotifications({
     required NotificationReadStatus readStatus,
+    NotificationCategory category = NotificationCategory.all,
     String? cursor,
+    int limit = 10,
   }) {
-    final query = <String, dynamic>{'readStatus': readStatus.name, 'limit': 20};
+    final query = <String, dynamic>{
+      'readStatus': readStatus.name,
+      'limit': limit,
+      if (category != NotificationCategory.all) 'category': category.name,
+    };
     if (cursor != null) {
       query['cursor'] = cursor;
     }

@@ -66,6 +66,7 @@ void main() {
     expect(find.text('8'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.byKey(const Key('account_personnel_entry')), findsOneWidget);
+    expect(find.text('3 KTV · 2 Chuyên gia'), findsOneWidget);
     expect(find.text('5 đang hoạt động'), findsOneWidget);
   });
 
@@ -345,7 +346,13 @@ final class _FakePersonnelRepository implements PersonnelRepository {
   }) async => ManagedPersonnelPage(
     items: const <ManagedPersonnel>[],
     limit: limit,
-    totalResults: status == AccountStatus.active ? 5 : 0,
+    totalResults: status != AccountStatus.active
+        ? 0
+        : role == AccountRole.technician
+        ? 3
+        : role == AccountRole.expert
+        ? 2
+        : 5,
     hasNextPage: false,
   );
 

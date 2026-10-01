@@ -12,6 +12,8 @@ class StickyPageHeader extends StatelessWidget {
     this.onBack,
     this.showBack = true,
     this.trailing,
+    this.bottom,
+    this.bottomHeight = 0,
     this.height = 76,
     this.titleSize = 16,
     this.backgroundColor = AppColors.backgroundTop,
@@ -23,6 +25,8 @@ class StickyPageHeader extends StatelessWidget {
   final VoidCallback? onBack;
   final bool showBack;
   final Widget? trailing;
+  final Widget? bottom;
+  final double bottomHeight;
   final double height;
   final double titleSize;
   final Color backgroundColor;
@@ -36,6 +40,8 @@ class StickyPageHeader extends StatelessWidget {
       onBack: onBack,
       showBack: showBack,
       trailing: trailing,
+      bottom: bottom,
+      bottomHeight: bottomHeight,
       height: height,
       titleSize: titleSize,
       backgroundColor: backgroundColor,
@@ -89,6 +95,8 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onBack,
     required this.showBack,
     required this.trailing,
+    required this.bottom,
+    required this.bottomHeight,
     required this.height,
     required this.titleSize,
     required this.backgroundColor,
@@ -99,29 +107,43 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback? onBack;
   final bool showBack;
   final Widget? trailing;
+  final Widget? bottom;
+  final double bottomHeight;
   final double height;
   final double titleSize;
   final Color backgroundColor;
 
   @override
-  double get minExtent => height;
+  double get minExtent => height + (bottom == null ? 0 : bottomHeight);
 
   @override
-  double get maxExtent => height;
+  double get maxExtent => minExtent;
 
   @override
   Widget build(
     BuildContext context,
     double shrinkOffset,
     bool overlapsContent,
-  ) => _PageHeaderContent(
-    title: title,
-    subtitle: subtitle,
-    onBack: onBack,
-    showBack: showBack,
-    trailing: trailing,
-    titleSize: titleSize,
-    backgroundColor: backgroundColor,
+  ) => ColoredBox(
+    color: backgroundColor,
+    child: Column(
+      children: <Widget>[
+        SizedBox(
+          height: height,
+          child: _PageHeaderContent(
+            title: title,
+            subtitle: subtitle,
+            onBack: onBack,
+            showBack: showBack,
+            trailing: trailing,
+            titleSize: titleSize,
+            backgroundColor: backgroundColor,
+          ),
+        ),
+        if (bottom != null)
+          SizedBox(width: double.infinity, height: bottomHeight, child: bottom),
+      ],
+    ),
   );
 
   @override
@@ -131,6 +153,8 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
       onBack != oldDelegate.onBack ||
       showBack != oldDelegate.showBack ||
       trailing != oldDelegate.trailing ||
+      bottom != oldDelegate.bottom ||
+      bottomHeight != oldDelegate.bottomHeight ||
       height != oldDelegate.height ||
       titleSize != oldDelegate.titleSize ||
       backgroundColor != oldDelegate.backgroundColor;

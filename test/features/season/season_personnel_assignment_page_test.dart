@@ -72,6 +72,10 @@ void main() {
     expect(find.byType(SeasonPersonnelAssignmentPage), findsOneWidget);
     expect(find.text('Phân công nhân sự'), findsOneWidget);
     expect(find.byKey(const Key('assignment_role_technician')), findsOneWidget);
+    expect(find.byIcon(Icons.engineering_rounded), findsNothing);
+    expect(find.byIcon(Icons.health_and_safety_rounded), findsNothing);
+    expect(find.byIcon(Icons.waves_rounded), findsNothing);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
     expect(find.text('Nguyễn Văn Kỹ Thuật'), findsOneWidget);
   });
 }
