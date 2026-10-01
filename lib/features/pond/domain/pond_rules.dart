@@ -60,6 +60,21 @@ abstract final class PondRules {
     return null;
   }
 
+  static String? validateVolume(String? value) =>
+      validatePositiveNumber(value, 'Thể tích', max: maxVolumeM3);
+
+  static String? validateVolumeCapacity(
+    double? volumeM3,
+    double areaM2,
+    double depthM,
+  ) {
+    if (volumeM3 != null && volumeM3 > areaM2 * depthM) {
+      return 'Thể tích không được vượt quá diện tích × độ sâu '
+          '(${_formatLimit(areaM2 * depthM)} m³).';
+    }
+    return null;
+  }
+
   static String _formatLimit(double value) =>
       value.toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
 }

@@ -153,6 +153,7 @@ final class PondMutationController extends _OwnerPondController<void> {
     required String name,
     required double areaM2,
     required double depthM,
+    double? volumeM3,
     required PondType type,
     required PondStatus status,
   }) => _mutate(
@@ -164,6 +165,7 @@ final class PondMutationController extends _OwnerPondController<void> {
                 name: name,
                 areaM2: areaM2,
                 depthM: depthM,
+                volumeM3: volumeM3,
                 type: type,
                 status: status,
               )
@@ -175,6 +177,7 @@ final class PondMutationController extends _OwnerPondController<void> {
                 name: name,
                 areaM2: areaM2,
                 depthM: depthM,
+                volumeM3: volumeM3,
                 type: type,
                 status: status,
               ),

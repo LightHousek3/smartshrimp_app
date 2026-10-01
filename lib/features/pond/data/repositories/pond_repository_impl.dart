@@ -33,11 +33,12 @@ final class PondRepositoryImpl implements PondRepository {
     required String name,
     required double areaM2,
     required double depthM,
+    double? volumeM3,
     required PondType type,
     required PondStatus status,
   }) => _remote.createPond(
     farmId,
-    _writeData(name, areaM2, depthM, type, status),
+    _writeData(name, areaM2, depthM, volumeM3, type, status),
   );
 
   @override
@@ -47,24 +48,27 @@ final class PondRepositoryImpl implements PondRepository {
     required String name,
     required double areaM2,
     required double depthM,
+    double? volumeM3,
     required PondType type,
     required PondStatus status,
   }) => _remote.updatePond(
     farmId,
     pondId,
-    _writeData(name, areaM2, depthM, type, status),
+    _writeData(name, areaM2, depthM, volumeM3, type, status),
   );
 
   static Map<String, dynamic> _writeData(
     String name,
     double areaM2,
     double depthM,
+    double? volumeM3,
     PondType type,
     PondStatus status,
   ) => <String, dynamic>{
     'name': PondRules.normalizeName(name),
     'areaM2': areaM2,
     'depthM': depthM,
+    'volumeM3': ?volumeM3,
     'type': _typeValue(type),
     'status': _statusValue(status),
   };

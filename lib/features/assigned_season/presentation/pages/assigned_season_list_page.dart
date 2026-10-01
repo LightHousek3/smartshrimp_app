@@ -5,6 +5,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 
@@ -57,31 +58,12 @@ class _AssignedSeasonListPageState
               controller: _scroll,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 26, 16, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'Vụ nuôi',
-                          style: TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Các vụ nuôi bạn được phân công',
-                          style: TextStyle(
-                            color: AppColors.inkSoft,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                const StickyPageHeader(
+                  title: 'Vụ nuôi',
+                  subtitle: 'Các vụ nuôi bạn được phân công',
+                  showBack: false,
+                  height: 80,
+                  titleSize: 22,
                 ),
                 SliverToBoxAdapter(
                   child: Padding(

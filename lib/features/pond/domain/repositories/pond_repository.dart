@@ -17,6 +17,7 @@ abstract interface class PondRepository {
     required String name,
     required double areaM2,
     required double depthM,
+    double? volumeM3,
     required PondType type,
     required PondStatus status,
   });
@@ -27,6 +28,7 @@ abstract interface class PondRepository {
     required String name,
     required double areaM2,
     required double depthM,
+    double? volumeM3,
     required PondType type,
     required PondStatus status,
   });

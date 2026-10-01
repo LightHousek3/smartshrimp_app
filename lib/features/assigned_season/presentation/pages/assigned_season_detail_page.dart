@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -31,68 +32,64 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
             onRefresh: ref
                 .read(assignedSeasonDetailProvider(seasonId).notifier)
                 .refresh,
-            child: ListView(
-              children: <Widget>[
-                _Header(season),
-                Padding(
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                StickyPageHeader(
+                  title: season.pondName,
+                  subtitle:
+                      '${season.name}${season.dayOfCulture == null ? '' : ' · DOC ${season.dayOfCulture}'}',
+                  onBack: context.pop,
+                  trailing: _Badge(season.status),
+                ),
+                SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      _Breadcrumb(season),
-                      const SizedBox(height: 16),
-                      if (season.status ==
-                          AssignedSeasonStatus.planning) ...<Widget>[
-                        const _PlanningNotice(),
-                        const SizedBox(height: 18),
-                      ],
-                      _PondCard(season),
-                      const SizedBox(height: 18),
-                      const _Title('Nhân sự vụ nuôi'),
-                      const SizedBox(height: 10),
-                      _PersonnelCard(season),
-                      const SizedBox(height: 18),
-                      const _Title('Dữ liệu thả ban đầu'),
-                      const SizedBox(height: 10),
-                      _InfoCard(<(String, String)>[
-                        ('Ngày thả', _date(season.stockingDate)),
-                        ('Số lượng', '${season.initialQuantity ?? '—'} con'),
-                        (
-                          'Mật độ',
-                          '${_num(season.initialDensityPerM2)} con/m²',
-                        ),
-                      ]),
-                      if (season.otherAssignedSeasons.isNotEmpty) ...<Widget>[
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _Breadcrumb(season),
                         const SizedBox(height: 16),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: _Title('Các ao khác trong trại'),
-                        ),
+                        if (season.status ==
+                            AssignedSeasonStatus.planning) ...<Widget>[
+                          const _PlanningNotice(),
+                          const SizedBox(height: 18),
+                        ],
+                        _PondCard(season),
+                        if (season.status ==
+                            AssignedSeasonStatus.active) ...<Widget>[
+                          const SizedBox(height: 18),
+                          const _FeatureActions(),
+                          const SizedBox(height: 22),
+                          const _LatestWaterMeasurement(),
+                          const SizedBox(height: 22),
+                          const _TodayOperations(),
+                        ],
+                        const SizedBox(height: 18),
+                        const _Title('Nhân sự vụ nuôi'),
                         const SizedBox(height: 10),
-                        for (
-                          var i = 0;
-                          i < season.otherAssignedSeasons.length;
-                          i++
-                        ) ...<Widget>[
-                          _OtherAssignedSeasonCard(
-                            season.otherAssignedSeasons[i],
+                        _PersonnelCard(season),
+                        if (season.otherAssignedSeasons.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 18),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: _Title('Các ao khác trong trại'),
                           ),
-                          if (i < season.otherAssignedSeasons.length - 1)
-                            const SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                          for (
+                            var i = 0;
+                            i < season.otherAssignedSeasons.length;
+                            i++
+                          ) ...<Widget>[
+                            _OtherAssignedSeasonCard(
+                              season.otherAssignedSeasons[i],
+                            ),
+                            if (i < season.otherAssignedSeasons.length - 1)
+                              const SizedBox(height: 10),
+                          ],
                         ],
                       ],
-                      const SizedBox(height: 18),
-                      const _Title('Thông tin trang trại'),
-                      const SizedBox(height: 10),
-                      _InfoCard(<(String, String)>[
-                        ('Trang trại', season.farmName),
-                        ('Địa chỉ', season.farmAddress ?? 'Chưa cập nhật'),
-                        (
-                          'Ngày dự kiến kết thúc',
-                          _date(season.expectedEndDate),
-                        ),
-                      ]),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -102,41 +99,6 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _Header extends StatelessWidget {
-  const _Header(this.season);
-  final AssignedSeasonDetail season;
-  @override
-  Widget build(BuildContext context) => Container(
-    color: const Color(0xE6FFF7F4),
-    padding: const EdgeInsets.fromLTRB(10, 14, 16, 14),
-    child: Row(
-      children: <Widget>[
-        IconButton(onPressed: context.pop, icon: const Icon(Icons.arrow_back)),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                season.pondName,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(
-                '${season.name}${season.dayOfCulture == null ? '' : ' · DOC ${season.dayOfCulture}'}',
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        _Badge(season.status),
-      ],
-    ),
-  );
 }
 
 class _Breadcrumb extends StatelessWidget {
@@ -257,16 +219,484 @@ class _PondCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
-              _Metric('SỐ LƯỢNG THẢ', '${season.initialQuantity ?? '—'} con'),
+              _Metric(
+                'SỐ LƯỢNG THẢ',
+                season.initialQuantity == null
+                    ? '—'
+                    : '${season.initialQuantity} con',
+              ),
               const SizedBox(width: 10),
+              _Metric('KẾT THÚC DỰ KIẾN', _date(season.expectedEndDate)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
               _Metric(
                 'MẬT ĐỘ THẢ',
                 '${_num(season.initialDensityPerM2)} con/m²',
+              ),
+              const SizedBox(width: 10),
+              _Metric(
+                'SINH KHỐI HIỆN TẠI',
+                '${_num(season.currentBiomassKg)} kg',
               ),
             ],
           ),
         ],
       ],
+    ),
+  );
+}
+
+class _FeatureActions extends StatelessWidget {
+  const _FeatureActions();
+
+  static const _items = <_FeatureActionData>[
+    _FeatureActionData(
+      label: 'Đo nước',
+      icon: Icons.water_drop_outlined,
+      background: Color(0xFFEAF4FF),
+      foreground: Color(0xFF1378D1),
+    ),
+    _FeatureActionData(
+      label: 'Sức khỏe',
+      icon: Icons.favorite_border_rounded,
+      background: Color(0xFFFBE6EA),
+      foreground: AppColors.error,
+    ),
+    _FeatureActionData(
+      label: 'Vận hành',
+      icon: Icons.settings_outlined,
+      background: Color(0xFFE2F6F3),
+      foreground: Color(0xFF0F9B8E),
+    ),
+    _FeatureActionData(
+      label: 'AI nhận diện',
+      icon: Icons.center_focus_strong_outlined,
+      background: Color(0xFFF0E9FF),
+      foreground: Color(0xFF7B5BD6),
+    ),
+    _FeatureActionData(
+      label: 'Hỏi chuyên gia',
+      icon: Icons.chat_bubble_outline_rounded,
+      background: Color(0xFFEAF4FF),
+      foreground: Color(0xFF1378D1),
+    ),
+    _FeatureActionData(
+      label: 'Ca bệnh',
+      icon: Icons.emergency_outlined,
+      background: Color(0xFFFBE6EA),
+      foreground: AppColors.error,
+      badge: '1',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: _items.length,
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.14,
+    ),
+    itemBuilder: (context, index) => _FeatureAction(_items[index]),
+  );
+}
+
+class _FeatureActionData {
+  const _FeatureActionData({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    this.badge,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final String? badge;
+}
+
+class _FeatureAction extends StatelessWidget {
+  const _FeatureAction(this.data);
+  final _FeatureActionData data;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xF7FFFFFF),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: AppColors.line),
+    ),
+    child: InkWell(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${data.label} đang được phát triển.')),
+      ),
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: data.background,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(data.icon, color: data.foreground, size: 21),
+              ),
+              if (data.badge != null)
+                Positioned(
+                  right: -5,
+                  top: -5,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 18),
+                    height: 18,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      data.badge!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Text(
+            data.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.inkSoft,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _LatestWaterMeasurement extends StatelessWidget {
+  const _LatestWaterMeasurement();
+
+  static const _metrics = <_WaterMetricData>[
+    _WaterMetricData('Nhiệt độ', '28.5', '°C'),
+    _WaterMetricData('pH', '7.8', ''),
+    _WaterMetricData('DO', '5.2', 'mg/L'),
+    _WaterMetricData('Độ mặn', '15.3', '‰'),
+    _WaterMetricData('NH3', '0.012', 'mg/L'),
+    _WaterMetricData('NO2', '0.08', 'mg/L'),
+    _WaterMetricData('Kiềm', '142', 'mg/L'),
+    _WaterMetricData('H2S', '0', 'mg/L'),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      const Row(
+        children: <Widget>[
+          Expanded(child: _Title('Đo nước gần nhất')),
+          Text(
+            '06:15 · 18–09',
+            style: TextStyle(
+              color: AppColors.inkMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      _Card(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        child: Column(
+          children: <Widget>[
+            _WaterMetricRow(metrics: _metrics.take(4).toList()),
+            const Divider(height: 24),
+            _WaterMetricRow(metrics: _metrics.skip(4).toList()),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _WaterMetricData {
+  const _WaterMetricData(this.label, this.value, this.unit);
+  final String label;
+  final String value;
+  final String unit;
+}
+
+class _WaterMetricRow extends StatelessWidget {
+  const _WaterMetricRow({required this.metrics});
+  final List<_WaterMetricData> metrics;
+
+  @override
+  Widget build(BuildContext context) => IntrinsicHeight(
+    child: Row(
+      children: <Widget>[
+        for (var index = 0; index < metrics.length; index++) ...<Widget>[
+          Expanded(child: _WaterMetric(metrics[index])),
+          if (index < metrics.length - 1)
+            const VerticalDivider(width: 1, color: AppColors.line),
+        ],
+      ],
+    ),
+  );
+}
+
+class _WaterMetric extends StatelessWidget {
+  const _WaterMetric(this.data);
+  final _WaterMetricData data;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4),
+    child: Column(
+      children: <Widget>[
+        Text(
+          data.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 9.5),
+        ),
+        const SizedBox(height: 5),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: AppColors.ink),
+              children: <InlineSpan>[
+                TextSpan(
+                  text: data.value,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (data.unit.isNotEmpty)
+                  TextSpan(
+                    text: ' ${data.unit}',
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _TodayOperations extends StatelessWidget {
+  const _TodayOperations();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Row(
+        children: <Widget>[
+          const Expanded(child: _Title('Cữ vận hành hôm nay')),
+          TextButton(
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Vận hành đang được phát triển.')),
+            ),
+            child: const Text('Xem tất cả'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 4),
+      const _OperationCard(
+        icon: Icons.settings_outlined,
+        iconBackground: Color(0xFFE2F6F3),
+        iconForeground: Color(0xFF0F9B8E),
+        category: 'Cho ăn',
+        slot: 'Cữ 2',
+        title: 'Thức ăn CP 9004 (40% đạm)',
+        time: '10:30',
+        amount: '47.2 kg',
+        note: 'Kèm Vitamin C tạt',
+      ),
+      SizedBox(height: 10),
+      _OperationCard(
+        icon: Icons.science_outlined,
+        iconBackground: Color(0xFFF0E9FF),
+        iconForeground: Color(0xFF7B5BD6),
+        category: 'Hóa chất',
+        title: 'Yucca khử khí độc',
+        time: '11:00',
+        amount: '4.48 l',
+      ),
+    ],
+  );
+}
+
+class _OperationCard extends StatelessWidget {
+  const _OperationCard({
+    required this.icon,
+    required this.iconBackground,
+    required this.iconForeground,
+    required this.category,
+    required this.title,
+    required this.time,
+    required this.amount,
+    this.slot,
+    this.note,
+  });
+
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconForeground;
+  final String category;
+  final String? slot;
+  final String title;
+  final String time;
+  final String amount;
+  final String? note;
+
+  @override
+  Widget build(BuildContext context) => _Card(
+    padding: const EdgeInsets.all(14),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: iconBackground,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(icon, color: iconForeground, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  _OperationBadge(
+                    label: category,
+                    background: iconBackground,
+                    foreground: iconForeground,
+                  ),
+                  if (slot != null) ...<Widget>[
+                    const SizedBox(width: 6),
+                    Text(
+                      slot!,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  const _OperationBadge(
+                    label: '● Đã lên lịch',
+                    background: Color(0xFFEAF4FF),
+                    foreground: Color(0xFF1378D1),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: <Widget>[
+                  const Icon(
+                    Icons.schedule_rounded,
+                    color: AppColors.inkMuted,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$time · $amount',
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              if (note != null) ...<Widget>[
+                const SizedBox(height: 8),
+                _OperationBadge(
+                  label: '▣ $note',
+                  background: const Color(0xFFFBE6EA),
+                  foreground: AppColors.error,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _OperationBadge extends StatelessWidget {
+  const _OperationBadge({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(7),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        color: foreground,
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
+      ),
     ),
   );
 }
@@ -348,45 +778,6 @@ class _PersonnelCard extends StatelessWidget {
             ],
           ),
         ),
-      ],
-    ),
-  );
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard(this.rows);
-  final List<(String, String)> rows;
-  @override
-  Widget build(BuildContext context) => _Card(
-    child: Column(
-      children: <Widget>[
-        for (var i = 0; i < rows.length; i++) ...<Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  rows[i].$1,
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              Flexible(
-                child: Text(
-                  rows[i].$2,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (i < rows.length - 1) const Divider(height: 22),
-        ],
       ],
     ),
   );

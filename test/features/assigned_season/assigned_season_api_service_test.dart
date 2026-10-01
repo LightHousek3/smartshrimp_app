@@ -6,6 +6,7 @@ import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/assigned_season/data/services/assigned_season_api_service.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 
 void main() {
   test('parses list counts and all season statuses', () async {
@@ -47,6 +48,42 @@ void main() {
       AssignedSeasonStatus.completed,
       AssignedSeasonStatus.cancelled,
     ]);
+  });
+
+  test('parses assigned season stocking metrics and current biomass', () {
+    final detail = AssignedSeasonDetail.parse(<String, dynamic>{
+      'id': 'season-1',
+      'name': 'Vụ 1',
+      'status': 'ACTIVE',
+      'shrimpType': 'WHITELEG',
+      'stockingDate': '2026-09-29',
+      'expectedEndDate': '2027-01-15',
+      'initialQuantity': 500000,
+      'initialDensityPerM2': 100,
+      'currentBiomassKg': 1234.5,
+      'pond': <String, dynamic>{
+        'id': 'pond-1',
+        'name': 'Ao A1',
+        'type': 'AQUACULTURE',
+        'status': 'AVAILABLE',
+        'areaM2': 5000,
+        'depthM': 1.5,
+        'volumeM3': 7500,
+      },
+      'farm': <String, dynamic>{
+        'id': 'farm-1',
+        'name': 'Trại 1',
+        'address': null,
+      },
+      'personnel': <dynamic>[],
+      'otherAssignedSeasons': <dynamic>[],
+      'assignment': <String, dynamic>{'assignedAt': '2026-09-29T00:00:00.000Z'},
+    });
+
+    expect(detail.initialQuantity, 500000);
+    expect(detail.expectedEndDate, DateTime(2027, 1, 15));
+    expect(detail.initialDensityPerM2, 100);
+    expect(detail.currentBiomassKg, 1234.5);
   });
 }
 
