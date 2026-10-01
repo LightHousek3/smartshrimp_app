@@ -434,7 +434,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
         context,
         'Ao đã được ẩn khỏi danh sách và dữ liệu lịch sử vẫn được giữ lại.',
       );
-      context.go('/farms/${pond.farmId}/ponds');
+      context.go('/farms/${pond.farmId}');
     } on AppException catch (error) {
       if (mounted) {
         AppNoticeService.danger(

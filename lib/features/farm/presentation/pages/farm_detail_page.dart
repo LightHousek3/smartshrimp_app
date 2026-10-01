@@ -721,6 +721,7 @@ class _PondCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const <BoxShadow>[
               BoxShadow(

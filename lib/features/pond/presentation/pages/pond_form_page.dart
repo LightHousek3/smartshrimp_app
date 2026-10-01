@@ -92,6 +92,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
   late final TextEditingController _name;
   late final TextEditingController _area;
   late final TextEditingController _depth;
+  late final TextEditingController _volume;
   late PondType _type;
   late PondStatus _status;
   String? _volumeError;
@@ -103,6 +104,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     _name = TextEditingController(text: pond?.name);
     _area = TextEditingController(text: pond?.areaM2?.toString() ?? '');
     _depth = TextEditingController(text: pond?.depthM?.toString() ?? '');
+    _volume = TextEditingController(text: pond?.volumeM3?.toString() ?? '');
     _type = pond?.type ?? PondType.aquaculture;
     _status = pond?.status ?? PondStatus.available;
   }
@@ -112,6 +114,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     _name.dispose();
     _area.dispose();
     _depth.dispose();
+    _volume.dispose();
     super.dispose();
   }
 
@@ -196,6 +199,14 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 15),
+                _numberField(
+                  _volume,
+                  'Thể tích (m³) - tùy chọn',
+                  'Để trống để hệ thống tự tính',
+                  PondRules.validateVolume,
+                  required: false,
+                ),
                 const SizedBox(height: 15),
                 _label('Loại ao'),
                 const SizedBox(height: 8),
@@ -287,11 +298,12 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     TextEditingController controller,
     String label,
     String hint,
-    String? Function(String?) validator,
-  ) => Column(
+    String? Function(String?) validator, {
+    bool required = true,
+  }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      _label(label, required: true),
+      _label(label, required: required),
       const SizedBox(height: 7),
       TextFormField(
         controller: controller,
@@ -329,9 +341,19 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     if (!_formKey.currentState!.validate()) return;
     final areaM2 = PondRules.parseNumber(_area.text)!;
     final depthM = PondRules.parseNumber(_depth.text)!;
+    final volumeM3 = PondRules.parseNumber(_volume.text);
     final volumeError = PondRules.validateCalculatedVolume(areaM2, depthM);
     if (volumeError != null) {
       setState(() => _volumeError = volumeError);
+      return;
+    }
+    final capacityError = PondRules.validateVolumeCapacity(
+      volumeM3,
+      areaM2,
+      depthM,
+    );
+    if (capacityError != null) {
+      setState(() => _volumeError = capacityError);
       return;
     }
     if (_volumeError != null) setState(() => _volumeError = null);
@@ -343,6 +365,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
             name: _name.text,
             areaM2: areaM2,
             depthM: depthM,
+            volumeM3: volumeM3,
             type: _type,
             status: _status,
           );
