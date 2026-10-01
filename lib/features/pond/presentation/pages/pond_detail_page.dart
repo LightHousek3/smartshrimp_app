@@ -1,14 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
@@ -31,7 +31,6 @@ class PondDetailPage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
-          top: false,
           bottom: false,
           child: state.when(
             data: (pond) => _PondDetailContent(pond: pond),
@@ -66,11 +65,10 @@ class _PondDetailContent extends ConsumerStatefulWidget {
 
 class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
   final _searchController = TextEditingController();
-  Timer? _searchDebounce;
   _SeasonFilter _filter = _SeasonFilter.all;
 
   Pond get pond => widget.pond;
-  SeasonListScope get _scope => (farmId: pond.farmId, pondId: pond.id);
+  PondSeasonScope get _scope => (farmId: pond.farmId, pondId: pond.id);
   bool get _canCreateSeason =>
       !pond.isDeleted &&
       !pond.hasOpenSeason &&
@@ -79,7 +77,6 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
 
   @override
   void dispose() {
-    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -87,112 +84,77 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
   @override
   Widget build(BuildContext context) {
     final mutation = ref.watch(pondMutationControllerProvider(pond.farmId));
-    final seasons = ref.watch(seasonListControllerProvider(_scope));
+    final seasons = ref.watch(pondSeasonHistoryProvider(_scope));
     final ids = (farmId: pond.farmId, pondId: pond.id);
     return RefreshIndicator(
       color: AppColors.ocean,
       onRefresh: () async {
+        ref.invalidate(pondSeasonHistoryProvider(_scope));
         await Future.wait(<Future<void>>[
           ref.read(pondDetailControllerProvider(ids).notifier).refresh(),
-          ref.read(seasonListControllerProvider(_scope).notifier).refresh(),
+          ref.read(pondSeasonHistoryProvider(_scope).future),
         ]);
       },
-      child: ListView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          16,
-          seasonScreenTopPadding(context),
-          16,
-          32,
-        ),
-        children: <Widget>[
-          _header(mutation.isLoading),
-          const SizedBox(height: 12),
-          _PondSummaryCard(pond: pond),
-          const SizedBox(height: 16),
-          _seasonHeading(mutation.isLoading),
-          const SizedBox(height: 8),
-          _seasonTools(),
-          const SizedBox(height: 12),
-          seasons.when(
-            data: _seasonContent,
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(
-                child: SizedBox.square(
-                  dimension: 24,
-                  child: CircularProgressIndicator(
-                    color: AppColors.ocean,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-            ),
-            error: (error, _) => _InlineError(
-              message: error is AppException
-                  ? error.message
-                  : 'Không thể tải danh sách vụ nuôi.',
-              onRetry: ref
-                  .read(seasonListControllerProvider(_scope).notifier)
-                  .refresh,
+        slivers: <Widget>[
+          StickyPageHeader(
+            title: pond.name,
+            subtitle: pond.farm?.name ?? 'Trang trại',
+            onBack: mutation.isLoading ? null : context.pop,
+            trailing: AppCircleButton(
+              icon: Icons.edit_rounded,
+              tooltip: 'Chỉnh sửa ao',
+              size: 36,
+              iconSize: 17,
+              onPressed: mutation.isLoading
+                  ? null
+                  : () => context.push(
+                      '/farms/${pond.farmId}/ponds/${pond.id}/edit',
+                      extra: pond,
+                    ),
             ),
           ),
-          const SizedBox(height: 16),
-          _deleteButton(mutation.isLoading),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            sliver: SliverList.list(
+              children: <Widget>[
+                _PondSummaryCard(pond: pond),
+                const SizedBox(height: 16),
+                _seasonHeading(mutation.isLoading),
+                const SizedBox(height: 8),
+                _seasonTools(),
+                const SizedBox(height: 12),
+                seasons.when(
+                  data: _seasonContent,
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    child: Center(
+                      child: SizedBox.square(
+                        dimension: 24,
+                        child: CircularProgressIndicator(
+                          color: AppColors.ocean,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  error: (error, _) => _InlineError(
+                    message: error is AppException
+                        ? error.message
+                        : 'Không thể tải danh sách vụ nuôi.',
+                    onRetry: _refreshSeasons,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _deleteButton(mutation.isLoading),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-
-  Widget _header(bool loading) => Row(
-    children: <Widget>[
-      _HeaderIconButton(
-        icon: Icons.adaptive.arrow_back,
-        tooltip: 'Quay lại',
-        onPressed: loading ? null : context.pop,
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              pond.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 16,
-                height: 1.25,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              pond.farm?.name ?? 'Trang trại',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.inkMuted,
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-      _HeaderIconButton(
-        icon: Icons.edit_rounded,
-        tooltip: 'Chỉnh sửa ao',
-        filled: true,
-        onPressed: loading
-            ? null
-            : () => context.push(
-                '/farms/${pond.farmId}/ponds/${pond.id}/edit',
-                extra: pond,
-              ),
-      ),
-    ],
-  );
 
   Widget _seasonHeading(bool loading) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -369,37 +331,35 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     ),
   );
 
-  Widget _seasonContent(SeasonPage page) {
-    if (page.items.isEmpty) {
+  Widget _seasonContent(List<AquacultureSeason> seasons) {
+    final filteredSeasons = _filterSeasons(seasons);
+    final hasFilter =
+        _searchController.text.trim().isNotEmpty ||
+        _filter != _SeasonFilter.all;
+    if (filteredSeasons.isEmpty) {
       return SeasonEmptyState(
         compact: true,
-        title: _searchController.text.isEmpty
-            ? 'Chưa có vụ nuôi'
-            : 'Không tìm thấy vụ nuôi',
-        hint: _searchController.text.isEmpty
-            ? 'Ao chưa có vụ nuôi phù hợp với trạng thái đã chọn.'
-            : 'Hãy thử từ khóa hoặc trạng thái khác.',
+        showBackground: false,
+        title: hasFilter ? 'Không tìm thấy vụ nuôi' : 'Chưa có vụ nuôi',
+        hint: hasFilter
+            ? 'Hãy thử từ khóa hoặc trạng thái khác.'
+            : 'Ao chưa có vụ nuôi.',
       );
     }
     return Column(
       children: <Widget>[
-        for (var index = 0; index < page.items.length; index++) ...<Widget>[
+        for (
+          var index = 0;
+          index < filteredSeasons.length;
+          index++
+        ) ...<Widget>[
           _PondSeasonCard(
-            season: page.items[index],
+            season: filteredSeasons[index],
             onTap: () => context.push(
-              '/farms/${pond.farmId}/ponds/${pond.id}/seasons/${page.items[index].id}',
+              '/farms/${pond.farmId}/ponds/${pond.id}/seasons/${filteredSeasons[index].id}',
             ),
           ),
-          if (index != page.items.length - 1) const SizedBox(height: 8),
-        ],
-        if (page.hasNextPage) ...<Widget>[
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: ref
-                .read(seasonListControllerProvider(_scope).notifier)
-                .loadMore,
-            child: const Text('Xem thêm'),
-          ),
+          if (index != filteredSeasons.length - 1) const SizedBox(height: 8),
         ],
       ],
     );
@@ -421,29 +381,33 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
 
   void _search(String value) {
     setState(() {});
-    _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      ref
-          .read(seasonListControllerProvider(_scope).notifier)
-          .applyFilters(search: value);
-    });
   }
 
   void _selectFilter(_SeasonFilter value) {
     setState(() => _filter = value);
-    final controller = ref.read(seasonListControllerProvider(_scope).notifier);
-    switch (value) {
-      case _SeasonFilter.all:
-        controller.applyFilters(clearStatus: true);
-      case _SeasonFilter.active:
-        controller.applyFilters(status: SeasonStatus.active);
-      case _SeasonFilter.planning:
-        controller.applyFilters(status: SeasonStatus.planning);
-      case _SeasonFilter.completed:
-        controller.applyFilters(status: SeasonStatus.completed);
-      case _SeasonFilter.cancelled:
-        controller.applyFilters(status: SeasonStatus.cancelled);
-    }
+  }
+
+  List<AquacultureSeason> _filterSeasons(List<AquacultureSeason> seasons) {
+    final query = _searchController.text.trim().toLowerCase();
+    return seasons
+        .where((season) {
+          final matchesSearch =
+              query.isEmpty || season.name.toLowerCase().contains(query);
+          final matchesStatus = switch (_filter) {
+            _SeasonFilter.all => true,
+            _SeasonFilter.active => season.status == SeasonStatus.active,
+            _SeasonFilter.planning => season.status == SeasonStatus.planning,
+            _SeasonFilter.completed => season.status == SeasonStatus.completed,
+            _SeasonFilter.cancelled => season.status == SeasonStatus.cancelled,
+          };
+          return matchesSearch && matchesStatus;
+        })
+        .toList(growable: false);
+  }
+
+  Future<void> _refreshSeasons() async {
+    ref.invalidate(pondSeasonHistoryProvider(_scope));
+    await ref.read(pondSeasonHistoryProvider(_scope).future);
   }
 
   Future<void> _delete() async {
@@ -481,37 +445,6 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
       }
     }
   }
-}
-
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.filled = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: Material(
-      color: filled ? const Color(0xFFEEF1F6) : Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox.square(
-          dimension: 36,
-          child: Icon(icon, color: AppColors.inkSoft, size: filled ? 17 : 20),
-        ),
-      ),
-    ),
-  );
 }
 
 class _PondSummaryCard extends StatelessWidget {
@@ -790,19 +723,12 @@ class _DetailError extends StatelessWidget {
   final Future<void> Function() onRetry;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
-    child: Column(
-      children: <Widget>[
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _HeaderIconButton(
-            icon: Icons.adaptive.arrow_back,
-            tooltip: 'Quay lại',
-            onPressed: context.pop,
-          ),
-        ),
-        Expanded(
+  Widget build(BuildContext context) => Column(
+    children: <Widget>[
+      PageHeaderBar(title: 'Chi tiết ao', onBack: context.pop),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -819,7 +745,7 @@ class _DetailError extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    ),
+      ),
+    ],
   );
 }

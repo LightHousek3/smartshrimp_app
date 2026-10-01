@@ -7,6 +7,7 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -120,7 +121,6 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _quantity;
-  late final TextEditingController _averageWeight;
   late ShrimpType _shrimpType;
   DateTime? _stockingDate;
   DateTime? _expectedEndDate;
@@ -136,11 +136,6 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
     _quantity = TextEditingController(
       text: season?.initialQuantity?.toString() ?? '',
     );
-    _averageWeight = TextEditingController(
-      text: season?.initialAvgWeightG == null
-          ? ''
-          : seasonDecimalLabel(season!.initialAvgWeightG, digits: 3),
-    );
     _shrimpType = season?.shrimpType ?? ShrimpType.whiteleg;
     _stockingDate = season?.stockingDate;
     _expectedEndDate = season?.expectedEndDate;
@@ -150,7 +145,6 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
   void dispose() {
     _name.dispose();
     _quantity.dispose();
-    _averageWeight.dispose();
     super.dispose();
   }
 
@@ -161,124 +155,129 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
-          top: false,
           bottom: false,
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                seasonScreenTopPadding(context),
-                16,
-                40,
+          child: CustomScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            slivers: <Widget>[
+              StickyPageHeader(
+                title: _editing ? 'Chỉnh sửa vụ nuôi' : 'Tạo vụ nuôi mới',
+                subtitle:
+                    '${widget.pond.name} · ${widget.pond.farm?.name ?? 'Trang trại'}',
+                onBack: loading ? null : context.pop,
               ),
-              children: <Widget>[
-                _header(loading),
-                const SizedBox(height: 28),
-                _label('Tên vụ nuôi', required: true),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _name,
-                  maxLength: SeasonRules.nameMaxLength,
-                  validator: SeasonRules.validateName,
-                  enabled: !loading,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 14,
-                    height: 1.5,
-                    fontFamily: 'monospace',
-                  ),
-                  decoration: _inputDecoration(
-                    hintText: 'VD: Vụ Đông Xuân 2026',
-                    counterText: '',
-                  ),
-                ),
-                if (!_editing) ...<Widget>[
-                  const SizedBox(height: 16),
-                  _label('Loại tôm', required: true),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: <Widget>[
-                      for (final type in const <ShrimpType>[
-                        ShrimpType.whiteleg,
-                        ShrimpType.blackTiger,
-                      ]) ...<Widget>[
-                        Expanded(
-                          child: _ShrimpTypeOption(
-                            label: shrimpTypeLabel(type),
-                            selected: _shrimpType == type,
-                            enabled: !loading,
-                            onTap: () => setState(() => _shrimpType = type),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                sliver: SliverToBoxAdapter(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _label('Tên vụ nuôi', required: true),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _name,
+                          maxLength: SeasonRules.nameMaxLength,
+                          validator: SeasonRules.validateName,
+                          enabled: !loading,
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 14,
+                            height: 1.5,
+                            fontFamily: 'monospace',
+                          ),
+                          decoration: _inputDecoration(
+                            hintText: 'VD: Vụ Đông Xuân 2026',
+                            counterText: '',
                           ),
                         ),
-                        if (type == ShrimpType.whiteleg)
-                          const SizedBox(width: 8),
+                        if (!_editing) ...<Widget>[
+                          const SizedBox(height: 16),
+                          _label('Loại tôm', required: true),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: <Widget>[
+                              for (final type in const <ShrimpType>[
+                                ShrimpType.whiteleg,
+                                ShrimpType.blackTiger,
+                              ]) ...<Widget>[
+                                Expanded(
+                                  child: _ShrimpTypeOption(
+                                    label: shrimpTypeLabel(type),
+                                    selected: _shrimpType == type,
+                                    enabled: !loading,
+                                    onTap: () =>
+                                        setState(() => _shrimpType = type),
+                                  ),
+                                ),
+                                if (type == ShrimpType.whiteleg)
+                                  const SizedBox(width: 8),
+                              ],
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        _DateField(
+                          label: _editing
+                              ? 'Ngày thả giống'
+                              : 'Ngày thả giống *',
+                          value: _stockingDate,
+                          enabled: !loading,
+                          onChanged: (value) => setState(() {
+                            _stockingDate = value;
+                            _dateError = null;
+                          }),
+                        ),
+                        const SizedBox(height: 16),
+                        _DateField(
+                          label: 'Ngày kết thúc dự kiến',
+                          value: _expectedEndDate,
+                          enabled: !loading,
+                          onChanged: (value) => setState(() {
+                            _expectedEndDate = value;
+                            _dateError = null;
+                          }),
+                        ),
+                        if (_dateError != null) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text(
+                            _dateError!,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        _numberField(
+                          controller: _quantity,
+                          label: 'Số lượng thả (con)',
+                          hint: 'VD: 480000',
+                          validator: SeasonRules.validateQuantity,
+                          decimal: false,
+                          enabled: !loading,
+                        ),
+                        const SizedBox(height: 16),
+                        _densityPreviewField(),
+                        const SizedBox(height: 24),
+                        GradientButton(
+                          label: _editing ? 'Lưu thay đổi' : 'Tạo vụ nuôi',
+                          icon: Icons.check_rounded,
+                          isLoading: loading,
+                          onPressed: loading ? null : _submit,
+                        ),
                       ],
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 16),
-                _DateField(
-                  label: _editing ? 'Ngày thả giống' : 'Ngày thả giống *',
-                  value: _stockingDate,
-                  enabled: !loading,
-                  onChanged: (value) => setState(() {
-                    _stockingDate = value;
-                    _dateError = null;
-                  }),
-                ),
-                const SizedBox(height: 16),
-                _DateField(
-                  label: 'Ngày kết thúc dự kiến',
-                  value: _expectedEndDate,
-                  enabled: !loading,
-                  onChanged: (value) => setState(() {
-                    _expectedEndDate = value;
-                    _dateError = null;
-                  }),
-                ),
-                if (_dateError != null) ...<Widget>[
-                  const SizedBox(height: 6),
-                  Text(
-                    _dateError!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-                const SizedBox(height: 16),
-                _numberField(
-                  controller: _quantity,
-                  label: 'Số lượng thả (con)',
-                  hint: 'VD: 480000',
-                  validator: SeasonRules.validateQuantity,
-                  decimal: false,
-                  enabled: !loading,
                 ),
-                const SizedBox(height: 16),
-                _densityPreviewField(),
-                const SizedBox(height: 24),
-                GradientButton(
-                  label: _editing ? 'Lưu thay đổi' : 'Tạo vụ nuôi',
-                  icon: Icons.check_rounded,
-                  isLoading: loading,
-                  onPressed: loading ? null : _submit,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _header(bool loading) => SeasonScreenHeader(
-    title: _editing ? 'Chỉnh sửa vụ nuôi' : 'Tạo vụ nuôi mới',
-    subtitle: '${widget.pond.name} · ${widget.pond.farm?.name ?? 'Trang trại'}',
-    onBack: loading ? null : context.pop,
-  );
 
   Widget _numberField({
     required TextEditingController controller,
@@ -438,7 +437,6 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
               stockingDate: _stockingDate,
               expectedEndDate: _expectedEndDate,
               initialQuantity: SeasonRules.parseQuantity(_quantity.text),
-              initialAvgWeightG: SeasonRules.parseWeight(_averageWeight.text),
             )
           : await notifier.updateSeason(
               farmId: widget.farmId,
@@ -448,7 +446,6 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
               stockingDate: _stockingDate,
               expectedEndDate: _expectedEndDate,
               initialQuantity: SeasonRules.parseQuantity(_quantity.text),
-              initialAvgWeightG: SeasonRules.parseWeight(_averageWeight.text),
             );
       if (!mounted) return;
       AppNoticeService.success(

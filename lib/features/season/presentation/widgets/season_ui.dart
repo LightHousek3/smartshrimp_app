@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
-double seasonScreenTopPadding(BuildContext context) {
-  final safeTop = MediaQuery.paddingOf(context).top;
-  return safeTop + 4 > 52 ? safeTop + 4 : 52;
-}
-
 class SeasonStatusBadge extends StatelessWidget {
   const SeasonStatusBadge({required this.status, super.key});
 
@@ -48,103 +43,6 @@ class SeasonStatusBadge extends StatelessWidget {
   }
 }
 
-class SeasonScreenHeader extends StatelessWidget {
-  const SeasonScreenHeader({
-    required this.title,
-    required this.subtitle,
-    required this.onBack,
-    this.actionIcon,
-    this.actionTooltip,
-    this.onAction,
-    super.key,
-  });
-
-  final String title;
-  final String subtitle;
-  final VoidCallback? onBack;
-  final IconData? actionIcon;
-  final String? actionTooltip;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: <Widget>[
-      _SeasonHeaderButton(
-        icon: Icons.adaptive.arrow_back,
-        tooltip: 'Quay lại',
-        onPressed: onBack,
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 16,
-                height: 1.25,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.inkMuted,
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-      if (actionIcon != null)
-        _SeasonHeaderButton(
-          icon: actionIcon!,
-          tooltip: actionTooltip ?? 'Thao tác',
-          onPressed: onAction,
-          filled: true,
-        ),
-    ],
-  );
-}
-
-class _SeasonHeaderButton extends StatelessWidget {
-  const _SeasonHeaderButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.filled = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: Material(
-      color: filled ? const Color(0xFFEEF1F6) : Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox.square(
-          dimension: 36,
-          child: Icon(icon, size: filled ? 17 : 20, color: AppColors.inkSoft),
-        ),
-      ),
-    ),
-  );
-}
-
 class SeasonSectionCard extends StatelessWidget {
   const SeasonSectionCard({
     required this.child,
@@ -180,6 +78,7 @@ class SeasonEmptyState extends StatelessWidget {
     required this.hint,
     this.icon = Icons.layers_rounded,
     this.compact = false,
+    this.showBackground = true,
     super.key,
   });
 
@@ -187,6 +86,7 @@ class SeasonEmptyState extends StatelessWidget {
   final String hint;
   final IconData icon;
   final bool compact;
+  final bool showBackground;
 
   @override
   Widget build(BuildContext context) {
@@ -197,11 +97,16 @@ class SeasonEmptyState extends StatelessWidget {
         horizontal: 24,
         vertical: compact ? 22 : 38,
       ),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.line, style: BorderStyle.solid),
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0x4DFFFFFF),
-      ),
+      decoration: showBackground
+          ? BoxDecoration(
+              border: Border.all(
+                color: AppColors.line,
+                style: BorderStyle.solid,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              color: const Color(0x4DFFFFFF),
+            )
+          : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -302,8 +207,6 @@ String activationConditionLabel(String code) => switch (code) {
   'POND_NOT_AQUACULTURE' => 'Ao phải là ao nuôi',
   'STOCKING_DATE_REQUIRED' => 'Cần ngày thả giống',
   'INITIAL_QUANTITY_REQUIRED' => 'Cần số lượng thả ban đầu',
-  'INITIAL_AVG_WEIGHT_REQUIRED' => 'Cần khối lượng trung bình ban đầu',
-  'INITIAL_BIOMASS_REQUIRED' => 'Chưa tính được sinh khối ban đầu',
   'INITIAL_DENSITY_REQUIRED' => 'Chưa tính được mật độ thả',
   'ACTIVE_TECHNICIAN_REQUIRED' => 'Cần đúng một Kỹ thuật viên đang hoạt động',
   'ACTIVE_EXPERT_REQUIRED' => 'Cần đúng một Chuyên gia đang hoạt động',

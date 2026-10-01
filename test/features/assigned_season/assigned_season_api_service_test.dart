@@ -83,7 +83,7 @@ Map<String, dynamic> _seasonJson({
   'shrimpType': 'WHITELEG',
   'stockingDate': '2026-09-01',
   'expectedEndDate': null,
-  'initialBiomassKg': 10,
+  'initialDensityPerM2': 100,
   'pond': <String, dynamic>{
     'id': 'pond-$id',
     'name': 'Ao $id',

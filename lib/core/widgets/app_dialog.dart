@@ -7,16 +7,22 @@ class AppDialog extends StatelessWidget {
     required this.title,
     this.description,
     this.level = AppNoticeLevel.info,
+    this.icon,
     this.content,
     this.actions = const <Widget>[],
+    this.verticalHeader = false,
+    this.separatedActions = false,
     super.key,
   });
 
   final String title;
   final String? description;
   final AppNoticeLevel level;
+  final IconData? icon;
   final Widget? content;
   final List<Widget> actions;
+  final bool verticalHeader;
+  final bool separatedActions;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +34,7 @@ class AppDialog extends StatelessWidget {
       shadowColor: const Color(0x2416243A),
       elevation: 12,
       scrollable: true,
+      clipBehavior: Clip.antiAlias,
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -35,58 +42,110 @@ class AppDialog extends StatelessWidget {
       ),
       titlePadding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
       contentPadding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
-      actionsPadding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: visual.background,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(visual.icon, color: visual.foreground, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+      actionsPadding: separatedActions
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      title: verticalHeader
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 17,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
+                _DialogLevelIcon(visual: visual, icon: icon),
+                const SizedBox(height: 14),
+                _DialogTitleText(title: title, description: description),
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                _DialogLevelIcon(visual: visual, icon: icon),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DialogTitleText(
+                    title: title,
+                    description: description,
                   ),
                 ),
-                if (description != null && description!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    description!,
-                    style: const TextStyle(
-                      color: AppColors.inkSoft,
-                      fontSize: 11.5,
-                      height: 1.4,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
               ],
             ),
-          ),
-        ],
-      ),
       content: content,
       actionsAlignment: MainAxisAlignment.center,
       actionsOverflowAlignment: OverflowBarAlignment.center,
       actionsOverflowButtonSpacing: 8,
-      actions: actions,
+      actions: separatedActions && actions.isNotEmpty
+          ? <Widget>[
+              Container(
+                width: double.maxFinite,
+                padding: const EdgeInsets.all(14),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF7F8FA),
+                  border: Border(top: BorderSide(color: AppColors.line)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: actions,
+                ),
+              ),
+            ]
+          : actions,
     );
   }
+}
+
+class _DialogLevelIcon extends StatelessWidget {
+  const _DialogLevelIcon({required this.visual, required this.icon});
+
+  final AppNoticeVisual visual;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: visual.background,
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: Icon(icon ?? visual.icon, color: visual.foreground, size: 20),
+  );
+}
+
+class _DialogTitleText extends StatelessWidget {
+  const _DialogTitleText({required this.title, required this.description});
+
+  final String title;
+  final String? description;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.ink,
+          fontSize: 17,
+          height: 1.2,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      if (description != null && description!.trim().isNotEmpty) ...<Widget>[
+        const SizedBox(height: 4),
+        Text(
+          description!,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.inkSoft,
+            fontSize: 12,
+            height: 1.45,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.05,
+            wordSpacing: 0.8,
+          ),
+        ),
+      ],
+    ],
+  );
 }
 
 class AppConfirmDialog extends StatelessWidget {
@@ -95,10 +154,14 @@ class AppConfirmDialog extends StatelessWidget {
     required this.description,
     required this.confirmLabel,
     required this.onConfirm,
+    this.onCancel,
     this.cancelLabel = 'Quay lại',
     this.level = AppNoticeLevel.warning,
     this.destructive = false,
+    this.icon,
     this.content,
+    this.verticalHeader = false,
+    this.separatedActions = false,
     super.key,
   });
 
@@ -106,17 +169,24 @@ class AppConfirmDialog extends StatelessWidget {
   final String description;
   final String confirmLabel;
   final VoidCallback onConfirm;
+  final VoidCallback? onCancel;
   final String cancelLabel;
   final AppNoticeLevel level;
   final bool destructive;
+  final IconData? icon;
   final Widget? content;
+  final bool verticalHeader;
+  final bool separatedActions;
 
   @override
   Widget build(BuildContext context) => AppDialog(
     title: title,
     description: description,
     level: level,
+    icon: icon,
     content: content,
+    verticalHeader: verticalHeader,
+    separatedActions: separatedActions,
     actions: <Widget>[
       Row(
         children: <Widget>[
@@ -124,7 +194,7 @@ class AppConfirmDialog extends StatelessWidget {
             child: _DialogActionButton(
               key: const Key('app_confirm_dialog_cancel'),
               label: cancelLabel,
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: onCancel ?? () => Navigator.of(context).pop(false),
               secondary: true,
             ),
           ),

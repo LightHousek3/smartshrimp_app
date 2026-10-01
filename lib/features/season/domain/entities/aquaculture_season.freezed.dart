@@ -1676,7 +1676,7 @@ as bool,
 /// @nodoc
 mixin _$AquacultureSeason {
 
- String get id; String get pondId; String get name; ShrimpType get shrimpType; SeasonStatus get status; String get createdBy; DateTime get createdAt; DateTime get updatedAt; Pond get pond; DateTime? get stockingDate; DateTime? get expectedEndDate; DateTime? get actualEndDate; int? get initialQuantity; double? get initialAvgWeightG; double? get initialBiomassKg; double? get initialDensityPerM2; String? get cancellationReason; int? get dayOfCulture; SeasonPersonnel? get personnel; SeasonPersonnel? get lastAssignedPersonnel; SeasonProtocol? get approvedProductionProtocol; ActivationEligibility? get activationEligibility; SeasonActions? get availableActions;
+ String get id; String get pondId; String get name; ShrimpType get shrimpType; SeasonStatus get status; String get createdBy; DateTime get createdAt; DateTime get updatedAt; Pond get pond; DateTime? get stockingDate; DateTime? get expectedEndDate; DateTime? get actualEndDate; int? get initialQuantity; double? get initialDensityPerM2; String? get cancellationReason; int? get dayOfCulture; SeasonPersonnel? get personnel; SeasonPersonnel? get lastAssignedPersonnel; SeasonProtocol? get approvedProductionProtocol; ActivationEligibility? get activationEligibility; SeasonActions? get availableActions;
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1687,16 +1687,16 @@ $AquacultureSeasonCopyWith<AquacultureSeason> get copyWith => _$AquacultureSeaso
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialAvgWeightG, initialAvgWeightG) || other.initialAvgWeightG == initialAvgWeightG)&&(identical(other.initialBiomassKg, initialBiomassKg) || other.initialBiomassKg == initialBiomassKg)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialAvgWeightG,initialBiomassKg,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
+int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
 
 @override
 String toString() {
-  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialAvgWeightG: $initialAvgWeightG, initialBiomassKg: $initialBiomassKg, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
+  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
 }
 
 
@@ -1707,7 +1707,7 @@ abstract mixin class $AquacultureSeasonCopyWith<$Res>  {
   factory $AquacultureSeasonCopyWith(AquacultureSeason value, $Res Function(AquacultureSeason) _then) = _$AquacultureSeasonCopyWithImpl;
 @useResult
 $Res call({
- String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialAvgWeightG, double? initialBiomassKg, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
+ String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
 });
 
 
@@ -1724,7 +1724,7 @@ class _$AquacultureSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialAvgWeightG = freezed,Object? initialBiomassKg = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
@@ -1739,9 +1739,7 @@ as Pond,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDat
 as DateTime?,expectedEndDate: freezed == expectedEndDate ? _self.expectedEndDate : expectedEndDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,actualEndDate: freezed == actualEndDate ? _self.actualEndDate : actualEndDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,initialQuantity: freezed == initialQuantity ? _self.initialQuantity : initialQuantity // ignore: cast_nullable_to_non_nullable
-as int?,initialAvgWeightG: freezed == initialAvgWeightG ? _self.initialAvgWeightG : initialAvgWeightG // ignore: cast_nullable_to_non_nullable
-as double?,initialBiomassKg: freezed == initialBiomassKg ? _self.initialBiomassKg : initialBiomassKg // ignore: cast_nullable_to_non_nullable
-as double?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
+as int?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
 as double?,cancellationReason: freezed == cancellationReason ? _self.cancellationReason : cancellationReason // ignore: cast_nullable_to_non_nullable
 as String?,dayOfCulture: freezed == dayOfCulture ? _self.dayOfCulture : dayOfCulture // ignore: cast_nullable_to_non_nullable
 as int?,personnel: freezed == personnel ? _self.personnel : personnel // ignore: cast_nullable_to_non_nullable
@@ -1903,10 +1901,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialAvgWeightG,  double? initialBiomassKg,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AquacultureSeason() when $default != null:
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialAvgWeightG,_that.initialBiomassKg,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
   return orElse();
 
 }
@@ -1924,10 +1922,10 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialAvgWeightG,  double? initialBiomassKg,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)  $default,) {final _that = this;
 switch (_that) {
 case _AquacultureSeason():
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialAvgWeightG,_that.initialBiomassKg,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1944,10 +1942,10 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialAvgWeightG,  double? initialBiomassKg,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,) {final _that = this;
 switch (_that) {
 case _AquacultureSeason() when $default != null:
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialAvgWeightG,_that.initialBiomassKg,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
   return null;
 
 }
@@ -1959,7 +1957,7 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 
 
 class _AquacultureSeason extends AquacultureSeason {
-  const _AquacultureSeason({required this.id, required this.pondId, required this.name, required this.shrimpType, required this.status, required this.createdBy, required this.createdAt, required this.updatedAt, required this.pond, this.stockingDate, this.expectedEndDate, this.actualEndDate, this.initialQuantity, this.initialAvgWeightG, this.initialBiomassKg, this.initialDensityPerM2, this.cancellationReason, this.dayOfCulture, this.personnel, this.lastAssignedPersonnel, this.approvedProductionProtocol, this.activationEligibility, this.availableActions}): super._();
+  const _AquacultureSeason({required this.id, required this.pondId, required this.name, required this.shrimpType, required this.status, required this.createdBy, required this.createdAt, required this.updatedAt, required this.pond, this.stockingDate, this.expectedEndDate, this.actualEndDate, this.initialQuantity, this.initialDensityPerM2, this.cancellationReason, this.dayOfCulture, this.personnel, this.lastAssignedPersonnel, this.approvedProductionProtocol, this.activationEligibility, this.availableActions}): super._();
   
 
 @override final  String id;
@@ -1975,8 +1973,6 @@ class _AquacultureSeason extends AquacultureSeason {
 @override final  DateTime? expectedEndDate;
 @override final  DateTime? actualEndDate;
 @override final  int? initialQuantity;
-@override final  double? initialAvgWeightG;
-@override final  double? initialBiomassKg;
 @override final  double? initialDensityPerM2;
 @override final  String? cancellationReason;
 @override final  int? dayOfCulture;
@@ -1996,16 +1992,16 @@ _$AquacultureSeasonCopyWith<_AquacultureSeason> get copyWith => __$AquacultureSe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialAvgWeightG, initialAvgWeightG) || other.initialAvgWeightG == initialAvgWeightG)&&(identical(other.initialBiomassKg, initialBiomassKg) || other.initialBiomassKg == initialBiomassKg)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialAvgWeightG,initialBiomassKg,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
+int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
 
 @override
 String toString() {
-  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialAvgWeightG: $initialAvgWeightG, initialBiomassKg: $initialBiomassKg, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
+  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
 }
 
 
@@ -2016,7 +2012,7 @@ abstract mixin class _$AquacultureSeasonCopyWith<$Res> implements $AquacultureSe
   factory _$AquacultureSeasonCopyWith(_AquacultureSeason value, $Res Function(_AquacultureSeason) _then) = __$AquacultureSeasonCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialAvgWeightG, double? initialBiomassKg, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
+ String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
 });
 
 
@@ -2033,7 +2029,7 @@ class __$AquacultureSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialAvgWeightG = freezed,Object? initialBiomassKg = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
   return _then(_AquacultureSeason(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
@@ -2048,9 +2044,7 @@ as Pond,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDat
 as DateTime?,expectedEndDate: freezed == expectedEndDate ? _self.expectedEndDate : expectedEndDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,actualEndDate: freezed == actualEndDate ? _self.actualEndDate : actualEndDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,initialQuantity: freezed == initialQuantity ? _self.initialQuantity : initialQuantity // ignore: cast_nullable_to_non_nullable
-as int?,initialAvgWeightG: freezed == initialAvgWeightG ? _self.initialAvgWeightG : initialAvgWeightG // ignore: cast_nullable_to_non_nullable
-as double?,initialBiomassKg: freezed == initialBiomassKg ? _self.initialBiomassKg : initialBiomassKg // ignore: cast_nullable_to_non_nullable
-as double?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
+as int?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
 as double?,cancellationReason: freezed == cancellationReason ? _self.cancellationReason : cancellationReason // ignore: cast_nullable_to_non_nullable
 as String?,dayOfCulture: freezed == dayOfCulture ? _self.dayOfCulture : dayOfCulture // ignore: cast_nullable_to_non_nullable
 as int?,personnel: freezed == personnel ? _self.personnel : personnel // ignore: cast_nullable_to_non_nullable

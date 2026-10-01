@@ -23,7 +23,6 @@ void main() {
         stockingDate: DateTime(2026, 9, 25),
         expectedEndDate: DateTime(2027, 1, 20),
         initialQuantity: 100000,
-        initialAvgWeightG: 0.02,
       );
 
       expect(remote.lastData, <String, dynamic>{
@@ -33,7 +32,6 @@ void main() {
         'stockingDate': '2026-09-25',
         'expectedEndDate': '2027-01-20',
         'initialQuantity': 100000,
-        'initialAvgWeightG': 0.02,
       });
     },
   );

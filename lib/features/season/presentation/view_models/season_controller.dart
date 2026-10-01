@@ -12,7 +12,7 @@ import 'package:smartshrimp_app/features/season/data/services/season_api_service
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
 
-typedef SeasonListScope = ({String? farmId, String? pondId});
+typedef PondSeasonScope = ({String farmId, String pondId});
 
 final seasonRemoteDataSourceProvider = Provider<SeasonRemoteDataSource>((ref) {
   return SeasonApiService(ref.watch(apiClientProvider));
@@ -22,10 +22,42 @@ final seasonRepositoryProvider = Provider<SeasonRepository>((ref) {
   return SeasonRepositoryImpl(ref.watch(seasonRemoteDataSourceProvider));
 });
 
-final seasonListControllerProvider = AsyncNotifierProvider.autoDispose
-    .family<SeasonListController, SeasonPage, SeasonListScope>(
-      SeasonListController.new,
-    );
+final pondSeasonHistoryProvider = FutureProvider.autoDispose
+    .family<List<AquacultureSeason>, PondSeasonScope>((ref, scope) async {
+      if (ref.watch(authControllerProvider).value?.role !=
+          AccountRole.farmOwner) {
+        throw const UnsupportedRoleException();
+      }
+
+      final seasons = <AquacultureSeason>[];
+      final knownIds = <String>{};
+      final seenCursors = <String>{};
+      String? cursor;
+      try {
+        do {
+          final page = await ref
+              .read(seasonRepositoryProvider)
+              .getSeasons(
+                farmId: scope.farmId,
+                pondId: scope.pondId,
+                cursor: cursor,
+                limit: 100,
+              );
+          seasons.addAll(page.items.where((item) => knownIds.add(item.id)));
+          if (!page.hasNextPage) break;
+
+          final nextCursor = page.nextCursor;
+          if (nextCursor == null || !seenCursors.add(nextCursor)) {
+            throw const InvalidResponseException();
+          }
+          cursor = nextCursor;
+        } while (true);
+        return seasons;
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
 
 final seasonDetailControllerProvider = AsyncNotifierProvider.autoDispose
     .family<SeasonDetailController, AquacultureSeason, String>(
@@ -94,75 +126,6 @@ abstract base class _OwnerSeasonController<T> extends AsyncNotifier<T> {
   }
 }
 
-final class SeasonListController extends _OwnerSeasonController<SeasonPage> {
-  SeasonListController(this.scope);
-
-  final SeasonListScope scope;
-  static const _limit = 20;
-  String _search = '';
-  SeasonStatus? _status;
-  bool _loadingMore = false;
-  int _generation = 0;
-
-  @override
-  Future<SeasonPage> build() {
-    requireOwner();
-    return _fetch();
-  }
-
-  Future<void> applyFilters({
-    String? search,
-    SeasonStatus? status,
-    bool clearStatus = false,
-  }) async {
-    if (search != null) _search = search;
-    if (clearStatus) {
-      _status = null;
-    } else if (status != null) {
-      _status = status;
-    }
-    await refresh();
-  }
-
-  Future<void> refresh() async {
-    final generation = ++_generation;
-    final result = await AsyncValue.guard(_fetch);
-    if (ref.mounted && generation == _generation) state = result;
-  }
-
-  Future<void> loadMore() async {
-    final current = state.value;
-    if (current == null || !current.hasNextPage || _loadingMore) return;
-    _loadingMore = true;
-    final generation = ++_generation;
-    try {
-      final next = await _fetch(cursor: current.nextCursor);
-      if (ref.mounted && generation == _generation) {
-        state = AsyncData(current.append(next));
-      }
-    } on Object catch (error, stackTrace) {
-      if (ref.mounted && generation == _generation) {
-        state = AsyncError<SeasonPage>(error, stackTrace);
-      }
-    } finally {
-      _loadingMore = false;
-    }
-  }
-
-  Future<SeasonPage> _fetch({String? cursor}) => runAuthenticated(
-    () => ref
-        .read(seasonRepositoryProvider)
-        .getSeasons(
-          farmId: scope.farmId,
-          pondId: scope.pondId,
-          status: _status,
-          search: _search,
-          cursor: cursor,
-          limit: _limit,
-        ),
-  );
-}
-
 final class SeasonDetailController
     extends _OwnerSeasonController<AquacultureSeason> {
   SeasonDetailController(this.seasonId);
@@ -194,7 +157,6 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => _mutate(
     () => ref
         .read(seasonRepositoryProvider)
@@ -205,7 +167,6 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
           stockingDate: stockingDate,
           expectedEndDate: expectedEndDate,
           initialQuantity: initialQuantity,
-          initialAvgWeightG: initialAvgWeightG,
         ),
     farmId: farmId,
     pondId: pondId,
@@ -219,7 +180,6 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => _mutate(
     () => ref
         .read(seasonRepositoryProvider)
@@ -230,7 +190,6 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
           stockingDate: stockingDate,
           expectedEndDate: expectedEndDate,
           initialQuantity: initialQuantity,
-          initialAvgWeightG: initialAvgWeightG,
         ),
     farmId: farmId,
     pondId: current.pondId,
@@ -320,7 +279,9 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
       final result = await runAuthenticated(operation);
       state = const AsyncData<void>(null);
       ref
-        ..invalidate(seasonListControllerProvider)
+        ..invalidate(
+          pondSeasonHistoryProvider((farmId: farmId, pondId: pondId)),
+        )
         ..invalidate(farmDetailControllerProvider(farmId))
         ..invalidate(
           pondDetailControllerProvider((farmId: farmId, pondId: pondId)),

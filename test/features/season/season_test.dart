@@ -11,8 +11,7 @@ void main() {
     expect(season.status, SeasonStatus.planning);
     expect(season.shrimpType, ShrimpType.whiteleg);
     expect(season.initialQuantity, 100000);
-    expect(season.initialAvgWeightG, 0.02);
-    expect(season.initialBiomassKg, 2);
+    expect(season.initialDensityPerM2, 20);
     expect(season.pond.name, 'Ao A1');
     expect(season.personnel?.technician?.account.fullName, 'Kỹ thuật viên A');
     expect(season.personnel?.expert, isNull);
@@ -64,8 +63,6 @@ void main() {
     expect(SeasonRules.normalizeText('  Vụ   số 1 '), 'Vụ số 1');
     expect(SeasonRules.validateQuantity('100000'), isNull);
     expect(SeasonRules.validateQuantity('1.5'), isNotNull);
-    expect(SeasonRules.validateAverageWeight('0,025'), isNull);
-    expect(SeasonRules.validateAverageWeight('0.0001'), isNotNull);
     expect(SeasonRules.calculateDensity(480000, 3200), 150);
     expect(SeasonRules.calculateDensity(480000, null), isNull);
     expect(
@@ -95,8 +92,6 @@ Map<String, dynamic> _seasonJson() => <String, dynamic>{
   'expectedEndDate': '2027-01-20',
   'actualEndDate': null,
   'initialQuantity': '100000',
-  'initialAvgWeightG': 0.02,
-  'initialBiomassKg': 2,
   'initialDensityPerM2': 20,
   'status': 'PLANNING',
   'cancellationReason': null,

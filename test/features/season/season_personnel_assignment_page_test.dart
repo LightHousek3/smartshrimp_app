@@ -156,7 +156,6 @@ final class _SeasonRepository implements SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => throw UnimplementedError();
 
   @override
@@ -186,7 +185,6 @@ final class _SeasonRepository implements SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => throw UnimplementedError();
 }
 
