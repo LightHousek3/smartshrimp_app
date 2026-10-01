@@ -22,22 +22,47 @@ final personnelRepositoryProvider = Provider<PersonnelRepository>((ref) {
   return PersonnelRepositoryImpl(ref.watch(personnelRemoteDataSourceProvider));
 });
 
-final activePersonnelCountProvider = FutureProvider.autoDispose<int>((
-  ref,
-) async {
-  if (ref.watch(authControllerProvider).value?.role != AccountRole.farmOwner) {
-    throw const UnsupportedRoleException();
-  }
-  try {
-    final page = await ref
-        .read(personnelRepositoryProvider)
-        .getPersonnel(limit: 1, status: AccountStatus.active);
-    return page.totalResults;
-  } on SessionExpiredException {
-    await ref.read(authControllerProvider.notifier).expireSession();
-    rethrow;
-  }
-});
+final class ActivePersonnelSummary {
+  const ActivePersonnelSummary({
+    required this.technicians,
+    required this.experts,
+  });
+
+  final int technicians;
+  final int experts;
+
+  int get total => technicians + experts;
+}
+
+final activePersonnelSummaryProvider =
+    FutureProvider.autoDispose<ActivePersonnelSummary>((ref) async {
+      if (ref.watch(authControllerProvider).value?.role !=
+          AccountRole.farmOwner) {
+        throw const UnsupportedRoleException();
+      }
+      try {
+        final repository = ref.read(personnelRepositoryProvider);
+        final pages = await Future.wait(<Future<ManagedPersonnelPage>>[
+          repository.getPersonnel(
+            limit: 1,
+            role: AccountRole.technician,
+            status: AccountStatus.active,
+          ),
+          repository.getPersonnel(
+            limit: 1,
+            role: AccountRole.expert,
+            status: AccountStatus.active,
+          ),
+        ]);
+        return ActivePersonnelSummary(
+          technicians: pages[0].totalResults,
+          experts: pages[1].totalResults,
+        );
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
 
 final personnelListControllerProvider =
     AsyncNotifierProvider.autoDispose<
@@ -70,93 +95,106 @@ abstract base class _OwnerPersonnelController<T> extends AsyncNotifier<T> {
 
 final class PersonnelListController
     extends _OwnerPersonnelController<ManagedPersonnelPage> {
-  static const _pageSize = 20;
+  static const _pageSize = 100;
 
   PersonnelRoleFilter _roleFilter = PersonnelRoleFilter.all;
   PersonnelStatusFilter _statusFilter = PersonnelStatusFilter.all;
   String _search = '';
+  List<ManagedPersonnel> _allPersonnel = const <ManagedPersonnel>[];
   int _generation = 0;
-  bool _loadingMore = false;
 
   @override
-  Future<ManagedPersonnelPage> build() {
+  Future<ManagedPersonnelPage> build() async {
     requireOwner();
-    return _loadPage();
+    final page = await _loadAllPersonnel();
+    _allPersonnel = page.items;
+    return _applyLocalFilters(page);
   }
 
-  Future<void> applyFilters({
+  void applyFilters({
     required PersonnelRoleFilter roleFilter,
     required PersonnelStatusFilter statusFilter,
     String search = '',
-  }) async {
+  }) {
     _roleFilter = roleFilter;
     _statusFilter = statusFilter;
     _search = search;
-    final generation = ++_generation;
-    state = const AsyncLoading<ManagedPersonnelPage>();
-    final result = await AsyncValue.guard(_loadPage);
-    if (ref.mounted && generation == _generation) state = result;
+    final current = state.value;
+    if (current != null) state = AsyncData(_applyLocalFilters(current));
   }
 
   Future<void> refresh() async {
     final generation = ++_generation;
-    final result = await AsyncValue.guard(_loadPage);
-    if (ref.mounted && generation == _generation) state = result;
-  }
-
-  Future<void> loadMore() async {
-    final current = state.value;
-    final cursor = current?.nextCursor;
-    if (_loadingMore ||
-        current == null ||
-        !current.hasNextPage ||
-        cursor == null) {
-      return;
-    }
-
-    _loadingMore = true;
-    final generation = _generation;
-    try {
-      final next = await _loadPage(cursor: cursor);
-      if (!ref.mounted || generation != _generation) return;
-      final latest = state.value;
-      if (latest == null || latest.nextCursor != cursor) return;
-      final knownIds = latest.items.map((item) => item.id).toSet();
-      state = AsyncData(
-        next.copyWith(
-          items: <ManagedPersonnel>[
-            ...latest.items,
-            ...next.items.where((item) => knownIds.add(item.id)),
-          ],
-        ),
-      );
-    } finally {
-      _loadingMore = false;
+    final result = await AsyncValue.guard(_loadAllPersonnel);
+    if (!ref.mounted || generation != _generation) return;
+    if (result case AsyncData(:final value)) {
+      _allPersonnel = value.items;
+      state = AsyncData(_applyLocalFilters(value));
+    } else {
+      state = result;
     }
   }
 
-  Future<ManagedPersonnelPage> _loadPage({String? cursor}) => runAuthenticated(
-    () => ref
-        .read(personnelRepositoryProvider)
-        .getPersonnel(
-          cursor: cursor,
+  ManagedPersonnelPage _applyLocalFilters(ManagedPersonnelPage source) {
+    final role = switch (_roleFilter) {
+      PersonnelRoleFilter.all => null,
+      PersonnelRoleFilter.technician => AccountRole.technician,
+      PersonnelRoleFilter.expert => AccountRole.expert,
+    };
+    final status = switch (_statusFilter) {
+      PersonnelStatusFilter.all => null,
+      PersonnelStatusFilter.active => AccountStatus.active,
+      PersonnelStatusFilter.pendingActivation =>
+        AccountStatus.pendingActivation,
+      PersonnelStatusFilter.inactive => AccountStatus.inactive,
+      PersonnelStatusFilter.blocked => AccountStatus.blocked,
+    };
+    final search = _search.trim().toLowerCase();
+    final filtered = _allPersonnel
+        .where((person) {
+          if (role != null && person.role != role) return false;
+          if (status != null && person.status != status) return false;
+          return search.isEmpty ||
+              person.displayName.toLowerCase().contains(search);
+        })
+        .toList(growable: false);
+    return source.copyWith(
+      items: filtered,
+      totalResults: filtered.length,
+      hasNextPage: false,
+      nextCursor: null,
+    );
+  }
+
+  Future<ManagedPersonnelPage> _loadAllPersonnel() =>
+      runAuthenticated(() async {
+        final repository = ref.read(personnelRepositoryProvider);
+        final items = <ManagedPersonnel>[];
+        final knownIds = <String>{};
+        final seenCursors = <String>{};
+        String? cursor;
+
+        do {
+          final page = await repository.getPersonnel(
+            cursor: cursor,
+            limit: _pageSize,
+          );
+          items.addAll(page.items.where((person) => knownIds.add(person.id)));
+          if (!page.hasNextPage) break;
+          final nextCursor = page.nextCursor;
+          if (nextCursor == null || !seenCursors.add(nextCursor)) {
+            throw const InvalidResponseException();
+          }
+          cursor = nextCursor;
+        } while (true);
+
+        return ManagedPersonnelPage(
+          items: items,
           limit: _pageSize,
-          role: switch (_roleFilter) {
-            PersonnelRoleFilter.all => null,
-            PersonnelRoleFilter.technician => AccountRole.technician,
-            PersonnelRoleFilter.expert => AccountRole.expert,
-          },
-          status: switch (_statusFilter) {
-            PersonnelStatusFilter.all => null,
-            PersonnelStatusFilter.active => AccountStatus.active,
-            PersonnelStatusFilter.pendingActivation =>
-              AccountStatus.pendingActivation,
-            PersonnelStatusFilter.inactive => AccountStatus.inactive,
-            PersonnelStatusFilter.blocked => AccountStatus.blocked,
-          },
-          search: _search,
-        ),
-  );
+          totalResults: items.length,
+          hasNextPage: false,
+        );
+      });
 }
 
 final class PersonnelDetailController

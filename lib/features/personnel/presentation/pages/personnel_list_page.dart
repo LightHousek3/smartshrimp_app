@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/widgets/personnel_visuals.dart';
@@ -21,39 +21,15 @@ class PersonnelListPage extends ConsumerStatefulWidget {
 
 class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
   final _searchController = TextEditingController();
-  final _scrollController = ScrollController();
   PersonnelRoleFilter _roleFilter = PersonnelRoleFilter.all;
   PersonnelStatusFilter _statusFilter = PersonnelStatusFilter.all;
   Timer? _debounce;
-  bool _loadingMore = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_handleScroll);
-  }
 
   @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
     super.dispose();
-  }
-
-  Future<void> _handleScroll() async {
-    if (_scrollController.position.extentAfter >= 280 || _loadingMore) return;
-    setState(() => _loadingMore = true);
-    try {
-      await ref.read(personnelListControllerProvider.notifier).loadMore();
-    } on Object catch (error) {
-      if (!mounted) return;
-      AppNoticeService.danger(context, _errorMessage(error, loadingMore: true));
-    } finally {
-      if (mounted) setState(() => _loadingMore = false);
-    }
   }
 
   void _search(String value) {
@@ -94,20 +70,24 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
           color: AppColors.ocean,
           onRefresh: ref.read(personnelListControllerProvider.notifier).refresh,
           child: CustomScrollView(
-            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
-              const SliverPadding(
-                padding: EdgeInsets.fromLTRB(12, 8, 16, 0),
-                sliver: SliverToBoxAdapter(child: _Header()),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                sliver: SliverToBoxAdapter(child: _buildSearch()),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                sliver: SliverToBoxAdapter(child: _buildFilters()),
+              StickyPageHeader(
+                title: 'Nhân sự',
+                titleSize: 20,
+                height: 64,
+                onBack: () => context.go(AppRoutes.account),
+                bottomHeight: 126,
+                bottom: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                  child: Column(
+                    children: <Widget>[
+                      _buildSearch(),
+                      const SizedBox(height: 12),
+                      _buildFilters(),
+                    ],
+                  ),
+                ),
               ),
               ...state.when(
                 data: _buildData,
@@ -347,18 +327,6 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
           },
         ),
       ),
-      if (_loadingMore)
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 18),
-            child: Center(
-              child: SizedBox.square(
-                dimension: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.2),
-              ),
-            ),
-          ),
-        ),
     ];
   }
 
@@ -371,41 +339,9 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
         PersonnelStatusFilter.blocked => 'Đã khóa',
       };
 
-  static String _errorMessage(Object error, {bool loadingMore = false}) =>
-      error is AppException
+  static String _errorMessage(Object error) => error is AppException
       ? error.message
-      : loadingMore
-      ? 'Không thể tải thêm nhân sự.'
       : 'Không thể tải danh sách nhân sự.';
-}
-
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: <Widget>[
-      IconButton(
-        tooltip: 'Về Tài khoản',
-        onPressed: () => context.go(AppRoutes.account),
-        color: AppColors.inkSoft,
-        iconSize: 20,
-        icon: const Icon(Icons.arrow_back_rounded),
-      ),
-      const SizedBox(width: 2),
-      const Expanded(
-        child: Text(
-          'Nhân sự',
-          style: TextStyle(
-            color: AppColors.ink,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ),
-    ],
-  );
 }
 
 class _RoleChip extends StatelessWidget {

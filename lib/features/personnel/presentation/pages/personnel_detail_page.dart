@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
@@ -38,20 +39,21 @@ class PersonnelDetailPage extends ConsumerWidget {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
+                StickyPageHeader(
+                  title: detail.personnel.displayName,
+                  titleSize: 20,
+                  height: 64,
+                  onBack: context.pop,
+                ),
                 SliverToBoxAdapter(
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 720),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            _DetailHeader(
-                              title: detail.personnel.displayName,
-                              onBack: context.pop,
-                            ),
-                            const SizedBox(height: 12),
                             _ContactCard(personnel: detail.personnel),
                             const SizedBox(height: 16),
                             _KpiCard(
@@ -79,40 +81,6 @@ class PersonnelDetailPage extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _DetailHeader extends StatelessWidget {
-  const _DetailHeader({required this.title, required this.onBack});
-
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: <Widget>[
-      IconButton(
-        tooltip: 'Quay lại',
-        onPressed: onBack,
-        color: AppColors.inkSoft,
-        iconSize: 20,
-        icon: Icon(Icons.adaptive.arrow_back),
-      ),
-      const SizedBox(width: 2),
-      Expanded(
-        child: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.ink,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ),
-    ],
-  );
 }
 
 class _ContactCard extends StatelessWidget {
@@ -489,6 +457,7 @@ class _CurrentAssignmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.white,
+    surfaceTintColor: Colors.transparent,
     borderRadius: BorderRadius.circular(12),
     child: InkWell(
       key: Key('personnel_current_assignment_${assignment.id}'),
@@ -500,6 +469,7 @@ class _CurrentAssignmentCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: const <BoxShadow>[
             BoxShadow(
@@ -581,49 +551,89 @@ class _HistoryAssignmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reason = assignment.replacementReason?.trim();
-    return Container(
-      key: Key('personnel_assignment_history_${assignment.id}'),
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
-      decoration: BoxDecoration(
-        color: const Color(0xF2FFFFFF),
+    return Material(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        key: Key('personnel_assignment_history_${assignment.id}'),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 6,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            assignment.pondName,
-            style: const TextStyle(
-              color: AppColors.inkSoft,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            '${PersonnelVisuals.formatDate(assignment.assignedAt)} '
-            '→ ${PersonnelVisuals.formatDate(assignment.unassignedAt)}',
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
-          ),
-          if (reason != null && reason.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 7),
-            Text(
-              reason,
-              style: const TextStyle(
-                color: AppColors.inkMuted,
-                fontSize: 11,
-                fontStyle: FontStyle.italic,
+        onTap: () => context.push(
+          '/farms/${assignment.farmId}/ponds/${assignment.pondId}',
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x08000000),
+                blurRadius: 6,
+                offset: Offset(0, 1),
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      assignment.pondName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Vụ nuôi: ${assignment.seasonName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkSoft,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${PersonnelVisuals.formatDate(assignment.assignedAt)}-'
+                      '${PersonnelVisuals.formatDate(assignment.unassignedAt)}',
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    if (reason != null && reason.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 7),
+                      Text(
+                        reason,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 17,
+                color: AppColors.inkMuted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

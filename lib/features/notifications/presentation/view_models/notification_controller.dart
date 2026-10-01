@@ -47,17 +47,22 @@ final notificationSocketProvider = Provider.autoDispose<NotificationSocket?>((
   return socket;
 });
 
+typedef NotificationListQuery = ({
+  NotificationCategory category,
+  NotificationReadStatus readStatus,
+});
+
 final notificationListProvider =
     AsyncNotifierProvider.family<
       NotificationListController,
       NotificationPage,
-      NotificationReadStatus
+      NotificationListQuery
     >(NotificationListController.new);
 
 final class NotificationListController extends AsyncNotifier<NotificationPage> {
-  NotificationListController(this.readStatus);
+  NotificationListController(this.query);
 
-  final NotificationReadStatus readStatus;
+  final NotificationListQuery query;
   bool _loadingMore = false;
   bool _refreshing = false;
   bool _markingAllAsRead = false;
@@ -73,7 +78,10 @@ final class NotificationListController extends AsyncNotifier<NotificationPage> {
     return _runAuthenticated(
       () => ref
           .read(notificationRepositoryProvider)
-          .getNotifications(readStatus: readStatus),
+          .getNotifications(
+            readStatus: query.readStatus,
+            category: query.category,
+          ),
     );
   }
 
@@ -86,7 +94,10 @@ final class NotificationListController extends AsyncNotifier<NotificationPage> {
         () => _runAuthenticated(
           () => ref
               .read(notificationRepositoryProvider)
-              .getNotifications(readStatus: readStatus),
+              .getNotifications(
+                readStatus: query.readStatus,
+                category: query.category,
+              ),
         ),
       );
       if (ref.mounted && generation == _generation) state = result;
@@ -107,7 +118,11 @@ final class NotificationListController extends AsyncNotifier<NotificationPage> {
       final next = await _runAuthenticated(
         () => ref
             .read(notificationRepositoryProvider)
-            .getNotifications(readStatus: readStatus, cursor: cursor),
+            .getNotifications(
+              readStatus: query.readStatus,
+              category: query.category,
+              cursor: cursor,
+            ),
       );
       if (!ref.mounted || generation != _generation) return;
       final latest = state.value;

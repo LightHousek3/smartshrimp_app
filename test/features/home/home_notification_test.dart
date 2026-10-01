@@ -136,7 +136,9 @@ final class _NotificationRepository implements NotificationRepository {
   @override
   Future<NotificationPage> getNotifications({
     required NotificationReadStatus readStatus,
+    NotificationCategory category = NotificationCategory.all,
     String? cursor,
+    int limit = 10,
   }) async {
     if (fail) throw StateError('Notification API unavailable');
     return NotificationPage(

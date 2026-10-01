@@ -43,6 +43,7 @@ void main() {
     expect(find.text('Nhân sự'), findsNothing);
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
+    expect(find.text('1 KTV · 0 Chuyên gia'), findsOneWidget);
     expect(find.text('1 đang hoạt động'), findsOneWidget);
     expect(
       find.descendant(
@@ -94,10 +95,12 @@ void main() {
     );
     expect(avatar.backgroundColor, const Color(0xFF1D7AD6));
 
+    final callsBeforeSearch = repository.listCalls;
     await tester.enterText(find.byType(TextField).first, '  kỹ thuật  ');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(repository.lastSearch, '  kỹ thuật  ');
+    expect(repository.listCalls, callsBeforeSearch);
+    expect(repository.lastSearch, isNull);
 
     await tester.tap(find.text('Nguyễn Văn Kỹ Thuật'));
     await tester.pumpAndSettle();
@@ -119,7 +122,8 @@ void main() {
     expect(find.text('Trang trại Đông Hải · Vụ Đông 2025'), findsOneWidget);
     expect(find.text('Lịch sử phân công'), findsOneWidget);
     expect(find.text('Ao A3'), findsOneWidget);
-    expect(find.text('25/06/2026 → 30/09/2026'), findsOneWidget);
+    expect(find.text('Vụ nuôi: Vụ Hè Thu 2026'), findsOneWidget);
+    expect(find.text('25/06/2026-30/09/2026'), findsOneWidget);
     expect(find.text('Điều chuyển nhân sự'), findsOneWidget);
     expect(
       find.byKey(const Key('personnel_current_assignment_assignment-a5')),
@@ -295,6 +299,7 @@ final class _TechnicianAuthRepository implements AuthRepository {
 
 final class _FakePersonnelRepository implements PersonnelRepository {
   String? lastSearch;
+  int listCalls = 0;
   int detailCalls = 0;
 
   @override
@@ -305,11 +310,14 @@ final class _FakePersonnelRepository implements PersonnelRepository {
     AccountStatus? status,
     String? search,
   }) async {
+    listCalls++;
     lastSearch = search;
     return ManagedPersonnelPage(
-      items: <ManagedPersonnel>[_personnel],
+      items: role == AccountRole.expert
+          ? const <ManagedPersonnel>[]
+          : <ManagedPersonnel>[_personnel],
       limit: 20,
-      totalResults: 1,
+      totalResults: role == AccountRole.expert ? 0 : 1,
       hasNextPage: false,
     );
   }

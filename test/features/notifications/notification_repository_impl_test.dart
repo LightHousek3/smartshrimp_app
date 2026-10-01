@@ -13,6 +13,7 @@ void main() {
 
       await repository.getNotifications(
         readStatus: NotificationReadStatus.unread,
+        category: NotificationCategory.warning,
         cursor: 'cursor-1',
       );
       await repository.getNotification('notification-1');
@@ -20,7 +21,8 @@ void main() {
 
       expect(remote.lastQuery, <String, dynamic>{
         'readStatus': 'unread',
-        'limit': 20,
+        'limit': 10,
+        'category': 'warning',
         'cursor': 'cursor-1',
       });
       expect(remote.lastId, 'notification-1');

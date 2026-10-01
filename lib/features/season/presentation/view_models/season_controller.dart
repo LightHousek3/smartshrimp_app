@@ -293,7 +293,7 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
         ref
           ..invalidate(assignablePersonnelProvider)
           ..invalidate(personnelListControllerProvider)
-          ..invalidate(activePersonnelCountProvider);
+          ..invalidate(activePersonnelSummaryProvider);
       }
       return result;
     } on Object catch (error, stackTrace) {

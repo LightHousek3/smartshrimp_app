@@ -176,12 +176,17 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('Chỉ số NO2 đã vượt ngưỡng cho phép, cần xử lý sớm.'),
+        find.descendant(
+          of: find.byKey(const Key('notification_detail_sheet')),
+          matching: find.text(
+            'Chỉ số NO2 đã vượt ngưỡng cho phép, cần xử lý sớm.',
+          ),
+        ),
         findsOneWidget,
       );
       expect(find.text('Xem vụ nuôi'), findsOneWidget);
       expect(find.text('Đã đọc lúc'), findsNothing);
-      expect(repository.detailCalls, 1);
+      expect(repository.detailCalls, 0);
 
       await tester.tap(find.byKey(const Key('notification_action_button')));
       await tester.pumpAndSettle();
@@ -267,6 +272,7 @@ final class _NotificationRepository implements NotificationRepository {
     title: 'Cảnh báo: NO2 vượt ngưỡng — Ao A3',
     type: NotificationType.waterThresholdExceeded,
     createdAt: DateTime(2026, 9, 27, 6, 15),
+    content: 'Chỉ số NO2 đã vượt ngưỡng cho phép, cần xử lý sớm.',
   );
 
   final AppNotification _completedTask = AppNotification(
@@ -280,12 +286,14 @@ final class _NotificationRepository implements NotificationRepository {
   @override
   Future<NotificationPage> getNotifications({
     required NotificationReadStatus readStatus,
+    NotificationCategory category = NotificationCategory.all,
     String? cursor,
+    int limit = 10,
   }) async {
     final warning = _allRead
         ? _warning.copyWith(readAt: DateTime(2026, 9, 27, 7))
         : _warning;
-    final items = switch (readStatus) {
+    final readItems = switch (readStatus) {
       NotificationReadStatus.all => <AppNotification>[warning, _completedTask],
       NotificationReadStatus.unread => <AppNotification>[
         if (!_allRead) warning,
@@ -294,6 +302,26 @@ final class _NotificationRepository implements NotificationRepository {
         if (_allRead) warning,
         _completedTask,
       ],
+    };
+    final items = switch (category) {
+      NotificationCategory.all => readItems,
+      NotificationCategory.action =>
+        readItems
+            .where(
+              (notification) =>
+                  notification.isUnread && notification.referenceId != null,
+            )
+            .toList(growable: false),
+      NotificationCategory.warning =>
+        readItems
+            .where(
+              (notification) =>
+                  notification.type ==
+                      NotificationType.waterThresholdExceeded ||
+                  notification.type ==
+                      NotificationType.scheduleGenerationFailed,
+            )
+            .toList(growable: false),
     };
     return NotificationPage(
       items: items,

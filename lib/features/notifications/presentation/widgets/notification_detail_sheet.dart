@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
-import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
 
 Future<void> showNotificationDetailSheet({
   required BuildContext context,
-  required String notificationId,
+  required AppNotification notification,
 }) => showModalBottomSheet<void>(
   context: context,
   useRootNavigator: true,
@@ -20,58 +17,45 @@ Future<void> showNotificationDetailSheet({
     maxWidth: 560,
     maxHeight: MediaQuery.sizeOf(context).height * 0.86,
   ),
-  builder: (_) => _NotificationDetailSheet(notificationId: notificationId),
+  builder: (_) => _NotificationDetailSheet(notification: notification),
 );
 
-class _NotificationDetailSheet extends ConsumerWidget {
-  const _NotificationDetailSheet({required this.notificationId});
+class _NotificationDetailSheet extends StatelessWidget {
+  const _NotificationDetailSheet({required this.notification});
 
-  final String notificationId;
+  final AppNotification notification;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final detailState = ref.watch(notificationDetailProvider(notificationId));
-    return Container(
-      key: const Key('notification_detail_sheet'),
-      width: double.infinity,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.86,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x330F1C2E),
-            blurRadius: 28,
-            offset: Offset(0, -8),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const _SheetHeader(),
-          const Divider(height: 1, color: Color(0xFFEEF1F7)),
-          detailState.when(
-            loading: () => const _LoadingContent(),
-            error: (error, _) => _ErrorContent(
-              message: error is AppException
-                  ? error.message
-                  : 'Không thể tải chi tiết thông báo. Vui lòng thử lại.',
-              onRetry: () =>
-                  ref.invalidate(notificationDetailProvider(notificationId)),
-            ),
-            data: (notification) => Flexible(
-              fit: FlexFit.loose,
-              child: _LoadedContent(notification: notification),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    key: const Key('notification_detail_sheet'),
+    width: double.infinity,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+    ),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: Color(0x330F1C2E),
+          blurRadius: 28,
+          offset: Offset(0, -8),
+        ),
+      ],
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const _SheetHeader(),
+        const Divider(height: 1, color: Color(0xFFEEF1F7)),
+        Flexible(
+          fit: FlexFit.loose,
+          child: _LoadedContent(notification: notification),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SheetHeader extends StatelessWidget {
@@ -288,52 +272,6 @@ class _ActionFooter extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
-}
-
-class _LoadingContent extends StatelessWidget {
-  const _LoadingContent();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox(
-    height: 240,
-    child: Center(
-      child: CircularProgressIndicator(color: AppColors.ocean, strokeWidth: 2),
-    ),
-  );
-}
-
-class _ErrorContent extends StatelessWidget {
-  const _ErrorContent({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const Icon(
-          Icons.cloud_off_outlined,
-          color: AppColors.inkMuted,
-          size: 38,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.inkSoft, fontSize: 13),
-        ),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Thử lại'),
-        ),
-      ],
     ),
   );
 }
