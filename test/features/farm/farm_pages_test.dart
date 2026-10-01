@@ -80,7 +80,11 @@ void main() {
 
     await tester.tap(find.text('Trại Cà Mau'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Xóa trang trại'), 300);
+    await tester.drag(
+      find.byType(CustomScrollView).last,
+      const Offset(0, -700),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Xóa trang trại'));
     await tester.pumpAndSettle();
     expect(find.text('Chưa thể xóa trang trại'), findsOneWidget);
@@ -90,6 +94,76 @@ void main() {
     );
     expect(find.text('Xác nhận xóa'), findsNothing);
     expect(find.text('Lưu trữ trang trại'), findsNothing);
+  });
+
+  testWidgets('farm detail pond section matches compact searchable layout', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
+          farmRepositoryProvider.overrideWithValue(
+            _FakeFarmRepository(farm: _farmWithPonds),
+          ),
+        ],
+        child: const SmartShrimpApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trang trại'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trại Cà Mau'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(CustomScrollView).last,
+      const Offset(0, -450),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Thêm ao'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Tìm ao...'), findsOneWidget);
+    expect(find.text('Trạng thái'), findsOneWidget);
+    expect(find.text('Loại ao'), findsOneWidget);
+    expect(find.text('Ao A3'), findsOneWidget);
+    expect(find.text('Ao C2 (xử lý nước)'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('pond-filter-Trạng thái')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Không xác định'), findsNothing);
+    await tester.tap(find.text('Đang bảo trì').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Ao A3'), findsNothing);
+    expect(find.text('Ao C2 (xử lý nước)'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('pond-filter-Trạng thái')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tất cả Trạng thái'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, 'C2');
+    await tester.pump();
+    expect(find.text('Ao A3'), findsNothing);
+    expect(find.text('Ao C2 (xử lý nước)'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).last, 'không tồn tại');
+    await tester.pump();
+    expect(find.text('Không tìm thấy ao'), findsOneWidget);
+    expect(find.text('Hãy thử từ khóa hoặc bộ lọc khác.'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey<String>('pond-empty-state'))),
+      const Size(361, 180),
+    );
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -112,6 +186,38 @@ const _farm = Farm(
   canDelete: false,
 );
 
+const _farmWithPonds = Farm(
+  id: 'farm-1',
+  ownerId: 'owner-1',
+  name: 'Trại Cà Mau',
+  address: 'Cà Mau',
+  totalAreaHectares: 3.5,
+  pondCount: 4,
+  activeSeasonCount: 3,
+  canDelete: false,
+  ponds: <FarmPond>[
+    FarmPond(
+      id: 'pond-1',
+      name: 'Ao A3',
+      areaM2: 3200,
+      type: PondType.aquaculture,
+      status: PondStatus.available,
+      currentSeason: FarmCurrentSeason(
+        id: 'season-1',
+        status: FarmSeasonStatus.active,
+        dayOfCulture: 72,
+      ),
+    ),
+    FarmPond(
+      id: 'pond-2',
+      name: 'Ao C2 (xử lý nước)',
+      areaM2: 2000,
+      type: PondType.waterTreatment,
+      status: PondStatus.maintenance,
+    ),
+  ],
+);
+
 final class _OwnerAuthRepository implements AuthRepository {
   @override
   Future<AuthAccount> login({
@@ -127,11 +233,14 @@ final class _OwnerAuthRepository implements AuthRepository {
 }
 
 final class _FakeFarmRepository implements FarmRepository {
+  _FakeFarmRepository({this.farm = _farm});
+
+  final Farm farm;
   int createCalls = 0;
   int getCalls = 0;
 
   @override
-  Future<Farm> deleteFarm(String farmId) async => _farm;
+  Future<Farm> deleteFarm(String farmId) async => farm;
 
   @override
   Future<Farm> createFarm({
@@ -142,16 +251,16 @@ final class _FakeFarmRepository implements FarmRepository {
     double? totalAreaHectares,
   }) async {
     createCalls++;
-    return _farm;
+    return farm;
   }
 
   @override
-  Future<Farm> getFarm(String farmId) async => _farm;
+  Future<Farm> getFarm(String farmId) async => farm;
 
   @override
   Future<List<Farm>> getFarms() async {
     getCalls++;
-    return const <Farm>[_farm];
+    return <Farm>[farm];
   }
 
   @override
@@ -162,5 +271,5 @@ final class _FakeFarmRepository implements FarmRepository {
     double? latitude,
     double? longitude,
     double? totalAreaHectares,
-  }) async => _farm;
+  }) async => farm;
 }
