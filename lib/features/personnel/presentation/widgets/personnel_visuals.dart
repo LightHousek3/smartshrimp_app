@@ -58,6 +58,13 @@ abstract final class PersonnelVisuals {
     _ => const Color(0xFF64748B),
   };
 
+  static String formatDate(DateTime? value) {
+    if (value == null) return 'Chưa có dữ liệu';
+    final local = value.toLocal();
+    String twoDigits(int number) => number.toString().padLeft(2, '0');
+    return '${twoDigits(local.day)}/${twoDigits(local.month)}/${local.year}';
+  }
+
   static String formatDateTime(DateTime? value) {
     if (value == null) return 'Chưa có dữ liệu';
     final local = value.toLocal();

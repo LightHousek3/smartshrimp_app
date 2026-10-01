@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/widgets/personnel_visuals.dart';
@@ -31,7 +32,7 @@ class PersonnelDetailPage extends ConsumerWidget {
             onBack: context.pop,
             onRetry: ref.read(provider.notifier).refresh,
           ),
-          data: (personnel) => RefreshIndicator(
+          data: (detail) => RefreshIndicator(
             color: AppColors.ocean,
             onRefresh: ref.read(provider.notifier).refresh,
             child: CustomScrollView(
@@ -46,15 +47,25 @@ class PersonnelDetailPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            _DetailHeader(onBack: context.pop),
+                            _DetailHeader(
+                              title: detail.personnel.displayName,
+                              onBack: context.pop,
+                            ),
+                            const SizedBox(height: 12),
+                            _ContactCard(personnel: detail.personnel),
                             const SizedBox(height: 16),
-                            _IdentityCard(personnel: personnel),
-                            const SizedBox(height: 14),
-                            _AssignmentCard(personnel: personnel),
-                            const SizedBox(height: 14),
-                            _ContactCard(personnel: personnel),
-                            const SizedBox(height: 14),
-                            _ActivityCard(personnel: personnel),
+                            _KpiCard(
+                              personnel: detail.personnel,
+                              kpi: detail.kpi,
+                            ),
+                            const SizedBox(height: 16),
+                            _CurrentAssignmentsSection(
+                              assignments: detail.currentAssignments,
+                            ),
+                            const SizedBox(height: 16),
+                            _AssignmentHistorySection(
+                              assignments: detail.assignmentHistory,
+                            ),
                           ],
                         ),
                       ),
@@ -71,143 +82,36 @@ class PersonnelDetailPage extends ConsumerWidget {
 }
 
 class _DetailHeader extends StatelessWidget {
-  const _DetailHeader({required this.onBack});
+  const _DetailHeader({required this.title, required this.onBack});
 
+  final String title;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) => Row(
     children: <Widget>[
-      IconButton.filledTonal(
+      IconButton(
         tooltip: 'Quay lại',
         onPressed: onBack,
-        icon: const Icon(Icons.arrow_back_rounded),
+        color: AppColors.inkSoft,
+        iconSize: 20,
+        icon: Icon(Icons.adaptive.arrow_back),
       ),
-      const SizedBox(width: 10),
-      const Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Chi tiết nhân sự',
-              style: TextStyle(
-                color: AppColors.ink,
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              'Thông tin tài khoản và phân công hiện tại',
-              style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.personnel});
-
-  final ManagedPersonnel personnel;
-
-  @override
-  Widget build(BuildContext context) => _SurfaceCard(
-    child: Column(
-      children: <Widget>[
-        PersonnelAvatar(personnel: personnel, radius: 42),
-        const SizedBox(height: 13),
-        Text(
-          personnel.displayName,
-          textAlign: TextAlign.center,
+      const SizedBox(width: 2),
+      Expanded(
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: AppColors.ink,
             fontSize: 20,
             fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 9),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 7,
-          runSpacing: 7,
-          children: <Widget>[
-            PersonnelPill(
-              label: PersonnelVisuals.roleLabel(personnel.role),
-              foreground: PersonnelVisuals.roleForeground(personnel.role),
-              background: PersonnelVisuals.roleBackground(personnel.role),
-            ),
-            PersonnelPill(
-              label: PersonnelVisuals.statusLabel(personnel.status),
-              foreground: PersonnelVisuals.statusForeground(personnel.status),
-              background: PersonnelVisuals.statusBackground(personnel.status),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-class _AssignmentCard extends StatelessWidget {
-  const _AssignmentCard({required this.personnel});
-
-  final ManagedPersonnel personnel;
-
-  @override
-  Widget build(BuildContext context) => _SurfaceCard(
-    child: Row(
-      children: <Widget>[
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE6F2FF),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: const Icon(Icons.layers_rounded, color: AppColors.ocean),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Text(
-                'VỤ ĐANG PHỤ TRÁCH',
-                style: TextStyle(
-                  color: AppColors.inkMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '${personnel.currentSeasonAssignments}',
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          personnel.currentSeasonAssignments == 0
-              ? 'Chưa được phân công'
-              : 'Đang tham gia',
-          style: TextStyle(
-            color: personnel.currentSeasonAssignments == 0
-                ? AppColors.inkMuted
-                : const Color(0xFF087F6B),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }
 
@@ -218,102 +122,586 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _SurfaceCard(
-    title: 'Thông tin liên hệ',
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            PersonnelAvatar(personnel: personnel, radius: 25),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    personnel.displayName,
+                    key: const Key('personnel_detail_name'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: <Widget>[
+                      PersonnelPill(
+                        label: PersonnelVisuals.roleLabel(personnel.role),
+                        foreground: PersonnelVisuals.roleForeground(
+                          personnel.role,
+                        ),
+                        background: PersonnelVisuals.roleBackground(
+                          personnel.role,
+                        ),
+                      ),
+                      PersonnelPill(
+                        label: PersonnelVisuals.statusLabel(personnel.status),
+                        foreground: PersonnelVisuals.statusForeground(
+                          personnel.status,
+                        ),
+                        background: PersonnelVisuals.statusBackground(
+                          personnel.status,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 13),
+          child: Divider(height: 1, color: AppColors.line),
+        ),
         _InfoRow(
           icon: Icons.mail_outline_rounded,
           label: 'Email',
           value: personnel.email,
         ),
-        const _RowDivider(),
+        const SizedBox(height: 13),
         _InfoRow(
-          icon: Icons.phone_outlined,
-          label: 'Số điện thoại',
+          icon: Icons.phone_rounded,
+          label: 'Điện thoại',
           value: personnel.phone?.trim().isNotEmpty == true
               ? personnel.phone!
               : 'Chưa cập nhật',
         ),
+        const SizedBox(height: 13),
+        _InfoRow(
+          icon: Icons.calendar_month_rounded,
+          label: 'Tham gia hệ thống từ',
+          value: PersonnelVisuals.formatDate(
+            personnel.activatedAt ?? personnel.createdAt,
+          ),
+        ),
       ],
     ),
   );
 }
 
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.personnel});
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({required this.personnel, required this.kpi});
 
   final ManagedPersonnel personnel;
+  final PersonnelKpi kpi;
 
   @override
-  Widget build(BuildContext context) => _SurfaceCard(
-    title: 'Hoạt động tài khoản',
-    child: Column(
-      children: <Widget>[
-        _InfoRow(
-          icon: Icons.verified_user_outlined,
-          label: 'Kích hoạt lúc',
-          value: PersonnelVisuals.formatDateTime(personnel.activatedAt),
-        ),
-        const _RowDivider(),
-        _InfoRow(
-          icon: Icons.login_rounded,
-          label: 'Đăng nhập gần nhất',
-          value: PersonnelVisuals.formatDateTime(personnel.lastLoginAt),
-        ),
-        const _RowDivider(),
-        _InfoRow(
-          icon: Icons.calendar_today_outlined,
-          label: 'Ngày tạo tài khoản',
-          value: PersonnelVisuals.formatDateTime(personnel.createdAt),
-        ),
-        const _RowDivider(),
-        _InfoRow(
-          icon: Icons.update_rounded,
-          label: 'Cập nhật gần nhất',
-          value: PersonnelVisuals.formatDateTime(personnel.updatedAt),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final technician = personnel.role == AccountRole.technician;
+    final metrics = technician
+        ? <_KpiMetric>[
+            _KpiMetric(
+              icon: Icons.layers_rounded,
+              label: 'Vụ đã tham gia',
+              value: '${kpi.seasonsParticipated}',
+              hint: 'Bao gồm lịch sử phân công',
+              background: const Color(0xFFEAF4FF),
+              foreground: const Color(0xFF0C4E8F),
+            ),
+            _KpiMetric(
+              icon: Icons.checklist_rounded,
+              label: 'Nhiệm vụ hoàn thành',
+              value: '${kpi.completedTasks ?? 0}',
+              hint: 'Trạng thái đã hoàn thành',
+              background: const Color(0xFFE2F6F3),
+              foreground: const Color(0xFF087F6B),
+            ),
+            _KpiMetric(
+              icon: Icons.alarm_on_rounded,
+              label: 'Hoàn thành đúng hạn',
+              value: '${kpi.onTimeCompletedTasks ?? 0}',
+              hint: 'Không trễ hạn giao',
+              background: const Color(0xFFE2F6F3),
+              foreground: const Color(0xFF087F6B),
+            ),
+            _KpiMetric(
+              icon: Icons.timer_rounded,
+              label: 'Tỷ lệ đúng hạn',
+              value: _metricLabel(kpi.onTimeCompletionRatePct, suffix: '%'),
+              hint: 'Đúng hạn / đã hoàn thành',
+              background: const Color(0xFFFBF0DC),
+              foreground: const Color(0xFFB86808),
+            ),
+          ]
+        : <_KpiMetric>[
+            _KpiMetric(
+              icon: Icons.layers_rounded,
+              label: 'Vụ đã tham gia',
+              value: '${kpi.seasonsParticipated}',
+              hint: 'Bao gồm lịch sử phân công',
+              background: const Color(0xFFEAF4FF),
+              foreground: const Color(0xFF0C4E8F),
+            ),
+            _KpiMetric(
+              icon: Icons.health_and_safety_rounded,
+              label: 'Ca bệnh xử lý',
+              value: '${kpi.diseaseCasesHandled ?? 0}',
+              hint: 'Tất cả ca được phân công',
+              background: const Color(0xFFFBE6EA),
+              foreground: const Color(0xFFB4233E),
+            ),
+            _KpiMetric(
+              icon: Icons.check_circle_rounded,
+              label: 'Ca đã giải quyết',
+              value: '${kpi.diseaseCasesResolved ?? 0}',
+              hint: 'Trạng thái đã giải quyết',
+              background: const Color(0xFFE2F6F3),
+              foreground: const Color(0xFF087F6B),
+            ),
+            _KpiMetric(
+              icon: Icons.schedule_rounded,
+              label: 'Thời gian xử lý TB',
+              value: _metricLabel(kpi.avgResolutionHours, suffix: ' giờ'),
+              hint: 'Từ lúc mở đến khi giải quyết',
+              background: const Color(0xFFFBF0DC),
+              foreground: const Color(0xFFB86808),
+            ),
+          ];
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.line),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Container(
+            color: const Color(0xFFF7F9FC),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'KPI vận hành',
+                        style: TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Tổng hợp từ dữ liệu đã ghi nhận trong hệ thống',
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: technician
+                        ? const Color(0xFFEAF4FF)
+                        : const Color(0xFFE2F6F3),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    technician ? 'Theo nhiệm vụ' : 'Theo ca bệnh',
+                    style: TextStyle(
+                      color: technician
+                          ? const Color(0xFF0C4E8F)
+                          : const Color(0xFF087F6B),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(11),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = (constraints.maxWidth - 8) / 2;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: metrics
+                      .map(
+                        (metric) => SizedBox(
+                          width: width,
+                          child: _KpiMetricCard(metric: metric),
+                        ),
+                      )
+                      .toList(growable: false),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _SurfaceCard extends StatelessWidget {
-  const _SurfaceCard({required this.child, this.title});
+class _KpiMetric {
+  const _KpiMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.hint,
+    required this.background,
+    required this.foreground,
+  });
 
-  final Widget child;
-  final String? title;
+  final IconData icon;
+  final String label;
+  final String value;
+  final String hint;
+  final Color background;
+  final Color foreground;
+}
+
+class _KpiMetricCard extends StatelessWidget {
+  const _KpiMetricCard({required this.metric});
+
+  final _KpiMetric metric;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(17),
+    constraints: const BoxConstraints(minHeight: 104),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xF8FFFFFF),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white),
+      color: metric.background,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(metric.icon, size: 13, color: metric.foreground),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                metric.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: metric.foreground,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          metric.value,
+          style: TextStyle(
+            color: metric.foreground,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          metric.hint,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: metric.foreground.withValues(alpha: 0.7),
+            fontSize: 9,
+            height: 1.25,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _CurrentAssignmentsSection extends StatelessWidget {
+  const _CurrentAssignmentsSection({required this.assignments});
+
+  final List<PersonnelSeasonAssignment> assignments;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: <Widget>[
+      const _SectionHeading('Phân công hiện tại'),
+      const SizedBox(height: 8),
+      if (assignments.isEmpty)
+        const _AssignmentEmpty('Chưa được phân công vào vụ nuôi nào.')
+      else
+        for (var index = 0; index < assignments.length; index++) ...<Widget>[
+          _CurrentAssignmentCard(assignment: assignments[index]),
+          if (index != assignments.length - 1) const SizedBox(height: 8),
+        ],
+    ],
+  );
+}
+
+class _CurrentAssignmentCard extends StatelessWidget {
+  const _CurrentAssignmentCard({required this.assignment});
+
+  final PersonnelSeasonAssignment assignment;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    child: InkWell(
+      key: Key('personnel_current_assignment_${assignment.id}'),
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => context.push(
+        '/farms/${assignment.farmId}/ponds/${assignment.pondId}/seasons/'
+        '${assignment.seasonId}',
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x0D000000),
+              blurRadius: 6,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    assignment.pondName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${assignment.farmName} · ${assignment.seasonName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 17,
+              color: AppColors.inkMuted,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _AssignmentHistorySection extends StatelessWidget {
+  const _AssignmentHistorySection({required this.assignments});
+
+  final List<PersonnelSeasonAssignment> assignments;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: <Widget>[
+      const _SectionHeading('Lịch sử phân công'),
+      const SizedBox(height: 8),
+      if (assignments.isEmpty)
+        const _AssignmentEmpty('Chưa có lịch sử phân công.')
+      else
+        for (var index = 0; index < assignments.length; index++) ...<Widget>[
+          _HistoryAssignmentCard(assignment: assignments[index]),
+          if (index != assignments.length - 1) const SizedBox(height: 8),
+        ],
+    ],
+  );
+}
+
+class _HistoryAssignmentCard extends StatelessWidget {
+  const _HistoryAssignmentCard({required this.assignment});
+
+  final PersonnelSeasonAssignment assignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = assignment.replacementReason?.trim();
+    return Container(
+      key: Key('personnel_assignment_history_${assignment.id}'),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xF2FFFFFF),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 6,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            assignment.pondName,
+            style: const TextStyle(
+              color: AppColors.inkSoft,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '${PersonnelVisuals.formatDate(assignment.assignedAt)} '
+            '→ ${PersonnelVisuals.formatDate(assignment.unassignedAt)}',
+            style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+          ),
+          if (reason != null && reason.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 7),
+            Text(
+              reason,
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: AppColors.ink,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
+}
+
+class _AssignmentEmpty extends StatelessWidget {
+  const _AssignmentEmpty(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.line),
+    ),
+    child: Text(
+      message,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+    ),
+  );
+}
+
+String _metricLabel(double? value, {required String suffix}) {
+  if (value == null) return '—';
+  final rounded = value == value.roundToDouble()
+      ? value.toStringAsFixed(0)
+      : value
+            .toStringAsFixed(2)
+            .replaceFirst(RegExp(r'0+$'), '')
+            .replaceFirst(RegExp(r'\.$'), '');
+  return '$rounded$suffix';
+}
+
+class _SurfaceCard extends StatelessWidget {
+  const _SurfaceCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       boxShadow: const <BoxShadow>[
         BoxShadow(
           color: Color(0x0F000000),
-          blurRadius: 9,
-          offset: Offset(0, 3),
+          blurRadius: 12,
+          offset: Offset(0, 2),
         ),
       ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        if (title != null) ...<Widget>[
-          Text(
-            title!,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        child,
-      ],
+      children: <Widget>[child],
     ),
   );
 }
@@ -333,23 +721,18 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF4FA),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: AppColors.ocean, size: 17),
+      Padding(
+        padding: const EdgeInsets.only(top: 3),
+        child: Icon(icon, color: const Color(0xFF1D7AD6), size: 16),
       ),
-      const SizedBox(width: 11),
+      const SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
               label,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
             ),
             const SizedBox(height: 2),
             SelectableText(
@@ -364,16 +747,6 @@ class _InfoRow extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _RowDivider extends StatelessWidget {
-  const _RowDivider();
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 10),
-    child: Divider(height: 1, color: AppColors.line),
   );
 }
 
@@ -397,7 +770,7 @@ class _DetailError extends StatelessWidget {
         IconButton.filledTonal(
           tooltip: 'Quay lại',
           onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(Icons.adaptive.arrow_back),
         ),
         Expanded(
           child: Center(
@@ -405,7 +778,7 @@ class _DetailError extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 const Icon(
-                  Icons.person_off_outlined,
+                  Icons.person_off_rounded,
                   size: 46,
                   color: AppColors.inkMuted,
                 ),

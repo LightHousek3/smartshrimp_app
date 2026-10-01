@@ -32,6 +32,40 @@ void main() {
     expect(personnel.status, AccountStatus.unknown);
   });
 
+  test('parses KPI and current or historical season assignments', () {
+    final detail = ManagedPersonnelDetail.parse(<String, dynamic>{
+      ..._personnelJson(
+        updatedAt: '2026-09-22T08:30:00.000Z',
+        activatedAt: '2026-09-02T08:30:00.000Z',
+      ),
+      'kpi': <String, dynamic>{
+        'seasonsParticipated': 3,
+        'completedTasks': 12,
+        'onTimeCompletedTasks': 10,
+        'onTimeCompletionRatePct': 83.33,
+      },
+      'currentAssignments': <Object?>[
+        _assignmentJson(id: 'assignment-current', pondName: 'Ao A5'),
+      ],
+      'assignmentHistory': <Object?>[
+        _assignmentJson(
+          id: 'assignment-history',
+          pondName: 'Ao A3',
+          unassignedAt: '2026-09-30T00:00:00.000Z',
+        ),
+      ],
+    });
+
+    expect(detail.kpi.seasonsParticipated, 3);
+    expect(detail.kpi.completedTasks, 12);
+    expect(detail.currentAssignments.single.pondName, 'Ao A5');
+    expect(detail.assignmentHistory.single.pondName, 'Ao A3');
+    expect(
+      detail.assignmentHistory.single.unassignedAt,
+      DateTime.utc(2026, 9, 30),
+    );
+  });
+
   test('rejects malformed required fields and invalid assignment counts', () {
     expect(
       () => ManagedPersonnel.parse(_personnelJson(id: 1)),
@@ -92,4 +126,21 @@ Map<String, dynamic> _personnelJson({
   'lastLoginAt': null,
   'activatedAt': ?activatedAt,
   'updatedAt': ?updatedAt,
+};
+
+Map<String, dynamic> _assignmentJson({
+  required String id,
+  required String pondName,
+  String? unassignedAt,
+}) => <String, dynamic>{
+  'id': id,
+  'seasonId': 'season-$id',
+  'seasonName': 'Vụ Đông Xuân 2026',
+  'farmId': 'farm-1',
+  'farmName': 'Trang trại Của Lập',
+  'pondId': 'pond-$id',
+  'pondName': pondName,
+  'assignedAt': '2026-06-25T00:00:00.000Z',
+  'unassignedAt': unassignedAt,
+  'replacementReason': unassignedAt == null ? null : 'Điều chuyển nhân sự',
 };

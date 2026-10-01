@@ -58,22 +58,20 @@ void main() {
       ApiClient(
         _dioWithHandler((request, handler) {
           capturedRequest = request;
-          handler.resolve(
-            _success(
-              request,
-              data: _personnelJson(updatedAt: '2026-09-22T08:30:00.000Z'),
-            ),
-          );
+          handler.resolve(_success(request, data: _personnelDetailJson()));
         }),
         _FakeSessionStore(),
       ),
     );
 
-    final personnel = await service.getPersonnelById('personnel 1');
+    final detail = await service.getPersonnelById('personnel 1');
 
     expect(capturedRequest.method, 'GET');
     expect(capturedRequest.path, '/owner/personnel/personnel%201');
-    expect(personnel.updatedAt, DateTime.utc(2026, 9, 22, 8, 30));
+    expect(detail.personnel.updatedAt, DateTime.utc(2026, 9, 22, 8, 30));
+    expect(detail.kpi.completedTasks, 12);
+    expect(detail.currentAssignments.single.pondName, 'Ao A5');
+    expect(detail.assignmentHistory.single.pondName, 'Ao A3');
   });
 }
 
@@ -113,6 +111,43 @@ Map<String, dynamic> _personnelJson({String? updatedAt}) => <String, dynamic>{
   'activatedAt': null,
   'lastLoginAt': null,
   'updatedAt': ?updatedAt,
+};
+
+Map<String, dynamic> _personnelDetailJson() => <String, dynamic>{
+  ..._personnelJson(updatedAt: '2026-09-22T08:30:00.000Z'),
+  'kpi': <String, dynamic>{
+    'seasonsParticipated': 3,
+    'completedTasks': 12,
+    'onTimeCompletedTasks': 10,
+    'onTimeCompletionRatePct': 83.33,
+  },
+  'currentAssignments': <Object?>[
+    _assignmentJson(id: 'assignment-1', pondName: 'Ao A5'),
+  ],
+  'assignmentHistory': <Object?>[
+    _assignmentJson(
+      id: 'assignment-2',
+      pondName: 'Ao A3',
+      unassignedAt: '2026-09-30T08:30:00.000Z',
+    ),
+  ],
+};
+
+Map<String, dynamic> _assignmentJson({
+  required String id,
+  required String pondName,
+  String? unassignedAt,
+}) => <String, dynamic>{
+  'id': id,
+  'seasonId': 'season-$id',
+  'seasonName': 'Vụ Đông Xuân 2026',
+  'farmId': 'farm-1',
+  'farmName': 'Trang trại Của Lập',
+  'pondId': 'pond-$id',
+  'pondName': pondName,
+  'assignedAt': '2026-06-25T08:30:00.000Z',
+  'unassignedAt': unassignedAt,
+  'replacementReason': unassignedAt == null ? null : 'Điều chuyển nhân sự',
 };
 
 final class _FakeSessionStore implements SessionStore {

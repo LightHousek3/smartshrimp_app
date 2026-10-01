@@ -30,7 +30,7 @@ final class PersonnelRepositoryImpl implements PersonnelRepository {
   }
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) =>
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) =>
       _remoteDataSource.getPersonnelById(personnelId);
 
   static String _roleValue(AccountRole role) => switch (role) {

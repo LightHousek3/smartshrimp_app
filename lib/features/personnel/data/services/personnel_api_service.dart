@@ -4,7 +4,7 @@ import 'package:smartshrimp_app/features/personnel/domain/entities/managed_perso
 abstract interface class PersonnelRemoteDataSource {
   Future<ManagedPersonnelPage> getPersonnel(Map<String, dynamic> query);
 
-  Future<ManagedPersonnel> getPersonnelById(String personnelId);
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId);
 }
 
 final class PersonnelApiService implements PersonnelRemoteDataSource {
@@ -24,11 +24,11 @@ final class PersonnelApiService implements PersonnelRemoteDataSource {
   }
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) async {
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) async {
     final response = await _client.get(
       '$_basePath/${Uri.encodeComponent(personnelId)}',
       authenticated: true,
     );
-    return ManagedPersonnel.parse(response.requireMapData(), detail: true);
+    return ManagedPersonnelDetail.parse(response.requireMapData());
   }
 }

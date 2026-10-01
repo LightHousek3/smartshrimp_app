@@ -46,7 +46,7 @@ final personnelListControllerProvider =
     >(PersonnelListController.new);
 
 final personnelDetailControllerProvider = AsyncNotifierProvider.autoDispose
-    .family<PersonnelDetailController, ManagedPersonnel, String>(
+    .family<PersonnelDetailController, ManagedPersonnelDetail, String>(
       PersonnelDetailController.new,
     );
 
@@ -160,13 +160,13 @@ final class PersonnelListController
 }
 
 final class PersonnelDetailController
-    extends _OwnerPersonnelController<ManagedPersonnel> {
+    extends _OwnerPersonnelController<ManagedPersonnelDetail> {
   PersonnelDetailController(this.personnelId);
 
   final String personnelId;
 
   @override
-  Future<ManagedPersonnel> build() {
+  Future<ManagedPersonnelDetail> build() {
     requireOwner();
     return _load();
   }
@@ -175,7 +175,7 @@ final class PersonnelDetailController
     state = await AsyncValue.guard(_load);
   }
 
-  Future<ManagedPersonnel> _load() => runAuthenticated(
+  Future<ManagedPersonnelDetail> _load() => runAuthenticated(
     () => ref.read(personnelRepositoryProvider).getPersonnelById(personnelId),
   );
 }

@@ -102,9 +102,30 @@ void main() {
     await tester.tap(find.text('Nguyễn Văn Kỹ Thuật'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Chi tiết nhân sự'), findsOneWidget);
-    expect(find.text('Thông tin liên hệ'), findsOneWidget);
-    expect(find.text('VỤ ĐANG PHỤ TRÁCH'), findsOneWidget);
+    expect(find.text('Nguyễn Văn Kỹ Thuật'), findsNWidgets(2));
+    expect(find.byKey(const Key('personnel_detail_name')), findsOneWidget);
+    expect(find.text('technician@smartshrimp.vn'), findsOneWidget);
+    expect(find.text('Kỹ thuật viên'), findsOneWidget);
+    expect(find.text('Đang hoạt động'), findsOneWidget);
+    expect(find.text('Điện thoại'), findsOneWidget);
+    expect(find.text('Tham gia hệ thống từ'), findsOneWidget);
+    expect(find.text('KPI vận hành'), findsOneWidget);
+    expect(find.text('Theo nhiệm vụ'), findsOneWidget);
+    expect(find.text('Vụ đã tham gia'), findsOneWidget);
+    expect(find.text('Phân công hiện tại'), findsOneWidget);
+    expect(find.text('Ao A5'), findsOneWidget);
+    expect(find.text('Ao D2'), findsOneWidget);
+    expect(find.text('Trang trại Của Lập · Vụ Đông Xuân 2025'), findsOneWidget);
+    expect(find.text('Trang trại Đông Hải · Vụ Đông 2025'), findsOneWidget);
+    expect(find.text('Lịch sử phân công'), findsOneWidget);
+    expect(find.text('Ao A3'), findsOneWidget);
+    expect(find.text('25/06/2026 → 30/09/2026'), findsOneWidget);
+    expect(find.text('Điều chuyển nhân sự'), findsOneWidget);
+    expect(
+      find.byKey(const Key('personnel_current_assignment_assignment-a5')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.layers_rounded), findsOneWidget);
     expect(find.text('0912345678'), findsOneWidget);
     expect(repository.detailCalls, 1);
   });
@@ -192,10 +213,57 @@ final _personnel = ManagedPersonnel(
   status: AccountStatus.active,
   currentSeasonAssignments: 2,
   createdAt: _createdAt,
+  activatedAt: _activatedAt,
   updatedAt: _updatedAt,
 );
 final _createdAt = DateTime(2026, 9, 1);
+final _activatedAt = DateTime(2024, 11, 15);
 final _updatedAt = DateTime(2026, 9, 22);
+final _personnelDetail = ManagedPersonnelDetail(
+  personnel: _personnel,
+  kpi: const PersonnelKpi(
+    seasonsParticipated: 3,
+    completedTasks: 3,
+    onTimeCompletedTasks: 0,
+    onTimeCompletionRatePct: 0,
+  ),
+  currentAssignments: <PersonnelSeasonAssignment>[
+    PersonnelSeasonAssignment(
+      id: 'assignment-a5',
+      seasonId: 'season-a5',
+      seasonName: 'Vụ Đông Xuân 2025',
+      farmId: 'farm-1',
+      farmName: 'Trang trại Của Lập',
+      pondId: 'pond-a5',
+      pondName: 'Ao A5',
+      assignedAt: DateTime(2025, 1, 1),
+    ),
+    PersonnelSeasonAssignment(
+      id: 'assignment-d2',
+      seasonId: 'season-d2',
+      seasonName: 'Vụ Đông 2025',
+      farmId: 'farm-2',
+      farmName: 'Trang trại Đông Hải',
+      pondId: 'pond-d2',
+      pondName: 'Ao D2',
+      assignedAt: DateTime(2025, 2, 1),
+    ),
+  ],
+  assignmentHistory: <PersonnelSeasonAssignment>[
+    PersonnelSeasonAssignment(
+      id: 'assignment-a3',
+      seasonId: 'season-a3',
+      seasonName: 'Vụ Hè Thu 2026',
+      farmId: 'farm-1',
+      farmName: 'Trang trại Của Lập',
+      pondId: 'pond-a3',
+      pondName: 'Ao A3',
+      assignedAt: DateTime(2026, 6, 25),
+      unassignedAt: DateTime(2026, 9, 30),
+      replacementReason: 'Điều chuyển nhân sự',
+    ),
+  ],
+);
 
 final class _OwnerAuthRepository implements AuthRepository {
   @override
@@ -247,9 +315,9 @@ final class _FakePersonnelRepository implements PersonnelRepository {
   }
 
   @override
-  Future<ManagedPersonnel> getPersonnelById(String personnelId) async {
+  Future<ManagedPersonnelDetail> getPersonnelById(String personnelId) async {
     detailCalls++;
-    return _personnel;
+    return _personnelDetail;
   }
 }
 
