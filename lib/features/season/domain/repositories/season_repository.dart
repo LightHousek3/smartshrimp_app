@@ -20,7 +20,6 @@ abstract interface class SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   });
 
   Future<AquacultureSeason> updateSeason({
@@ -30,7 +29,6 @@ abstract interface class SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   });
 
   Future<AquacultureSeason> activateSeason(AquacultureSeason current);

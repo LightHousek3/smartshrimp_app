@@ -9,6 +9,7 @@ class GradientButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.icon = Icons.check_rounded,
+    this.compact = false,
     super.key,
   });
 
@@ -16,10 +17,12 @@ class GradientButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final IconData icon;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
+    final radius = compact ? 11.0 : _buttonRadius;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -31,13 +34,13 @@ class GradientButton extends StatelessWidget {
                 ]
               : const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)],
         ),
-        borderRadius: BorderRadius.circular(_buttonRadius),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: enabled
-            ? const <BoxShadow>[
+            ? <BoxShadow>[
                 BoxShadow(
-                  color: Color(0x3377A1D3),
-                  blurRadius: 14,
-                  offset: Offset(0, 7),
+                  color: const Color(0x3377A1D3),
+                  blurRadius: compact ? 8 : 14,
+                  offset: Offset(0, compact ? 4 : 7),
                 ),
               ]
             : null,
@@ -46,15 +49,15 @@ class GradientButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(_buttonRadius),
+          borderRadius: BorderRadius.circular(radius),
           child: SizedBox(
             width: double.infinity,
-            height: 58,
+            height: compact ? 44 : 58,
             child: Center(
               child: isLoading
-                  ? const SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(
+                  ? SizedBox.square(
+                      dimension: compact ? 18 : 22,
+                      child: const CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2.4,
                       ),
@@ -62,14 +65,21 @@ class GradientButton extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(icon, color: Colors.white, size: 22),
-                        const SizedBox(width: 10),
+                        Icon(
+                          icon,
+                          color: Colors.white,
+                          size: compact ? 18 : 22,
+                        ),
+                        SizedBox(width: compact ? 8 : 10),
                         Text(
                           label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
+                            fontSize: compact ? 14 : 17,
+                            height: 1,
+                            fontWeight: compact
+                                ? FontWeight.w600
+                                : FontWeight.w700,
                           ),
                         ),
                       ],

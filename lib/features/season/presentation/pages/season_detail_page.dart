@@ -10,6 +10,7 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
@@ -34,7 +35,6 @@ class SeasonDetailPage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
-          top: false,
           bottom: false,
           child: state.when(
             data: (season) => _SeasonDetailContent(
@@ -79,59 +79,64 @@ class _SeasonDetailContent extends ConsumerWidget {
       onRefresh: ref
           .read(seasonDetailControllerProvider(season.id).notifier)
           .refresh,
-      child: ListView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          16,
-          seasonScreenTopPadding(context),
-          16,
-          32,
-        ),
-        children: <Widget>[
-          _header(context, mutation.isLoading),
-          const SizedBox(height: 12),
-          _overview(),
-          if (season.status == SeasonStatus.active) ...<Widget>[
-            const SizedBox(height: 16),
-            _historyShortcuts(context),
-          ],
-          if (season.status == SeasonStatus.active ||
-              season.status == SeasonStatus.completed) ...<Widget>[
-            const SizedBox(height: 16),
-            _costCard(),
-          ],
-          const SizedBox(height: 16),
-          _protocol(context),
-          if (season.status != SeasonStatus.planning) ...<Widget>[
-            const SizedBox(height: 8),
-            _diseaseCard(context),
-          ],
-          if (season.status == SeasonStatus.planning) ...<Widget>[
-            const SizedBox(height: 16),
-            _activationChecklist(),
-          ],
-          const SizedBox(height: 16),
-          _personnel(context, ref, mutation.isLoading),
-          const SizedBox(height: 16),
-          _actions(context, ref, mutation.isLoading),
+        slivers: <Widget>[
+          StickyPageHeader(
+            title: season.name,
+            subtitle:
+                '${season.pond.name} · ${season.pond.farm?.name ?? 'Trang trại'}',
+            onBack: mutation.isLoading ? null : context.pop,
+            trailing: season.canUpdate
+                ? AppCircleButton(
+                    icon: Icons.edit_rounded,
+                    tooltip: 'Cập nhật vụ nuôi',
+                    size: 36,
+                    iconSize: 17,
+                    onPressed: mutation.isLoading
+                        ? null
+                        : () => context.push(
+                            '/farms/$farmId/ponds/$pondId/seasons/${season.id}/edit',
+                            extra: season,
+                          ),
+                  )
+                : null,
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            sliver: SliverList.list(
+              children: <Widget>[
+                _overview(),
+                if (season.status == SeasonStatus.active) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _historyShortcuts(context),
+                ],
+                if (season.status == SeasonStatus.active ||
+                    season.status == SeasonStatus.completed) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _costCard(),
+                ],
+                const SizedBox(height: 16),
+                _protocol(context),
+                if (season.status != SeasonStatus.planning) ...<Widget>[
+                  const SizedBox(height: 8),
+                  _diseaseCard(context),
+                ],
+                if (season.status == SeasonStatus.planning) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _activationChecklist(),
+                ],
+                const SizedBox(height: 16),
+                _personnel(context, ref, mutation.isLoading),
+                const SizedBox(height: 16),
+                _actions(context, ref, mutation.isLoading),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-
-  Widget _header(BuildContext context, bool loading) => SeasonScreenHeader(
-    title: season.name,
-    subtitle: '${season.pond.name} · ${season.pond.farm?.name ?? 'Trang trại'}',
-    onBack: loading ? null : context.pop,
-    actionIcon: season.canUpdate ? Icons.edit_rounded : null,
-    actionTooltip: 'Cập nhật vụ nuôi',
-    onAction: loading
-        ? null
-        : () => context.push(
-            '/farms/$farmId/ponds/$pondId/seasons/${season.id}/edit',
-            extra: season,
-          ),
-  );
 
   Widget _overview() => SeasonSectionCard(
     child: Column(
@@ -555,6 +560,7 @@ class _SeasonDetailContent extends ConsumerWidget {
         GradientButton(
           label: 'Kích hoạt vụ nuôi',
           icon: Icons.check_rounded,
+          compact: true,
           isLoading: loading,
           onPressed: loading ? null : () => _activate(context, ref),
         ),
@@ -563,18 +569,26 @@ class _SeasonDetailContent extends ConsumerWidget {
           const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
-          height: 47,
+          height: 44,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.inkSoft,
+              foregroundColor: AppColors.ink,
               backgroundColor: Colors.white,
-              side: const BorderSide(color: AppColors.line),
+              disabledForegroundColor: AppColors.inkMuted,
+              disabledBackgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFE4E7EE)),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                height: 1,
+                fontWeight: FontWeight.w600,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(11),
               ),
             ),
             onPressed: loading ? null : () => _cancel(context, ref),
-            icon: const Icon(Icons.cancel_rounded, size: 18),
+            icon: const Icon(Icons.close_rounded, size: 18),
             label: const Text('Hủy vụ nuôi'),
           ),
         ),
@@ -1259,49 +1273,51 @@ class _CancellationDialogState extends State<_CancellationDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AppDialog(
+  Widget build(BuildContext context) => AppConfirmDialog(
     title: 'Hủy vụ nuôi?',
     description:
         'Vụ nuôi sẽ chuyển sang trạng thái Đã hủy và được giữ lại trong lịch sử. Đây không phải thao tác xóa dữ liệu.',
+    confirmLabel: 'Xác nhận hủy',
     level: AppNoticeLevel.danger,
+    destructive: true,
+    icon: Icons.close_rounded,
+    verticalHeader: true,
+    separatedActions: true,
+    onCancel: () => context.pop(),
     content: Form(
       key: _formKey,
-      child: TextFormField(
-        controller: _reason,
-        autofocus: true,
-        minLines: 3,
-        maxLines: 4,
-        validator: SeasonRules.validateCancellationReason,
-        decoration: const InputDecoration(
-          labelText: 'Lý do hủy *',
-          hintText: 'Nhập lý do hủy vụ nuôi…',
-        ),
-      ),
-    ),
-    actions: <Widget>[
-      Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Expanded(
-            child: OutlinedButton(
-              onPressed: context.pop,
-              child: const Text('Quay lại'),
+          const Text(
+            'Lý do hủy *',
+            style: TextStyle(
+              color: AppColors.inkSoft,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  context.pop(SeasonRules.normalizeText(_reason.text));
-                }
-              },
-              child: const Text('Xác nhận hủy'),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _reason,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 4,
+            validator: SeasonRules.validateCancellationReason,
+            decoration: const InputDecoration(
+              hintText: 'Nhập lý do hủy vụ nuôi…',
+              alignLabelWithHint: true,
             ),
           ),
         ],
       ),
-    ],
+    ),
+    onConfirm: () {
+      if (_formKey.currentState!.validate()) {
+        context.pop(SeasonRules.normalizeText(_reason.text));
+      }
+    },
   );
 }
 

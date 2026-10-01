@@ -29,7 +29,7 @@ abstract class AssignedSeason with _$AssignedSeason {
     required DateTime assignedAt,
     DateTime? stockingDate,
     DateTime? expectedEndDate,
-    double? initialBiomassKg,
+    double? initialDensityPerM2,
   }) = _AssignedSeason;
 
   int? get dayOfCulture {
@@ -56,7 +56,7 @@ abstract class AssignedSeason with _$AssignedSeason {
         assignedAt: DateTime.parse(assignment['assignedAt'] as String),
         stockingDate: _date(json['stockingDate']),
         expectedEndDate: _date(json['expectedEndDate']),
-        initialBiomassKg: (json['initialBiomassKg'] as num?)?.toDouble(),
+        initialDensityPerM2: (json['initialDensityPerM2'] as num?)?.toDouble(),
       );
     } on Object catch (_, stackTrace) {
       Error.throwWithStackTrace(const InvalidResponseException(), stackTrace);

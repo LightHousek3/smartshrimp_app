@@ -38,7 +38,6 @@ final class SeasonRepositoryImpl implements SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => _remote.createSeason(
     _writeData(
       pondId: pondId,
@@ -47,7 +46,6 @@ final class SeasonRepositoryImpl implements SeasonRepository {
       stockingDate: stockingDate,
       expectedEndDate: expectedEndDate,
       initialQuantity: initialQuantity,
-      initialAvgWeightG: initialAvgWeightG,
     ),
   );
 
@@ -59,7 +57,6 @@ final class SeasonRepositoryImpl implements SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => _remote.updateSeason(current.id, <String, dynamic>{
     ..._writeData(
       name: name,
@@ -67,7 +64,6 @@ final class SeasonRepositoryImpl implements SeasonRepository {
       stockingDate: stockingDate,
       expectedEndDate: expectedEndDate,
       initialQuantity: initialQuantity,
-      initialAvgWeightG: initialAvgWeightG,
     ),
     'expectedUpdatedAt': current.updatedAt.toUtc().toIso8601String(),
   });
@@ -124,7 +120,6 @@ final class SeasonRepositoryImpl implements SeasonRepository {
     DateTime? stockingDate,
     DateTime? expectedEndDate,
     int? initialQuantity,
-    double? initialAvgWeightG,
   }) => <String, dynamic>{
     'pondId': ?pondId,
     'name': SeasonRules.normalizeText(name),
@@ -136,6 +131,5 @@ final class SeasonRepositoryImpl implements SeasonRepository {
         ? null
         : SeasonRules.dateOnly(expectedEndDate),
     'initialQuantity': initialQuantity,
-    'initialAvgWeightG': initialAvgWeightG,
   };
 }

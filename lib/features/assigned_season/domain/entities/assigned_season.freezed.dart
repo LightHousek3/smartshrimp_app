@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AssignedSeason {
 
- String get id; String get name; AssignedSeasonStatus get status; String get shrimpType; String get pondId; String get pondName; String get farmId; String get farmName; DateTime get assignedAt; DateTime? get stockingDate; DateTime? get expectedEndDate; double? get initialBiomassKg;
+ String get id; String get name; AssignedSeasonStatus get status; String get shrimpType; String get pondId; String get pondName; String get farmId; String get farmName; DateTime get assignedAt; DateTime? get stockingDate; DateTime? get expectedEndDate; double? get initialDensityPerM2;
 /// Create a copy of AssignedSeason
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AssignedSeasonCopyWith<AssignedSeason> get copyWith => _$AssignedSeasonCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssignedSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.assignedAt, assignedAt) || other.assignedAt == assignedAt)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.initialBiomassKg, initialBiomassKg) || other.initialBiomassKg == initialBiomassKg));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssignedSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.assignedAt, assignedAt) || other.assignedAt == assignedAt)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,shrimpType,pondId,pondName,farmId,farmName,assignedAt,stockingDate,expectedEndDate,initialBiomassKg);
+int get hashCode => Object.hash(runtimeType,id,name,status,shrimpType,pondId,pondName,farmId,farmName,assignedAt,stockingDate,expectedEndDate,initialDensityPerM2);
 
 @override
 String toString() {
-  return 'AssignedSeason(id: $id, name: $name, status: $status, shrimpType: $shrimpType, pondId: $pondId, pondName: $pondName, farmId: $farmId, farmName: $farmName, assignedAt: $assignedAt, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, initialBiomassKg: $initialBiomassKg)';
+  return 'AssignedSeason(id: $id, name: $name, status: $status, shrimpType: $shrimpType, pondId: $pondId, pondName: $pondName, farmId: $farmId, farmName: $farmName, assignedAt: $assignedAt, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, initialDensityPerM2: $initialDensityPerM2)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AssignedSeasonCopyWith<$Res>  {
   factory $AssignedSeasonCopyWith(AssignedSeason value, $Res Function(AssignedSeason) _then) = _$AssignedSeasonCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String farmId, String farmName, DateTime assignedAt, DateTime? stockingDate, DateTime? expectedEndDate, double? initialBiomassKg
+ String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String farmId, String farmName, DateTime assignedAt, DateTime? stockingDate, DateTime? expectedEndDate, double? initialDensityPerM2
 });
 
 
@@ -62,7 +62,7 @@ class _$AssignedSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AssignedSeason
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? shrimpType = null,Object? pondId = null,Object? pondName = null,Object? farmId = null,Object? farmName = null,Object? assignedAt = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? initialBiomassKg = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? shrimpType = null,Object? pondId = null,Object? pondName = null,Object? farmId = null,Object? farmName = null,Object? assignedAt = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? initialDensityPerM2 = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,7 @@ as String,farmName: null == farmName ? _self.farmName : farmName // ignore: cast
 as String,assignedAt: null == assignedAt ? _self.assignedAt : assignedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,expectedEndDate: freezed == expectedEndDate ? _self.expectedEndDate : expectedEndDate // ignore: cast_nullable_to_non_nullable
-as DateTime?,initialBiomassKg: freezed == initialBiomassKg ? _self.initialBiomassKg : initialBiomassKg // ignore: cast_nullable_to_non_nullable
+as DateTime?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -161,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialBiomassKg)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialDensityPerM2)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AssignedSeason() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialBiomassKg);case _:
+return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialDensityPerM2);case _:
   return orElse();
 
 }
@@ -182,10 +182,10 @@ return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialBiomassKg)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialDensityPerM2)  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeason():
-return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialBiomassKg);case _:
+return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialDensityPerM2);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +202,10 @@ return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialBiomassKg)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String farmId,  String farmName,  DateTime assignedAt,  DateTime? stockingDate,  DateTime? expectedEndDate,  double? initialDensityPerM2)?  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeason() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialBiomassKg);case _:
+return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.farmId,_that.farmName,_that.assignedAt,_that.stockingDate,_that.expectedEndDate,_that.initialDensityPerM2);case _:
   return null;
 
 }
@@ -217,7 +217,7 @@ return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_
 
 
 class _AssignedSeason extends AssignedSeason {
-  const _AssignedSeason({required this.id, required this.name, required this.status, required this.shrimpType, required this.pondId, required this.pondName, required this.farmId, required this.farmName, required this.assignedAt, this.stockingDate, this.expectedEndDate, this.initialBiomassKg}): super._();
+  const _AssignedSeason({required this.id, required this.name, required this.status, required this.shrimpType, required this.pondId, required this.pondName, required this.farmId, required this.farmName, required this.assignedAt, this.stockingDate, this.expectedEndDate, this.initialDensityPerM2}): super._();
   
 
 @override final  String id;
@@ -231,7 +231,7 @@ class _AssignedSeason extends AssignedSeason {
 @override final  DateTime assignedAt;
 @override final  DateTime? stockingDate;
 @override final  DateTime? expectedEndDate;
-@override final  double? initialBiomassKg;
+@override final  double? initialDensityPerM2;
 
 /// Create a copy of AssignedSeason
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +243,16 @@ _$AssignedSeasonCopyWith<_AssignedSeason> get copyWith => __$AssignedSeasonCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AssignedSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.assignedAt, assignedAt) || other.assignedAt == assignedAt)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.initialBiomassKg, initialBiomassKg) || other.initialBiomassKg == initialBiomassKg));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AssignedSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.assignedAt, assignedAt) || other.assignedAt == assignedAt)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,shrimpType,pondId,pondName,farmId,farmName,assignedAt,stockingDate,expectedEndDate,initialBiomassKg);
+int get hashCode => Object.hash(runtimeType,id,name,status,shrimpType,pondId,pondName,farmId,farmName,assignedAt,stockingDate,expectedEndDate,initialDensityPerM2);
 
 @override
 String toString() {
-  return 'AssignedSeason(id: $id, name: $name, status: $status, shrimpType: $shrimpType, pondId: $pondId, pondName: $pondName, farmId: $farmId, farmName: $farmName, assignedAt: $assignedAt, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, initialBiomassKg: $initialBiomassKg)';
+  return 'AssignedSeason(id: $id, name: $name, status: $status, shrimpType: $shrimpType, pondId: $pondId, pondName: $pondName, farmId: $farmId, farmName: $farmName, assignedAt: $assignedAt, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, initialDensityPerM2: $initialDensityPerM2)';
 }
 
 
@@ -263,7 +263,7 @@ abstract mixin class _$AssignedSeasonCopyWith<$Res> implements $AssignedSeasonCo
   factory _$AssignedSeasonCopyWith(_AssignedSeason value, $Res Function(_AssignedSeason) _then) = __$AssignedSeasonCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String farmId, String farmName, DateTime assignedAt, DateTime? stockingDate, DateTime? expectedEndDate, double? initialBiomassKg
+ String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String farmId, String farmName, DateTime assignedAt, DateTime? stockingDate, DateTime? expectedEndDate, double? initialDensityPerM2
 });
 
 
@@ -280,7 +280,7 @@ class __$AssignedSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AssignedSeason
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? shrimpType = null,Object? pondId = null,Object? pondName = null,Object? farmId = null,Object? farmName = null,Object? assignedAt = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? initialBiomassKg = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? shrimpType = null,Object? pondId = null,Object? pondName = null,Object? farmId = null,Object? farmName = null,Object? assignedAt = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? initialDensityPerM2 = freezed,}) {
   return _then(_AssignedSeason(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -293,7 +293,7 @@ as String,farmName: null == farmName ? _self.farmName : farmName // ignore: cast
 as String,assignedAt: null == assignedAt ? _self.assignedAt : assignedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,stockingDate: freezed == stockingDate ? _self.stockingDate : stockingDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,expectedEndDate: freezed == expectedEndDate ? _self.expectedEndDate : expectedEndDate // ignore: cast_nullable_to_non_nullable
-as DateTime?,initialBiomassKg: freezed == initialBiomassKg ? _self.initialBiomassKg : initialBiomassKg // ignore: cast_nullable_to_non_nullable
+as DateTime?,initialDensityPerM2: freezed == initialDensityPerM2 ? _self.initialDensityPerM2 : initialDensityPerM2 // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }

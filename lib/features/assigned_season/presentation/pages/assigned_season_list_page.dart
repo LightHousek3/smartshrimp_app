@@ -359,10 +359,10 @@ class _SeasonCard extends StatelessWidget {
                   _MiniStat('DOC', season.dayOfCulture?.toString() ?? '—'),
                   const SizedBox(width: 8),
                   _MiniStat(
-                    'SINH KHỐI',
-                    season.initialBiomassKg == null
+                    'MẬT ĐỘ',
+                    season.initialDensityPerM2 == null
                         ? '—'
-                        : '${season.initialBiomassKg!.toStringAsFixed(season.initialBiomassKg! % 1 == 0 ? 0 : 1)}kg',
+                        : '${season.initialDensityPerM2!.toStringAsFixed(season.initialDensityPerM2! % 1 == 0 ? 0 : 1)} con/m²',
                   ),
                   const SizedBox(width: 8),
                   const _MiniStat('SỨC KHỎE', 'Chưa có'),

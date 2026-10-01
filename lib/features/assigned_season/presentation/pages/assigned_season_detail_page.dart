@@ -58,11 +58,6 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                         ('Ngày thả', _date(season.stockingDate)),
                         ('Số lượng', '${season.initialQuantity ?? '—'} con'),
                         (
-                          'Trọng lượng TB',
-                          '${_num(season.initialAvgWeightG)} g/con',
-                        ),
-                        ('Sinh khối', '${_num(season.initialBiomassKg)} kg'),
-                        (
                           'Mật độ',
                           '${_num(season.initialDensityPerM2)} con/m²',
                         ),
@@ -262,7 +257,7 @@ class _PondCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
-              _Metric('SINH KHỐI', '${_num(season.initialBiomassKg)} kg'),
+              _Metric('SỐ LƯỢNG THẢ', '${season.initialQuantity ?? '—'} con'),
               const SizedBox(width: 10),
               _Metric(
                 'MẬT ĐỘ THẢ',

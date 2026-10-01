@@ -6,6 +6,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/widgets/personnel_visuals.dart';
@@ -165,204 +166,165 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
 
     return Form(
       key: _formKey,
-      child: ListView(
+      child: CustomScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(19, 14, 19, 34),
-        children: <Widget>[
-          _Header(
+        slivers: <Widget>[
+          StickyPageHeader(
             title: _isReplacement ? 'Thay nhân sự' : 'Phân công nhân sự',
             subtitle:
-                '${widget.season.pond.name} • ${widget.season.pond.farm?.name ?? 'Trang trại'}',
-            loading: mutation.isLoading,
+                '${widget.season.pond.name} · ${widget.season.pond.farm?.name ?? 'Trang trại'}',
+            onBack: mutation.isLoading ? null : context.pop,
           ),
-          const SizedBox(height: 18),
-          _SeasonSummary(season: widget.season),
-          const SizedBox(height: 18),
-          const _FieldLabel('Vai trò cần phân công'),
-          const SizedBox(height: 8),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _RoleOption(
-                  key: const Key('assignment_role_technician'),
-                  label: 'Kỹ thuật viên',
-                  icon: Icons.engineering_rounded,
-                  selected: _role == AccountRole.technician,
-                  current: widget.season.personnel?.technician,
-                  onTap: mutation.isLoading
-                      ? null
-                      : () => _selectRole(AccountRole.technician),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _RoleOption(
-                  key: const Key('assignment_role_expert'),
-                  label: 'Chuyên gia',
-                  icon: Icons.health_and_safety_rounded,
-                  selected: _role == AccountRole.expert,
-                  current: widget.season.personnel?.expert,
-                  onTap: mutation.isLoading
-                      ? null
-                      : () => _selectRole(AccountRole.expert),
-                ),
-              ),
-            ],
-          ),
-          if (_current case final current?) ...<Widget>[
-            const SizedBox(height: 13),
-            _NoticeCard(
-              icon: Icons.info_outline_rounded,
-              title: 'Đang phân công: ${current.account.fullName}',
-              message: 'Chọn nhân sự mới để thực hiện thay thế.',
-              foreground: const Color(0xFF9A6500),
-              background: const Color(0xFFFFF7DF),
-              border: const Color(0xFFF3D27A),
-            ),
-            const SizedBox(height: 10),
-            _NoticeCard(
-              icon: Icons.swap_horiz_rounded,
-              title: 'Phạm vi bàn giao tự động',
-              message: _role == AccountRole.technician
-                  ? 'Nhiệm vụ chưa kết thúc sẽ được chuyển sang Kỹ thuật viên mới; lịch sử thực hiện vẫn được giữ nguyên.'
-                  : 'Ca bệnh đang mở sẽ được chuyển trách nhiệm theo dõi sang Chuyên gia mới; phản hồi cũ không thay đổi.',
-              foreground: AppColors.ocean,
-              background: const Color(0xFFEAF4FF),
-              border: const Color(0xFFB8D8F7),
-            ),
-          ],
-          const SizedBox(height: 18),
-          _FieldLabel('Chọn ${PersonnelVisuals.roleLabel(_role)} *'),
-          const SizedBox(height: 8),
-          people.when(
-            data: (items) {
-              final eligible = items
-                  .where((person) => !assignedIds.contains(person.id))
-                  .toList(growable: false);
-              if (eligible.isEmpty) {
-                return _PersonnelEmpty(role: _role);
-              }
-              return Column(
-                children: <Widget>[
-                  for (final person in eligible) ...<Widget>[
-                    _PersonnelOption(
-                      key: Key('assignment_candidate_${person.id}'),
-                      person: person,
-                      selected: _selected?.id == person.id,
-                      enabled: !mutation.isLoading,
-                      onTap: () => setState(() {
-                        _selected = person;
-                        _selectionError = null;
-                        _submitError = null;
-                      }),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 34),
+            sliver: SliverList.list(
+              children: <Widget>[
+                _SeasonSummary(season: widget.season),
+                const SizedBox(height: 18),
+                const _FieldLabel('Vai trò cần phân công'),
+                const SizedBox(height: 8),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _RoleOption(
+                        key: const Key('assignment_role_technician'),
+                        label: 'Kỹ thuật viên',
+                        icon: Icons.engineering_rounded,
+                        selected: _role == AccountRole.technician,
+                        current: widget.season.personnel?.technician,
+                        onTap: mutation.isLoading
+                            ? null
+                            : () => _selectRole(AccountRole.technician),
+                      ),
                     ),
-                    if (person != eligible.last) const SizedBox(height: 9),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _RoleOption(
+                        key: const Key('assignment_role_expert'),
+                        label: 'Chuyên gia',
+                        icon: Icons.health_and_safety_rounded,
+                        selected: _role == AccountRole.expert,
+                        current: widget.season.personnel?.expert,
+                        onTap: mutation.isLoading
+                            ? null
+                            : () => _selectRole(AccountRole.expert),
+                      ),
+                    ),
                   ],
+                ),
+                if (_current case final current?) ...<Widget>[
+                  const SizedBox(height: 13),
+                  _NoticeCard(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Đang phân công: ${current.account.fullName}',
+                    message: 'Chọn nhân sự mới để thực hiện thay thế.',
+                    foreground: const Color(0xFF9A6500),
+                    background: const Color(0xFFFFF7DF),
+                    border: const Color(0xFFF3D27A),
+                  ),
+                  const SizedBox(height: 10),
+                  _NoticeCard(
+                    icon: Icons.swap_horiz_rounded,
+                    title: 'Phạm vi bàn giao tự động',
+                    message: _role == AccountRole.technician
+                        ? 'Nhiệm vụ chưa kết thúc sẽ được chuyển sang Kỹ thuật viên mới; lịch sử thực hiện vẫn được giữ nguyên.'
+                        : 'Ca bệnh đang mở sẽ được chuyển trách nhiệm theo dõi sang Chuyên gia mới; phản hồi cũ không thay đổi.',
+                    foreground: AppColors.ocean,
+                    background: const Color(0xFFEAF4FF),
+                    border: const Color(0xFFB8D8F7),
+                  ),
                 ],
-              );
-            },
-            loading: () => const _PersonnelLoading(),
-            error: (error, _) => _PersonnelError(
-              message: error is AppException
-                  ? error.message
-                  : 'Không thể tải danh sách nhân sự.',
-              onRetry: () => ref.invalidate(assignablePersonnelProvider(_role)),
+                const SizedBox(height: 18),
+                _FieldLabel('Chọn ${PersonnelVisuals.roleLabel(_role)} *'),
+                const SizedBox(height: 8),
+                people.when(
+                  data: (items) {
+                    final eligible = items
+                        .where((person) => !assignedIds.contains(person.id))
+                        .toList(growable: false);
+                    if (eligible.isEmpty) {
+                      return _PersonnelEmpty(role: _role);
+                    }
+                    return Column(
+                      children: <Widget>[
+                        for (final person in eligible) ...<Widget>[
+                          _PersonnelOption(
+                            key: Key('assignment_candidate_${person.id}'),
+                            person: person,
+                            selected: _selected?.id == person.id,
+                            enabled: !mutation.isLoading,
+                            onTap: () => setState(() {
+                              _selected = person;
+                              _selectionError = null;
+                              _submitError = null;
+                            }),
+                          ),
+                          if (person != eligible.last)
+                            const SizedBox(height: 9),
+                        ],
+                      ],
+                    );
+                  },
+                  loading: () => const _PersonnelLoading(),
+                  error: (error, _) => _PersonnelError(
+                    message: error is AppException
+                        ? error.message
+                        : 'Không thể tải danh sách nhân sự.',
+                    onRetry: () =>
+                        ref.invalidate(assignablePersonnelProvider(_role)),
+                  ),
+                ),
+                if (_selectionError case final error?) ...<Widget>[
+                  const SizedBox(height: 7),
+                  Text(
+                    error,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (_isReplacement) ...<Widget>[
+                  const SizedBox(height: 18),
+                  const _FieldLabel('Lý do thay nhân sự *'),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('replacement_reason_field'),
+                    controller: _reasonController,
+                    enabled: !mutation.isLoading,
+                    minLines: 3,
+                    maxLines: 5,
+                    maxLength: SeasonRules.replacementReasonMaxLength,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      hintText: 'Nhập lý do thay nhân sự...',
+                      alignLabelWithHint: true,
+                    ),
+                    validator: SeasonRules.validateReplacementReason,
+                  ),
+                ],
+                if (_submitError case final error?) ...<Widget>[
+                  const SizedBox(height: 12),
+                  _SubmitError(message: error),
+                ],
+                const SizedBox(height: 22),
+                GradientButton(
+                  key: const Key('submit_personnel_assignment'),
+                  label: _isReplacement ? 'Xác nhận thay nhân sự' : 'Phân công',
+                  icon: _isReplacement
+                      ? Icons.swap_horiz_rounded
+                      : Icons.person_add_alt_1_rounded,
+                  isLoading: mutation.isLoading,
+                  onPressed: mutation.isLoading ? null : _submit,
+                ),
+              ],
             ),
-          ),
-          if (_selectionError case final error?) ...<Widget>[
-            const SizedBox(height: 7),
-            Text(
-              error,
-              style: const TextStyle(
-                color: AppColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (_isReplacement) ...<Widget>[
-            const SizedBox(height: 18),
-            const _FieldLabel('Lý do thay nhân sự *'),
-            const SizedBox(height: 8),
-            TextFormField(
-              key: const Key('replacement_reason_field'),
-              controller: _reasonController,
-              enabled: !mutation.isLoading,
-              minLines: 3,
-              maxLines: 5,
-              maxLength: SeasonRules.replacementReasonMaxLength,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                hintText: 'Nhập lý do thay nhân sự...',
-                alignLabelWithHint: true,
-              ),
-              validator: SeasonRules.validateReplacementReason,
-            ),
-          ],
-          if (_submitError case final error?) ...<Widget>[
-            const SizedBox(height: 12),
-            _SubmitError(message: error),
-          ],
-          const SizedBox(height: 22),
-          GradientButton(
-            key: const Key('submit_personnel_assignment'),
-            label: _isReplacement ? 'Xác nhận thay nhân sự' : 'Phân công',
-            icon: _isReplacement
-                ? Icons.swap_horiz_rounded
-                : Icons.person_add_alt_1_rounded,
-            isLoading: mutation.isLoading,
-            onPressed: mutation.isLoading ? null : _submit,
           ),
         ],
       ),
     );
   }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.title,
-    required this.subtitle,
-    required this.loading,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool loading;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: <Widget>[
-      AppCircleButton(
-        icon: Icons.arrow_back_ios_new_rounded,
-        tooltip: 'Quay lại',
-        onPressed: loading ? null : context.pop,
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
 }
 
 class _SeasonSummary extends StatelessWidget {
