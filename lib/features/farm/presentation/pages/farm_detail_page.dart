@@ -7,11 +7,14 @@ import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_map_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
+
+const _allPondFilter = Object();
 
 class FarmDetailPage extends ConsumerWidget {
   const FarmDetailPage({required this.farmId, super.key});
@@ -160,58 +163,17 @@ class _FarmDetailContent extends ConsumerWidget {
                 _InventoryCard(
                   onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
                 ),
-                const SizedBox(height: 25),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        'Danh sách ao (${farm.ponds.length})',
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () =>
-                          context.push('/farms/${farm.id}/ponds/create'),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text(
-                        'Thêm ao',
-                        style: TextStyle(fontSize: 12.5),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 16),
+                _PondSection(
+                  ponds: farm.ponds,
+                  onAdd: () => context.push('/farms/${farm.id}/ponds/create'),
+                  onOpen: (pond) =>
+                      context.push('/farms/${farm.id}/ponds/${pond.id}'),
                 ),
-                const SizedBox(height: 9),
-                if (farm.ponds.isEmpty)
-                  const _EmptyPonds()
-                else
-                  ...farm.ponds.map(
-                    (pond) => Padding(
-                      padding: const EdgeInsets.only(bottom: 11),
-                      child: _PondCard(
-                        pond: pond,
-                        onTap: () =>
-                            context.push('/farms/${farm.id}/ponds/${pond.id}'),
-                      ),
-                    ),
-                  ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => context.push('/farms/${farm.id}/ponds'),
-                    icon: const Icon(Icons.manage_search_rounded),
-                    label: const Text('Tìm kiếm và lọc ao'),
-                  ),
-                ),
-                const SizedBox(height: 21),
-                FarmActionButton(
+                const SizedBox(height: 16),
+                DestructiveActionButton(
                   label: 'Xóa trang trại',
-                  icon: Icons.delete_outline_rounded,
-                  destructive: true,
-                  enabled: !mutation.isLoading,
+                  loading: mutation.isLoading,
                   onPressed: () => _deleteFarm(context, ref),
                 ),
               ],
@@ -481,6 +443,244 @@ class _LocationInfoRow extends StatelessWidget {
   );
 }
 
+class _PondSection extends StatefulWidget {
+  const _PondSection({
+    required this.ponds,
+    required this.onAdd,
+    required this.onOpen,
+  });
+
+  final List<FarmPond> ponds;
+  final VoidCallback onAdd;
+  final ValueChanged<FarmPond> onOpen;
+
+  @override
+  State<_PondSection> createState() => _PondSectionState();
+}
+
+class _PondSectionState extends State<_PondSection> {
+  final _searchController = TextEditingController();
+  PondStatus? _status;
+  PondType? _type;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _searchController.text.trim().toLowerCase();
+    final ponds = widget.ponds.where((pond) {
+      final matchesName =
+          query.isEmpty || pond.name.toLowerCase().contains(query);
+      final matchesStatus = _status == null || pond.status == _status;
+      final matchesType = _type == null || pond.type == _type;
+      return matchesName && matchesStatus && matchesType;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Danh sách ao',
+                  style: AppTypography.display(
+                    color: AppColors.ink,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 36,
+                child: TextButton.icon(
+                  onPressed: widget.onAdd,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF0C4E8F),
+                    backgroundColor: const Color(0xFFEAF4FF),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 13),
+                  label: const Text(
+                    'Thêm ao',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: SizedBox(
+                height: 36,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  style: const TextStyle(color: AppColors.ink, fontSize: 11),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm ao...',
+                    hintStyle: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.inkMuted,
+                      size: 14,
+                    ),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 36,
+                    ),
+                    contentPadding: const EdgeInsets.only(right: 10),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.line),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.ocean),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 104,
+              child: _PondFilter<PondStatus>(
+                label: 'Trạng thái',
+                value: _status,
+                values: const <PondStatus>[
+                  PondStatus.available,
+                  PondStatus.maintenance,
+                  PondStatus.inactive,
+                ],
+                text: _pondStatusLabel,
+                onChanged: (value) => setState(() => _status = value),
+              ),
+            ),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 87,
+              child: _PondFilter<PondType>(
+                label: 'Loại ao',
+                value: _type,
+                values: const <PondType>[
+                  PondType.aquaculture,
+                  PondType.waterTreatment,
+                ],
+                text: _pondTypeLabel,
+                onChanged: (value) => setState(() => _type = value),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (ponds.isEmpty)
+          _EmptyPonds(
+            filtered: query.isNotEmpty || _status != null || _type != null,
+          )
+        else
+          ...ponds.map(
+            (pond) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PondCard(pond: pond, onTap: () => widget.onOpen(pond)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PondFilter<T> extends StatelessWidget {
+  const _PondFilter({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.text,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T? value;
+  final List<T> values;
+  final String Function(T) text;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<Object>(
+    initialValue: value,
+    onSelected: (selected) =>
+        onChanged(identical(selected, _allPondFilter) ? null : selected as T),
+    itemBuilder: (_) => <PopupMenuEntry<Object>>[
+      PopupMenuItem<Object>(
+        value: _allPondFilter,
+        child: Text('Tất cả $label'),
+      ),
+      ...values.map(
+        (item) => PopupMenuItem<Object>(value: item, child: Text(text(item))),
+      ),
+    ],
+    child: Container(
+      key: ValueKey<String>('pond-filter-$label'),
+      height: 36,
+      padding: const EdgeInsets.only(left: 12, right: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              value == null ? label : text(value as T),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.inkSoft,
+            size: 17,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+String _pondStatusLabel(PondStatus status) => switch (status) {
+  PondStatus.available => 'Sẵn sàng',
+  PondStatus.maintenance => 'Đang bảo trì',
+  PondStatus.inactive => 'Ngừng hoạt động',
+  PondStatus.unknown => 'Không xác định',
+};
+
+String _pondTypeLabel(PondType type) => switch (type) {
+  PondType.aquaculture => 'Ao nuôi',
+  PondType.waterTreatment => 'Ao xử lý nước',
+  PondType.unknown => 'Không xác định',
+};
+
 class _PondCard extends StatelessWidget {
   const _PondCard({required this.pond, required this.onTap});
   final FarmPond pond;
@@ -491,13 +691,13 @@ class _PondCard extends StatelessWidget {
     final status = switch (pond.status) {
       PondStatus.available => (
         'Sẵn sàng',
-        const Color(0xFFE8F7EF),
-        const Color(0xFF07864B),
+        const Color(0xFFE2F6F3),
+        const Color(0xFF0F9B8E),
       ),
       PondStatus.maintenance => (
         'Đang bảo trì',
-        const Color(0xFFFFF0D9),
-        const Color(0xFFB66A00),
+        const Color(0xFFFBF0DC),
+        const Color(0xFFD98314),
       ),
       PondStatus.inactive => (
         'Ngừng hoạt động',
@@ -510,37 +710,43 @@ class _PondCard extends StatelessWidget {
         AppColors.inkMuted,
       ),
     };
-    final type = switch (pond.type) {
-      PondType.aquaculture => 'Ao nuôi',
-      PondType.waterTreatment => 'Ao xử lý nước',
-      PondType.unknown => 'Loại ao chưa xác định',
-    };
+    final type = _pondTypeLabel(pond.type);
+    final isTreatmentPond = pond.type == PondType.waterTreatment;
     return Material(
-      color: const Color(0xF7FFFFFF),
-      borderRadius: BorderRadius.circular(13),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(15, 14, 13, 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: Colors.white),
-            boxShadow: farmCardShadow,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
           child: Row(
             children: <Widget>[
               Container(
-                width: 38,
-                height: 38,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6F4FF),
-                  borderRadius: BorderRadius.circular(10),
+                  color: isTreatmentPond
+                      ? const Color(0xFFE2F6F3)
+                      : const Color(0xFFEAF4FF),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.water_drop_rounded,
-                  size: 21,
-                  color: AppColors.ocean,
+                child: Icon(
+                  Icons.water_drop_outlined,
+                  size: 16,
+                  color: isTreatmentPond
+                      ? const Color(0xFF0F9B8E)
+                      : AppColors.ocean,
                 ),
               ),
               const SizedBox(width: 12),
@@ -550,76 +756,64 @@ class _PondCard extends StatelessWidget {
                   children: <Widget>[
                     Row(
                       children: <Widget>[
-                        Expanded(
+                        Flexible(
                           child: Text(
                             pond.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: AppColors.ink,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 10,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: status.$2,
-                            borderRadius: BorderRadius.circular(7),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             status.$1,
                             style: TextStyle(
                               color: status.$3,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              height: 1,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 5,
-                      children: <Widget>[
-                        Text(
-                          type,
-                          style: const TextStyle(
-                            color: AppColors.inkMuted,
-                            fontSize: 10.5,
-                          ),
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      <String>[
+                        type,
                         if (pond.areaM2 != null)
-                          Text(
-                            '• ${formatCompactNumber(pond.areaM2)} m²',
-                            style: const TextStyle(
-                              color: AppColors.inkMuted,
-                              fontSize: 10.5,
-                            ),
-                          ),
+                          '${formatCompactNumber(pond.areaM2)} m²',
                         if (pond.currentSeason?.dayOfCulture != null)
-                          Text(
-                            'DOC ${pond.currentSeason!.dayOfCulture}',
-                            style: const TextStyle(
-                              color: AppColors.ocean,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                      ],
+                          'DOC ${pond.currentSeason!.dayOfCulture}',
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 8),
               const Icon(
                 Icons.chevron_right_rounded,
-                size: 20,
+                size: 16,
                 color: AppColors.inkMuted,
               ),
             ],
@@ -631,32 +825,46 @@ class _PondCard extends StatelessWidget {
 }
 
 class _EmptyPonds extends StatelessWidget {
-  const _EmptyPonds();
+  const _EmptyPonds({this.filtered = false});
+
+  final bool filtered;
 
   @override
   Widget build(BuildContext context) => Container(
+    key: const ValueKey<String>('pond-empty-state'),
+    width: double.infinity,
+    constraints: const BoxConstraints(minHeight: 180),
     padding: const EdgeInsets.symmetric(vertical: 31, horizontal: 22),
     decoration: BoxDecoration(
       color: const Color(0x66FFFFFF),
       borderRadius: BorderRadius.circular(13),
       border: Border.all(color: const Color(0xFFB8C4D3)),
     ),
-    child: const Column(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Icon(Icons.water_drop_outlined, color: AppColors.inkMuted, size: 30),
-        SizedBox(height: 10),
+        const Icon(
+          Icons.water_drop_outlined,
+          color: AppColors.inkMuted,
+          size: 30,
+        ),
+        const SizedBox(height: 10),
         Text(
-          'Chưa có ao nuôi',
-          style: TextStyle(
+          filtered ? 'Không tìm thấy ao' : 'Chưa có ao nuôi',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
             color: AppColors.ink,
             fontSize: 13,
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Text(
-          'Thêm ao để bắt đầu quản lý vụ nuôi.',
-          style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
+          filtered
+              ? 'Hãy thử từ khóa hoặc bộ lọc khác.'
+              : 'Thêm ao để bắt đầu quản lý vụ nuôi.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
         ),
       ],
     ),

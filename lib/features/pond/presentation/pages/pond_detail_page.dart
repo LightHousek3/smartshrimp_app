@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_list_page.dart';
@@ -404,23 +405,10 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     );
   }
 
-  Widget _deleteButton(bool loading) => SizedBox(
-    width: double.infinity,
-    height: 47,
-    child: OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFBB4D00),
-        backgroundColor: const Color(0xFFFBF0DC),
-        disabledForegroundColor: const Color(0xFFBB4D00),
-        disabledBackgroundColor: const Color(0xFFFBF0DC),
-        side: const BorderSide(color: Color(0xFFFEE685)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      ),
-      onPressed: loading ? null : _delete,
-      icon: const Icon(Icons.delete_outline_rounded, size: 16),
-      label: const Text('Xóa ao'),
-    ),
+  Widget _deleteButton(bool loading) => DestructiveActionButton(
+    label: 'Xóa ao',
+    loading: loading,
+    onPressed: _delete,
   );
 
   String get _filterLabel => switch (_filter) {
@@ -459,40 +447,20 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
   }
 
   Future<void> _delete() async {
-    if (pond.hasOpenSeason) {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AppDialog(
-          title: 'Chưa thể xóa ao',
-          description:
+    final confirmed = await showAppConfirmDialog(
+      context,
+      entityLabel: 'ao',
+      entityName: pond.name,
+      retentionMessage:
+          'Ao sẽ được ẩn khỏi danh sách quản lý. Dữ liệu lịch sử vẫn được giữ lại.',
+      confirmLabel: 'Xóa ao',
+      blockers: pond.hasOpenSeason
+          ? const <String>[
               'Ao đang có vụ nuôi mở. Hãy hủy hoặc hoàn tất vụ nuôi trước khi xóa ao.',
-          level: AppNoticeLevel.warning,
-          actions: <Widget>[
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Đã hiểu'),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AppConfirmDialog(
-        title: 'Xóa ao?',
-        description:
-            'Ao sẽ được ẩn khỏi danh sách quản lý. Dữ liệu lịch sử vẫn được giữ lại.',
-        confirmLabel: 'Xóa ao',
-        destructive: true,
-        level: AppNoticeLevel.danger,
-        onConfirm: () => Navigator.of(dialogContext).pop(true),
-      ),
+            ]
+          : const <String>[],
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     try {
       await ref
           .read(pondMutationControllerProvider(pond.farmId).notifier)
