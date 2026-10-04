@@ -193,6 +193,64 @@ class _PondCard extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xB3EEF1F6),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: <Widget>[
+              const Icon(
+                Icons.home_work_outlined,
+                color: AppColors.inkMuted,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      'Trang trại',
+                      style: TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      season.farmName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (season.farmAddress?.trim().isNotEmpty ==
+                        true) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        season.farmAddress!.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         const Divider(height: 28),
         Row(
           children: <Widget>[
@@ -732,25 +790,6 @@ class _PersonnelCard extends StatelessWidget {
           ),
           const Divider(height: 1),
         ],
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Color(0xFFF0F4FA),
-            child: Icon(
-              Icons.home_work_outlined,
-              color: AppColors.inkMuted,
-              size: 18,
-            ),
-          ),
-          title: Text(
-            season.farmName,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-          subtitle: const Text(
-            'Chủ trang trại',
-            style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
-          ),
-        ),
-        const Divider(height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
