@@ -14,6 +14,8 @@ import 'package:smartshrimp_app/features/farm/presentation/pages/farm_detail_pag
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_form_page.dart';
 import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.dart';
 import 'package:smartshrimp_app/features/home/presentation/pages/home_page.dart';
+import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.dart';
+import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversations_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -49,12 +51,14 @@ abstract final class AppRoutes {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
   final refreshNotifier = _RouterRefreshNotifier();
   ref
     ..onDispose(refreshNotifier.dispose)
     ..listen(authControllerProvider, (_, _) => refreshNotifier.refresh());
 
   final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
@@ -79,6 +83,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
       final account = authState.value;
+      if (location.contains('/rag') &&
+          (account?.role != AccountRole.technician ||
+              account?.status != AccountStatus.active)) {
+        return AppRoutes.home;
+      }
       if ((location.startsWith(AppRoutes.farms) ||
               location.startsWith(AppRoutes.personnel)) &&
           account?.role != AccountRole.farmOwner) {
@@ -130,6 +139,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => AssignedSeasonDetailPage(
                       seasonId: state.pathParameters['seasonId']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'rag',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (_, state) => RagConversationsPage(
+                          seasonId: state.pathParameters['seasonId']!,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'new',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => RagChatPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':conversationId',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => RagChatPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              conversationId:
+                                  state.pathParameters['conversationId']!,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),

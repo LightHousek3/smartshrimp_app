@@ -60,6 +60,8 @@ class PageHeaderBar extends StatelessWidget {
     this.height = 76,
     this.titleSize = 16,
     this.backgroundColor = AppColors.backgroundTop,
+    this.backButton,
+    this.titleStyle,
     super.key,
   });
 
@@ -71,6 +73,8 @@ class PageHeaderBar extends StatelessWidget {
   final double height;
   final double titleSize;
   final Color backgroundColor;
+  final Widget? backButton;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -84,6 +88,8 @@ class PageHeaderBar extends StatelessWidget {
       trailing: trailing,
       titleSize: titleSize,
       backgroundColor: backgroundColor,
+      backButton: backButton,
+      titleStyle: titleStyle,
     ),
   );
 }
@@ -169,6 +175,8 @@ class _PageHeaderContent extends StatelessWidget {
     required this.trailing,
     required this.titleSize,
     required this.backgroundColor,
+    this.backButton,
+    this.titleStyle,
   });
 
   final String title;
@@ -178,6 +186,8 @@ class _PageHeaderContent extends StatelessWidget {
   final Widget? trailing;
   final double titleSize;
   final Color backgroundColor;
+  final Widget? backButton;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) => ColoredBox(
@@ -188,22 +198,23 @@ class _PageHeaderContent extends StatelessWidget {
         child: Row(
           children: <Widget>[
             if (showBack) ...<Widget>[
-              SizedBox(
-                width: 40,
-                height: 44,
-                child: IconButton(
-                  tooltip: 'Quay lại',
-                  onPressed: onBack,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(
+              backButton ??
+                  SizedBox(
                     width: 40,
                     height: 44,
+                    child: IconButton(
+                      tooltip: 'Quay lại',
+                      onPressed: onBack,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 40,
+                        height: 44,
+                      ),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 22),
+                      color: AppColors.inkSoft,
+                    ),
                   ),
-                  icon: const Icon(Icons.arrow_back_rounded, size: 22),
-                  color: AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(width: 8),
+              SizedBox(width: backButton == null ? 8 : 12),
             ],
             Expanded(
               child: Column(
@@ -215,12 +226,14 @@ class _PageHeaderContent extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.display(
-                      color: AppColors.ink,
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
+                    style:
+                        titleStyle ??
+                        AppTypography.display(
+                          color: AppColors.ink,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
                   ),
                   if (subtitle case final subtitle?)
                     Text(
