@@ -59,7 +59,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                         if (season.status ==
                             AssignedSeasonStatus.active) ...<Widget>[
                           const SizedBox(height: 18),
-                          const _FeatureActions(),
+                          _FeatureActions(seasonId: season.id),
                           const SizedBox(height: 22),
                           const _LatestWaterMeasurement(),
                           const SizedBox(height: 22),
@@ -136,7 +136,7 @@ class _PlanningNotice extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
     ),
     child: const Text(
-      'Vụ đang chuẩn bị và chưa phát sinh dữ liệu vận hành. Các chức năng đo nước, sức khỏe, vận hành và AI sẽ mở khi Chủ trại kích hoạt vụ.',
+      'Vụ đang chuẩn bị và chưa phát sinh dữ liệu vận hành. Các chức năng đo nước, sức khỏe, vận hành và AI nhận diện sẽ mở khi Chủ trại kích hoạt vụ.',
       style: TextStyle(color: Color(0xFF7008E7), fontSize: 12, height: 1.55),
     ),
   );
@@ -308,7 +308,8 @@ class _PondCard extends StatelessWidget {
 }
 
 class _FeatureActions extends StatelessWidget {
-  const _FeatureActions();
+  const _FeatureActions({required this.seasonId});
+  final String seasonId;
 
   static const _items = <_FeatureActionData>[
     _FeatureActionData(
@@ -336,7 +337,7 @@ class _FeatureActions extends StatelessWidget {
       foreground: Color(0xFF7B5BD6),
     ),
     _FeatureActionData(
-      label: 'Hỏi chuyên gia',
+      label: 'Trợ lý AI',
       icon: Icons.chat_bubble_outline_rounded,
       background: Color(0xFFEAF4FF),
       foreground: Color(0xFF1378D1),
@@ -361,7 +362,10 @@ class _FeatureActions extends StatelessWidget {
       crossAxisSpacing: 8,
       childAspectRatio: 1.14,
     ),
-    itemBuilder: (context, index) => _FeatureAction(_items[index]),
+    itemBuilder: (context, index) => _FeatureAction(
+      _items[index],
+      onTap: index == 4 ? () => context.push('/seasons/$seasonId/rag') : null,
+    ),
   );
 }
 
@@ -382,8 +386,9 @@ class _FeatureActionData {
 }
 
 class _FeatureAction extends StatelessWidget {
-  const _FeatureAction(this.data);
+  const _FeatureAction(this.data, {this.onTap});
   final _FeatureActionData data;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -393,9 +398,11 @@ class _FeatureAction extends StatelessWidget {
       side: const BorderSide(color: AppColors.line),
     ),
     child: InkWell(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${data.label} đang được phát triển.')),
-      ),
+      onTap:
+          onTap ??
+          () => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${data.label} đang được phát triển.')),
+          ),
       borderRadius: BorderRadius.circular(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -39,10 +39,12 @@ final class ApiClient {
     String path, {
     Object? data,
     required bool authenticated,
+    Duration? receiveTimeout,
   }) {
     return _request(
       path: path,
       method: 'POST',
+      receiveTimeout: receiveTimeout,
       data: data,
       authenticated: authenticated,
     );
@@ -56,6 +58,19 @@ final class ApiClient {
     return _request(
       path: path,
       method: 'PATCH',
+      data: data,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<ApiResponse> put(
+    String path, {
+    Object? data,
+    required bool authenticated,
+  }) {
+    return _request(
+      path: path,
+      method: 'PUT',
       data: data,
       authenticated: authenticated,
     );
@@ -80,6 +95,7 @@ final class ApiClient {
     required bool authenticated,
     Map<String, dynamic>? queryParameters,
     Object? data,
+    Duration? receiveTimeout,
   }) async {
     String? accessToken;
     if (authenticated) {
@@ -97,6 +113,7 @@ final class ApiClient {
         queryParameters: queryParameters,
         data: data,
         accessToken: accessToken,
+        receiveTimeout: receiveTimeout,
       );
     } on DioException catch (error) {
       if (!authenticated || error.response?.statusCode != 401) {
@@ -118,6 +135,7 @@ final class ApiClient {
         queryParameters: queryParameters,
         data: data,
         accessToken: refreshedAccessToken,
+        receiveTimeout: receiveTimeout,
       );
     } on DioException catch (error) {
       final mappedError = ErrorMapper.fromDio(error);
@@ -135,6 +153,7 @@ final class ApiClient {
     required String? accessToken,
     Map<String, dynamic>? queryParameters,
     Object? data,
+    Duration? receiveTimeout,
   }) async {
     final response = await _dio.request<Map<String, dynamic>>(
       path,
@@ -142,6 +161,7 @@ final class ApiClient {
       data: data,
       options: Options(
         method: method,
+        receiveTimeout: receiveTimeout,
         headers: accessToken == null
             ? null
             : <String, Object>{'Authorization': 'Bearer $accessToken'},

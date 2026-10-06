@@ -10,6 +10,8 @@ class AppCircleButton extends StatelessWidget {
     this.size = 42,
     this.iconSize = 21,
     this.borderRadius,
+    this.iconWidget,
+    this.backgroundColor,
     super.key,
   });
 
@@ -20,6 +22,8 @@ class AppCircleButton extends StatelessWidget {
   final double size;
   final double iconSize;
   final BorderRadius? borderRadius;
+  final Widget? iconWidget;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +37,9 @@ class AppCircleButton extends StatelessWidget {
       child: Tooltip(
         message: tooltip,
         child: Material(
-          color: filled ? const Color(0xFF1D7AD6) : Colors.white,
+          color:
+              backgroundColor ??
+              (filled ? const Color(0xFF1D7AD6) : Colors.white),
           shape: shape,
           elevation: filled ? 3 : 0,
           shadowColor: const Color(0x330F62B4),
@@ -42,11 +48,13 @@ class AppCircleButton extends StatelessWidget {
             onTap: onPressed,
             child: SizedBox.square(
               dimension: size,
-              child: Icon(
-                icon,
-                size: iconSize,
-                color: filled ? Colors.white : AppColors.inkSoft,
-              ),
+              child:
+                  iconWidget ??
+                  Icon(
+                    icon,
+                    size: iconSize,
+                    color: filled ? Colors.white : AppColors.inkSoft,
+                  ),
             ),
           ),
         ),
