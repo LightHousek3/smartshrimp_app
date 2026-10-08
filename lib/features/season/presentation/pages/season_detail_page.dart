@@ -663,65 +663,158 @@ class _ActivationDialogContent extends StatelessWidget {
   final AquacultureSeason season;
 
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FBFE),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFDDEAF4)),
+  Widget build(BuildContext context) {
+    final expectedEndDateStr = season.expectedEndDate != null
+        ? seasonDateLabel(season.expectedEndDate)
+        : null;
+    final expectedDurationDays =
+        season.stockingDate != null && season.expectedEndDate != null
+            ? season.expectedEndDate!.difference(season.stockingDate!).inDays
+            : null;
+    final expectedEndDisplay = expectedEndDateStr != null
+        ? (expectedDurationDays != null && expectedDurationDays > 0
+            ? '$expectedEndDateStr (~$expectedDurationDays ngày)'
+            : expectedEndDateStr)
+        : 'Chưa đặt';
+    final areaDisplay = season.pond.areaM2 != null && season.pond.areaM2! > 0
+        ? '${seasonDecimalLabel(season.pond.areaM2)} m²'
+        : '—';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FBFE),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFDDEAF4)),
+          ),
+          child: Column(
+            children: <Widget>[
+              // Row 1: Ao nuôi & Diện tích
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Ao nuôi',
+                      value: season.pond.name,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Diện tích ao',
+                      value: areaDisplay,
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: AppColors.line),
+              ),
+              // Row 2: Số lượng thả & Mật độ thả (tách riêng rõ ràng)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Số lượng thả',
+                      value:
+                          '${seasonIntegerLabel(season.initialQuantity)} con',
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Mật độ thả',
+                      value:
+                          '${seasonDecimalLabel(season.initialDensityPerM2)} con/m²',
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: AppColors.line),
+              ),
+              // Row 3: Giống tôm & Phác đồ nuôi
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Giống tôm',
+                      value: shrimpTypeLabel(season.shrimpType),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Phác đồ nuôi',
+                      value: season.approvedProductionProtocol != null
+                          ? '${season.approvedProductionProtocol!.title} · Bản ${season.approvedProductionProtocol!.versionNo}'
+                          : 'Chưa áp dụng',
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: AppColors.line),
+              ),
+              // Row 4: Ngày thả giống & Dự kiến kết thúc
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Ngày thả giống',
+                      value: seasonDateLabel(season.stockingDate),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Dự kiến kết thúc',
+                      value: expectedEndDisplay,
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: AppColors.line),
+              ),
+              // Row 5: Nhân sự phụ trách
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Kỹ thuật viên',
+                      value: season.personnel?.technician?.account.fullName ??
+                          'Chưa phân công',
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActivationDialogMetric(
+                      label: 'Chuyên gia thủy sản',
+                      value: season.personnel?.expert?.account.fullName ??
+                          'Chưa phân công',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: _ActivationDialogMetric(
-                    label: 'Ao nuôi',
-                    value: season.pond.name,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _ActivationDialogMetric(
-                    label: 'Ngày thả giống',
-                    value: seasonDateLabel(season.stockingDate),
-                  ),
-                ),
-              ],
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1, color: AppColors.line),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: _ActivationDialogMetric(
-                    label: 'Số lượng thả',
-                    value: '${seasonIntegerLabel(season.initialQuantity)} con',
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _ActivationDialogMetric(
-                    label: 'Mật độ thả',
-                    value:
-                        '${seasonDecimalLabel(season.initialDensityPerM2)} con/m²',
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 12),
+        const SizedBox(height: 12),
       Container(
         width: double.infinity,
         padding: const EdgeInsets.all(10),
@@ -731,7 +824,7 @@ class _ActivationDialogContent extends StatelessWidget {
           border: Border.all(color: const Color(0xFFF1D8A9)),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Container(
               width: 30,
@@ -763,6 +856,7 @@ class _ActivationDialogContent extends StatelessWidget {
       ),
     ],
   );
+  }
 }
 
 class _ActivationDialogMetric extends StatelessWidget {
