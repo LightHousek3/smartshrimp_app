@@ -26,12 +26,14 @@ final class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     required bool authenticated,
+    Map<String, String>? headers,
   }) {
     return _request(
       path: path,
       method: 'GET',
       queryParameters: queryParameters,
       authenticated: authenticated,
+      headers: headers,
     );
   }
 
@@ -40,6 +42,7 @@ final class ApiClient {
     Object? data,
     required bool authenticated,
     Duration? receiveTimeout,
+    Map<String, String>? headers,
   }) {
     return _request(
       path: path,
@@ -47,6 +50,7 @@ final class ApiClient {
       receiveTimeout: receiveTimeout,
       data: data,
       authenticated: authenticated,
+      headers: headers,
     );
   }
 
@@ -54,12 +58,14 @@ final class ApiClient {
     String path, {
     Object? data,
     required bool authenticated,
+    Map<String, String>? headers,
   }) {
     return _request(
       path: path,
       method: 'PATCH',
       data: data,
       authenticated: authenticated,
+      headers: headers,
     );
   }
 
@@ -67,12 +73,14 @@ final class ApiClient {
     String path, {
     Object? data,
     required bool authenticated,
+    Map<String, String>? headers,
   }) {
     return _request(
       path: path,
       method: 'PUT',
       data: data,
       authenticated: authenticated,
+      headers: headers,
     );
   }
 
@@ -80,12 +88,14 @@ final class ApiClient {
     String path, {
     Object? data,
     required bool authenticated,
+    Map<String, String>? headers,
   }) {
     return _request(
       path: path,
       method: 'DELETE',
       data: data,
       authenticated: authenticated,
+      headers: headers,
     );
   }
 
@@ -96,6 +106,7 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
+    Map<String, String>? headers,
   }) async {
     String? accessToken;
     if (authenticated) {
@@ -114,6 +125,7 @@ final class ApiClient {
         data: data,
         accessToken: accessToken,
         receiveTimeout: receiveTimeout,
+        headers: headers,
       );
     } on DioException catch (error) {
       if (!authenticated || error.response?.statusCode != 401) {
@@ -136,6 +148,7 @@ final class ApiClient {
         data: data,
         accessToken: refreshedAccessToken,
         receiveTimeout: receiveTimeout,
+        headers: headers,
       );
     } on DioException catch (error) {
       final mappedError = ErrorMapper.fromDio(error);
@@ -154,7 +167,12 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
+    Map<String, String>? headers,
   }) async {
+    final mergedHeaders = <String, Object>{
+      if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+      ...?headers,
+    };
     final response = await _dio.request<Map<String, dynamic>>(
       path,
       queryParameters: queryParameters,
@@ -162,9 +180,7 @@ final class ApiClient {
       options: Options(
         method: method,
         receiveTimeout: receiveTimeout,
-        headers: accessToken == null
-            ? null
-            : <String, Object>{'Authorization': 'Bearer $accessToken'},
+        headers: mergedHeaders.isEmpty ? null : mergedHeaders,
       ),
     );
     if (response.statusCode == 204) {

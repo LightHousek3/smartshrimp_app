@@ -16,6 +16,8 @@ import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.
 import 'package:smartshrimp_app/features/home/presentation/pages/home_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversations_page.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -140,6 +142,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       seasonId: state.pathParameters['seasonId']!,
                     ),
                     routes: [
+                      GoRoute(
+                        path: 'water-logs',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (_, state) {
+                          final extra =
+                              state.extra as Map<String, dynamic>?;
+                          return WaterLogListPage(
+                            seasonId: state.pathParameters['seasonId']!,
+                            farmName: extra?['farmName'] as String?,
+                            seasonName: extra?['seasonName'] as String?,
+                            pondName: extra?['pondName'] as String?,
+                          );
+                        },
+                        routes: [
+                          GoRoute(
+                            path: 'statistics',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) {
+                              final extra =
+                                  state.extra as Map<String, dynamic>?;
+                              return WaterLogStatisticsPage(
+                                seasonId: state.pathParameters['seasonId']!,
+                                pondName: extra?['pondName'] as String?,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                       GoRoute(
                         path: 'rag',
                         parentNavigatorKey: rootNavigatorKey,

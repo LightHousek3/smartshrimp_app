@@ -8,6 +8,9 @@ import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
 
 class AssignedSeasonDetailPage extends ConsumerWidget {
   const AssignedSeasonDetailPage({required this.seasonId, super.key});
@@ -59,9 +62,17 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                         if (season.status ==
                             AssignedSeasonStatus.active) ...<Widget>[
                           const SizedBox(height: 18),
-                          _FeatureActions(seasonId: season.id),
+                          _FeatureActions(
+                            seasonId: season.id,
+                            farmName: season.farmName,
+                            seasonName: season.name,
+                            pondName: season.pondName,
+                          ),
                           const SizedBox(height: 22),
-                          const _LatestWaterMeasurement(),
+                          _LatestWaterMeasurement(
+                            seasonId: season.id,
+                            pondName: season.pondName,
+                          ),
                           const SizedBox(height: 22),
                           const _TodayOperations(),
                         ],
@@ -308,8 +319,17 @@ class _PondCard extends StatelessWidget {
 }
 
 class _FeatureActions extends StatelessWidget {
-  const _FeatureActions({required this.seasonId});
+  const _FeatureActions({
+    required this.seasonId,
+    required this.farmName,
+    required this.seasonName,
+    required this.pondName,
+  });
+
   final String seasonId;
+  final String farmName;
+  final String seasonName;
+  final String pondName;
 
   static const _items = <_FeatureActionData>[
     _FeatureActionData(
@@ -364,7 +384,18 @@ class _FeatureActions extends StatelessWidget {
     ),
     itemBuilder: (context, index) => _FeatureAction(
       _items[index],
-      onTap: index == 4 ? () => context.push('/seasons/$seasonId/rag') : null,
+      onTap: switch (index) {
+        0 => () => context.push(
+          '/seasons/$seasonId/water-logs',
+          extra: <String, String>{
+            'farmName': farmName,
+            'seasonName': seasonName,
+            'pondName': pondName,
+          },
+        ),
+        4 => () => context.push('/seasons/$seasonId/rag'),
+        _ => null,
+      },
     ),
   );
 }
@@ -462,122 +493,104 @@ class _FeatureAction extends StatelessWidget {
   );
 }
 
-class _LatestWaterMeasurement extends StatelessWidget {
-  const _LatestWaterMeasurement();
+class _LatestWaterMeasurement extends ConsumerWidget {
+  const _LatestWaterMeasurement({
+    required this.seasonId,
+    required this.pondName,
+  });
 
-  static const _metrics = <_WaterMetricData>[
-    _WaterMetricData('Nhiệt độ', '28.5', '°C'),
-    _WaterMetricData('pH', '7.8', ''),
-    _WaterMetricData('DO', '5.2', 'mg/L'),
-    _WaterMetricData('Độ mặn', '15.3', '‰'),
-    _WaterMetricData('NH3', '0.012', 'mg/L'),
-    _WaterMetricData('NO2', '0.08', 'mg/L'),
-    _WaterMetricData('Kiềm', '142', 'mg/L'),
-    _WaterMetricData('H2S', '0', 'mg/L'),
-  ];
+  final String seasonId;
+  final String pondName;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      const Row(
-        children: <Widget>[
-          Expanded(child: _Title('Đo nước gần nhất')),
-          Text(
-            '06:15 · 18–09',
-            style: TextStyle(
-              color: AppColors.inkMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      _Card(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-        child: Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(latestWaterLogProvider(seasonId));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
           children: <Widget>[
-            _WaterMetricRow(metrics: _metrics.take(4).toList()),
-            const Divider(height: 24),
-            _WaterMetricRow(metrics: _metrics.skip(4).toList()),
+            const Expanded(child: _Title('Đo nước gần nhất')),
+            TextButton(
+              onPressed: () => context.push(
+                '/seasons/$seasonId/water-logs/statistics',
+                extra: <String, String>{'pondName': pondName},
+              ),
+              child: const Text('Xem thống kê'),
+            ),
           ],
         ),
-      ),
-    ],
-  );
-}
-
-class _WaterMetricData {
-  const _WaterMetricData(this.label, this.value, this.unit);
-  final String label;
-  final String value;
-  final String unit;
-}
-
-class _WaterMetricRow extends StatelessWidget {
-  const _WaterMetricRow({required this.metrics});
-  final List<_WaterMetricData> metrics;
-
-  @override
-  Widget build(BuildContext context) => IntrinsicHeight(
-    child: Row(
-      children: <Widget>[
-        for (var index = 0; index < metrics.length; index++) ...<Widget>[
-          Expanded(child: _WaterMetric(metrics[index])),
-          if (index < metrics.length - 1)
-            const VerticalDivider(width: 1, color: AppColors.line),
-        ],
-      ],
-    ),
-  );
-}
-
-class _WaterMetric extends StatelessWidget {
-  const _WaterMetric(this.data);
-  final _WaterMetricData data;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Column(
-      children: <Widget>[
-        Text(
-          data.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 9.5),
-        ),
-        const SizedBox(height: 5),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(color: AppColors.ink),
-              children: <InlineSpan>[
-                TextSpan(
-                  text: data.value,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                if (data.unit.isNotEmpty)
-                  TextSpan(
-                    text: ' ${data.unit}',
-                    style: const TextStyle(
-                      color: AppColors.inkMuted,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
+        const SizedBox(height: 10),
+        state.when(
+          loading: () => const _Card(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.ocean),
+              ),
             ),
           ),
+          error: (_, _) => const _Card(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Text(
+                'Không tải được dữ liệu đo nước.',
+                style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
+              ),
+            ),
+          ),
+          data: (log) {
+            if (log == null) {
+              return const _Card(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'Chưa có nhật ký đo nước.',
+                      style: TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return _Card(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 14,
+              ),
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
+                            style: const TextStyle(
+                              color: AppColors.inkMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        WaterLogStatusBadge(log: log),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  WaterParamTiles(log: log),
+                ],
+              ),
+            );
+          },
         ),
       ],
-    ),
-  );
+    );
+  }
 }
 
 class _TodayOperations extends StatelessWidget {
