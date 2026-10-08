@@ -18,6 +18,9 @@ import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.da
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversations_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
+import 'package:smartshrimp_app/features/operation/presentation/pages/operation_list_page.dart';
+import 'package:smartshrimp_app/features/operation/presentation/pages/operation_detail_page.dart';
+import 'package:smartshrimp_app/features/operation/presentation/pages/operation_stats_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -191,6 +194,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                               seasonId: state.pathParameters['seasonId']!,
                               conversationId:
                                   state.pathParameters['conversationId']!,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'operations',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (_, state) => OperationListPage(
+                          seasonId: state.pathParameters['seasonId']!,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'stats',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => OperationStatsPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':scheduleId',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => OperationDetailPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              scheduleId: state.pathParameters['scheduleId']!,
                             ),
                           ),
                         ],

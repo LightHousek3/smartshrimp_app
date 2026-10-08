@@ -11,6 +11,8 @@ import 'package:smartshrimp_app/features/assigned_season/presentation/view_model
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
+import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_schedule_card.dart';
 
 class AssignedSeasonDetailPage extends ConsumerWidget {
   const AssignedSeasonDetailPage({required this.seasonId, super.key});
@@ -74,7 +76,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                             pondName: season.pondName,
                           ),
                           const SizedBox(height: 22),
-                          const _TodayOperations(),
+                          _TodayOperations(seasonId: season.id),
                         ],
                         const SizedBox(height: 18),
                         const _Title('Nhân sự vụ nuôi'),
@@ -393,6 +395,7 @@ class _FeatureActions extends StatelessWidget {
             'pondName': pondName,
           },
         ),
+        2 => () => context.push('/seasons/$seasonId/operations'),
         4 => () => context.push('/seasons/$seasonId/rag'),
         _ => null,
       },
@@ -593,190 +596,79 @@ class _LatestWaterMeasurement extends ConsumerWidget {
   }
 }
 
-class _TodayOperations extends StatelessWidget {
-  const _TodayOperations();
+class _TodayOperations extends ConsumerWidget {
+  const _TodayOperations({required this.seasonId});
+  final String seasonId;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Row(
-        children: <Widget>[
-          const Expanded(child: _Title('Cữ vận hành hôm nay')),
-          TextButton(
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Vận hành đang được phát triển.')),
-            ),
-            child: const Text('Xem tất cả'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 4),
-      const _OperationCard(
-        icon: Icons.settings_outlined,
-        iconBackground: Color(0xFFE2F6F3),
-        iconForeground: Color(0xFF0F9B8E),
-        category: 'Cho ăn',
-        slot: 'Cữ 2',
-        title: 'Thức ăn CP 9004 (40% đạm)',
-        time: '10:30',
-        amount: '47.2 kg',
-        note: 'Kèm Vitamin C tạt',
-      ),
-      SizedBox(height: 10),
-      _OperationCard(
-        icon: Icons.science_outlined,
-        iconBackground: Color(0xFFF0E9FF),
-        iconForeground: Color(0xFF7B5BD6),
-        category: 'Hóa chất',
-        title: 'Yucca khử khí độc',
-        time: '11:00',
-        amount: '4.48 l',
-      ),
-    ],
-  );
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final opState = ref.watch(operationListProvider(seasonId));
 
-class _OperationCard extends StatelessWidget {
-  const _OperationCard({
-    required this.icon,
-    required this.iconBackground,
-    required this.iconForeground,
-    required this.category,
-    required this.title,
-    required this.time,
-    required this.amount,
-    this.slot,
-    this.note,
-  });
-
-  final IconData icon;
-  final Color iconBackground;
-  final Color iconForeground;
-  final String category;
-  final String? slot;
-  final String title;
-  final String time;
-  final String amount;
-  final String? note;
-
-  @override
-  Widget build(BuildContext context) => _Card(
-    padding: const EdgeInsets.all(14),
-    child: Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: iconBackground,
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Icon(icon, color: iconForeground, size: 21),
+        Row(
+          children: <Widget>[
+            const Expanded(child: _Title('Cữ vận hành hôm nay')),
+            TextButton(
+              onPressed: () => context.push('/seasons/$seasonId/operations'),
+              child: const Text('Xem tất cả'),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  _OperationBadge(
-                    label: category,
-                    background: iconBackground,
-                    foreground: iconForeground,
-                  ),
-                  if (slot != null) ...<Widget>[
-                    const SizedBox(width: 6),
-                    Text(
-                      slot!,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  const Spacer(),
-                  const _OperationBadge(
-                    label: '● Đã lên lịch',
-                    background: Color(0xFFEAF4FF),
-                    foreground: Color(0xFF1378D1),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: <Widget>[
-                  const Icon(
-                    Icons.schedule_rounded,
-                    color: AppColors.inkMuted,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$time · $amount',
-                    style: const TextStyle(
-                      color: AppColors.inkMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              if (note != null) ...<Widget>[
-                const SizedBox(height: 8),
-                _OperationBadge(
-                  label: '▣ $note',
-                  background: const Color(0xFFFBE6EA),
-                  foreground: AppColors.error,
-                ),
-              ],
-            ],
+        const SizedBox(height: 4),
+        opState.when(
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppColors.ocean),
+            ),
           ),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (result) {
+            if (result.schedules.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.line),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Chưa có lịch vận hành nào hôm nay',
+                    style: TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final topThree = result.schedules.take(3).toList(growable: false);
+            return Column(
+              children: <Widget>[
+                for (final s in topThree) ...<Widget>[
+                  OperationScheduleCard(
+                    schedule: s,
+                    onTap: () =>
+                        context.push('/seasons/$seasonId/operations/${s.id}'),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            );
+          },
         ),
       ],
-    ),
-  );
-}
-
-class _OperationBadge extends StatelessWidget {
-  const _OperationBadge({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(7),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: foreground,
-        fontSize: 9.5,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  );
+    );
+  }
 }
 
 class _PersonnelCard extends StatelessWidget {

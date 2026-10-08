@@ -69,9 +69,9 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
       // Replace /rag/new with /rag/{conversationId} after first message
       final newConvId = ref.read(ragChatProvider(_key)).value?.conversationId;
       if (widget.conversationId == null && newConvId != null) {
-        GoRouter.of(context).replace(
-          '/seasons/${widget.seasonId}/rag/$newConvId',
-        );
+        GoRouter.of(
+          context,
+        ).replace('/seasons/${widget.seasonId}/rag/$newConvId');
       }
     } catch (error) {
       if (mounted) {

@@ -12,6 +12,7 @@ class AppDialog extends StatelessWidget {
     this.actions = const <Widget>[],
     this.verticalHeader = false,
     this.separatedActions = false,
+    this.titleStyle,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class AppDialog extends StatelessWidget {
   final List<Widget> actions;
   final bool verticalHeader;
   final bool separatedActions;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +54,11 @@ class AppDialog extends StatelessWidget {
               children: <Widget>[
                 _DialogLevelIcon(visual: visual, icon: icon),
                 const SizedBox(height: 14),
-                _DialogTitleText(title: title, description: description),
+                _DialogTitleText(
+                  title: title,
+                  description: description,
+                  titleStyle: titleStyle,
+                ),
               ],
             )
           : Row(
@@ -64,6 +70,7 @@ class AppDialog extends StatelessWidget {
                   child: _DialogTitleText(
                     title: title,
                     description: description,
+                    titleStyle: titleStyle,
                   ),
                 ),
               ],
@@ -111,10 +118,15 @@ class _DialogLevelIcon extends StatelessWidget {
 }
 
 class _DialogTitleText extends StatelessWidget {
-  const _DialogTitleText({required this.title, required this.description});
+  const _DialogTitleText({
+    required this.title,
+    required this.description,
+    this.titleStyle,
+  });
 
   final String title;
   final String? description;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -123,12 +135,14 @@ class _DialogTitleText extends StatelessWidget {
     children: <Widget>[
       Text(
         title,
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontSize: 17,
-          height: 1.2,
-          fontWeight: FontWeight.w800,
-        ),
+        style: titleStyle ??
+            const TextStyle(
+              color: AppColors.ink,
+              fontSize: 16.5,
+              height: 1.3,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.15,
+            ),
       ),
       if (description != null && description!.trim().isNotEmpty) ...<Widget>[
         const SizedBox(height: 4),
@@ -162,6 +176,7 @@ class AppConfirmDialog extends StatelessWidget {
     this.content,
     this.verticalHeader = false,
     this.separatedActions = false,
+    this.titleStyle,
     super.key,
   });
 
@@ -177,6 +192,7 @@ class AppConfirmDialog extends StatelessWidget {
   final Widget? content;
   final bool verticalHeader;
   final bool separatedActions;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) => AppDialog(
@@ -187,6 +203,7 @@ class AppConfirmDialog extends StatelessWidget {
     content: content,
     verticalHeader: verticalHeader,
     separatedActions: separatedActions,
+    titleStyle: titleStyle,
     actions: <Widget>[
       Row(
         children: <Widget>[
