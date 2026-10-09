@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_sheet_widgets.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
@@ -21,9 +23,9 @@ Future<bool?> showVoidWaterLogSheet({
   useSafeArea: true,
   isScrollControlled: true,
   backgroundColor: Colors.white,
-  showDragHandle: true,
+  showDragHandle: false,
   shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
   ),
   clipBehavior: Clip.antiAlias,
   barrierColor: const Color(0x990F1C2E),
@@ -107,86 +109,80 @@ class _VoidWaterLogSheetState extends ConsumerState<_VoidWaterLogSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _SheetHeader(
+          WaterLogSheetHeader(
             title: 'Nhật ký đo nước',
-            onClose: () => Navigator.of(context).pop(),
+            closeKey: const Key('close_void_water_log'),
+            onClose: _submitting ? null : () => Navigator.of(context).pop(),
           ),
-          const Divider(height: 1, color: Color(0xFFEEF1F7)),
+          const Divider(height: 1.2, color: Color(0xFFEEF1F7)),
           Flexible(
             fit: FlexFit.loose,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      Text(
-                        '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                      Expanded(
+                        child: Text(
+                          '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       _ValidityBadge(isVoided: log.isVoided),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F9FC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.line),
-                    ),
-                    child: WaterParamTiles(log: log),
-                  ),
-                  if (log.note != null &&
-                      log.note!.trim().isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 12),
+                  WaterParamTiles(log: log, boxed: true),
+                  if (log.note?.trim().isNotEmpty == true) ...<Widget>[
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 13,
-                      ),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEEF1F6),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         log.note!.trim(),
                         style: const TextStyle(
                           color: AppColors.inkSoft,
-                          fontSize: 12.5,
+                          fontSize: 13,
                           height: 1.5,
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 14),
                   if (canVoid) ...<Widget>[
+                    const SizedBox(height: 16),
                     const Text(
                       'Lý do hủy hiệu lực (bắt buộc)',
                       style: TextStyle(
                         color: AppColors.inkSoft,
                         fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     TextField(
                       controller: _reasonController,
+                      enabled: !_submitting,
                       minLines: 2,
                       maxLines: 4,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                       textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
+                      decoration: waterLogInputDecoration(
                         hintText: 'Vì sao bản ghi này không chính xác?',
                       ),
                     ),
@@ -210,11 +206,14 @@ class _VoidWaterLogSheetState extends ConsumerState<_VoidWaterLogSheet> {
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.inkSoft,
-                                side: const BorderSide(color: AppColors.line),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                side: const BorderSide(
+                                  color: AppColors.line,
+                                  width: 1.2,
                                 ),
-                                textStyle: const TextStyle(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                textStyle: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -226,18 +225,21 @@ class _VoidWaterLogSheetState extends ConsumerState<_VoidWaterLogSheet> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: DestructiveActionButton(
                             label: 'Xác nhận',
+                            filled: true,
                             loading: _submitting,
                             onPressed: _confirm,
                           ),
                         ),
                       ],
                     ),
-                  ] else if (log.isVoided) ...<Widget>[_VoidInfo(log: log)],
-                  const SizedBox(height: 8),
+                  ] else if (log.isVoided) ...<Widget>[
+                    const SizedBox(height: 16),
+                    _VoidInfo(log: log),
+                  ],
                 ],
               ),
             ),
@@ -248,72 +250,41 @@ class _VoidWaterLogSheetState extends ConsumerState<_VoidWaterLogSheet> {
   }
 }
 
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title, required this.onClose});
-
-  final String title;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
-    child: Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        Material(
-          color: const Color(0xFFEEF1F6),
-          shape: const CircleBorder(),
-          child: IconButton(
-            key: const Key('close_void_water_log'),
-            tooltip: 'Đóng',
-            visualDensity: VisualDensity.compact,
-            onPressed: onClose,
-            icon: const Icon(
-              Icons.close_rounded,
-              color: AppColors.inkMuted,
-              size: 19,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 class _ValidityBadge extends StatelessWidget {
   const _ValidityBadge({required this.isVoided});
-
   final bool isVoided;
 
   @override
   Widget build(BuildContext context) {
-    final background = isVoided
-        ? const Color(0xFFEEF1F6)
-        : const Color(0xFFE4F6EC);
-    final foreground = isVoided ? AppColors.inkMuted : const Color(0xFF1E9E5A);
+    final foreground = isVoided ? AppColors.inkMuted : const Color(0xFF0F9B8E);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: background,
+        color: isVoided ? const Color(0xFFEEF1F6) : const Color(0xFFE2F6F3),
         borderRadius: BorderRadius.circular(99),
       ),
-      child: Text(
-        isVoided ? 'Đã hủy hiệu lực' : 'Có hiệu lực',
-        style: TextStyle(
-          color: foreground,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: foreground,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isVoided ? 'Đã hủy hiệu lực' : 'Có hiệu lực',
+            style: TextStyle(
+              color: foreground,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

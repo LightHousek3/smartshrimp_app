@@ -147,7 +147,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     routes: [
                       GoRoute(
                         path: 'water-logs',
-                        parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) {
                           final extra =
                               state.extra as Map<String, dynamic>?;
