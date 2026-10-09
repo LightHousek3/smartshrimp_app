@@ -10,6 +10,9 @@ class GradientButton extends StatelessWidget {
     this.isLoading = false,
     this.icon = Icons.check_rounded,
     this.compact = false,
+    this.leading,
+    this.borderRadius,
+    this.gradientColors,
     super.key,
   });
 
@@ -18,20 +21,24 @@ class GradientButton extends StatelessWidget {
   final bool isLoading;
   final IconData icon;
   final bool compact;
+  final Widget? leading;
+  final double? borderRadius;
+  final List<Color>? gradientColors;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
-    final radius = compact ? 11.0 : _buttonRadius;
+    final radius = borderRadius ?? (compact ? 11.0 : _buttonRadius);
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: enabled
-              ? const <Color>[
-                  AppColors.oceanLight,
-                  AppColors.tealLight,
-                  AppColors.oceanLight,
-                ]
+              ? gradientColors ??
+                    const <Color>[
+                      AppColors.oceanLight,
+                      AppColors.tealLight,
+                      AppColors.oceanLight,
+                    ]
               : const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)],
         ),
         borderRadius: BorderRadius.circular(radius),
@@ -65,11 +72,12 @@ class GradientButton extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(
-                          icon,
-                          color: Colors.white,
-                          size: compact ? 18 : 22,
-                        ),
+                        leading ??
+                            Icon(
+                              icon,
+                              color: Colors.white,
+                              size: compact ? 18 : 22,
+                            ),
                         SizedBox(width: compact ? 8 : 10),
                         Text(
                           label,
