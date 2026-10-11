@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
@@ -508,90 +509,191 @@ class _LatestWaterMeasurement extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(latestWaterLogProvider(seasonId));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            const Expanded(child: _Title('Đo nước gần nhất')),
-            TextButton(
-              onPressed: () => context.push(
-                '/seasons/$seasonId/water-logs/statistics',
-                extra: <String, String>{'pondName': pondName},
-              ),
-              child: const Text('Xem thống kê'),
-            ),
-          ],
+    final log = state.asData?.value;
+    final borderRadius = BorderRadius.circular(18);
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x0A0F1C2E),
+            blurRadius: 1,
+            offset: Offset(0, 1),
+          ),
+          BoxShadow(
+            color: Color(0x590F1C2E),
+            blurRadius: 12,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: borderRadius,
+          side: const BorderSide(color: AppColors.line, width: 1.2),
         ),
-        const SizedBox(height: 10),
-        state.when(
-          loading: () => const _Card(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: CircularProgressIndicator(color: AppColors.ocean),
-              ),
-            ),
+        child: InkWell(
+          borderRadius: borderRadius,
+          onTap: () => context.push(
+            '/seasons/$seasonId/water-logs/statistics',
+            extra: <String, String>{'pondName': pondName},
           ),
-          error: (_, _) => const _Card(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-              child: Text(
-                'Không tải được dữ liệu đo nước.',
-                style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
-              ),
-            ),
-          ),
-          data: (log) {
-            if (log == null) {
-              return const _Card(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: Text(
-                      'Chưa có nhật ký đo nước.',
-                      style: TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 12,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        'Đo nước gần nhất',
+                        style: AppTypography.display(
+                          color: AppColors.ink,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }
-            return _Card(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 14,
-              ),
-              child: Column(
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
-                            style: const TextStyle(
-                              color: AppColors.inkMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    if (log != null) ...<Widget>[
+                      const SizedBox(width: 8),
+                      Text(
+                        '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          height: 1.5,
                         ),
-                        WaterLogStatusBadge(log: log),
-                      ],
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                state.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.ocean),
                     ),
                   ),
-                  const Divider(height: 24),
-                  WaterParamTiles(log: log),
-                ],
-              ),
-            );
-          },
+                  error: (_, _) => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'Không tải được dữ liệu đo nước.',
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
+                    ),
+                  ),
+                  data: (log) => log == null
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: Text(
+                              'Chưa có nhật ký đo nước.',
+                              style: TextStyle(
+                                color: AppColors.inkMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        )
+                      : _LatestWaterGrid(log: log),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LatestWaterGrid extends StatelessWidget {
+  const _LatestWaterGrid({required this.log});
+
+  final WaterLog log;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: <Widget>[
+      for (var row = 0; row < 2; row++) ...<Widget>[
+        if (row > 0) const SizedBox(height: 8),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              for (var column = 0; column < 4; column++) ...<Widget>[
+                if (column > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: row * 4 + column < waterLogCardParams.length
+                      ? _LatestWaterTile(
+                          log: log,
+                          param: waterLogCardParams[row * 4 + column],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ],
+          ),
         ),
       ],
+    ],
+  );
+}
+
+class _LatestWaterTile extends StatelessWidget {
+  const _LatestWaterTile({required this.log, required this.param});
+
+  final WaterLog log;
+  final WaterLogParam param;
+
+  @override
+  Widget build(BuildContext context) {
+    final exceeded = log.exceededParameters.contains(param.field);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: exceeded ? const Color(0xFFFBE6EA) : const Color(0xB3EEF1F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            param.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.inkMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            formatWaterValue(log.valueOf(param.field)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.mono(
+              color: exceeded ? AppColors.error : AppColors.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ).copyWith(height: 1.5),
+          ),
+          Text(
+            param.unit,
+            style: const TextStyle(
+              color: AppColors.inkMuted,
+              fontSize: 9,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
