@@ -416,11 +416,11 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
       entityLabel: 'ao',
       entityName: pond.name,
       retentionMessage:
-          'Ao sẽ được ẩn khỏi danh sách quản lý. Dữ liệu lịch sử vẫn được giữ lại.',
+          'Ao sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn dữ liệu liên quan hoặc lịch sử vụ nuôi.',
       confirmLabel: 'Xóa ao',
       blockers: pond.hasOpenSeason
           ? const <String>[
-              'Ao đang có vụ nuôi mở. Hãy hủy hoặc hoàn tất vụ nuôi trước khi xóa ao.',
+              'Ao đang có vụ nuôi mở. Không thể xóa ao khi còn vụ nuôi hoặc dữ liệu liên quan.',
             ]
           : const <String>[],
     );
@@ -430,10 +430,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
           .read(pondMutationControllerProvider(pond.farmId).notifier)
           .delete(pond.id);
       if (!mounted) return;
-      AppNoticeService.success(
-        context,
-        'Ao đã được ẩn khỏi danh sách và dữ liệu lịch sử vẫn được giữ lại.',
-      );
+      AppNoticeService.success(context, 'Đã xóa ao.');
       context.go('/farms/${pond.farmId}');
     } on AppException catch (error) {
       if (mounted) {

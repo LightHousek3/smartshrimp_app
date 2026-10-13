@@ -5,10 +5,10 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
-import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_refresh_boundary.dart';
 
 class WaterLogStatisticsPage extends ConsumerStatefulWidget {
   const WaterLogStatisticsPage({
@@ -25,42 +25,6 @@ class WaterLogStatisticsPage extends ConsumerStatefulWidget {
       _WaterLogStatisticsPageState();
 }
 
-class _StatsQuery {
-  const _StatsQuery(this.seasonId, this.days, this.granularity);
-
-  final String seasonId;
-  final int days;
-  final String granularity;
-
-  @override
-  bool operator ==(Object other) =>
-      other is _StatsQuery &&
-      other.seasonId == seasonId &&
-      other.days == days &&
-      other.granularity == granularity;
-
-  @override
-  int get hashCode => Object.hash(seasonId, days, granularity);
-}
-
-final _waterLogStatsProvider = FutureProvider.autoDispose
-    .family<WaterLogStatistics, _StatsQuery>((ref, query) async {
-      final repository = ref.watch(waterLogRepositoryProvider);
-      final to = DateTime.now();
-      final from = to.subtract(Duration(days: query.days));
-      try {
-        return await repository.getStatistics(
-          seasonId: query.seasonId,
-          from: from,
-          to: to,
-          granularity: query.granularity,
-        );
-      } on SessionExpiredException {
-        await ref.read(authControllerProvider.notifier).expireSession();
-        rethrow;
-      }
-    });
-
 class _WaterLogStatisticsPageState
     extends ConsumerState<WaterLogStatisticsPage> {
   int _days = 30;
@@ -69,64 +33,75 @@ class _WaterLogStatisticsPageState
 
   @override
   Widget build(BuildContext context) {
-    final query = _StatsQuery(widget.seasonId, _days, _granularity);
-    final state = ref.watch(_waterLogStatsProvider(query));
+    final query = (
+      seasonId: widget.seasonId,
+      days: _days,
+      granularity: _granularity,
+    );
+    final state = ref.watch(waterLogStatisticsProvider(query));
 
     return Scaffold(
-      body: AppGradientBackground(
-        child: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              StickyPageHeader(
-                title: 'Thống kê chất lượng nước',
-                subtitle: widget.pondName,
-                onBack: context.pop,
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      _RangeChips(
-                        days: _days,
-                        onChanged: (value) => setState(() => _days = value),
-                      ),
-                      const SizedBox(height: 10),
-                      _GranularityToggle(
-                        granularity: _granularity,
-                        onChanged: (value) =>
-                            setState(() => _granularity = value),
-                      ),
-                      const SizedBox(height: 16),
-                      state.when(
-                        loading: () => const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 48),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.ocean,
+      body: WaterLogRefreshBoundary(
+        onRefresh: () async {
+          ref.invalidate(waterLogStatisticsProvider(query));
+          await ref.read(waterLogStatisticsProvider(query).future);
+        },
+        child: AppGradientBackground(
+          child: SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                StickyPageHeader(
+                  title: 'Thống kê chất lượng nước',
+                  subtitle: widget.pondName,
+                  onBack: context.pop,
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _RangeChips(
+                          days: _days,
+                          onChanged: (value) => setState(() => _days = value),
+                        ),
+                        const SizedBox(height: 10),
+                        _GranularityToggle(
+                          granularity: _granularity,
+                          onChanged: (value) =>
+                              setState(() => _granularity = value),
+                        ),
+                        const SizedBox(height: 16),
+                        state.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 48),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.ocean,
+                              ),
                             ),
                           ),
+                          error: (error, _) => _Failure(
+                            error: error,
+                            onRetry: () => ref.invalidate(
+                              waterLogStatisticsProvider(query),
+                            ),
+                          ),
+                          data: (stats) => _StatisticsBody(
+                            stats: stats,
+                            selectedParam: _selectedParam,
+                            onSelectParam: (field) =>
+                                setState(() => _selectedParam = field),
+                          ),
                         ),
-                        error: (error, _) => _Failure(
-                          error: error,
-                          onRetry: () =>
-                              ref.invalidate(_waterLogStatsProvider(query)),
-                        ),
-                        data: (stats) => _StatisticsBody(
-                          stats: stats,
-                          selectedParam: _selectedParam,
-                          onSelectParam: (field) =>
-                              setState(() => _selectedParam = field),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

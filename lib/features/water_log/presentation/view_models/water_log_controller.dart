@@ -6,7 +6,11 @@ import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_cont
 import 'package:smartshrimp_app/features/water_log/data/repositories/water_log_repository_impl.dart';
 import 'package:smartshrimp_app/features/water_log/data/services/water_log_api_service.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_list_state.dart';
 
 final waterLogRepositoryProvider = Provider<WaterLogRepository>((ref) {
   final role = ref.watch(authControllerProvider).value?.role;
@@ -22,9 +26,61 @@ final waterLogRepositoryProvider = Provider<WaterLogRepository>((ref) {
 });
 
 final waterLogListProvider = AsyncNotifierProvider.autoDispose
-    .family<WaterLogListController, WaterLogPage, String>(
+    .family<WaterLogListController, WaterLogListState, String>(
       WaterLogListController.new,
     );
+
+final waterLogCanWriteProvider = Provider.autoDispose.family<bool, String>((
+  ref,
+  seasonId,
+) {
+  if (ref.watch(authControllerProvider).value?.role != AccountRole.technician) {
+    return false;
+  }
+  return ref
+          .watch(assignedSeasonDetailProvider(seasonId))
+          .asData
+          ?.value
+          .status ==
+      AssignedSeasonStatus.active;
+});
+
+typedef WaterLogStatsQuery = ({String seasonId, int days, String granularity});
+
+final waterLogStatisticsProvider = FutureProvider.autoDispose
+    .family<WaterLogStatistics, WaterLogStatsQuery>((ref, query) async {
+      ref.watch(waterLogRevisionProvider(query.seasonId));
+      final repository = ref.watch(waterLogRepositoryProvider);
+      final to = DateTime.now();
+      try {
+        return await repository.getStatistics(
+          seasonId: query.seasonId,
+          from: to.subtract(Duration(days: query.days)),
+          to: to,
+          granularity: query.granularity,
+        );
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
+
+final waterLogRevisionProvider = NotifierProvider.autoDispose
+    .family<WaterLogRevision, int, String>(WaterLogRevision.new);
+
+final class WaterLogRevision extends Notifier<int> {
+  WaterLogRevision(this.seasonId);
+  final String seasonId;
+  @override
+  int build() => 0;
+  void changed() => state++;
+}
+
+/// Invalidate other water views after a read refresh or successful write.
+void invalidateWaterLogViews(WidgetRef ref, String seasonId) {
+  ref.invalidate(latestWaterLogProvider(seasonId));
+  ref.read(waterLogRevisionProvider(seasonId).notifier).changed();
+}
 
 /// Nhật ký mới nhất (chưa hủy) của vụ — dùng cho card "Đo nước gần nhất".
 final latestWaterLogProvider = FutureProvider.autoDispose
@@ -42,54 +98,147 @@ final latestWaterLogProvider = FutureProvider.autoDispose
       }
     });
 
-final class WaterLogListController extends AsyncNotifier<WaterLogPage> {
+final class WaterLogListController extends AsyncNotifier<WaterLogListState> {
   WaterLogListController(this.seasonId);
 
   final String seasonId;
-  bool _loadingMore = false;
+  int _generation = 0;
+  int? _loadingMoreGeneration;
+  bool _refreshing = false;
+  WaterLogFilter _filter = WaterLogFilter.all;
+  DateTime? _from;
+  DateTime? _to;
+  WaterLogFilter get filter => _filter;
 
-  @override
-  Future<WaterLogPage> build() => _fetch();
-
-  Future<WaterLogPage> _fetch({String? cursor}) async {
+  Future<WaterLogMetadata> loadMetadata() async {
     try {
+      // Fetch on each submission: no stale species/policy/account cache.
       return await ref
           .read(waterLogRepositoryProvider)
-          .getWaterLogs(
-            seasonId: seasonId,
-            includeVoided: true,
-            cursor: cursor,
-          );
+          .getMetadata(seasonId: seasonId);
     } on SessionExpiredException {
       await ref.read(authControllerProvider.notifier).expireSession();
       rethrow;
     }
   }
 
+  @override
+  Future<WaterLogListState> build() async {
+    ref.watch(waterLogRepositoryProvider);
+    _generation++;
+    _refreshing = false;
+    _loadingMoreGeneration = null;
+    return WaterLogListState(page: await _fetch());
+  }
+
+  Future<WaterLogPage> _fetch({String? cursor}) async {
+    final generation = _generation;
+    try {
+      return await ref
+          .read(waterLogRepositoryProvider)
+          .getWaterLogs(
+            seasonId: seasonId,
+            filter: _filter,
+            from: _from,
+            to: _to,
+            includeCounts: cursor == null,
+            cursor: cursor,
+          );
+    } on SessionExpiredException {
+      if (ref.mounted && generation == _generation) {
+        await ref.read(authControllerProvider.notifier).expireSession();
+      }
+      rethrow;
+    }
+  }
+
   Future<void> refresh() async {
+    if (state.isLoading) {
+      // Let Riverpod cancel an unfinished build, including its automatic state update.
+      ref.invalidateSelf();
+      await future;
+      return;
+    }
+    final generation = ++_generation;
+    _refreshing = true;
+    _loadingMoreGeneration = null;
     final previous = state.value;
+    if (previous != null) {
+      state = AsyncData(
+        previous.copyWith(loadingMore: false, paginationError: null),
+      );
+    }
     try {
       final refreshed = await _fetch();
-      if (ref.mounted) state = AsyncData(refreshed);
+      if (!ref.mounted || generation != _generation) return;
+      _refreshing = false;
+      state = AsyncData(WaterLogListState(page: refreshed));
     } on Object catch (error, stackTrace) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || generation != _generation) return;
       if (previous == null) {
-        state = AsyncError<WaterLogPage>(error, stackTrace);
+        state = AsyncError<WaterLogListState>(error, stackTrace);
       }
       // Giữ dữ liệu cũ hiển thị, để page báo lỗi.
       Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      if (generation == _generation) _refreshing = false;
+    }
+  }
+
+  Future<void> setQuery({
+    required WaterLogFilter filter,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    if (filter == _filter && from == _from && to == _to) return;
+    _filter = filter;
+    _from = from;
+    _to = to;
+    ref.invalidateSelf();
+    try {
+      await future;
+    } on Object {
+      // Riverpod has published the first-page error for this query.
     }
   }
 
   Future<void> loadMore() async {
     final current = state.value;
-    if (current == null || !current.hasNextPage || _loadingMore) return;
-    _loadingMore = true;
+    final generation = _generation;
+    if (current == null ||
+        !current.page.hasNextPage ||
+        _refreshing ||
+        _loadingMoreGeneration == generation) {
+      return;
+    }
+    _loadingMoreGeneration = generation;
+    state = AsyncData(
+      current.copyWith(loadingMore: true, paginationError: null),
+    );
     try {
-      final next = await _fetch(cursor: current.nextCursor);
-      if (ref.mounted) state = AsyncData(current.append(next));
+      final cursor = current.page.nextCursor;
+      if (cursor == null || cursor.trim().isEmpty) {
+        throw const InvalidResponseException();
+      }
+      final next = await _fetch(cursor: cursor);
+      // A refresh starts a new snapshot; late pages belong to the old one.
+      if (ref.mounted && generation == _generation) {
+        if (next.hasNextPage &&
+            (next.nextCursor == null ||
+                next.nextCursor!.trim().isEmpty ||
+                next.nextCursor == cursor)) {
+          throw const InvalidResponseException();
+        }
+        state = AsyncData(WaterLogListState(page: current.page.append(next)));
+      }
+    } on Object catch (error) {
+      // Errors from superseded pages must not replace the current snapshot.
+      if (!ref.mounted || generation != _generation) return;
+      state = AsyncData(
+        current.copyWith(loadingMore: false, paginationError: error),
+      );
     } finally {
-      _loadingMore = false;
+      if (_loadingMoreGeneration == generation) _loadingMoreGeneration = null;
     }
   }
 
@@ -137,6 +286,7 @@ final class WaterLogListController extends AsyncNotifier<WaterLogPage> {
   Future<void> _refreshAfterMutation() async {
     if (!ref.mounted) return;
     ref.invalidate(latestWaterLogProvider(seasonId));
+    ref.read(waterLogRevisionProvider(seasonId).notifier).changed();
     try {
       await refresh();
     } on Object {

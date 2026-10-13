@@ -1,4 +1,10 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_counts.dart';
+
+part 'water_log.freezed.dart';
+
+enum WaterLogFilter { all, warning, voided }
 
 /// Metadata hiển thị cho từng chỉ số đo nước (đúng nhãn/đơn vị theo Figma).
 class WaterLogParam {
@@ -125,25 +131,30 @@ class WaterLog {
   }
 }
 
-class WaterLogPage {
-  const WaterLogPage({
-    required this.items,
-    required this.totalResults,
-    required this.hasNextPage,
-    this.nextCursor,
-  });
+@freezed
+abstract class WaterLogPage with _$WaterLogPage {
+  const WaterLogPage._();
+  const factory WaterLogPage({
+    required List<WaterLog> items,
+    required int totalResults,
+    required bool hasNextPage,
+    String? nextCursor,
+    WaterLogCounts? counts,
+  }) = _WaterLogPage;
 
-  final List<WaterLog> items;
-  final int totalResults;
-  final bool hasNextPage;
-  final String? nextCursor;
-
-  WaterLogPage append(WaterLogPage next) => WaterLogPage(
-    items: <WaterLog>[...items, ...next.items],
-    totalResults: next.totalResults,
-    hasNextPage: next.hasNextPage,
-    nextCursor: next.nextCursor,
-  );
+  WaterLogPage append(WaterLogPage next) {
+    final ids = <String>{};
+    return WaterLogPage(
+      items: [
+        for (final log in [...items, ...next.items])
+          if (ids.add(log.id)) log,
+      ],
+      totalResults: next.totalResults,
+      hasNextPage: next.hasNextPage,
+      nextCursor: next.nextCursor,
+      counts: next.counts ?? counts,
+    );
+  }
 }
 
 class WaterLogParamStat {

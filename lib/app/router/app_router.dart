@@ -148,8 +148,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'water-logs',
                         builder: (_, state) {
-                          final extra =
-                              state.extra as Map<String, dynamic>?;
+                          final extra = state.extra as Map<String, dynamic>?;
                           return WaterLogListPage(
                             seasonId: state.pathParameters['seasonId']!,
                             farmName: extra?['farmName'] as String?,

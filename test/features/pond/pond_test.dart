@@ -14,7 +14,6 @@ void main() {
       'volumeM3': 1800,
       'type': 'AQUACULTURE',
       'status': 'AVAILABLE',
-      'deletedAt': null,
       'farm': <String, dynamic>{'id': 'farm-1', 'name': 'Trại Cà Mau'},
       'currentSeason': <String, dynamic>{
         'id': 'season-1',

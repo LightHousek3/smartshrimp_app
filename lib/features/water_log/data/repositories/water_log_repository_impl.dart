@@ -1,5 +1,6 @@
 import 'package:smartshrimp_app/features/water_log/data/services/water_log_api_service.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 
 final class WaterLogRepositoryImpl implements WaterLogRepository {
@@ -8,11 +9,17 @@ final class WaterLogRepositoryImpl implements WaterLogRepository {
   final WaterLogApiService _apiService;
 
   @override
+  Future<WaterLogMetadata> getMetadata({required String seasonId}) =>
+      _apiService.getMetadata(seasonId);
+
+  @override
   Future<WaterLogPage> getWaterLogs({
     required String seasonId,
     DateTime? from,
     DateTime? to,
     bool includeVoided = false,
+    WaterLogFilter? filter,
+    bool includeCounts = false,
     int limit = 20,
     String? cursor,
   }) => _apiService.getWaterLogs(
@@ -20,6 +27,8 @@ final class WaterLogRepositoryImpl implements WaterLogRepository {
     from: from,
     to: to,
     includeVoided: includeVoided,
+    filter: filter,
+    includeCounts: includeCounts,
     limit: limit,
     cursor: cursor,
   );

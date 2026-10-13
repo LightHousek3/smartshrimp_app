@@ -6,9 +6,11 @@ import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/water_log/data/services/water_log_api_service.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_form_sheet.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
 Map<String, dynamic> _logJson() => {
   'id': 'log',
@@ -185,6 +187,9 @@ void main() {
 }
 
 final class _Repository implements WaterLogRepository {
+  @override
+  Future<WaterLogMetadata> getMetadata({required String seasonId}) async =>
+      WaterLogMetadata.legacy(ShrimpType.whiteleg);
   bool failReads = false;
   bool failCreates = false;
   int voidCalls = 0;
@@ -197,6 +202,8 @@ final class _Repository implements WaterLogRepository {
     DateTime? from,
     DateTime? to,
     bool includeVoided = false,
+    WaterLogFilter? filter,
+    bool includeCounts = false,
     int limit = 20,
     String? cursor,
   }) async {

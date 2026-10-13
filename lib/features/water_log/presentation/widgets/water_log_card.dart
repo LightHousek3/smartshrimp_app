@@ -129,7 +129,7 @@ class WaterLogCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: SvgPicture.asset(
-                      'assets/images/water_log_drop.svg',
+                      'assets/icons/water-log/water_log_drop.svg',
                       width: 16,
                       height: 16,
                     ),

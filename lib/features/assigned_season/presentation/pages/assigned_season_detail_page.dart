@@ -12,6 +12,7 @@ import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dar
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_refresh_boundary.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_schedule_card.dart';
 
@@ -21,92 +22,120 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(assignedSeasonDetailProvider(seasonId));
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: state.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.ocean),
-          ),
-          error: (error, _) => _Failure(
-            error: error,
-            onRetry: () => ref
-                .read(assignedSeasonDetailProvider(seasonId).notifier)
-                .refresh(),
-          ),
-          data: (season) => RefreshIndicator(
-            onRefresh: ref
-                .read(assignedSeasonDetailProvider(seasonId).notifier)
-                .refresh,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                StickyPageHeader(
-                  title: season.pondName,
-                  subtitle:
-                      '${season.name}${season.dayOfCulture == null ? '' : ' · DOC ${season.dayOfCulture}'}',
-                  onBack: context.pop,
-                  trailing: _Badge(season.status),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        _Breadcrumb(season),
-                        const SizedBox(height: 16),
-                        if (season.status ==
-                            AssignedSeasonStatus.planning) ...<Widget>[
-                          const _PlanningNotice(),
-                          const SizedBox(height: 18),
-                        ],
-                        _PondCard(season),
-                        if (season.status ==
-                            AssignedSeasonStatus.active) ...<Widget>[
-                          const SizedBox(height: 18),
-                          _FeatureActions(
-                            seasonId: season.id,
-                            farmName: season.farmName,
-                            seasonName: season.name,
-                            pondName: season.pondName,
-                          ),
+    Future<void> refresh() async {
+      invalidateWaterLogViews(ref, seasonId);
+      await ref.read(assignedSeasonDetailProvider(seasonId).notifier).refresh();
+    }
+
+    return WaterLogRefreshBoundary(
+      onRefresh: refresh,
+      child: AppGradientBackground(
+        child: SafeArea(
+          bottom: false,
+          child: state.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.ocean),
+            ),
+            error: (error, _) => _Failure(
+              error: error,
+              onRetry: () => ref
+                  .read(assignedSeasonDetailProvider(seasonId).notifier)
+                  .refresh(),
+            ),
+            data: (season) => RefreshIndicator(
+              onRefresh: refresh,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: <Widget>[
+                  StickyPageHeader(
+                    title: season.pondName,
+                    subtitle:
+                        '${season.name}${season.dayOfCulture == null ? '' : ' · DOC ${season.dayOfCulture}'}',
+                    onBack: context.pop,
+                    trailing: _Badge(season.status),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          _Breadcrumb(season),
+                          const SizedBox(height: 16),
+                          if (season.status ==
+                              AssignedSeasonStatus.planning) ...<Widget>[
+                            const _PlanningNotice(),
+                            const SizedBox(height: 18),
+                          ],
+                          _PondCard(season),
+                          if (season.status ==
+                              AssignedSeasonStatus.active) ...<Widget>[
+                            const SizedBox(height: 18),
+                            _FeatureActions(
+                              seasonId: season.id,
+                              farmName: season.farmName,
+                              seasonName: season.name,
+                              pondName: season.pondName,
+                            ),
+                          ],
+                          if (season.status != AssignedSeasonStatus.active)
+                            TextButton(
+                              onPressed: () async {
+                                await context.push(
+                                  '/seasons/${season.id}/water-logs',
+                                  extra: <String, String>{
+                                    'pondName': season.pondName,
+                                    'farmName': season.farmName,
+                                    'seasonName': season.name,
+                                  },
+                                );
+                                if (context.mounted) {
+                                  invalidateWaterLogViews(ref, season.id);
+                                }
+                              },
+                              child: const Text('Nhật ký đo nước'),
+                            ),
                           const SizedBox(height: 22),
                           _LatestWaterMeasurement(
                             seasonId: season.id,
                             pondName: season.pondName,
                           ),
-                          const SizedBox(height: 22),
-                          _TodayOperations(seasonId: season.id),
-                        ],
-                        const SizedBox(height: 18),
-                        const _Title('Nhân sự vụ nuôi'),
-                        const SizedBox(height: 10),
-                        _PersonnelCard(season),
-                        if (season.otherAssignedSeasons.isNotEmpty) ...<Widget>[
+                          if (season.status ==
+                              AssignedSeasonStatus.active) ...<Widget>[
+                            const SizedBox(height: 22),
+                            _TodayOperations(seasonId: season.id),
+                          ],
                           const SizedBox(height: 18),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                            child: _Title('Các ao khác trong trại'),
-                          ),
+                          const _Title('Nhân sự vụ nuôi'),
                           const SizedBox(height: 10),
-                          for (
-                            var i = 0;
-                            i < season.otherAssignedSeasons.length;
-                            i++
-                          ) ...<Widget>[
-                            _OtherAssignedSeasonCard(
-                              season.otherAssignedSeasons[i],
+                          _PersonnelCard(season),
+                          if (season
+                              .otherAssignedSeasons
+                              .isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 18),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: _Title('Các ao khác trong trại'),
                             ),
-                            if (i < season.otherAssignedSeasons.length - 1)
-                              const SizedBox(height: 10),
+                            const SizedBox(height: 10),
+                            for (
+                              var i = 0;
+                              i < season.otherAssignedSeasons.length;
+                              i++
+                            ) ...<Widget>[
+                              _OtherAssignedSeasonCard(
+                                season.otherAssignedSeasons[i],
+                              ),
+                              if (i < season.otherAssignedSeasons.length - 1)
+                                const SizedBox(height: 10),
+                            ],
                           ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -321,7 +350,7 @@ class _PondCard extends StatelessWidget {
   );
 }
 
-class _FeatureActions extends StatelessWidget {
+class _FeatureActions extends ConsumerWidget {
   const _FeatureActions({
     required this.seasonId,
     required this.farmName,
@@ -375,7 +404,7 @@ class _FeatureActions extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => GridView.builder(
+  Widget build(BuildContext context, WidgetRef ref) => GridView.builder(
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
     itemCount: _items.length,
@@ -388,14 +417,17 @@ class _FeatureActions extends StatelessWidget {
     itemBuilder: (context, index) => _FeatureAction(
       _items[index],
       onTap: switch (index) {
-        0 => () => context.push(
-          '/seasons/$seasonId/water-logs',
-          extra: <String, String>{
-            'farmName': farmName,
-            'seasonName': seasonName,
-            'pondName': pondName,
-          },
-        ),
+        0 => () async {
+          await context.push(
+            '/seasons/$seasonId/water-logs',
+            extra: <String, String>{
+              'farmName': farmName,
+              'seasonName': seasonName,
+              'pondName': pondName,
+            },
+          );
+          if (context.mounted) invalidateWaterLogViews(ref, seasonId);
+        },
         2 => () => context.push('/seasons/$seasonId/operations'),
         4 => () => context.push('/seasons/$seasonId/rag'),
         _ => null,
@@ -535,10 +567,13 @@ class _LatestWaterMeasurement extends ConsumerWidget {
         ),
         child: InkWell(
           borderRadius: borderRadius,
-          onTap: () => context.push(
-            '/seasons/$seasonId/water-logs/statistics',
-            extra: <String, String>{'pondName': pondName},
-          ),
+          onTap: () async {
+            await context.push(
+              '/seasons/$seasonId/water-logs/statistics',
+              extra: <String, String>{'pondName': pondName},
+            );
+            if (context.mounted) invalidateWaterLogViews(ref, seasonId);
+          },
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -627,10 +662,10 @@ class _LatestWaterGrid extends StatelessWidget {
               for (var column = 0; column < 4; column++) ...<Widget>[
                 if (column > 0) const SizedBox(width: 8),
                 Expanded(
-                  child: row * 4 + column < waterLogCardParams.length
+                  child: row * 4 + column < waterLogFormParams.length
                       ? _LatestWaterTile(
                           log: log,
-                          param: waterLogCardParams[row * 4 + column],
+                          param: waterLogFormParams[row * 4 + column],
                         )
                       : const SizedBox.shrink(),
                 ),

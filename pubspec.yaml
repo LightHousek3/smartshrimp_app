@@ -38,5 +38,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/icons/water-log/
     - assets/icons/rag/
     - assets/fonts/google_fonts/

@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigne
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_detail_page.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
@@ -104,6 +105,9 @@ void main() {
               _NotificationRepository(assignment: notification),
             ),
             assignedSeasonRepositoryProvider.overrideWithValue(seasons),
+            latestWaterLogProvider(
+              'assigned-season-1',
+            ).overrideWith((ref) async => null),
           ],
           child: const SmartShrimpApp(),
         ),

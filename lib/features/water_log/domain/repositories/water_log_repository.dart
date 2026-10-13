@@ -1,11 +1,15 @@
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 
 abstract class WaterLogRepository {
+  Future<WaterLogMetadata> getMetadata({required String seasonId});
   Future<WaterLogPage> getWaterLogs({
     required String seasonId,
     DateTime? from,
     DateTime? to,
     bool includeVoided = false,
+    WaterLogFilter? filter,
+    bool includeCounts = false,
     int limit = 20,
     String? cursor,
   });

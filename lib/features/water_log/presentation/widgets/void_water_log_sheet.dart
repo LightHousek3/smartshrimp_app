@@ -98,7 +98,10 @@ class _VoidWaterLogSheetState extends ConsumerState<_VoidWaterLogSheet> {
   Widget build(BuildContext context) {
     final log = widget.log;
     final role = ref.watch(authControllerProvider).value?.role;
-    final canVoid = !log.isVoided && role == AccountRole.technician;
+    final canVoid =
+        !log.isVoided &&
+        role == AccountRole.technician &&
+        ref.watch(waterLogCanWriteProvider(widget.seasonId));
 
     return Container(
       key: const Key('void_water_log_sheet'),
