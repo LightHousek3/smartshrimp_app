@@ -40,4 +40,5 @@ flutter:
     - assets/images/
     - assets/icons/water-log/
     - assets/icons/rag/
+    - assets/icons/common/
     - assets/fonts/google_fonts/

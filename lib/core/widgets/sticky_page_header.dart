@@ -17,6 +17,8 @@ class StickyPageHeader extends StatelessWidget {
     this.height = 76,
     this.titleSize = 16,
     this.backgroundColor = AppColors.backgroundTop,
+    this.titleStyle,
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
     super.key,
   });
 
@@ -30,6 +32,8 @@ class StickyPageHeader extends StatelessWidget {
   final double height;
   final double titleSize;
   final Color backgroundColor;
+  final TextStyle? titleStyle;
+  final EdgeInsetsGeometry contentPadding;
 
   @override
   Widget build(BuildContext context) => SliverPersistentHeader(
@@ -45,6 +49,8 @@ class StickyPageHeader extends StatelessWidget {
       height: height,
       titleSize: titleSize,
       backgroundColor: backgroundColor,
+      titleStyle: titleStyle,
+      contentPadding: contentPadding,
     ),
   );
 }
@@ -106,6 +112,8 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.height,
     required this.titleSize,
     required this.backgroundColor,
+    required this.titleStyle,
+    required this.contentPadding,
   });
 
   final String title;
@@ -118,6 +126,8 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double height;
   final double titleSize;
   final Color backgroundColor;
+  final TextStyle? titleStyle;
+  final EdgeInsetsGeometry contentPadding;
 
   @override
   double get minExtent => height + (bottom == null ? 0 : bottomHeight);
@@ -144,6 +154,8 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
             trailing: trailing,
             titleSize: titleSize,
             backgroundColor: backgroundColor,
+            titleStyle: titleStyle,
+            contentPadding: contentPadding,
           ),
         ),
         if (bottom != null)
@@ -163,7 +175,9 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
       bottomHeight != oldDelegate.bottomHeight ||
       height != oldDelegate.height ||
       titleSize != oldDelegate.titleSize ||
-      backgroundColor != oldDelegate.backgroundColor;
+      backgroundColor != oldDelegate.backgroundColor ||
+      titleStyle != oldDelegate.titleStyle ||
+      contentPadding != oldDelegate.contentPadding;
 }
 
 class _PageHeaderContent extends StatelessWidget {
@@ -177,6 +191,7 @@ class _PageHeaderContent extends StatelessWidget {
     required this.backgroundColor,
     this.backButton,
     this.titleStyle,
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
   });
 
   final String title;
@@ -188,13 +203,14 @@ class _PageHeaderContent extends StatelessWidget {
   final Color backgroundColor;
   final Widget? backButton;
   final TextStyle? titleStyle;
+  final EdgeInsetsGeometry contentPadding;
 
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: backgroundColor,
     child: SizedBox.expand(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: contentPadding,
         child: Row(
           children: <Widget>[
             if (showBack) ...<Widget>[

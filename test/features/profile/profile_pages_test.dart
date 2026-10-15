@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import '../home/owner_dashboard_fixtures.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -200,6 +202,9 @@ Widget _testApp(
 ) {
   return ProviderScope(
     overrides: [
+      ownerDashboardRepositoryProvider.overrideWithValue(
+        DashboardFixtureRepository(),
+      ),
       authRepositoryProvider.overrideWithValue(authRepository),
       profileRepositoryProvider.overrideWithValue(profileRepository),
       personnelRepositoryProvider.overrideWithValue(_FakePersonnelRepository()),

@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import '../home/owner_dashboard_fixtures.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -36,6 +38,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           personnelRepositoryProvider.overrideWithValue(repository),
           seasonRepositoryProvider.overrideWithValue(seasonRepository),
@@ -170,6 +175,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_TechnicianAuthRepository()),
           profileRepositoryProvider.overrideWithValue(
             _FakeProfileRepository(AccountRole.technician),
@@ -194,6 +202,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           personnelRepositoryProvider.overrideWithValue(
             _FakePersonnelRepository(),
