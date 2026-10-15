@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import '../home/owner_dashboard_fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +33,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            ownerDashboardRepositoryProvider.overrideWithValue(
+              DashboardFixtureRepository(),
+            ),
             authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
             farmRepositoryProvider.overrideWithValue(_FakeFarmRepository()),
             pondRepositoryProvider.overrideWithValue(ponds),
@@ -93,6 +98,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           farmRepositoryProvider.overrideWithValue(repository),
         ],
@@ -136,6 +144,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           farmRepositoryProvider.overrideWithValue(_FakeFarmRepository()),
         ],
@@ -178,6 +189,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
           farmRepositoryProvider.overrideWithValue(
             _FakeFarmRepository(farm: _farmWithPonds),

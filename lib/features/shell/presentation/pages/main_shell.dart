@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
@@ -106,7 +107,7 @@ class MainShell extends ConsumerWidget {
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: 64,
+            height: isOwner ? 66 : 64,
             child: Row(
               children: List<Widget>.generate(items.length, (index) {
                 final item = items[index];
@@ -145,13 +146,31 @@ class MainShell extends ConsumerWidget {
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: <Widget>[
-                                    Icon(
-                                      selected ? item.selectedIcon : item.icon,
-                                      color: selected
-                                          ? AppColors.ocean
-                                          : AppColors.inkMuted,
-                                      size: 22,
-                                    ),
+                                    if (isOwner)
+                                      AppSvgIcon(
+                                        switch (item.path) {
+                                          '/' => AppSvgIconName.home,
+                                          '/farms' => AppSvgIconName.farm,
+                                          '/tasks' => AppSvgIconName.tasks,
+                                          '/notifications' =>
+                                            AppSvgIconName.notifications,
+                                          _ => AppSvgIconName.account,
+                                        },
+                                        color: selected
+                                            ? AppColors.ocean
+                                            : AppColors.inkMuted,
+                                        size: 22,
+                                      )
+                                    else
+                                      Icon(
+                                        selected
+                                            ? item.selectedIcon
+                                            : item.icon,
+                                        color: selected
+                                            ? AppColors.ocean
+                                            : AppColors.inkMuted,
+                                        size: 22,
+                                      ),
                                     if (isNotificationTab &&
                                         notificationBadgeText != null)
                                       Positioned(

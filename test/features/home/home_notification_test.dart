@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'owner_dashboard_fixtures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +29,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            ownerDashboardRepositoryProvider.overrideWithValue(
+              DashboardFixtureRepository(),
+            ),
             authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
             notificationRepositoryProvider.overrideWithValue(
               const _NotificationRepository(unreadCount: 25),
@@ -61,6 +66,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(
             const _AuthRepository(AccountRole.farmOwner),
           ),
@@ -83,6 +91,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            ownerDashboardRepositoryProvider.overrideWithValue(
+              DashboardFixtureRepository(),
+            ),
             authRepositoryProvider.overrideWithValue(
               const _AuthRepository(AccountRole.farmOwner),
             ),
