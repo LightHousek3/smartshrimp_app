@@ -202,7 +202,7 @@ class _FarmDetailContent extends ConsumerWidget {
       entityLabel: 'trang trại',
       entityName: farm.name,
       retentionMessage:
-          'Trang trại sẽ không còn xuất hiện trong vận hành. Dữ liệu lịch sử vẫn được giữ lại để truy vết.',
+          'Trang trại sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn ao hoặc dữ liệu liên quan.',
       blockers: farm.canDelete
           ? const <String>[]
           : <String>[

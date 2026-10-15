@@ -14,7 +14,6 @@ void main() {
       'pondCount': 1,
       'activeSeasonCount': 1,
       'canDelete': false,
-      'deletedAt': null,
       'ponds': <Object?>[
         <String, dynamic>{
           'id': 'pond-1',

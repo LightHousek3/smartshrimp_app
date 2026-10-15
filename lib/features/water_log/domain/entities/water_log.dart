@@ -1,4 +1,11 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_counts.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_exceedance.dart';
+
+part 'water_log.freezed.dart';
+
+enum WaterLogFilter { all, warning, voided }
 
 /// Metadata hiển thị cho từng chỉ số đo nước (đúng nhãn/đơn vị theo Figma).
 class WaterLogParam {
@@ -42,6 +49,7 @@ class WaterLog {
     required this.createdAt,
     required this.isVoided,
     required this.exceededParameters,
+    this.exceededParameterDetails = const <WaterLogExceedance>[],
     this.recordedBy,
     this.temperatureC,
     this.ph,
@@ -79,6 +87,9 @@ class WaterLog {
   /// Key camelCase các chỉ số vượt ngưỡng do backend tính sẵn.
   final List<String> exceededParameters;
 
+  /// Optional additive contract; older servers only return exceededParameters.
+  final List<WaterLogExceedance> exceededParameterDetails;
+
   double? valueOf(String field) => switch (field) {
     'temperatureC' => temperatureC,
     'ph' => ph,
@@ -94,6 +105,7 @@ class WaterLog {
   static WaterLog parse(Map<String, dynamic> json) {
     try {
       final rawExceeded = json['exceededParameters'];
+      final rawDetails = json['exceededParameterDetails'];
       return WaterLog(
         id: json['id'] as String,
         seasonId: json['seasonId'] as String,
@@ -118,6 +130,11 @@ class WaterLog {
         exceededParameters: rawExceeded == null
             ? const <String>[]
             : (rawExceeded as List<dynamic>).map((e) => e as String).toList(),
+        exceededParameterDetails: rawDetails == null
+            ? const <WaterLogExceedance>[]
+            : (rawDetails as List<dynamic>)
+                  .map(WaterLogExceedance.parse)
+                  .toList(growable: false),
       );
     } on Object catch (_, stackTrace) {
       Error.throwWithStackTrace(const InvalidResponseException(), stackTrace);
@@ -125,25 +142,30 @@ class WaterLog {
   }
 }
 
-class WaterLogPage {
-  const WaterLogPage({
-    required this.items,
-    required this.totalResults,
-    required this.hasNextPage,
-    this.nextCursor,
-  });
+@freezed
+abstract class WaterLogPage with _$WaterLogPage {
+  const WaterLogPage._();
+  const factory WaterLogPage({
+    required List<WaterLog> items,
+    required int totalResults,
+    required bool hasNextPage,
+    String? nextCursor,
+    WaterLogCounts? counts,
+  }) = _WaterLogPage;
 
-  final List<WaterLog> items;
-  final int totalResults;
-  final bool hasNextPage;
-  final String? nextCursor;
-
-  WaterLogPage append(WaterLogPage next) => WaterLogPage(
-    items: <WaterLog>[...items, ...next.items],
-    totalResults: next.totalResults,
-    hasNextPage: next.hasNextPage,
-    nextCursor: next.nextCursor,
-  );
+  WaterLogPage append(WaterLogPage next) {
+    final ids = <String>{};
+    return WaterLogPage(
+      items: [
+        for (final log in [...items, ...next.items])
+          if (ids.add(log.id)) log,
+      ],
+      totalResults: next.totalResults,
+      hasNextPage: next.hasNextPage,
+      nextCursor: next.nextCursor,
+      counts: next.counts ?? counts,
+    );
+  }
 }
 
 class WaterLogParamStat {

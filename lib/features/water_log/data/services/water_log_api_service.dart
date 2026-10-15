@@ -1,6 +1,8 @@
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_counts.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 
 final class WaterLogApiService {
   WaterLogApiService(this._client, this._basePath);
@@ -13,16 +15,28 @@ final class WaterLogApiService {
   String _path(String seasonId) =>
       '$_basePath/${Uri.encodeComponent(seasonId)}/water-logs';
 
+  Future<WaterLogMetadata> getMetadata(String seasonId) async {
+    final response = await _client.get(
+      '${_path(seasonId)}/metadata',
+      authenticated: true,
+    );
+    return WaterLogMetadata.parse(response.requireMapData());
+  }
+
   Future<WaterLogPage> getWaterLogs(
     String seasonId, {
     DateTime? from,
     DateTime? to,
     bool includeVoided = false,
+    WaterLogFilter? filter,
+    bool includeCounts = false,
     int limit = 20,
     String? cursor,
   }) async {
     final query = <String, dynamic>{
-      'includeVoided': includeVoided,
+      if (filter == null) 'includeVoided': includeVoided,
+      if (filter != null) 'filter': filter.name,
+      if (includeCounts) 'includeCounts': true,
       'limit': limit,
     };
     if (from != null) query['from'] = from.toUtc().toIso8601String();
@@ -37,12 +51,21 @@ final class WaterLogApiService {
     final meta = response.meta;
     if (meta == null ||
         meta['totalResults'] is! int ||
-        meta['hasNextPage'] is! bool) {
+        meta['hasNextPage'] is! bool ||
+        (meta['totalResults'] as int) < 0 ||
+        (meta['nextCursor'] != null && meta['nextCursor'] is! String) ||
+        (meta['hasNextPage'] == true &&
+            (meta['nextCursor'] == null ||
+                (meta['nextCursor'] as String).trim().isEmpty ||
+                meta['nextCursor'] == cursor))) {
+      throw const InvalidResponseException();
+    }
+    final data = response.requireListData();
+    if (meta['hasNextPage'] == true && data.isEmpty) {
       throw const InvalidResponseException();
     }
     return WaterLogPage(
-      items: response
-          .requireListData()
+      items: data
           .map((raw) {
             if (raw is! Map<String, dynamic>) {
               throw const InvalidResponseException();
@@ -53,6 +76,9 @@ final class WaterLogApiService {
       totalResults: meta['totalResults'] as int,
       hasNextPage: meta['hasNextPage'] as bool,
       nextCursor: meta['nextCursor'] as String?,
+      counts: includeCounts || meta.containsKey('counts')
+          ? WaterLogCounts.parse(meta['counts'])
+          : null,
     );
   }
 

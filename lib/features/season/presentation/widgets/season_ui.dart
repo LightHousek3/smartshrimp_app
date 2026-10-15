@@ -201,6 +201,7 @@ String seasonDecimalLabel(double? value, {int digits = 2}) {
 
 String activationConditionLabel(String code) => switch (code) {
   'SEASON_NOT_PLANNING' => 'Vụ nuôi phải ở trạng thái đang chuẩn bị',
+  'FARM_NOT_ACTIVE' => 'Trang trại phải đang hoạt động',
   'FARM_ARCHIVED' => 'Trang trại không được lưu trữ',
   'POND_ARCHIVED' => 'Ao không được lưu trữ',
   'POND_NOT_AVAILABLE' => 'Ao phải ở trạng thái sẵn sàng',
