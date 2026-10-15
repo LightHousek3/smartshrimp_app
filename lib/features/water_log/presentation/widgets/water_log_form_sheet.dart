@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
@@ -19,31 +19,49 @@ import 'package:uuid/uuid.dart';
 Future<bool?> showWaterLogFormSheet({
   required BuildContext context,
   required String seasonId,
-}) => showModalBottomSheet<bool>(
-  context: context,
-  useRootNavigator: true,
-  useSafeArea: true,
-  isScrollControlled: true,
-  backgroundColor: Colors.white,
-  showDragHandle: false,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-  ),
-  clipBehavior: Clip.antiAlias,
-  barrierColor: const Color(0x990F1C2E),
-  constraints: BoxConstraints(
-    maxWidth: MediaQuery.sizeOf(context).width,
-    maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-  ),
-  builder: (sheetContext) => AnimatedPadding(
-    duration: const Duration(milliseconds: 180),
-    curve: Curves.easeOut,
-    padding: EdgeInsets.only(
-      bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+}) async {
+  ModalRoute<dynamic>? sheetRoute;
+  final saved = await showModalBottomSheet<bool>(
+    context: context,
+    useRootNavigator: true,
+    useSafeArea: true,
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: Colors.white,
+    showDragHandle: false,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
     ),
-    child: SafeArea(top: false, child: _WaterLogFormSheet(seasonId: seasonId)),
-  ),
-);
+    clipBehavior: Clip.antiAlias,
+    barrierColor: const Color(0x990F1C2E),
+    constraints: BoxConstraints(
+      maxWidth: MediaQuery.sizeOf(context).width,
+      maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+    ),
+    builder: (sheetContext) {
+      sheetRoute = ModalRoute.of(sheetContext);
+      return AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: SafeArea(
+          top: false,
+          child: _WaterLogFormSheet(seasonId: seasonId),
+        ),
+      );
+    },
+  );
+  if (saved == true && context.mounted) {
+    await sheetRoute?.completed;
+    if (context.mounted) {
+      AppNoticeService.success(context, 'Đã lưu nhật ký đo nước.');
+    }
+  }
+  return saved;
+}
 
 class _WaterLogFormSheet extends ConsumerStatefulWidget {
   const _WaterLogFormSheet({required this.seasonId});
@@ -257,156 +275,166 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      key: const Key('water_log_form_sheet'),
-      width: double.infinity,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          WaterLogSheetHeader(
-            title: 'Nhập nhật ký đo nước',
-            closeKey: const Key('close_water_log_form'),
-            onClose: _submitting ? null : () => Navigator.of(context).pop(),
-          ),
-          const Divider(height: 1.2, color: Color(0xFFEEF1F7)),
-          Flexible(
-            fit: FlexFit.loose,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Material(
-                    color: const Color(0xFFEEF1F6),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      onTap: _submitting ? null : _pickRecordedAt,
+    return PopScope(
+      canPop: !_submitting,
+      child: Container(
+        key: const Key('water_log_form_sheet'),
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            WaterLogSheetHeader(
+              title: 'Nhập nhật ký đo nước',
+              closeKey: const Key('close_water_log_form'),
+              onClose: _submitting ? null : () => Navigator.of(context).pop(),
+            ),
+            const Divider(height: 1.2, color: Color(0xFFEEF1F7)),
+            Flexible(
+              fit: FlexFit.loose,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Material(
+                      color: const Color(0xFFEEF1F6),
                       borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        child: Text.rich(
-                          TextSpan(
-                            children: <InlineSpan>[
-                              const TextSpan(text: 'Thời điểm đo: '),
-                              TextSpan(
-                                text: _formatRecordedAt(),
-                                style: AppTypography.mono(
-                                  color: AppColors.ink,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ).copyWith(height: 1.5),
-                              ),
-                            ],
+                      child: InkWell(
+                        onTap: _submitting ? null : _pickRecordedAt,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                          style: const TextStyle(
-                            color: AppColors.inkSoft,
-                            fontSize: 12,
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  for (var row = 0; row < 4; row++) ...<Widget>[
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        for (var column = 0; column < 2; column++) ...<Widget>[
-                          if (column > 0) const SizedBox(width: 12),
-                          Expanded(
-                            child: _NumberField(
-                              param: waterLogFormParams[row * 2 + column],
-                              controller:
-                                  _controllers[waterLogFormParams[row * 2 +
-                                          column]
-                                      .field]!,
-                              errorText:
-                                  _fieldErrors[waterLogFormParams[row * 2 +
-                                          column]
-                                      .field],
-                              enabled: !_submitting,
-                              onChanged: _onMetricChanged,
+                          child: Text.rich(
+                            TextSpan(
+                              children: <InlineSpan>[
+                                const TextSpan(text: 'Thời điểm đo: '),
+                                TextSpan(
+                                  text: _formatRecordedAt(),
+                                  style: AppTypography.mono(
+                                    color: AppColors.ink,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ).copyWith(height: 1.5),
+                                ),
+                              ],
+                            ),
+                            style: const TextStyle(
+                              color: AppColors.inkSoft,
+                              fontSize: 12,
+                              height: 1.5,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Ghi chú',
-                    style: TextStyle(
-                      color: AppColors.inkSoft,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _noteController,
-                    enabled: !_submitting,
-                    minLines: 2,
-                    maxLines: 4,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    decoration: waterLogInputDecoration(
-                      hintText: 'Quan sát tại hiện trường…',
-                    ),
-                  ),
-                  if (_formError != null) ...<Widget>[
-                    const SizedBox(height: 10),
-                    Text(
-                      _formError!,
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                    for (var row = 0; row < 4; row++) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          for (
+                            var column = 0;
+                            column < 2;
+                            column++
+                          ) ...<Widget>[
+                            if (column > 0) const SizedBox(width: 12),
+                            Expanded(
+                              child: _NumberField(
+                                param: waterLogFormParams[row * 2 + column],
+                                controller:
+                                    _controllers[waterLogFormParams[row * 2 +
+                                            column]
+                                        .field]!,
+                                errorText:
+                                    _fieldErrors[waterLogFormParams[row * 2 +
+                                            column]
+                                        .field],
+                                enabled: !_submitting,
+                                onChanged: _onMetricChanged,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Ghi chú',
+                      style: TextStyle(
+                        color: AppColors.inkSoft,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _noteController,
+                      enabled: !_submitting,
+                      minLines: 2,
+                      maxLines: 4,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                      textInputAction: TextInputAction.done,
+                      decoration: waterLogInputDecoration(
+                        hintText: 'Quan sát tại hiện trường…',
+                      ),
+                    ),
+                    if (_formError != null) ...<Widget>[
+                      const SizedBox(height: 10),
+                      Text(
+                        _formError!,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
                   ],
-                  const SizedBox(height: 6),
+                ),
+              ),
+            ),
+            const Divider(height: 1.2, color: Color(0xFFEEF1F7)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: GradientButton(
+                label: 'Lưu nhật ký',
+                compact: true,
+                borderRadius: 12,
+                gradientColors: const <Color>[
+                  AppColors.oceanLight,
+                  AppColors.tealLight,
                 ],
+                leading: SvgPicture.asset(
+                  'assets/icons/water-log/water_log_save.svg',
+                  width: 18,
+                  height: 18,
+                ),
+                isLoading: _submitting && !_confirming,
+                onPressed:
+                    _submitting ||
+                        _fieldErrors.values.any((error) => error != null)
+                    ? null
+                    : _submit,
               ),
             ),
-          ),
-          const Divider(height: 1.2, color: Color(0xFFEEF1F7)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: GradientButton(
-              label: 'Lưu nhật ký',
-              compact: true,
-              borderRadius: 12,
-              gradientColors: const <Color>[
-                AppColors.oceanLight,
-                AppColors.tealLight,
-              ],
-              leading: SvgPicture.asset(
-                'assets/icons/water-log/water_log_save.svg',
-                width: 18,
-                height: 18,
-              ),
-              isLoading: _submitting && !_confirming,
-              onPressed:
-                  _submitting ||
-                      _fieldErrors.values.any((error) => error != null)
-                  ? null
-                  : _submit,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -462,9 +490,7 @@ class _NumberField extends StatelessWidget {
         enabled: enabled,
         onChanged: onChanged,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: <TextInputFormatter>[
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-        ],
+        // Preserve invalid input so validation cannot silently change its value.
         textInputAction: TextInputAction.next,
         style: const TextStyle(
           fontSize: 14,

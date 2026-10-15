@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -82,6 +83,7 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
   Widget build(BuildContext context) {
     final provider = waterLogListProvider(widget.seasonId);
     final state = ref.watch(provider);
+    final metadata = ref.watch(waterLogMetadataProvider(widget.seasonId));
     final canWrite = ref.watch(waterLogCanWriteProvider(widget.seasonId));
     final selectedFilter = ref.read(provider.notifier).filter;
     final counts = state.asData?.value.page.counts;
@@ -108,7 +110,75 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                     title: 'Chất lượng nước',
                     subtitle: subtitle.isEmpty ? null : subtitle,
                     onBack: context.pop,
-                    backgroundColor: Colors.transparent,
+                    backButton: SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: IconButton(
+                        tooltip: 'Quay lại',
+                        padding: EdgeInsets.zero,
+                        onPressed: context.pop,
+                        icon: SvgPicture.asset(
+                          'assets/icons/water-log/water_back.svg',
+                          width: 19.9898,
+                          height: 19.9898,
+                        ),
+                      ),
+                    ),
+                    backgroundColor: AppColors.backgroundTop,
+                    trailing: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xB3FFFFFF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xB3FFFFFF)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1A000000),
+                            blurRadius: 3,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: TextButton(
+                        key: const Key('water_statistics_button'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF0C4E8F),
+                          minimumSize: const Size(96, 35),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        onPressed: () => context.push(
+                          '/seasons/${widget.seasonId}/water-logs/statistics',
+                          extra: <String, String>{
+                            if (widget.pondName != null)
+                              'pondName': widget.pondName!,
+                            if (widget.seasonName != null)
+                              'seasonName': widget.seasonName!,
+                          },
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/water-log/water_statistics.svg',
+                              width: 14.9997,
+                              height: 14.9997,
+                            ),
+                            const SizedBox(width: 6),
+                            const Text('Thống kê'),
+                          ],
+                        ),
+                      ),
+                    ),
                     titleStyle:
                         AppTypography.display(
                           color: AppColors.ink,
@@ -185,6 +255,28 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                                 ),
                                 const SizedBox(height: 12),
                                 const _ImmutableNotice(),
+                                if (metadata.hasError)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          metadata.error is AppException
+                                              ? (metadata.error!
+                                                        as AppException)
+                                                    .message
+                                              : 'Không tải được ngưỡng Min/Max.',
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => ref.invalidate(
+                                          waterLogMetadataProvider(
+                                            widget.seasonId,
+                                          ),
+                                        ),
+                                        child: const Text('Thử lại ngưỡng'),
+                                      ),
+                                    ],
+                                  ),
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.all(4),
@@ -282,6 +374,7 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: WaterLogCard(
                                     log: log,
+                                    metadata: metadata.asData?.value,
                                     onTap: () => showVoidWaterLogSheet(
                                       context: context,
                                       seasonId: widget.seasonId,

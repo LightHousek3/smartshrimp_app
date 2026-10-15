@@ -159,13 +159,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         routes: [
                           GoRoute(
                             path: 'statistics',
-                            parentNavigatorKey: rootNavigatorKey,
                             builder: (_, state) {
                               final extra =
                                   state.extra as Map<String, dynamic>?;
                               return WaterLogStatisticsPage(
                                 seasonId: state.pathParameters['seasonId']!,
                                 pondName: extra?['pondName'] as String?,
+                                seasonName: extra?['seasonName'] as String?,
                               );
                             },
                           ),

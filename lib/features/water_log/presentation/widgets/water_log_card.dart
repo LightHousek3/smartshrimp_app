@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
 
 String _twoDigits(int value) => value.toString().padLeft(2, '0');
@@ -38,8 +39,7 @@ class WaterLogStatusBadge extends StatelessWidget {
       background = const Color(0xFFE2F6F3);
       foreground = const Color(0xFF0F9B8E);
     } else {
-      label =
-          '${log.exceededParameters.map(waterLogParamLabel).join(' · ')} cao';
+      label = '${log.exceededParameters.length} chỉ số bất thường';
       background = const Color(0xFFFBE6EA);
       foreground = AppColors.error;
     }
@@ -80,9 +80,10 @@ class WaterLogStatusBadge extends StatelessWidget {
 
 /// Card nhật ký đo nước theo Figma (trang danh sách).
 class WaterLogCard extends StatelessWidget {
-  const WaterLogCard({required this.log, this.onTap, super.key});
+  const WaterLogCard({required this.log, this.metadata, this.onTap, super.key});
 
   final WaterLog log;
+  final WaterLogMetadata? metadata;
   final VoidCallback? onTap;
 
   @override
@@ -166,6 +167,8 @@ class WaterLogCard extends StatelessWidget {
               const SizedBox(height: 12),
               WaterParamTiles(
                 log: log,
+                metadata: metadata,
+                showThresholds: true,
                 boxed: true,
                 includeH2s: true,
                 roomy: true,

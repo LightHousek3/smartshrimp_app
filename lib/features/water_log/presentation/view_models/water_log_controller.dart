@@ -11,6 +11,7 @@ import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigne
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_list_state.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_read_retry.dart';
 
 final waterLogRepositoryProvider = Provider<WaterLogRepository>((ref) {
   final role = ref.watch(authControllerProvider).value?.role;
@@ -29,6 +30,21 @@ final waterLogListProvider = AsyncNotifierProvider.autoDispose
     .family<WaterLogListController, WaterLogListState, String>(
       WaterLogListController.new,
     );
+
+final waterLogMetadataProvider = FutureProvider.autoDispose
+    .family<WaterLogMetadata, String>((ref, seasonId) async {
+      ref.watch(waterLogRevisionProvider(seasonId));
+      try {
+        return await ref
+            .watch(waterLogRepositoryProvider)
+            .getMetadata(seasonId: seasonId);
+      } on SessionExpiredException {
+        if (ref.mounted) {
+          await ref.read(authControllerProvider.notifier).expireSession();
+        }
+        rethrow;
+      }
+    }, retry: waterLogReadRetry);
 
 final waterLogCanWriteProvider = Provider.autoDispose.family<bool, String>((
   ref,

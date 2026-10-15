@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_counts.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
@@ -60,6 +63,7 @@ Future<void> _open(
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPadding);
   final container = ProviderContainer(
+    retry: (_, _) => null,
     overrides: [
       authRepositoryProvider.overrideWithValue(_Auth()),
       waterLogRepositoryProvider.overrideWithValue(repository),
@@ -93,6 +97,159 @@ Future<void> _open(
 }
 
 void main() {
+  for (final fail in [false, true]) {
+    testWidgets('pending void blocks dismissal and then resolves: fail=$fail', (
+      tester,
+    ) async {
+      final repository = _PendingVoidRepository();
+      await _open(tester, repository);
+      await tester.ensureVisible(find.byType(WaterLogCard));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(WaterLogCard));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => GoogleFonts.pendingFonts());
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Sai mẫu');
+      await tester.ensureVisible(find.text('Xác nhận'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Xác nhận'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(repository.calls, 1);
+      await tester.binding.handlePopRoute();
+      await tester.tapAt(const Offset(5, 5));
+      await tester.drag(
+        find.byKey(const Key('void_water_log_sheet')),
+        const Offset(0, 500),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('void_water_log_sheet')), findsOneWidget);
+      if (fail) {
+        repository.pending.completeError(
+          const ApiException('Không hủy được mẫu đo.', statusCode: 409),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Không hủy được mẫu đo.'), findsOneWidget);
+        expect(find.byType(SnackBar), findsNothing);
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('void_water_log_sheet')), findsNothing);
+      } else {
+        repository.pending.complete(_log('valid', voided: true));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('void_water_log_sheet')), findsNothing);
+        expect(find.text('Đã hủy hiệu lực nhật ký đo nước.'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+  for (final fail in [false, true]) {
+    testWidgets('void log shared success notice only on success: fail=$fail', (
+      tester,
+    ) async {
+      final repository = _VoidRepository(fail: fail);
+      await _open(tester, repository);
+      await tester.ensureVisible(find.byType(WaterLogCard));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(WaterLogCard));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => GoogleFonts.pendingFonts());
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Nhập sai mẫu đo');
+      await tester.ensureVisible(find.text('Xác nhận'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Xác nhận'));
+      await tester.pumpAndSettle();
+      expect(repository.voidCalls, 1);
+      if (fail) {
+        expect(find.text('Không thể hủy bản ghi này.'), findsOneWidget);
+        expect(find.byKey(const Key('void_water_log_sheet')), findsOneWidget);
+        expect(find.byType(SnackBar), findsNothing);
+      } else {
+        expect(find.byKey(const Key('void_water_log_sheet')), findsNothing);
+        expect(find.text('Đã hủy hiệu lực nhật ký đo nước.'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('app_notice_success')),
+          findsOneWidget,
+        );
+        expect(find.byType(SnackBar), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets('dismissing void sheet does not announce success', (
+    tester,
+  ) async {
+    final repository = _VoidRepository(fail: false);
+    await _open(tester, repository);
+    await tester.ensureVisible(find.byType(WaterLogCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(WaterLogCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('close_void_water_log')));
+    await tester.pumpAndSettle();
+    expect(repository.voidCalls, 0);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+  for (final error in <AppException>[
+    const ApiException(
+      'Bạn không có quyền xem ngưỡng vụ nuôi.',
+      statusCode: 403,
+    ),
+    const NetworkException(),
+  ]) {
+    testWidgets('list thresholds preserve API message: ${error.message}', (
+      tester,
+    ) async {
+      final repository = _MetadataRepository(error: error);
+      await _open(tester, repository);
+      expect(find.text(error.message), findsOneWidget);
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsNothing);
+      expect(find.byType(WaterLogCard), findsOneWidget);
+      repository.failMetadata = false;
+      await tester.tap(find.text('Thử lại ngưỡng'));
+      await tester.pumpAndSettle();
+      expect(find.text(error.message), findsNothing);
+      expect(find.text('Min: 26'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets(
+    'metadata failure preserves list and retry displays server thresholds',
+    (tester) async {
+      final repository = _MetadataRepository();
+      await _open(tester, repository);
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsOneWidget);
+      expect(find.byType(WaterLogCard), findsOneWidget);
+      expect(find.text('Min: …'), findsNWidgets(8));
+      repository.failMetadata = false;
+      await tester.tap(find.text('Thử lại ngưỡng'));
+      await tester.pumpAndSettle();
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsNothing);
+      expect(find.text('Min: 26'), findsOneWidget);
+      expect(find.text('Max: 32'), findsOneWidget);
+      expect(repository.metadataCalls, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('detail sheet displays all eight metrics including H2S', (
+    tester,
+  ) async {
+    await _open(tester, _Repository());
+    await tester.ensureVisible(find.byType(WaterLogCard));
+    await tester.tap(find.byType(WaterLogCard));
+    await tester.pumpAndSettle();
+    final sheet = find.byKey(const Key('void_water_log_sheet'));
+    expect(sheet, findsOneWidget);
+    for (final param in waterLogFormParams) {
+      expect(
+        find.descendant(of: sheet, matching: find.text(param.label)),
+        findsOneWidget,
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final status in AssignedSeasonStatus.values) {
     testWidgets('entry to create log is limited by $status', (tester) async {
       await _open(tester, _Repository(), status: status);
@@ -307,6 +464,52 @@ class _RacingRepository extends _Repository {
       nextCursor: initial ? 'old-cursor' : 'fresh-cursor',
       counts: const WaterLogCounts(all: 2, valid: 2, warning: 0, voided: 0),
     );
+  }
+}
+
+class _PendingVoidRepository extends _Repository {
+  final pending = Completer<WaterLog>();
+  int calls = 0;
+  @override
+  Future<WaterLog> voidWaterLog({
+    required String seasonId,
+    required String logId,
+    required String voidReason,
+  }) {
+    calls++;
+    return pending.future;
+  }
+}
+
+class _VoidRepository extends _Repository {
+  _VoidRepository({required this.fail});
+  final bool fail;
+  int voidCalls = 0;
+  @override
+  Future<WaterLog> voidWaterLog({
+    required String seasonId,
+    required String logId,
+    required String voidReason,
+  }) async {
+    voidCalls++;
+    if (fail) {
+      throw const ApiException('Không thể hủy bản ghi này.', statusCode: 409);
+    }
+    return _log(logId, voided: true);
+  }
+}
+
+class _MetadataRepository extends _Repository {
+  _MetadataRepository({this.error});
+  final Object? error;
+  bool failMetadata = true;
+  int metadataCalls = 0;
+
+  @override
+  Future<WaterLogMetadata> getMetadata({required String seasonId}) async {
+    metadataCalls++;
+    if (failMetadata) throw error ?? StateError('metadata unavailable');
+    return WaterLogMetadata.legacy(ShrimpType.blackTiger);
   }
 }
 

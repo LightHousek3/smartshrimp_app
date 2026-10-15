@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
@@ -15,12 +17,15 @@ import 'package:smartshrimp_app/features/operation/domain/entities/operation_mod
 import 'package:smartshrimp_app/features/operation/domain/repositories/operation_repository.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 
 Future<void> _open(
   WidgetTester tester,
   Future<WaterLog?> Function() latest, {
   AssignedSeasonStatus status = AssignedSeasonStatus.active,
+  Future<WaterLogMetadata> Function()? metadata,
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
   tester.view.physicalSize = const Size(320, 700);
@@ -43,6 +48,11 @@ Future<void> _open(
         assignedSeasonRepositoryProvider.overrideWithValue(_Seasons(status)),
         operationRepositoryProvider.overrideWithValue(_Operations()),
         latestWaterLogProvider('season').overrideWith((ref) => latest()),
+        waterLogMetadataProvider('season').overrideWith(
+          (ref) =>
+              metadata?.call() ??
+              Future.value(WaterLogMetadata.legacy(ShrimpType.whiteleg)),
+        ),
       ],
       child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
     ),
@@ -86,12 +96,33 @@ void main() {
           createdAt: DateTime(2026),
           isVoided: false,
           exceededParameters: exceeded,
-          h2sMgL: exceeded.isEmpty ? 0.01 : 0.1,
+          h2sMgL: exceeded.isEmpty ? 0.00001 : 0.05001,
           ph: exceeded.contains('ph') ? 9 : 8,
         ),
       );
       await tester.pumpAndSettle();
       expect(find.text('H2S'), findsOneWidget);
+      for (final param in waterLogFormParams) {
+        for (final bound in ['min', 'max']) {
+          expect(
+            find.byKey(Key('latest_water_threshold_${param.field}_$bound')),
+            findsOneWidget,
+          );
+        }
+      }
+      expect(find.text('Min: 25'), findsOneWidget);
+      expect(find.text('Max: 33'), findsOneWidget);
+      expect(find.text('Max: 0.05'), findsOneWidget);
+      expect(find.text('Min: —'), findsNWidgets(3));
+      final measuredValue = find.text(exceeded.isEmpty ? '0.00001' : '0.05001');
+      expect(
+        tester.renderObject<RenderParagraph>(measuredValue).didExceedMaxLines,
+        isFalse,
+      );
+      expect(
+        find.ancestor(of: measuredValue, matching: find.byType(FittedBox)),
+        findsOneWidget,
+      );
       final tile = find
           .ancestor(of: find.text('H2S'), matching: find.byType(Container))
           .first;
@@ -120,6 +151,75 @@ void main() {
     expect(find.text('Không tải được dữ liệu đo nước.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets(
+    'latest thresholds load independently and retry without hiding measurements',
+    (tester) async {
+      final pending = Completer<WaterLogMetadata>();
+      var calls = 0;
+      await _open(
+        tester,
+        () async => WaterLog(
+          id: 'log',
+          seasonId: 'season',
+          recordedAt: DateTime(2026),
+          createdAt: DateTime(2026),
+          isVoided: false,
+          exceededParameters: [],
+          ph: 8,
+        ),
+        metadata: () {
+          calls++;
+          return calls == 1
+              ? pending.future
+              : Future.value(WaterLogMetadata.legacy(ShrimpType.blackTiger));
+        },
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Min: …'), findsNWidgets(8));
+      pending.completeError(StateError('offline'));
+      await tester.pumpAndSettle();
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsOneWidget);
+      expect(find.text('H2S'), findsOneWidget);
+      await tester.ensureVisible(find.text('Thử lại ngưỡng'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thử lại ngưỡng'));
+      await tester.pumpAndSettle();
+      expect(find.text('Min: 26'), findsOneWidget);
+      expect(find.text('Max: 32'), findsOneWidget);
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsNothing);
+      expect(calls, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final error in <AppException>[
+    const ApiException(
+      'Bạn không có quyền xem ngưỡng vụ nuôi.',
+      statusCode: 403,
+    ),
+    const NetworkException(),
+  ]) {
+    testWidgets('latest thresholds preserve API message: ${error.message}', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        () async => WaterLog(
+          id: 'log',
+          seasonId: 'season',
+          recordedAt: DateTime(2026),
+          createdAt: DateTime(2026),
+          isVoided: false,
+          exceededParameters: [],
+        ),
+        metadata: () async => throw error,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(error.message), findsOneWidget);
+      expect(find.text('Không tải được ngưỡng Min/Max.'), findsNothing);
+      expect(find.text('H2S'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 class _Seasons implements AssignedSeasonRepository {

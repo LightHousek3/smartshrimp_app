@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigne
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
@@ -99,6 +100,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                           _LatestWaterMeasurement(
                             seasonId: season.id,
                             pondName: season.pondName,
+                            seasonName: season.name,
                           ),
                           if (season.status ==
                               AssignedSeasonStatus.active) ...<Widget>[
@@ -533,15 +535,20 @@ class _LatestWaterMeasurement extends ConsumerWidget {
   const _LatestWaterMeasurement({
     required this.seasonId,
     required this.pondName,
+    required this.seasonName,
   });
 
   final String seasonId;
   final String pondName;
+  final String seasonName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(latestWaterLogProvider(seasonId));
     final log = state.asData?.value;
+    final metadata = log == null
+        ? null
+        : ref.watch(waterLogMetadataProvider(seasonId));
     final borderRadius = BorderRadius.circular(18);
     return Container(
       decoration: BoxDecoration(
@@ -570,7 +577,10 @@ class _LatestWaterMeasurement extends ConsumerWidget {
           onTap: () async {
             await context.push(
               '/seasons/$seasonId/water-logs/statistics',
-              extra: <String, String>{'pondName': pondName},
+              extra: <String, String>{
+                'pondName': pondName,
+                'seasonName': seasonName,
+              },
             );
             if (context.mounted) invalidateWaterLogViews(ref, seasonId);
           },
@@ -634,8 +644,32 @@ class _LatestWaterMeasurement extends ConsumerWidget {
                             ),
                           ),
                         )
-                      : _LatestWaterGrid(log: log),
+                      : _LatestWaterGrid(
+                          log: log,
+                          metadata: metadata?.asData?.value,
+                        ),
                 ),
+                if (log != null && metadata?.hasError == true)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          metadata?.error is AppException
+                              ? (metadata!.error! as AppException).message
+                              : 'Không tải được ngưỡng Min/Max.',
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            ref.invalidate(waterLogMetadataProvider(seasonId)),
+                        child: const Text('Thử lại ngưỡng'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -646,9 +680,10 @@ class _LatestWaterMeasurement extends ConsumerWidget {
 }
 
 class _LatestWaterGrid extends StatelessWidget {
-  const _LatestWaterGrid({required this.log});
+  const _LatestWaterGrid({required this.log, this.metadata});
 
   final WaterLog log;
+  final WaterLogMetadata? metadata;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -666,6 +701,13 @@ class _LatestWaterGrid extends StatelessWidget {
                       ? _LatestWaterTile(
                           log: log,
                           param: waterLogFormParams[row * 4 + column],
+                          metric: metadata?.metrics
+                              .where(
+                                (metric) =>
+                                    metric.field ==
+                                    waterLogFormParams[row * 4 + column].field,
+                              )
+                              .firstOrNull,
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -679,10 +721,11 @@ class _LatestWaterGrid extends StatelessWidget {
 }
 
 class _LatestWaterTile extends StatelessWidget {
-  const _LatestWaterTile({required this.log, required this.param});
+  const _LatestWaterTile({required this.log, required this.param, this.metric});
 
   final WaterLog log;
   final WaterLogParam param;
+  final WaterMetricMetadata? metric;
 
   @override
   Widget build(BuildContext context) {
@@ -708,15 +751,17 @@ class _LatestWaterTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            formatWaterValue(log.valueOf(param.field)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.mono(
-              color: exceeded ? AppColors.error : AppColors.ink,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ).copyWith(height: 1.5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              formatWaterValue(log.valueOf(param.field)),
+              style: AppTypography.mono(
+                color: exceeded ? AppColors.error : AppColors.ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ).copyWith(height: 1.5),
+            ),
           ),
           Text(
             param.unit,
@@ -727,6 +772,25 @@ class _LatestWaterTile extends StatelessWidget {
               height: 1.5,
             ),
           ),
+          const SizedBox(height: 4),
+          for (final bound in [
+            (label: 'Min', value: metric?.warningMin),
+            (label: 'Max', value: metric?.warningMax),
+          ])
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '${bound.label}: ${metric == null ? '…' : formatWaterValue(bound.value)}',
+                key: Key(
+                  'latest_water_threshold_${param.field}_${bound.label.toLowerCase()}',
+                ),
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontSize: 9,
+                  height: 1.5,
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +64,81 @@ Future<void> _save(WidgetTester tester) async {
 }
 
 void main() {
+  for (final fail in [false, true]) {
+    testWidgets(
+      'pending create blocks dismissal and then resolves: fail=$fail',
+      (tester) async {
+        final repository = _PendingRepository();
+        await _open(tester, repository);
+        await tester.enterText(find.byType(TextField).at(1), '8');
+        await tester.tap(find.text('Lưu nhật ký'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(repository.calls, 1);
+        await tester.binding.handlePopRoute();
+        await tester.tapAt(const Offset(5, 5));
+        await tester.drag(
+          find.byKey(const Key('water_log_form_sheet')),
+          const Offset(0, 500),
+        );
+        await tester.pump();
+        expect(find.byKey(const Key('water_log_form_sheet')), findsOneWidget);
+        if (fail) {
+          repository.pending.completeError(
+            const ApiException('Không lưu được mẫu đo.', statusCode: 409),
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('Không lưu được mẫu đo.'), findsOneWidget);
+          expect(find.byType(SnackBar), findsNothing);
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
+        } else {
+          repository.pending.complete(
+            WaterLog(
+              id: 'saved',
+              seasonId: 'season',
+              recordedAt: DateTime(2026),
+              createdAt: DateTime(2026),
+              isVoided: false,
+              exceededParameters: [],
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
+          expect(find.text('Đã lưu nhật ký đo nước.'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final invalid in ['-1', '-0,1', '1abc2', '1.2.3']) {
+    testWidgets(
+      'invalid pasted input $invalid is preserved and blocks saving',
+      (tester) async {
+        final repository = _Repository();
+        await _open(tester, repository);
+        final field = find.byType(TextField).at(2);
+        await tester.enterText(field, invalid);
+        await tester.pump();
+        final input = tester.widget<TextField>(field);
+        expect(input.controller!.text, invalid);
+        expect(input.decoration!.errorText, isNotNull);
+        expect(
+          tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+          isNull,
+        );
+        expect(repository.payloads, isEmpty);
+        await tester.enterText(field, '4,5');
+        await tester.pump();
+        expect(tester.widget<TextField>(field).decoration!.errorText, isNull);
+        await _save(tester);
+        expect(repository.payloads.single['dissolvedOxygenMgL'], 4.5);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   for (final error in [
     const ApiException('Metadata not found', statusCode: 404),
     const ApiException('Không có quyền đọc vụ', statusCode: 403),
@@ -345,6 +421,9 @@ void main() {
     expect(find.byKey(const Key('water_log_warning_dialog')), findsNothing);
     expect(repository.payloads.single['ph'], 8.5);
     expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.text('Đã lưu nhật ký đo nước.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('app_notice_success')), findsOneWidget);
   });
 
   testWidgets(
@@ -383,6 +462,10 @@ void main() {
       expect(repository.payloads, hasLength(1));
       expect(repository.payloads.single['ph'], 8);
       expect(repository.payloads.single['dissolvedOxygenMgL'], 3);
+      expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('Đã lưu nhật ký đo nước.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('app_notice_success')), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -448,6 +531,7 @@ void main() {
         find.text('Không thể lưu nhật ký. Vui lòng thử lại.'),
         findsOneWidget,
       );
+      expect(find.byType(SnackBar), findsNothing);
     },
   );
 
@@ -466,6 +550,20 @@ void main() {
     expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _PendingRepository extends _Repository {
+  final pending = Completer<WaterLog>();
+  int calls = 0;
+  @override
+  Future<WaterLog> createWaterLog({
+    required String seasonId,
+    required Map<String, Object?> payload,
+    required String idempotencyKey,
+  }) {
+    calls++;
+    return pending.future;
+  }
 }
 
 class _Repository implements WaterLogRepository {

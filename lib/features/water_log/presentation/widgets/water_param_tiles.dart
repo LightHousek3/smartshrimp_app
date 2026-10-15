@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 
 /// Định dạng số gọn: 18.0 -> '18', 29.4 -> '29.4'.
 String formatWaterValue(double? value) {
   if (value == null) return '—';
   if (value == value.roundToDouble()) return value.toInt().toString();
-  // Giới hạn chữ số thập phân để không tràn ô.
-  final text = value.toStringAsFixed(3);
+  // Giữ đủ độ chính xác lưu trữ của NH3, NO2 và H2S (5 chữ số).
+  final text = value.toStringAsFixed(5);
   return text.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
 }
 
@@ -15,6 +16,8 @@ String formatWaterValue(double? value) {
 class WaterParamTiles extends StatelessWidget {
   const WaterParamTiles({
     required this.log,
+    this.metadata,
+    this.showThresholds = false,
     this.boxed = false,
     this.includeH2s = false,
     this.roomy = false,
@@ -22,6 +25,8 @@ class WaterParamTiles extends StatelessWidget {
   });
 
   final WaterLog log;
+  final WaterLogMetadata? metadata;
+  final bool showThresholds;
   final bool boxed;
   final bool includeH2s;
   final bool roomy;
@@ -45,6 +50,14 @@ class WaterParamTiles extends StatelessWidget {
                           ? _BoxedParamTile(
                               log: log,
                               param: params[row * 4 + column],
+                              showThresholds: showThresholds,
+                              metric: metadata?.metrics
+                                  .where(
+                                    (metric) =>
+                                        metric.field ==
+                                        params[row * 4 + column].field,
+                                  )
+                                  .firstOrNull,
                               roomy: roomy,
                             )
                           : const SizedBox.shrink(),
@@ -73,11 +86,15 @@ class _BoxedParamTile extends StatelessWidget {
   const _BoxedParamTile({
     required this.log,
     required this.param,
+    required this.showThresholds,
+    this.metric,
     this.roomy = false,
   });
 
   final WaterLog log;
   final WaterLogParam param;
+  final bool showThresholds;
+  final WaterMetricMetadata? metric;
   final bool roomy;
 
   @override
@@ -104,15 +121,17 @@ class _BoxedParamTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            formatWaterValue(log.valueOf(param.field)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.mono(
-              color: exceeded ? AppColors.error : AppColors.ink,
-              fontSize: roomy ? 14 : 13,
-              fontWeight: FontWeight.w600,
-            ).copyWith(height: 1.5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              formatWaterValue(log.valueOf(param.field)),
+              style: AppTypography.mono(
+                color: exceeded ? AppColors.error : AppColors.ink,
+                fontSize: roomy ? 14 : 13,
+                fontWeight: FontWeight.w600,
+              ).copyWith(height: 1.5),
+            ),
           ),
           Text(
             param.unit,
@@ -123,6 +142,32 @@ class _BoxedParamTile extends StatelessWidget {
               height: 1.5,
             ),
           ),
+          if (showThresholds) ...[
+            const SizedBox(height: 4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final bound in [
+                  (label: 'Min', value: metric?.warningMin),
+                  (label: 'Max', value: metric?.warningMax),
+                ])
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${bound.label}: ${metric == null ? '…' : formatWaterValue(bound.value)}',
+                      key: Key(
+                        'water_threshold_${param.field}_${bound.label.toLowerCase()}',
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 9,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
