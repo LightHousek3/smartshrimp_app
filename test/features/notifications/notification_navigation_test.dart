@@ -24,6 +24,35 @@ const context = {
 };
 
 void main() {
+  for (final reference in [
+    'protocol',
+    'production_protocol',
+    'treatment_protocol',
+  ]) {
+    test(
+      'Owner $reference opens the protocol after resolving accessible context',
+      () {
+        final n = notice(reference, id: 'protocol/id?version=2');
+        expect(
+          notificationNeedsReferenceContext(n, AccountRole.farmOwner),
+          isTrue,
+        );
+        expect(
+          notificationDestination(
+            n,
+            AccountRole.farmOwner,
+            referenceContext: context,
+          ),
+          '/protocols/protocol%2Fid%3Fversion%3D2',
+        );
+        expect(notificationDestination(n, AccountRole.farmOwner), isNull);
+        expect(
+          notificationActionLabel(n, AccountRole.farmOwner),
+          'Xem phác đồ',
+        );
+      },
+    );
+  }
   test('owner inventory notification opens the referenced product', () {
     final n = notice('PRODUCT', type: NotificationType.inventoryLow);
     expect(notificationNeedsReferenceContext(n, AccountRole.farmOwner), isTrue);

@@ -226,6 +226,11 @@ String _unit(String? unit) => switch (unit) {
 
 void _showAlert(BuildContext context, DashboardAlert alert, String label) {
   final preview = alert.preview;
+  if (alert.kind == DashboardAlertKind.pendingProduction ||
+      alert.kind == DashboardAlertKind.pendingTreatment) {
+    context.push('/protocols/${Uri.encodeComponent(preview.id)}');
+    return;
+  }
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,

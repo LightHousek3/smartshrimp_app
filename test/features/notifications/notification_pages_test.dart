@@ -30,7 +30,7 @@ import 'package:smartshrimp_app/features/personnel/presentation/view_models/pers
 
 void main() {
   testWidgets(
-    'owner reads pending protocol content with season navigation instead of approval',
+    'owner reads pending protocol content with protocol detail navigation',
     (tester) async {
       final notification = AppNotification(
         id: 'protocol-notification',
@@ -71,7 +71,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(notification.title), findsOneWidget);
       expect(find.text(notification.content!), findsOneWidget);
-      expect(find.text('Xem vụ nuôi'), findsOneWidget);
+      expect(find.text('Xem phác đồ'), findsOneWidget);
       expect(find.text('Xem và duyệt'), findsNothing);
       expect(
         tester
