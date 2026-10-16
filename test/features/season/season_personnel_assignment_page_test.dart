@@ -72,11 +72,36 @@ void main() {
     expect(find.byType(SeasonPersonnelAssignmentPage), findsOneWidget);
     expect(find.text('Phân công nhân sự'), findsOneWidget);
     expect(find.byKey(const Key('assignment_role_technician')), findsOneWidget);
-    expect(find.byIcon(Icons.engineering_rounded), findsNothing);
-    expect(find.byIcon(Icons.health_and_safety_rounded), findsNothing);
+    expect(
+      find.byKey(const Key('personnel_availability_summary')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.engineering_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.health_and_safety_rounded), findsOneWidget);
     expect(find.byIcon(Icons.waves_rounded), findsNothing);
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
     expect(find.text('Nguyễn Văn Kỹ Thuật'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('personnel_summary_total')),
+        matching: find.text('2'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('personnel_summary_technicians')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('personnel_summary_experts')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
   });
 }
 
@@ -114,6 +139,16 @@ final _technician = ManagedPersonnel(
   role: AccountRole.technician,
   status: AccountStatus.active,
   currentSeasonAssignments: 1,
+  createdAt: DateTime.utc(2026, 9, 1),
+);
+
+final _expert = ManagedPersonnel(
+  id: 'expert-1',
+  email: 'expert@smartshrimp.vn',
+  fullName: 'TS. Trần Chuyên Gia',
+  role: AccountRole.expert,
+  status: AccountStatus.active,
+  currentSeasonAssignments: 2,
   createdAt: DateTime.utc(2026, 9, 1),
 );
 
@@ -201,11 +236,13 @@ final class _PersonnelRepository implements PersonnelRepository {
     AccountStatus? status,
     String? search,
   }) async => ManagedPersonnelPage(
-    items: role == AccountRole.technician
-        ? <ManagedPersonnel>[_technician]
-        : <ManagedPersonnel>[],
+    items: switch (role) {
+      AccountRole.technician => <ManagedPersonnel>[_technician],
+      AccountRole.expert => <ManagedPersonnel>[_expert],
+      _ => <ManagedPersonnel>[_technician, _expert],
+    },
     limit: limit,
-    totalResults: role == AccountRole.technician ? 1 : 0,
+    totalResults: role == null ? 2 : 1,
     hasNextPage: false,
   );
 

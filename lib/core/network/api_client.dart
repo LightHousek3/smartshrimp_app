@@ -42,7 +42,7 @@ final class ApiClient {
     Object? data,
     required bool authenticated,
     Duration? receiveTimeout,
-    Map<String, String>? headers,
+    Map<String, Object>? headers,
   }) {
     return _request(
       path: path,
@@ -106,7 +106,7 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
-    Map<String, String>? headers,
+    Map<String, Object>? headers,
   }) async {
     String? accessToken;
     if (authenticated) {
@@ -167,11 +167,11 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
-    Map<String, String>? headers,
+    Map<String, Object>? headers,
   }) async {
     final mergedHeaders = <String, Object>{
-      if (accessToken != null) 'Authorization': 'Bearer $accessToken',
       ...?headers,
+      if (accessToken != null) 'Authorization': 'Bearer $accessToken',
     };
     final response = await _dio.request<Map<String, dynamic>>(
       path,

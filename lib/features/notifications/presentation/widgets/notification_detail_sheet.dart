@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/app/router/app_router.dart';
-import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
-import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_action_footer.dart';
 
 Future<void> showNotificationDetailSheet({
   required BuildContext context,
@@ -25,42 +23,64 @@ Future<void> showNotificationDetailSheet({
   builder: (_) => _NotificationDetailSheet(notification: notification),
 );
 
-class _NotificationDetailSheet extends StatelessWidget {
+class _NotificationDetailSheet extends ConsumerWidget {
   const _NotificationDetailSheet({required this.notification});
 
   final AppNotification notification;
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: const Key('notification_detail_sheet'),
-    width: double.infinity,
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.sizeOf(context).height * 0.86,
-    ),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      boxShadow: <BoxShadow>[
-        BoxShadow(
-          color: Color(0x330F1C2E),
-          blurRadius: 28,
-          offset: Offset(0, -8),
-        ),
-      ],
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const _SheetHeader(),
-        const Divider(height: 1, color: Color(0xFFEEF1F7)),
-        Flexible(
-          fit: FlexFit.loose,
-          child: _LoadedContent(notification: notification),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detailProvider = notificationDetailProvider(notification.id);
+    final detail = ref.watch(detailProvider);
+    return Container(
+      key: const Key('notification_detail_sheet'),
+      width: double.infinity,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Color(0x330F1C2E),
+            blurRadius: 28,
+            offset: Offset(0, -8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const _SheetHeader(),
+          const Divider(height: 1, color: Color(0xFFEEF1F7)),
+          if (detail.hasError)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text('Chưa thể cập nhật trạng thái đã đọc.'),
+                  ),
+                  TextButton(
+                    key: const Key('retry_notification_read'),
+                    onPressed: () => ref.invalidate(detailProvider),
+                    child: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            ),
+          Flexible(
+            fit: FlexFit.loose,
+            child: _LoadedContent(
+              notification: detail.asData?.value ?? notification,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SheetHeader extends StatelessWidget {
@@ -118,7 +138,7 @@ class _LoadedContent extends StatelessWidget {
         ),
       ),
       const Divider(height: 1, color: Color(0xFFEEF1F7)),
-      _ActionFooter(notification: notification),
+      NotificationActionFooter(notification: notification),
     ],
   );
 }
@@ -234,85 +254,6 @@ class _NotificationInformation extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _ActionFooter extends ConsumerWidget {
-  const _ActionFooter({required this.notification});
-
-  final AppNotification notification;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final role = ref.watch(authControllerProvider).value?.role;
-    final referenceId = notification.referenceId?.trim();
-    final canOpenSeason =
-        (role == AccountRole.technician || role == AccountRole.expert) &&
-        notification.referenceType == 'aquaculture_season' &&
-        referenceId != null &&
-        referenceId.isNotEmpty &&
-        switch (notification.type) {
-          NotificationType.seasonAssignmentCreated ||
-          NotificationType.seasonAssignmentReplaced ||
-          NotificationType.seasonStatusChanged ||
-          NotificationType.waterThresholdExceeded ||
-          NotificationType.scheduleGenerationFailed ||
-          NotificationType.harvestDue ||
-          NotificationType.seasonCompleted => true,
-          _ => false,
-        };
-    final canOpenPersonnel =
-        role == AccountRole.farmOwner &&
-        notification.type == NotificationType.managedAccountActivated;
-    final destination = canOpenSeason
-        ? '${AppRoutes.seasons}/${Uri.encodeComponent(referenceId)}'
-        : canOpenPersonnel
-        ? notification.referenceType == 'account' &&
-                  referenceId != null &&
-                  referenceId.isNotEmpty
-              ? '${AppRoutes.personnel}/${Uri.encodeComponent(referenceId)}'
-              : AppRoutes.personnel
-        : null;
-    return SafeArea(
-      top: false,
-      minimum: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: <Color>[AppColors.oceanLight, AppColors.tealLight],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const Key('notification_action_button'),
-            onTap: destination != null
-                ? () {
-                    final router = GoRouter.of(context);
-                    Navigator.of(context).pop();
-                    router.push(destination);
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 46,
-              width: double.infinity,
-              child: Center(
-                child: Text(
-                  NotificationVisuals.actionLabel(notification.type),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>SmartShrimp cần truy cập thư viện ảnh để cập nhật ảnh đại diện của bạn.</string>
+	<string>SmartShrimp cần truy cập thư viện ảnh để cập nhật ảnh đại diện và ảnh vật tư.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SmartShrimp cần vị trí của bạn để điền tọa độ trang trại chính xác.</string>
 	<key>UIApplicationSceneManifest</key>

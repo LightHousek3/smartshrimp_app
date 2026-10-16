@@ -161,7 +161,8 @@ class _FarmDetailContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 _InventoryCard(
-                  onTap: () => _notInScope(context, 'Chức năng quản lý kho'),
+                  onTap: () =>
+                      context.push('/farms/${farm.id}/inventory', extra: farm),
                 ),
                 const SizedBox(height: 16),
                 _PondSection(
@@ -221,13 +222,6 @@ class _FarmDetailContent extends ConsumerWidget {
       if (!context.mounted) return;
       AppNoticeService.danger(context, error.message);
     }
-  }
-
-  static void _notInScope(BuildContext context, String feature) {
-    AppNoticeService.info(
-      context,
-      '$feature sẽ được hoàn thiện ở hạng mục tương ứng.',
-    );
   }
 }
 

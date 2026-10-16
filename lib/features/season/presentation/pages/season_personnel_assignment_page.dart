@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
+import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/widgets/personnel_visuals.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
@@ -157,6 +158,7 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
   Widget build(BuildContext context) {
     final mutation = ref.watch(seasonMutationControllerProvider);
     final people = ref.watch(assignablePersonnelProvider(_role));
+    final personnelSummary = ref.watch(activePersonnelSummaryProvider);
     final assignedIds = <String>{
       if (widget.season.personnel?.technician case final value?)
         value.account.id,
@@ -181,6 +183,12 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  _PersonnelAvailabilitySummary(
+                    state: personnelSummary,
+                    onRetry: () =>
+                        ref.invalidate(activePersonnelSummaryProvider),
+                  ),
+                  const SizedBox(height: 18),
                   const _FieldLabel('Vai trò cần phân công'),
                   const SizedBox(height: 8),
                   Row(
@@ -324,6 +332,172 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
       ),
     );
   }
+}
+
+class _PersonnelAvailabilitySummary extends StatelessWidget {
+  const _PersonnelAvailabilitySummary({
+    required this.state,
+    required this.onRetry,
+  });
+
+  final AsyncValue<ActivePersonnelSummary> state;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const Key('personnel_availability_summary'),
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.94),
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: AppColors.line),
+      boxShadow: const <BoxShadow>[
+        BoxShadow(
+          color: Color(0x0D0F1C2E),
+          blurRadius: 12,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: state.when(
+      data: (summary) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.groups_rounded, color: AppColors.ocean, size: 18),
+              SizedBox(width: 7),
+              Text(
+                'Nhân sự đang hoạt động',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _PersonnelSummaryMetric(
+                  key: const Key('personnel_summary_total'),
+                  icon: Icons.people_alt_rounded,
+                  label: 'Tổng nhân sự',
+                  value: summary.total,
+                  color: AppColors.ocean,
+                  background: const Color(0xFFEAF4FF),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PersonnelSummaryMetric(
+                  key: const Key('personnel_summary_technicians'),
+                  icon: Icons.engineering_rounded,
+                  label: 'Kỹ thuật viên',
+                  value: summary.technicians,
+                  color: const Color(0xFF0F9185),
+                  background: const Color(0xFFE2F6F3),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PersonnelSummaryMetric(
+                  key: const Key('personnel_summary_experts'),
+                  icon: Icons.health_and_safety_rounded,
+                  label: 'Chuyên gia',
+                  value: summary.experts,
+                  color: const Color(0xFF7355D2),
+                  background: const Color(0xFFEFEAFC),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      loading: () => const SizedBox(
+        height: 77,
+        child: Center(
+          child: SizedBox.square(
+            dimension: 21,
+            child: CircularProgressIndicator(
+              color: AppColors.ocean,
+              strokeWidth: 2.2,
+            ),
+          ),
+        ),
+      ),
+      error: (_, _) => Row(
+        children: <Widget>[
+          const Expanded(
+            child: Text(
+              'Không thể tải tổng số nhân sự đang hoạt động.',
+              style: TextStyle(color: AppColors.error, fontSize: 11.5),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    ),
+  );
+}
+
+class _PersonnelSummaryMetric extends StatelessWidget {
+  const _PersonnelSummaryMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.background,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 74),
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(icon, color: color, size: 17),
+        const SizedBox(height: 4),
+        Text(
+          '$value',
+          style: TextStyle(
+            color: color,
+            fontSize: 17,
+            height: 1,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.inkSoft,
+            fontSize: 8.5,
+            height: 1.1,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _RoleOption extends StatelessWidget {

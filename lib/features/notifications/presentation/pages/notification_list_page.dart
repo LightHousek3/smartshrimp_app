@@ -556,6 +556,9 @@ class _NotificationCard extends StatelessWidget {
                             if (unread) ...<Widget>[
                               const SizedBox(width: 8),
                               Container(
+                                key: Key(
+                                  'notification_unread_${notification.id}',
+                                ),
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
