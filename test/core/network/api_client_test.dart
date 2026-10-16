@@ -134,6 +134,48 @@ void main() {
     });
 
     test(
+      'preserves idempotency headers after an authenticated retry',
+      () async {
+        final store = _FakeSessionStore(
+          accessToken: 'expired-access-token',
+          refreshToken: 'refresh-token',
+        );
+        final idempotencyHeaders = <Object?>[];
+        var requestCalls = 0;
+        final client = ApiClient(
+          _dioWithHandler((request, handler) {
+            if (request.path.endsWith('/auth/refresh-token')) {
+              handler.resolve(_refreshSuccess(request));
+              return;
+            }
+            requestCalls++;
+            idempotencyHeaders.add(request.headers['Idempotency-Key']);
+            if (requestCalls == 1) {
+              handler.reject(_httpError(request, 401, 'Expired access token'));
+              return;
+            }
+            handler.resolve(
+              _success(request, data: <String, dynamic>{'id': 'transaction-1'}),
+            );
+          }),
+          store,
+        );
+
+        await client.post(
+          '/owner/farms/farm-1/products/product-1/stock-transactions',
+          authenticated: true,
+          headers: <String, Object>{'Idempotency-Key': 'inventory-request-1'},
+        );
+
+        expect(requestCalls, 2);
+        expect(idempotencyHeaders, <Object?>[
+          'inventory-request-1',
+          'inventory-request-1',
+        ]);
+      },
+    );
+
+    test(
       'shares one refresh across concurrent authenticated requests',
       () async {
         final store = _FakeSessionStore(refreshToken: 'refresh-token');

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +30,7 @@ import 'package:smartshrimp_app/features/personnel/presentation/view_models/pers
 
 void main() {
   testWidgets(
-    'owner reads pending protocol content without an unsupported approval action',
+    'owner reads pending protocol content with season navigation instead of approval',
     (tester) async {
       final notification = AppNotification(
         id: 'protocol-notification',
@@ -44,6 +46,9 @@ void main() {
           overrides: [
             authRepositoryProvider.overrideWithValue(
               const _AuthRepository(AccountRole.farmOwner),
+            ),
+            notificationRepositoryProvider.overrideWithValue(
+              _NotificationRepository(assignment: notification),
             ),
           ],
           child: MaterialApp(
@@ -66,16 +71,137 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(notification.title), findsOneWidget);
       expect(find.text(notification.content!), findsOneWidget);
+      expect(find.text('Xem vụ nuôi'), findsOneWidget);
+      expect(find.text('Xem và duyệt'), findsNothing);
       expect(
         tester
             .widget<InkWell>(
               find.byKey(const Key('notification_action_button')),
             )
             .onTap,
-        isNull,
+        isNotNull,
       );
     },
   );
+  Future<void> openNotifications(
+    WidgetTester tester,
+    _NotificationRepository repository, {
+    AccountRole role = AccountRole.farmOwner,
+  }) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
+          authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
+          notificationRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const SmartShrimpApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Thông báo'));
+    await tester.pumpAndSettle();
+  }
+
+  for (final role in [AccountRole.farmOwner, AccountRole.technician]) {
+    for (final type in [
+      NotificationType.waterThresholdExceeded,
+      NotificationType.inventoryLow,
+    ]) {
+      testWidgets('viewing ${type.name} clears unread state for ${role.name}', (
+        tester,
+      ) async {
+        final repository = _NotificationRepository(
+          assignment: AppNotification(
+            id: 'threshold-warning',
+            title: 'Cảnh báo vượt ngưỡng',
+            type: type,
+            createdAt: DateTime(2026, 10, 16),
+          ),
+        );
+        await openNotifications(tester, repository, role: role);
+        final dot = find.byKey(
+          const Key('notification_unread_threshold-warning'),
+        );
+        expect(dot, findsOneWidget);
+        expect(find.byKey(const Key('notif_tab_unread_badge')), findsOneWidget);
+        await tester.tap(find.text('Chưa đọc'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cảnh báo vượt ngưỡng'));
+        await tester.pumpAndSettle();
+        expect(repository.detailCalls, 1);
+        await tester.tap(find.byKey(const Key('close_notification_detail')));
+        await tester.pumpAndSettle();
+        expect(find.text('Bạn đã xem hết thông báo'), findsOneWidget);
+        expect(find.text('Bạn đã đọc hết'), findsOneWidget);
+        expect(find.byKey(const Key('notif_tab_unread_badge')), findsNothing);
+        await tester.tap(find.text('Tất cả'));
+        await tester.pumpAndSettle();
+        expect(find.text('Cảnh báo vượt ngưỡng'), findsOneWidget);
+        expect(dot, findsNothing);
+        // Re-entering the page uses the server's persisted read state.
+        await tester.tap(find.text('Trang chủ'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Thông báo'));
+        await tester.pumpAndSettle();
+        expect(dot, findsNothing);
+        expect(repository.markAllCalls, 0);
+      });
+    }
+  }
+
+  testWidgets('failed read keeps the dot and supports retry in the sheet', (
+    tester,
+  ) async {
+    final repository = _NotificationRepository(failDetail: true);
+    await openNotifications(tester, repository);
+    await tester.tap(find.text(repository._warning.title));
+    await tester.pumpAndSettle();
+    expect(repository.detailCalls, 1);
+    expect(find.text('Chưa thể cập nhật trạng thái đã đọc.'), findsOneWidget);
+    expect(find.text('1 thông báo chưa đọc'), findsOneWidget);
+    final dot = find.byKey(const Key('notification_unread_notification-1'));
+    expect(dot, findsOneWidget);
+    repository.failDetail = false;
+    await tester.tap(find.byKey(const Key('retry_notification_read')));
+    await tester.pumpAndSettle();
+    expect(repository.detailCalls, 2);
+    expect(find.text('Chưa thể cập nhật trạng thái đã đọc.'), findsNothing);
+    await tester.tap(find.byKey(const Key('close_notification_detail')));
+    await tester.pumpAndSettle();
+    expect(dot, findsNothing);
+    expect(find.text('Bạn đã đọc hết'), findsOneWidget);
+  });
+
+  testWidgets(
+    'closing the sheet before the read finishes still clears the dot',
+    (tester) async {
+      final pending = Completer<void>();
+      final repository = _NotificationRepository(readGate: pending.future);
+      await openNotifications(tester, repository);
+      await tester.tap(find.text(repository._warning.title));
+      await tester.pumpAndSettle();
+      expect(repository.detailCalls, 1);
+      await tester.tap(find.byKey(const Key('close_notification_detail')));
+      await tester.pumpAndSettle();
+      final dot = find.byKey(const Key('notification_unread_notification-1'));
+      expect(dot, findsOneWidget);
+      pending.complete();
+      await tester.pumpAndSettle();
+      expect(dot, findsNothing);
+      expect(find.text('Bạn đã đọc hết'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final hasReference in [true, false]) {
     testWidgets(
       'owner opens activated personnel with reference=$hasReference',
@@ -374,7 +500,7 @@ void main() {
       );
       expect(find.text('Xem vụ nuôi'), findsOneWidget);
       expect(find.text('Đã đọc lúc'), findsNothing);
-      expect(repository.detailCalls, 0);
+      expect(repository.detailCalls, 1);
       expect(
         tester
             .widget<InkWell>(
@@ -522,13 +648,21 @@ final class _AuthRepository implements AuthRepository {
 }
 
 final class _NotificationRepository implements NotificationRepository {
-  _NotificationRepository({this.failMarkAll = false, this.assignment});
+  _NotificationRepository({
+    this.failMarkAll = false,
+    this.failDetail = false,
+    this.readGate,
+    this.assignment,
+  });
 
   final bool failMarkAll;
+  bool failDetail;
+  final Future<void>? readGate;
   final AppNotification? assignment;
   int detailCalls = 0;
   int markAllCalls = 0;
   bool _allRead = false;
+  final _readIds = <String>{};
 
   final AppNotification _warning = AppNotification(
     id: 'notification-1',
@@ -554,16 +688,16 @@ final class _NotificationRepository implements NotificationRepository {
     int limit = 10,
   }) async {
     final source = assignment ?? _warning;
-    final warning = _allRead
+    final warning = _allRead || _readIds.contains(source.id)
         ? source.copyWith(readAt: DateTime(2026, 9, 27, 7))
         : source;
     final readItems = switch (readStatus) {
       NotificationReadStatus.all => <AppNotification>[warning, _completedTask],
       NotificationReadStatus.unread => <AppNotification>[
-        if (!_allRead) warning,
+        if (warning.isUnread) warning,
       ],
       NotificationReadStatus.read => <AppNotification>[
-        if (_allRead) warning,
+        if (!warning.isUnread) warning,
         _completedTask,
       ],
     };
@@ -597,9 +731,12 @@ final class _NotificationRepository implements NotificationRepository {
   @override
   Future<AppNotification> getNotification(String id) async {
     detailCalls++;
-    return _warning.copyWith(
+    if (readGate != null) await readGate;
+    if (failDetail) throw const NetworkException();
+    final source = assignment ?? _warning;
+    _readIds.add(id);
+    return (id == source.id ? source : _completedTask).copyWith(
       readAt: DateTime(2026, 9, 27, 7),
-      content: 'Chỉ số NO2 đã vượt ngưỡng cho phép, cần xử lý sớm.',
     );
   }
 

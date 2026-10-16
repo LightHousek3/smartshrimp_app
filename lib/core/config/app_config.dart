@@ -25,15 +25,18 @@ abstract final class AppConfig {
     return uri != null && uri.hasScheme && uri.hasAuthority ? uri.origin : null;
   }
 
+  // Public project defaults allow uploads without extra launch arguments.
+  // Override at build time with --dart-define or --dart-define-from-file.
   static const cloudinaryCloudName = String.fromEnvironment(
     'CLOUDINARY_CLOUD_NAME',
-    defaultValue: '',
+    defaultValue: 'bmlju4ql',
   );
   static const cloudinaryUploadPreset = String.fromEnvironment(
     'CLOUDINARY_UPLOAD_PRESET',
-    defaultValue: '',
+    defaultValue: 'product',
   );
   static const cloudinaryAvatarFolder = 'smartshrimp/avatars';
+  static const cloudinaryInventoryFolder = 'smartshrimp/inventory';
 
   static String get cloudinaryImageUploadUrl =>
       'https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload';

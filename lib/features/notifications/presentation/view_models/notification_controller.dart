@@ -170,6 +170,8 @@ final notificationDetailProvider = FutureProvider.autoDispose
       if (authState.value == null) {
         throw StateError('Notifications require an authenticated account.');
       }
+      // Finish synchronizing the read state even if the sheet is closed quickly.
+      final pendingRead = ref.keepAlive();
       try {
         final notification = await ref
             .read(notificationRepositoryProvider)
@@ -178,7 +180,11 @@ final notificationDetailProvider = FutureProvider.autoDispose
         if (ref.mounted) ref.invalidate(notificationListProvider);
         return notification;
       } on SessionExpiredException {
-        await ref.read(authControllerProvider.notifier).expireSession();
+        if (ref.mounted) {
+          await ref.read(authControllerProvider.notifier).expireSession();
+        }
         rethrow;
+      } finally {
+        pendingRead.close();
       }
-    });
+    }, retry: (_, _) => null);

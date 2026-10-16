@@ -7,6 +7,7 @@ import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_action_footer.dart';
 
 class NotificationDetailPage extends ConsumerWidget {
   const NotificationDetailPage({required this.notificationId, super.key});
@@ -208,6 +209,11 @@ class _DetailContent extends StatelessWidget {
               icon: Icons.done_all_rounded,
             ),
           ],
+          const SizedBox(height: 16),
+          NotificationActionFooter(
+            notification: notification,
+            closeBeforeNavigation: false,
+          ),
         ],
       ),
     );

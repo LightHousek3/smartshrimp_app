@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,6 +36,15 @@ import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_seas
 import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_form_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_personnel_assignment_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_detail_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_adjustment_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_history_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_product_form_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_stock_in_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_suppliers_page.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_form_page.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 
@@ -313,6 +323,106 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                               ? state.extra! as Farm
                               : null,
                         ),
+                      ),
+                      GoRoute(
+                        path: 'inventory',
+                        builder: (_, state) => InventoryPage(
+                          farmId: state.pathParameters['farmId']!,
+                          farmName: state.extra is Farm
+                              ? (state.extra! as Farm).name
+                              : null,
+                        ),
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: 'suppliers',
+                            builder: (_, state) => InventorySuppliersPage(
+                              farmId: state.pathParameters['farmId']!,
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: 'new',
+                                builder: (_, state) =>
+                                    InventorySupplierFormPage(
+                                      farmId: state.pathParameters['farmId']!,
+                                    ),
+                              ),
+                              GoRoute(
+                                path: ':supplierId/edit',
+                                builder: (_, state) =>
+                                    InventorySupplierFormPage(
+                                      farmId: state.pathParameters['farmId']!,
+                                      supplierId:
+                                          state.pathParameters['supplierId']!,
+                                      initialSupplier:
+                                          state.extra is InventorySupplier
+                                          ? state.extra as InventorySupplier
+                                          : null,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          GoRoute(
+                            path: 'new',
+                            builder: (_, state) =>
+                                InventoryProductFormPage.create(
+                                  farmId: state.pathParameters['farmId']!,
+                                ),
+                          ),
+                          GoRoute(
+                            path: 'history',
+                            builder: (_, state) => InventoryHistoryPage(
+                              farmId: state.pathParameters['farmId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':productId',
+                            builder: (_, state) => InventoryDetailPage(
+                              farmId: state.pathParameters['farmId']!,
+                              productId: state.pathParameters['productId']!,
+                            ),
+                            routes: <RouteBase>[
+                              GoRoute(
+                                path: 'edit',
+                                builder: (_, state) =>
+                                    InventoryProductFormPage.edit(
+                                      photoReplacement:
+                                          state.extra
+                                              is InventoryPhotoReplacement
+                                          ? state.extra
+                                                as InventoryPhotoReplacement
+                                          : null,
+                                      farmId: state.pathParameters['farmId']!,
+                                      productId:
+                                          state.pathParameters['productId']!,
+                                    ),
+                              ),
+                              GoRoute(
+                                path: 'stock-in',
+                                builder: (_, state) => InventoryStockInPage(
+                                  farmId: state.pathParameters['farmId']!,
+                                  productId: state.pathParameters['productId']!,
+                                ),
+                              ),
+                              GoRoute(
+                                path: 'stock-out/:balanceId',
+                                builder: (_, state) => InventoryAdjustmentPage(
+                                  farmId: state.pathParameters['farmId']!,
+                                  productId: state.pathParameters['productId']!,
+                                  balanceId: state.pathParameters['balanceId']!,
+                                  isStockOut: true,
+                                ),
+                              ),
+                              GoRoute(
+                                path: 'adjust/:balanceId',
+                                builder: (_, state) => InventoryAdjustmentPage(
+                                  farmId: state.pathParameters['farmId']!,
+                                  productId: state.pathParameters['productId']!,
+                                  balanceId: state.pathParameters['balanceId']!,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
