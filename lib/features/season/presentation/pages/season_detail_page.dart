@@ -492,24 +492,18 @@ class _SeasonDetailContent extends ConsumerWidget {
           ? 'Chưa có phác đồ nuôi được duyệt'
           : '${protocol.title} · Phiên bản ${protocol.versionNo}',
       badges: <Widget>[
-        const _FeatureBadge(
-          label: '0 chờ duyệt',
-          background: Color(0xFFFBF0DC),
-          foreground: Color(0xFFD98314),
-          dot: true,
-        ),
-        _FeatureBadge(
-          label: '${protocol == null ? 0 : 1} nuôi',
-          background: const Color(0xFFEAF4FF),
-          foreground: const Color(0xFF0C4E8F),
-        ),
-        const _FeatureBadge(
-          label: '0 điều trị',
-          background: Color(0xFFFBE6EA),
-          foreground: AppColors.error,
-        ),
+        if (protocol != null)
+          const _FeatureBadge(
+            label: 'Có phác đồ nuôi được duyệt',
+            background: Color(0xFFEAF4FF),
+            foreground: Color(0xFF0C4E8F),
+            dot: true,
+          ),
       ],
-      onTap: () => _comingSoon(context, 'Phác đồ'),
+      onTap: () => context.push(
+        '/protocols?seasonId=${Uri.encodeQueryComponent(season.id)}',
+        extra: '${season.pond.name} · ${season.name}',
+      ),
     );
   }
 

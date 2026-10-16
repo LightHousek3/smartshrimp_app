@@ -47,6 +47,8 @@ import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_list_page.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_detail_page.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
@@ -104,6 +106,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.home;
       }
       if ((location.startsWith(AppRoutes.farms) ||
+              location.startsWith('/protocols') ||
+              location.startsWith(AppRoutes.approvals) ||
               location.startsWith(AppRoutes.personnel)) &&
           account?.role != AccountRole.farmOwner) {
         return AppRoutes.home;
@@ -467,8 +471,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: AppRoutes.approvals,
-                builder: (_, _) =>
-                    const EmptyTabPage(semanticLabel: 'Phê duyệt'),
+                builder: (_, _) => const ProtocolListPage(pendingOnly: true),
+              ),
+              GoRoute(
+                path: '/protocols',
+                builder: (_, state) => ProtocolListPage(
+                  seasonId: state.uri.queryParameters['seasonId'],
+                  subtitle: state.extra is String
+                      ? state.extra as String
+                      : null,
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':protocolId',
+                    builder: (_, state) => ProtocolDetailPage(
+                      protocolId: state.pathParameters['protocolId']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -20,6 +20,13 @@ enum AppSvgIconName {
   back,
   chevron,
   chevronDown,
+  info,
+  clock,
+  medicine,
+  chemical,
+  mineral,
+  check,
+  close,
 }
 
 class AppSvgIcon extends StatelessWidget {

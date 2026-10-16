@@ -23,8 +23,10 @@ final notification = AppNotification(
 
 Future<void> openSheet(
   WidgetTester tester,
-  Future<Map<String, String>> Function() resolve,
-) async {
+  Future<Map<String, String>> Function() resolve, {
+  AppNotification? notice,
+}) async {
+  final shown = notice ?? notification;
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -34,11 +36,17 @@ Future<void> openSheet(
             child: FilledButton(
               onPressed: () => showNotificationDetailSheet(
                 context: context,
-                notification: notification,
+                notification: shown,
               ),
               child: const Text('Open notification'),
             ),
           ),
+        ),
+      ),
+      GoRoute(
+        path: '/protocols/:protocolId',
+        builder: (_, state) => Scaffold(
+          body: Text('Protocol ${state.pathParameters['protocolId']}'),
         ),
       ),
       GoRoute(
@@ -56,11 +64,11 @@ Future<void> openSheet(
     ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(_Auth()),
-        notificationDetailProvider(notification.id).overrideWith(
-          (ref) async => notification.copyWith(readAt: DateTime(2026)),
-        ),
+        notificationDetailProvider(
+          shown.id,
+        ).overrideWith((ref) async => shown.copyWith(readAt: DateTime(2026))),
         notificationReferenceContextProvider(
-          notification.id,
+          shown.id,
         ).overrideWith((ref) => resolve()),
       ],
       child: MaterialApp.router(routerConfig: router),
@@ -72,6 +80,31 @@ Future<void> openSheet(
 }
 
 void main() {
+  for (final reference in [
+    'protocol',
+    'production_protocol',
+    'treatment_protocol',
+  ]) {
+    testWidgets('Owner opens $reference detail using the shared footer', (
+      tester,
+    ) async {
+      await openSheet(
+        tester,
+        () async => {'seasonId': 'season'},
+        notice: notification.copyWith(
+          type: NotificationType.productionProtocolPending,
+          referenceType: reference,
+          referenceId: 'protocol',
+        ),
+      );
+      expect(find.text('Xem phác đồ'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('notification_action_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Protocol protocol'), findsOneWidget);
+      expect(find.byKey(const Key('notification_detail_sheet')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets(
     'resolves the target once and opens the exact product after dismissing the sheet',
     (tester) async {

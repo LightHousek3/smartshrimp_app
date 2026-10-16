@@ -129,8 +129,13 @@ String? notificationDestination(
       case 'protocol':
       case 'production_protocol':
       case 'treatment_protocol':
+        return owner
+            ? seasonId != null
+                  ? '/protocols/$encodedId'
+                  : null
+            : seasonDestination();
       case 'disease_case':
-        // Dedicated protocol/disease screens do not exist in the mobile router yet.
+        // Clinical case details are not implemented in the mobile router yet.
         return seasonDestination();
       case 'task':
         return AppRoutes.tasks;
@@ -165,9 +170,8 @@ String notificationActionLabel(
     role == AccountRole.technician ? 'Xem hoạt động' : 'Xem vụ nuôi',
   'water_log' || 'water_quality_log' =>
     role == AccountRole.technician ? 'Xem nhật ký nước' : 'Xem vụ nuôi',
-  'protocol' ||
-  'production_protocol' ||
-  'treatment_protocol' ||
+  'protocol' || 'production_protocol' || 'treatment_protocol' =>
+    role == AccountRole.farmOwner ? 'Xem phác đồ' : 'Xem vụ nuôi',
   'disease_case' => 'Xem vụ nuôi',
   'account' when role != AccountRole.farmOwner => 'Xem tài khoản',
   _ => NotificationVisuals.actionLabel(notification.type),
