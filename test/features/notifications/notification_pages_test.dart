@@ -19,6 +19,7 @@ import 'package:smartshrimp_app/features/notifications/domain/entities/app_notif
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
 import 'package:smartshrimp_app/features/personnel/domain/repositories/personnel_repository.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_detail_page.dart';
@@ -26,6 +27,55 @@ import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 
 void main() {
+  testWidgets(
+    'owner reads pending protocol content without an unsupported approval action',
+    (tester) async {
+      final notification = AppNotification(
+        id: 'protocol-notification',
+        title: 'Phác đồ nuôi đang chờ duyệt',
+        type: NotificationType.productionProtocolPending,
+        referenceType: 'protocol',
+        referenceId: 'protocol-id',
+        content: 'Phác đồ Feed (v2), vụ 1, ao A đang chờ chủ trại duyệt.',
+        createdAt: DateTime(2026, 10, 16),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(
+              const _AuthRepository(AccountRole.farmOwner),
+            ),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => showNotificationDetailSheet(
+                    context: context,
+                    notification: notification,
+                  ),
+                  child: const Text('Open notification'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open notification'));
+      await tester.pumpAndSettle();
+      expect(find.text(notification.title), findsOneWidget);
+      expect(find.text(notification.content!), findsOneWidget);
+      expect(
+        tester
+            .widget<InkWell>(
+              find.byKey(const Key('notification_action_button')),
+            )
+            .onTap,
+        isNull,
+      );
+    },
+  );
   for (final hasReference in [true, false]) {
     testWidgets(
       'owner opens activated personnel with reference=$hasReference',
