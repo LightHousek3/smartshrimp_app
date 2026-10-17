@@ -34,6 +34,9 @@ import 'package:smartshrimp_app/features/profile/presentation/pages/change_passw
 import 'package:smartshrimp_app/features/profile/presentation/pages/profile_edit_page.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
+import 'package:smartshrimp_app/features/harvest/presentation/pages/harvest_list_page.dart';
+import 'package:smartshrimp_app/features/harvest/presentation/pages/harvest_detail_page.dart';
+import 'package:smartshrimp_app/features/harvest/presentation/pages/harvest_form_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_form_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_personnel_assignment_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_detail_page.dart';
@@ -295,6 +298,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                               seasonId: state.pathParameters['seasonId']!,
                             ),
                             routes: <RouteBase>[
+                              GoRoute(
+                                path: 'harvests',
+                                builder: (_, state) => HarvestListPage(
+                                  seasonId: state.pathParameters['seasonId']!,
+                                ),
+                                routes: [
+                                  GoRoute(
+                                    path: 'create',
+                                    builder: (_, state) => HarvestFormPage(
+                                      seasonId:
+                                          state.pathParameters['seasonId']!,
+                                    ),
+                                  ),
+                                  GoRoute(
+                                    path: ':harvestId',
+                                    builder: (_, state) => HarvestDetailPage(
+                                      seasonId:
+                                          state.pathParameters['seasonId']!,
+                                      harvestId:
+                                          state.pathParameters['harvestId']!,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               GoRoute(
                                 path: 'edit',
                                 builder: (_, state) => SeasonEditPage(

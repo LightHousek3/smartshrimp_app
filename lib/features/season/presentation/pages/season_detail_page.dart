@@ -111,6 +111,12 @@ class _SeasonDetailContent extends ConsumerWidget {
                   const SizedBox(height: 16),
                   _historyShortcuts(context),
                 ],
+                // Completed seasons retain their immutable harvest history.
+                if (season.status == SeasonStatus.completed ||
+                    season.status == SeasonStatus.cancelled) ...<Widget>[
+                  const SizedBox(height: 16),
+                  _harvestShortcut(context),
+                ],
                 if (season.status == SeasonStatus.active ||
                     season.status == SeasonStatus.completed) ...<Widget>[
                   const SizedBox(height: 16),
@@ -285,10 +291,22 @@ class _SeasonDetailContent extends ConsumerWidget {
           label: 'Thu hoạch',
           background: const Color(0xFFE2F6F3),
           foreground: const Color(0xFF0F9B8E),
-          onTap: () => _comingSoon(context, 'Lịch sử thu hoạch'),
+          onTap: () => _openHarvests(context),
         ),
       ),
     ],
+  );
+
+  void _openHarvests(BuildContext context) => context.push(
+    '/farms/$farmId/ponds/$pondId/seasons/${season.id}/harvests',
+  );
+
+  Widget _harvestShortcut(BuildContext context) => _HistoryShortcut(
+    icon: Icons.agriculture_rounded,
+    label: 'Lịch sử thu hoạch',
+    background: const Color(0xFFE2F6F3),
+    foreground: const Color(0xFF0F9B8E),
+    onTap: () => _openHarvests(context),
   );
 
   Widget _costCard() => SeasonSectionCard(
