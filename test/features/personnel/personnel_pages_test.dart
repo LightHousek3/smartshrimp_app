@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -61,7 +62,13 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('account_personnel_entry')),
-        matching: find.byIcon(Icons.groups_outlined),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is SvgPicture &&
+              widget.bytesLoader is SvgAssetLoader &&
+              (widget.bytesLoader as SvgAssetLoader).assetName ==
+                  'assets/icons/common/users.svg',
+        ),
       ),
       findsOneWidget,
     );

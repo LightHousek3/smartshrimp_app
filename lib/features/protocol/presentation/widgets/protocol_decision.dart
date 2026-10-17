@@ -255,36 +255,15 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                 ),
               ),
             ),
-          if (mutation.hasError)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                protocolError(mutation.error!),
-                style: const TextStyle(
-                  fontSize: 11,
-                  height: 1.5,
-                  color: protocolRose,
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
   Future<void> _submit(bool approve) async {
-    final done = await ref
+    await ref
         .read(protocolReviewProvider(widget.detail.card.id).notifier)
         .submit(widget.detail, approve: approve, reason: _reason.text);
-    if (done && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            approve ? 'Đã phê duyệt phác đồ.' : 'Đã từ chối phác đồ.',
-          ),
-        ),
-      );
-    }
   }
 }
 

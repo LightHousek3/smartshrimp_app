@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -114,7 +116,28 @@ void main() {
 
     expect(find.text('Quản lý trại, ao và vụ nuôi'), findsOneWidget);
     expect(find.text('Trại Cà Mau'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FarmListPage),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is AppSvgIcon && widget.icon == AppSvgIconName.farm,
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('4 ao'), findsOneWidget);
+    final farmIcon = find.descendant(
+      of: find.byType(FarmListPage),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is AppSvgIcon && widget.icon == AppSvgIconName.farm,
+      ),
+    );
+    expect(tester.getSize(farmIcon), const Size(24, 24));
+    final iconTile = find
+        .ancestor(of: farmIcon, matching: find.byType(Container))
+        .first;
+    expect(tester.getSize(iconTile), const Size(44, 44));
     expect(find.text('3 vụ nuôi'), findsOneWidget);
     expect(repository.getCalls, 1);
 

@@ -27,6 +27,13 @@ enum AppSvgIconName {
   mineral,
   check,
   close,
+  email,
+  phone,
+  badge,
+  edit,
+  logout,
+  eye,
+  shieldOutline,
 }
 
 class AppSvgIcon extends StatelessWidget {
@@ -46,6 +53,8 @@ class AppSvgIcon extends StatelessWidget {
         ? 'shrimp-feed'
         : icon == AppSvgIconName.chevronDown
         ? 'chevron-down'
+        : icon == AppSvgIconName.shieldOutline
+        ? 'shield-outline'
         : icon.name}.svg',
     width: size,
     height: size,

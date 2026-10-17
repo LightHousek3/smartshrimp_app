@@ -159,6 +159,7 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     return ProtocolDetail.parse({
       ...detailJson(type: type, status: status),
       if (anchorDate != null) 'anchorDate': anchorDate,
+      if (status == 'REJECTED') 'rejectionReason': rejectionReason,
     });
   }
 

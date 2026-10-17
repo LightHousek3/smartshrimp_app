@@ -126,15 +126,19 @@ class ProtocolListController extends AsyncNotifier<ProtocolPage> {
 }
 
 final protocolReviewProvider = AsyncNotifierProvider.autoDispose
-    .family<ProtocolReviewController, void, String>(
+    .family<ProtocolReviewController, bool?, String>(
       ProtocolReviewController.new,
+      retry: (count, error) => null,
     );
 
-class ProtocolReviewController extends AsyncNotifier<void> {
+class ProtocolReviewController extends AsyncNotifier<bool?> {
   ProtocolReviewController(this.id);
   final String id;
   @override
-  void build() => _watchOwner(ref);
+  bool? build() {
+    _watchOwner(ref);
+    return null;
+  }
 
   Future<bool> submit(
     ProtocolDetail detail, {
@@ -153,8 +157,8 @@ class ProtocolReviewController extends AsyncNotifier<void> {
       return false;
     }
     state = const AsyncLoading();
-    final result = await AsyncValue.guard(
-      () => _session(
+    final result = await AsyncValue.guard<bool?>(() async {
+      await _session(
         ref,
         () => ref
             .read(protocolRepositoryProvider)
@@ -164,11 +168,12 @@ class ProtocolReviewController extends AsyncNotifier<void> {
               approve: approve,
               reason: reason,
             ),
-      ),
-    );
-    if (!ref.mounted) return result is AsyncData<void>;
+      );
+      return approve;
+    });
+    if (!ref.mounted) return result is AsyncData<bool?>;
     state = result;
-    if (result is AsyncData<void>) {
+    if (result is AsyncData<bool?>) {
       ref.invalidate(protocolListProvider);
       ref.invalidate(protocolDetailProvider(id));
       ref.invalidate(protocolDayProvider);

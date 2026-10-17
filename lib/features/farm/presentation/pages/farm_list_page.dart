@@ -7,6 +7,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
@@ -261,14 +262,18 @@ class _FarmCard extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE6F4FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.grid_view_rounded,
-                  color: Color(0xFF1D7AD6),
-                  size: 20,
+                child: const SizedBox.square(
+                  dimension: 24,
+                  child: AppSvgIcon(
+                    AppSvgIconName.farm,
+                    color: Color(0xFF1D7AD6),
+                    size: 24,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -401,15 +406,21 @@ class _FarmEmptyState extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
+            alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: Color(0xFFEEF1F6),
               borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
-            child: Icon(
-              searching ? Icons.search_off_rounded : Icons.grid_view_rounded,
-              color: AppColors.inkMuted,
-              size: 22,
-            ),
+            child: searching
+                ? const Icon(
+                    Icons.search_off_rounded,
+                    color: AppColors.inkMuted,
+                    size: 22,
+                  )
+                : const SizedBox.square(
+                    dimension: 22,
+                    child: AppSvgIcon(AppSvgIconName.farm, size: 22),
+                  ),
           ),
           const SizedBox(height: 12),
           Text(

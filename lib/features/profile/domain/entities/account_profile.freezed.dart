@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AccountProfile {
 
- String get id; String get email; String? get fullName; String? get phone; String? get avatarUrl;@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole get role;@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus get status; String? get managedByOwnerId; ManagedOwner? get managedByOwner; TechnicianKpi? get technicianKpi; ExpertKpi? get expertKpi; FarmOwnerKpi? get farmOwnerKpi; DateTime? get activatedAt; DateTime? get lastLoginAt; DateTime? get createdAt; DateTime? get updatedAt;
+ String get id; String get email; String? get fullName; String? get phone; String? get avatarUrl;@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole get role;@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus get status; String? get managedByOwnerId; ManagedOwner? get managedByOwner; TechnicianKpi? get technicianKpi; ExpertKpi? get expertKpi; DateTime? get activatedAt; DateTime? get lastLoginAt; DateTime? get createdAt; DateTime? get updatedAt;
 /// Create a copy of AccountProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AccountProfileCopyWith<AccountProfile> get copyWith => _$AccountProfileCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.status, status) || other.status == status)&&(identical(other.managedByOwnerId, managedByOwnerId) || other.managedByOwnerId == managedByOwnerId)&&(identical(other.managedByOwner, managedByOwner) || other.managedByOwner == managedByOwner)&&(identical(other.technicianKpi, technicianKpi) || other.technicianKpi == technicianKpi)&&(identical(other.expertKpi, expertKpi) || other.expertKpi == expertKpi)&&(identical(other.farmOwnerKpi, farmOwnerKpi) || other.farmOwnerKpi == farmOwnerKpi)&&(identical(other.activatedAt, activatedAt) || other.activatedAt == activatedAt)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.status, status) || other.status == status)&&(identical(other.managedByOwnerId, managedByOwnerId) || other.managedByOwnerId == managedByOwnerId)&&(identical(other.managedByOwner, managedByOwner) || other.managedByOwner == managedByOwner)&&(identical(other.technicianKpi, technicianKpi) || other.technicianKpi == technicianKpi)&&(identical(other.expertKpi, expertKpi) || other.expertKpi == expertKpi)&&(identical(other.activatedAt, activatedAt) || other.activatedAt == activatedAt)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,role,status,managedByOwnerId,managedByOwner,technicianKpi,expertKpi,farmOwnerKpi,activatedAt,lastLoginAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,role,status,managedByOwnerId,managedByOwner,technicianKpi,expertKpi,activatedAt,lastLoginAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'AccountProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, role: $role, status: $status, managedByOwnerId: $managedByOwnerId, managedByOwner: $managedByOwner, technicianKpi: $technicianKpi, expertKpi: $expertKpi, farmOwnerKpi: $farmOwnerKpi, activatedAt: $activatedAt, lastLoginAt: $lastLoginAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'AccountProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, role: $role, status: $status, managedByOwnerId: $managedByOwnerId, managedByOwner: $managedByOwner, technicianKpi: $technicianKpi, expertKpi: $expertKpi, activatedAt: $activatedAt, lastLoginAt: $lastLoginAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $AccountProfileCopyWith<$Res>  {
   factory $AccountProfileCopyWith(AccountProfile value, $Res Function(AccountProfile) _then) = _$AccountProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String email, String? fullName, String? phone, String? avatarUrl,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole role,@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus status, String? managedByOwnerId, ManagedOwner? managedByOwner, TechnicianKpi? technicianKpi, ExpertKpi? expertKpi, FarmOwnerKpi? farmOwnerKpi, DateTime? activatedAt, DateTime? lastLoginAt, DateTime? createdAt, DateTime? updatedAt
+ String id, String email, String? fullName, String? phone, String? avatarUrl,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole role,@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus status, String? managedByOwnerId, ManagedOwner? managedByOwner, TechnicianKpi? technicianKpi, ExpertKpi? expertKpi, DateTime? activatedAt, DateTime? lastLoginAt, DateTime? createdAt, DateTime? updatedAt
 });
 
 
-$ManagedOwnerCopyWith<$Res>? get managedByOwner;$TechnicianKpiCopyWith<$Res>? get technicianKpi;$ExpertKpiCopyWith<$Res>? get expertKpi;$FarmOwnerKpiCopyWith<$Res>? get farmOwnerKpi;
+$ManagedOwnerCopyWith<$Res>? get managedByOwner;$TechnicianKpiCopyWith<$Res>? get technicianKpi;$ExpertKpiCopyWith<$Res>? get expertKpi;
 
 }
 /// @nodoc
@@ -65,7 +65,7 @@ class _$AccountProfileCopyWithImpl<$Res>
 
 /// Create a copy of AccountProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? fullName = freezed,Object? phone = freezed,Object? avatarUrl = freezed,Object? role = null,Object? status = null,Object? managedByOwnerId = freezed,Object? managedByOwner = freezed,Object? technicianKpi = freezed,Object? expertKpi = freezed,Object? farmOwnerKpi = freezed,Object? activatedAt = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? fullName = freezed,Object? phone = freezed,Object? avatarUrl = freezed,Object? role = null,Object? status = null,Object? managedByOwnerId = freezed,Object? managedByOwner = freezed,Object? technicianKpi = freezed,Object? expertKpi = freezed,Object? activatedAt = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -78,8 +78,7 @@ as AccountStatus,managedByOwnerId: freezed == managedByOwnerId ? _self.managedBy
 as String?,managedByOwner: freezed == managedByOwner ? _self.managedByOwner : managedByOwner // ignore: cast_nullable_to_non_nullable
 as ManagedOwner?,technicianKpi: freezed == technicianKpi ? _self.technicianKpi : technicianKpi // ignore: cast_nullable_to_non_nullable
 as TechnicianKpi?,expertKpi: freezed == expertKpi ? _self.expertKpi : expertKpi // ignore: cast_nullable_to_non_nullable
-as ExpertKpi?,farmOwnerKpi: freezed == farmOwnerKpi ? _self.farmOwnerKpi : farmOwnerKpi // ignore: cast_nullable_to_non_nullable
-as FarmOwnerKpi?,activatedAt: freezed == activatedAt ? _self.activatedAt : activatedAt // ignore: cast_nullable_to_non_nullable
+as ExpertKpi?,activatedAt: freezed == activatedAt ? _self.activatedAt : activatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastLoginAt: freezed == lastLoginAt ? _self.lastLoginAt : lastLoginAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -121,18 +120,6 @@ $ExpertKpiCopyWith<$Res>? get expertKpi {
 
   return $ExpertKpiCopyWith<$Res>(_self.expertKpi!, (value) {
     return _then(_self.copyWith(expertKpi: value));
-  });
-}/// Create a copy of AccountProfile
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$FarmOwnerKpiCopyWith<$Res>? get farmOwnerKpi {
-    if (_self.farmOwnerKpi == null) {
-    return null;
-  }
-
-  return $FarmOwnerKpiCopyWith<$Res>(_self.farmOwnerKpi!, (value) {
-    return _then(_self.copyWith(farmOwnerKpi: value));
   });
 }
 }
@@ -216,10 +203,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  FarmOwnerKpi? farmOwnerKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AccountProfile() when $default != null:
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.farmOwnerKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -237,10 +224,10 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  FarmOwnerKpi? farmOwnerKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _AccountProfile():
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.farmOwnerKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -257,10 +244,10 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  FarmOwnerKpi? farmOwnerKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String? fullName,  String? phone,  String? avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole role, @JsonKey(unknownEnumValue: AccountStatus.unknown)  AccountStatus status,  String? managedByOwnerId,  ManagedOwner? managedByOwner,  TechnicianKpi? technicianKpi,  ExpertKpi? expertKpi,  DateTime? activatedAt,  DateTime? lastLoginAt,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AccountProfile() when $default != null:
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.farmOwnerKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.role,_that.status,_that.managedByOwnerId,_that.managedByOwner,_that.technicianKpi,_that.expertKpi,_that.activatedAt,_that.lastLoginAt,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -272,7 +259,7 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 
 @JsonSerializable(explicitToJson: true)
 class _AccountProfile extends AccountProfile {
-  const _AccountProfile({required this.id, required this.email, this.fullName, this.phone, this.avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.role, @JsonKey(unknownEnumValue: AccountStatus.unknown) required this.status, this.managedByOwnerId, this.managedByOwner, this.technicianKpi, this.expertKpi, this.farmOwnerKpi, this.activatedAt, this.lastLoginAt, this.createdAt, this.updatedAt}): super._();
+  const _AccountProfile({required this.id, required this.email, this.fullName, this.phone, this.avatarUrl, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.role, @JsonKey(unknownEnumValue: AccountStatus.unknown) required this.status, this.managedByOwnerId, this.managedByOwner, this.technicianKpi, this.expertKpi, this.activatedAt, this.lastLoginAt, this.createdAt, this.updatedAt}): super._();
   factory _AccountProfile.fromJson(Map<String, dynamic> json) => _$AccountProfileFromJson(json);
 
 @override final  String id;
@@ -286,7 +273,6 @@ class _AccountProfile extends AccountProfile {
 @override final  ManagedOwner? managedByOwner;
 @override final  TechnicianKpi? technicianKpi;
 @override final  ExpertKpi? expertKpi;
-@override final  FarmOwnerKpi? farmOwnerKpi;
 @override final  DateTime? activatedAt;
 @override final  DateTime? lastLoginAt;
 @override final  DateTime? createdAt;
@@ -305,16 +291,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.status, status) || other.status == status)&&(identical(other.managedByOwnerId, managedByOwnerId) || other.managedByOwnerId == managedByOwnerId)&&(identical(other.managedByOwner, managedByOwner) || other.managedByOwner == managedByOwner)&&(identical(other.technicianKpi, technicianKpi) || other.technicianKpi == technicianKpi)&&(identical(other.expertKpi, expertKpi) || other.expertKpi == expertKpi)&&(identical(other.farmOwnerKpi, farmOwnerKpi) || other.farmOwnerKpi == farmOwnerKpi)&&(identical(other.activatedAt, activatedAt) || other.activatedAt == activatedAt)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.status, status) || other.status == status)&&(identical(other.managedByOwnerId, managedByOwnerId) || other.managedByOwnerId == managedByOwnerId)&&(identical(other.managedByOwner, managedByOwner) || other.managedByOwner == managedByOwner)&&(identical(other.technicianKpi, technicianKpi) || other.technicianKpi == technicianKpi)&&(identical(other.expertKpi, expertKpi) || other.expertKpi == expertKpi)&&(identical(other.activatedAt, activatedAt) || other.activatedAt == activatedAt)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,role,status,managedByOwnerId,managedByOwner,technicianKpi,expertKpi,farmOwnerKpi,activatedAt,lastLoginAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,role,status,managedByOwnerId,managedByOwner,technicianKpi,expertKpi,activatedAt,lastLoginAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'AccountProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, role: $role, status: $status, managedByOwnerId: $managedByOwnerId, managedByOwner: $managedByOwner, technicianKpi: $technicianKpi, expertKpi: $expertKpi, farmOwnerKpi: $farmOwnerKpi, activatedAt: $activatedAt, lastLoginAt: $lastLoginAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'AccountProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, role: $role, status: $status, managedByOwnerId: $managedByOwnerId, managedByOwner: $managedByOwner, technicianKpi: $technicianKpi, expertKpi: $expertKpi, activatedAt: $activatedAt, lastLoginAt: $lastLoginAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -325,11 +311,11 @@ abstract mixin class _$AccountProfileCopyWith<$Res> implements $AccountProfileCo
   factory _$AccountProfileCopyWith(_AccountProfile value, $Res Function(_AccountProfile) _then) = __$AccountProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String email, String? fullName, String? phone, String? avatarUrl,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole role,@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus status, String? managedByOwnerId, ManagedOwner? managedByOwner, TechnicianKpi? technicianKpi, ExpertKpi? expertKpi, FarmOwnerKpi? farmOwnerKpi, DateTime? activatedAt, DateTime? lastLoginAt, DateTime? createdAt, DateTime? updatedAt
+ String id, String email, String? fullName, String? phone, String? avatarUrl,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole role,@JsonKey(unknownEnumValue: AccountStatus.unknown) AccountStatus status, String? managedByOwnerId, ManagedOwner? managedByOwner, TechnicianKpi? technicianKpi, ExpertKpi? expertKpi, DateTime? activatedAt, DateTime? lastLoginAt, DateTime? createdAt, DateTime? updatedAt
 });
 
 
-@override $ManagedOwnerCopyWith<$Res>? get managedByOwner;@override $TechnicianKpiCopyWith<$Res>? get technicianKpi;@override $ExpertKpiCopyWith<$Res>? get expertKpi;@override $FarmOwnerKpiCopyWith<$Res>? get farmOwnerKpi;
+@override $ManagedOwnerCopyWith<$Res>? get managedByOwner;@override $TechnicianKpiCopyWith<$Res>? get technicianKpi;@override $ExpertKpiCopyWith<$Res>? get expertKpi;
 
 }
 /// @nodoc
@@ -342,7 +328,7 @@ class __$AccountProfileCopyWithImpl<$Res>
 
 /// Create a copy of AccountProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? fullName = freezed,Object? phone = freezed,Object? avatarUrl = freezed,Object? role = null,Object? status = null,Object? managedByOwnerId = freezed,Object? managedByOwner = freezed,Object? technicianKpi = freezed,Object? expertKpi = freezed,Object? farmOwnerKpi = freezed,Object? activatedAt = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? fullName = freezed,Object? phone = freezed,Object? avatarUrl = freezed,Object? role = null,Object? status = null,Object? managedByOwnerId = freezed,Object? managedByOwner = freezed,Object? technicianKpi = freezed,Object? expertKpi = freezed,Object? activatedAt = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_AccountProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -355,8 +341,7 @@ as AccountStatus,managedByOwnerId: freezed == managedByOwnerId ? _self.managedBy
 as String?,managedByOwner: freezed == managedByOwner ? _self.managedByOwner : managedByOwner // ignore: cast_nullable_to_non_nullable
 as ManagedOwner?,technicianKpi: freezed == technicianKpi ? _self.technicianKpi : technicianKpi // ignore: cast_nullable_to_non_nullable
 as TechnicianKpi?,expertKpi: freezed == expertKpi ? _self.expertKpi : expertKpi // ignore: cast_nullable_to_non_nullable
-as ExpertKpi?,farmOwnerKpi: freezed == farmOwnerKpi ? _self.farmOwnerKpi : farmOwnerKpi // ignore: cast_nullable_to_non_nullable
-as FarmOwnerKpi?,activatedAt: freezed == activatedAt ? _self.activatedAt : activatedAt // ignore: cast_nullable_to_non_nullable
+as ExpertKpi?,activatedAt: freezed == activatedAt ? _self.activatedAt : activatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastLoginAt: freezed == lastLoginAt ? _self.lastLoginAt : lastLoginAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -399,18 +384,6 @@ $ExpertKpiCopyWith<$Res>? get expertKpi {
 
   return $ExpertKpiCopyWith<$Res>(_self.expertKpi!, (value) {
     return _then(_self.copyWith(expertKpi: value));
-  });
-}/// Create a copy of AccountProfile
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$FarmOwnerKpiCopyWith<$Res>? get farmOwnerKpi {
-    if (_self.farmOwnerKpi == null) {
-    return null;
-  }
-
-  return $FarmOwnerKpiCopyWith<$Res>(_self.farmOwnerKpi!, (value) {
-    return _then(_self.copyWith(farmOwnerKpi: value));
   });
 }
 }
@@ -1225,275 +1198,6 @@ as int,diseaseCasesHandled: null == diseaseCasesHandled ? _self.diseaseCasesHand
 as int,diseaseCasesResolved: null == diseaseCasesResolved ? _self.diseaseCasesResolved : diseaseCasesResolved // ignore: cast_nullable_to_non_nullable
 as int,avgResolutionHours: freezed == avgResolutionHours ? _self.avgResolutionHours : avgResolutionHours // ignore: cast_nullable_to_non_nullable
 as double?,
-  ));
-}
-
-
-}
-
-
-/// @nodoc
-mixin _$FarmOwnerKpi {
-
- int get farmsOwned; int get pondsManaged; int get activeSeasons;
-/// Create a copy of FarmOwnerKpi
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$FarmOwnerKpiCopyWith<FarmOwnerKpi> get copyWith => _$FarmOwnerKpiCopyWithImpl<FarmOwnerKpi>(this as FarmOwnerKpi, _$identity);
-
-  /// Serializes this FarmOwnerKpi to a JSON map.
-  Map<String, dynamic> toJson();
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FarmOwnerKpi&&(identical(other.farmsOwned, farmsOwned) || other.farmsOwned == farmsOwned)&&(identical(other.pondsManaged, pondsManaged) || other.pondsManaged == pondsManaged)&&(identical(other.activeSeasons, activeSeasons) || other.activeSeasons == activeSeasons));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,farmsOwned,pondsManaged,activeSeasons);
-
-@override
-String toString() {
-  return 'FarmOwnerKpi(farmsOwned: $farmsOwned, pondsManaged: $pondsManaged, activeSeasons: $activeSeasons)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $FarmOwnerKpiCopyWith<$Res>  {
-  factory $FarmOwnerKpiCopyWith(FarmOwnerKpi value, $Res Function(FarmOwnerKpi) _then) = _$FarmOwnerKpiCopyWithImpl;
-@useResult
-$Res call({
- int farmsOwned, int pondsManaged, int activeSeasons
-});
-
-
-
-
-}
-/// @nodoc
-class _$FarmOwnerKpiCopyWithImpl<$Res>
-    implements $FarmOwnerKpiCopyWith<$Res> {
-  _$FarmOwnerKpiCopyWithImpl(this._self, this._then);
-
-  final FarmOwnerKpi _self;
-  final $Res Function(FarmOwnerKpi) _then;
-
-/// Create a copy of FarmOwnerKpi
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? farmsOwned = null,Object? pondsManaged = null,Object? activeSeasons = null,}) {
-  return _then(_self.copyWith(
-farmsOwned: null == farmsOwned ? _self.farmsOwned : farmsOwned // ignore: cast_nullable_to_non_nullable
-as int,pondsManaged: null == pondsManaged ? _self.pondsManaged : pondsManaged // ignore: cast_nullable_to_non_nullable
-as int,activeSeasons: null == activeSeasons ? _self.activeSeasons : activeSeasons // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [FarmOwnerKpi].
-extension FarmOwnerKpiPatterns on FarmOwnerKpi {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _FarmOwnerKpi value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _FarmOwnerKpi() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _FarmOwnerKpi value)  $default,){
-final _that = this;
-switch (_that) {
-case _FarmOwnerKpi():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _FarmOwnerKpi value)?  $default,){
-final _that = this;
-switch (_that) {
-case _FarmOwnerKpi() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int farmsOwned,  int pondsManaged,  int activeSeasons)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _FarmOwnerKpi() when $default != null:
-return $default(_that.farmsOwned,_that.pondsManaged,_that.activeSeasons);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int farmsOwned,  int pondsManaged,  int activeSeasons)  $default,) {final _that = this;
-switch (_that) {
-case _FarmOwnerKpi():
-return $default(_that.farmsOwned,_that.pondsManaged,_that.activeSeasons);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int farmsOwned,  int pondsManaged,  int activeSeasons)?  $default,) {final _that = this;
-switch (_that) {
-case _FarmOwnerKpi() when $default != null:
-return $default(_that.farmsOwned,_that.pondsManaged,_that.activeSeasons);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-@JsonSerializable()
-
-class _FarmOwnerKpi implements FarmOwnerKpi {
-  const _FarmOwnerKpi({required this.farmsOwned, required this.pondsManaged, required this.activeSeasons});
-  factory _FarmOwnerKpi.fromJson(Map<String, dynamic> json) => _$FarmOwnerKpiFromJson(json);
-
-@override final  int farmsOwned;
-@override final  int pondsManaged;
-@override final  int activeSeasons;
-
-/// Create a copy of FarmOwnerKpi
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$FarmOwnerKpiCopyWith<_FarmOwnerKpi> get copyWith => __$FarmOwnerKpiCopyWithImpl<_FarmOwnerKpi>(this, _$identity);
-
-@override
-Map<String, dynamic> toJson() {
-  return _$FarmOwnerKpiToJson(this, );
-}
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FarmOwnerKpi&&(identical(other.farmsOwned, farmsOwned) || other.farmsOwned == farmsOwned)&&(identical(other.pondsManaged, pondsManaged) || other.pondsManaged == pondsManaged)&&(identical(other.activeSeasons, activeSeasons) || other.activeSeasons == activeSeasons));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,farmsOwned,pondsManaged,activeSeasons);
-
-@override
-String toString() {
-  return 'FarmOwnerKpi(farmsOwned: $farmsOwned, pondsManaged: $pondsManaged, activeSeasons: $activeSeasons)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$FarmOwnerKpiCopyWith<$Res> implements $FarmOwnerKpiCopyWith<$Res> {
-  factory _$FarmOwnerKpiCopyWith(_FarmOwnerKpi value, $Res Function(_FarmOwnerKpi) _then) = __$FarmOwnerKpiCopyWithImpl;
-@override @useResult
-$Res call({
- int farmsOwned, int pondsManaged, int activeSeasons
-});
-
-
-
-
-}
-/// @nodoc
-class __$FarmOwnerKpiCopyWithImpl<$Res>
-    implements _$FarmOwnerKpiCopyWith<$Res> {
-  __$FarmOwnerKpiCopyWithImpl(this._self, this._then);
-
-  final _FarmOwnerKpi _self;
-  final $Res Function(_FarmOwnerKpi) _then;
-
-/// Create a copy of FarmOwnerKpi
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? farmsOwned = null,Object? pondsManaged = null,Object? activeSeasons = null,}) {
-  return _then(_FarmOwnerKpi(
-farmsOwned: null == farmsOwned ? _self.farmsOwned : farmsOwned // ignore: cast_nullable_to_non_nullable
-as int,pondsManaged: null == pondsManaged ? _self.pondsManaged : pondsManaged // ignore: cast_nullable_to_non_nullable
-as int,activeSeasons: null == activeSeasons ? _self.activeSeasons : activeSeasons // ignore: cast_nullable_to_non_nullable
-as int,
   ));
 }
 
