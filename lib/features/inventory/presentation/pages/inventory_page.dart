@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
@@ -128,7 +129,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: <Widget>[
-            _FarmContext(farmName: widget.farmName),
+            _FarmContext(farmId: widget.farmId, farmName: widget.farmName),
             const SizedBox(height: 12),
             Row(
               children: <Widget>[
@@ -246,44 +247,68 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
 // Current farm context
 // ---------------------------------------------------------------------------
 
-class _FarmContext extends StatelessWidget {
-  const _FarmContext({required this.farmName});
+class _FarmContext extends ConsumerWidget {
+  const _FarmContext({required this.farmId, required this.farmName});
 
+  final String farmId;
   final String? farmName;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'Trang trại hiện tại',
-    child: Container(
-      height: 41,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: <Widget>[
-            const InventorySvgIcon(InventoryAssets.building, size: 15),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Text(
-                farmName ?? 'Trang trại đang chọn',
-                style: AppTypography.display(
-                  color: AppColors.ink,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final suppliedName = farmName?.trim();
+    // Route extras are optional (for example on a direct link or app restore).
+    // Resolve missing names by this farm's ID, never from a global selection.
+    final nameState = suppliedName != null && suppliedName.isNotEmpty
+        ? AsyncData(suppliedName)
+        : ref
+              .watch(farmDetailControllerProvider(farmId))
+              .whenData((farm) => farm.name);
+    return Semantics(
+      label: 'Trang trại hiện tại',
+      child: Container(
+        height: 41,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: <Widget>[
+              const InventorySvgIcon(InventoryAssets.building, size: 15),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Text(
+                  nameState.when(
+                    data: (name) => name,
+                    loading: () => 'Đang tải tên trang trại...',
+                    error: (error, _) => error is AppException
+                        ? error.message
+                        : 'Không thể tải tên trang trại.',
+                  ),
+                  style: AppTypography.display(
+                    color: AppColors.ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              if (nameState.hasError)
+                IconButton(
+                  tooltip: 'Tải lại tên trang trại',
+                  onPressed: () =>
+                      ref.invalidate(farmDetailControllerProvider(farmId)),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

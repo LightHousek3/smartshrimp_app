@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -54,125 +56,157 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               }
               await ref.read(profileControllerProvider.notifier).refresh();
             },
-            child: ListView(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-              children: <Widget>[
-                const Text(
-                  'Tài khoản',
-                  style: TextStyle(
+              slivers: <Widget>[
+                StickyPageHeader(
+                  title: 'Tài khoản',
+                  subtitle: profile.role == AccountRole.farmOwner
+                      ? 'Quản lý hồ sơ & nhân sự'
+                      : 'Quản lý hồ sơ cá nhân',
+                  subtitleStyle: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                  showBack: false,
+                  height: 76,
+                  titleStyle: AppTypography.display(
                     color: AppColors.ink,
-                    fontSize: 25,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                  ),
+                    height: 1.25,
+                    letterSpacing: -0.55,
+                  ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                 ),
-                const SizedBox(height: 10),
-                _ProfileHero(
-                  profile: profile,
-                  isUploading: _isUploadingAvatar,
-                  onAvatarTap: _pickAndUploadAvatar,
-                ),
-                if (profile.role == AccountRole.technician) ...<Widget>[
-                  const SizedBox(height: 14),
-                  _TechnicianKpiRow(kpi: profile.technicianKpi),
-                ] else if (profile.role == AccountRole.farmOwner) ...<Widget>[
-                  const SizedBox(height: 14),
-                  _FarmOwnerKpiRow(kpi: profile.farmOwnerKpi),
-                ],
-                if (profile.role == AccountRole.farmOwner) ...<Widget>[
-                  const SizedBox(height: 14),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 1),
-                    child: Text(
-                      'Nhân sự',
-                      style: TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _ActionCard(
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                  sliver: SliverList.list(
                     children: <Widget>[
-                      _ActionRow(
-                        key: const Key('account_personnel_entry'),
-                        icon: Icons.groups_outlined,
-                        iconForeground: const Color(0xFF0F9B8E),
-                        iconBackground: const Color(0xFFE2F6F3),
-                        label: ref
-                            .watch(activePersonnelSummaryProvider)
-                            .when(
-                              data: (summary) =>
-                                  '${summary.technicians} KTV · '
-                                  '${summary.experts} Chuyên gia',
-                              loading: () => 'KTV · Chuyên gia',
-                              error: (_, _) => 'KTV · Chuyên gia',
+                      _ProfileHero(
+                        profile: profile,
+                        isUploading: _isUploadingAvatar,
+                        onAvatarTap: _pickAndUploadAvatar,
+                      ),
+                      if (profile.role == AccountRole.technician) ...<Widget>[
+                        const SizedBox(height: 14),
+                        _TechnicianKpiRow(kpi: profile.technicianKpi),
+                      ],
+                      if (profile.role == AccountRole.farmOwner) ...<Widget>[
+                        const SizedBox(height: 14),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            'Nhân sự',
+                            style:
+                                AppTypography.display(
+                                  color: AppColors.ink,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w700,
+                                ).copyWith(
+                                  fontFamilyFallback: const ['PlusJakartaSans'],
+                                ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _ActionCard(
+                          children: <Widget>[
+                            _ActionRow(
+                              key: const Key('account_personnel_entry'),
+                              icon: Icons.groups_outlined,
+                              iconForeground: const Color(0xFF0F9B8E),
+                              iconBackground: const Color(0xFFE2F6F3),
+                              label: ref
+                                  .watch(activePersonnelSummaryProvider)
+                                  .when(
+                                    data: (summary) =>
+                                        '${summary.technicians} KTV · '
+                                        '${summary.experts} Chuyên gia',
+                                    loading: () => 'KTV · Chuyên gia',
+                                    error: (_, _) => 'KTV · Chuyên gia',
+                                  ),
+                              subtitle: ref
+                                  .watch(activePersonnelSummaryProvider)
+                                  .when(
+                                    data: (summary) =>
+                                        '${summary.total} đang hoạt động',
+                                    loading: () => 'Đang tải số nhân sự...',
+                                    error: (_, _) => 'Xem danh sách nhân sự',
+                                  ),
+                              onTap: () => context.go(AppRoutes.personnel),
                             ),
-                        subtitle: ref
-                            .watch(activePersonnelSummaryProvider)
-                            .when(
-                              data: (summary) =>
-                                  '${summary.total} đang hoạt động',
-                              loading: () => 'Đang tải số nhân sự...',
-                              error: (_, _) => 'Xem danh sách nhân sự',
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      Text(
+                        'Thông tin tài khoản',
+                        style:
+                            AppTypography.display(
+                              color: AppColors.ink,
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w700,
+                            ).copyWith(
+                              fontFamilyFallback: const ['PlusJakartaSans'],
                             ),
-                        onTap: () => context.go(AppRoutes.personnel),
+                      ),
+                      const SizedBox(height: 8),
+                      _AccountInfoCard(profile: profile),
+                      const SizedBox(height: 12),
+                      _ActionCard(
+                        children: <Widget>[
+                          _ActionRow(
+                            icon: Icons.edit_outlined,
+                            label: 'Cập nhật thông tin cá nhân',
+                            onTap: () => context.push(AppRoutes.profileEdit),
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          _ActionRow(
+                            icon: Icons.shield_outlined,
+                            label: 'Đổi mật khẩu',
+                            onTap: () => context.push(AppRoutes.changePassword),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        key: const Key('profile_logout_button'),
+                        onPressed: () =>
+                            ref.read(authControllerProvider.notifier).logout(),
+                        icon: const AppSvgIcon(
+                          AppSvgIconName.logout,
+                          size: 18,
+                          color: AppColors.error,
+                        ),
+                        label: const Text('Đăng xuất'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: AppColors.error,
+                          backgroundColor: const Color(0xFFFBE6EA),
+                          side: const BorderSide(color: Color(0xFFFFC7D0)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          textStyle: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'SmartShrimp Platform · v1.0.0',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
-                ],
-                const SizedBox(height: 14),
-                const Text(
-                  'Thông tin tài khoản',
-                  style: TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _AccountInfoCard(profile: profile),
-                const SizedBox(height: 12),
-                _ActionCard(
-                  children: <Widget>[
-                    _ActionRow(
-                      icon: Icons.edit_outlined,
-                      label: 'Cập nhật thông tin cá nhân',
-                      onTap: () => context.push(AppRoutes.profileEdit),
-                    ),
-                    const Divider(height: 1, color: AppColors.line),
-                    _ActionRow(
-                      icon: Icons.shield_outlined,
-                      label: 'Đổi mật khẩu',
-                      onTap: () => context.push(AppRoutes.changePassword),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  key: const Key('profile_logout_button'),
-                  onPressed: () =>
-                      ref.read(authControllerProvider.notifier).logout(),
-                  icon: const Icon(Icons.logout_rounded, size: 19),
-                  label: const Text('Đăng xuất'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    foregroundColor: AppColors.error,
-                    backgroundColor: const Color(0xFFFFF1F3),
-                    side: const BorderSide(color: Color(0xFFFFC7D0)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'SmartShrimp Platform · v1.0.0',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
                 ),
               ],
             ),
@@ -244,7 +278,7 @@ class _ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 132,
+      constraints: const BoxConstraints(minHeight: 104),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         image: const DecorationImage(
@@ -267,7 +301,7 @@ class _ProfileHero extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Row(
             children: <Widget>[
               Semantics(
@@ -312,14 +346,12 @@ class _ProfileHero extends StatelessWidget {
                       profile.displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: AppTypography.display(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        shadows: <Shadow>[
-                          Shadow(color: Color(0x44000000), blurRadius: 3),
-                        ],
-                      ),
+                        height: 1.375,
+                      ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                     ),
                     const SizedBox(height: 8),
                     DecoratedBox(
@@ -330,17 +362,31 @@ class _ProfileHero extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 5,
+                          vertical: 4,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            const Icon(
-                              Icons.person_rounded,
-                              color: AppColors.ocean,
-                              size: 15,
+                            Container(
+                              width: 20,
+                              height: 20,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF56B8F5),
+                                    Color(0xFF29C8D6),
+                                  ],
+                                ),
+                              ),
+                              child: const AppSvgIcon(
+                                AppSvgIconName.badge,
+                                size: 11,
+                                color: Colors.white,
+                              ),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 profile.roleLabel,
@@ -377,8 +423,8 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatarUrl = profile.avatarUrl;
     return Container(
-      width: 72,
-      height: 72,
+      width: 62,
+      height: 62,
       padding: const EdgeInsets.all(3),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -427,7 +473,7 @@ class _Initials extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: const Color(0xFFEAF4FF),
+      color: Colors.white,
       child: Center(
         child: Text(
           value,
@@ -461,15 +507,9 @@ class _AccountInfoCard extends StatelessWidget {
           Icons.business_outlined,
           'Chủ trang trại phụ trách',
           profile.managedByOwner?.displayName ?? 'Chưa phân công',
-          accent: true,
         )
       else
-        _InfoData(
-          Icons.badge_outlined,
-          'Vai trò hệ thống',
-          profile.roleLabel,
-          accent: true,
-        ),
+        _InfoData(Icons.badge_outlined, 'Vai trò hệ thống', profile.roleLabel),
       _InfoData(
         Icons.schedule_outlined,
         'Tham gia hệ thống từ',
@@ -520,35 +560,6 @@ class _TechnicianKpiRow extends StatelessWidget {
           subtitle: 'Chỉ tiêu KPI',
           value: rate == null ? '—' : '${rate.round()}%',
           available: rate != null,
-        ),
-      ],
-    );
-  }
-}
-
-class _FarmOwnerKpiRow extends StatelessWidget {
-  const _FarmOwnerKpiRow({required this.kpi});
-
-  final FarmOwnerKpi? kpi;
-
-  @override
-  Widget build(BuildContext context) {
-    return _KpiRow(
-      items: <_KpiData>[
-        _KpiData(
-          label: 'Trang trại',
-          subtitle: 'Đang sở hữu',
-          value: '${kpi?.farmsOwned ?? 0}',
-        ),
-        _KpiData(
-          label: 'Ao nuôi',
-          subtitle: 'Đang quản lý',
-          value: '${kpi?.pondsManaged ?? 0}',
-        ),
-        _KpiData(
-          label: 'Vụ nuôi',
-          subtitle: 'Đang hoạt động',
-          value: '${kpi?.activeSeasons ?? 0}',
         ),
       ],
     );
@@ -686,12 +697,11 @@ class _KpiCard extends StatelessWidget {
 }
 
 class _InfoData {
-  const _InfoData(this.icon, this.label, this.value, {this.accent = false});
+  const _InfoData(this.icon, this.label, this.value);
 
   final IconData icon;
   final String label;
   final String value;
-  final bool accent;
 }
 
 class _InfoRow extends StatelessWidget {
@@ -702,11 +712,11 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: <Widget>[
           _SquareIcon(icon: data.icon),
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,7 +734,7 @@ class _InfoRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: data.accent ? AppColors.ocean : AppColors.ink,
+                    color: AppColors.ink,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -788,7 +798,10 @@ class _ActionRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: subtitle == null ? 14 : 12,
+          ),
           child: Row(
             children: <Widget>[
               _SquareIcon(
@@ -796,17 +809,20 @@ class _ActionRow extends StatelessWidget {
                 foreground: iconForeground,
                 background: iconBackground,
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.ink,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: subtitle == null ? 14 : 13,
+                        height: 1.5,
+                        fontWeight: subtitle == null
+                            ? FontWeight.w600
+                            : FontWeight.w700,
                       ),
                     ),
                     if (subtitle != null) ...<Widget>[
@@ -815,18 +831,14 @@ class _ActionRow extends StatelessWidget {
                         subtitle!,
                         style: const TextStyle(
                           color: AppColors.inkMuted,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.inkMuted,
-                size: 21,
-              ),
+              const AppSvgIcon(AppSvgIconName.chevron, size: 18),
             ],
           ),
         ),
@@ -848,14 +860,28 @@ class _SquareIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final asset = switch (icon) {
+      Icons.groups_outlined => AppSvgIconName.users,
+      Icons.mail_outline_rounded => AppSvgIconName.email,
+      Icons.phone_outlined => AppSvgIconName.phone,
+      Icons.badge_outlined => AppSvgIconName.badge,
+      Icons.schedule_outlined => AppSvgIconName.clock,
+      Icons.edit_outlined => AppSvgIconName.edit,
+      Icons.shield_outlined => AppSvgIconName.shieldOutline,
+      _ => null,
+    };
     return Container(
-      width: 34,
-      height: 34,
+      width: 36,
+      height: 36,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: foreground, size: 17),
+      child: Center(
+        child: asset == null
+            ? Icon(icon, color: foreground, size: 16)
+            : AppSvgIcon(asset, size: 16, color: foreground),
+      ),
     );
   }
 }

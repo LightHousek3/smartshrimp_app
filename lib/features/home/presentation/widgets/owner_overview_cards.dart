@@ -138,14 +138,7 @@ class DashboardAlertCard extends StatelessWidget {
       ),
     };
     final preview = alert.preview;
-    final contextLabel = [
-      preview.farmName,
-      if (preview.pondName != null) preview.pondName!,
-      if (preview.seasonName != null) preview.seasonName!,
-    ].join(' · ');
-    final detail = alert.kind == DashboardAlertKind.lowStock
-        ? '${preview.title} · Còn ${dashboardQuantity(preview.quantity)}/${dashboardQuantity(preview.minAlertQuantity)} ${_unit(preview.unit)}'
-        : preview.title;
+    final contextLabel = _alertContext(alert);
     return Material(
       color: background,
       shape: RoundedRectangleBorder(
@@ -159,9 +152,23 @@ class DashboardAlertCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
             children: [
-              SizedBox(
+              Container(
                 width: 36,
-                child: Center(child: AppSvgIcon(icon, color: color, size: 18)),
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: switch (alert.kind) {
+                    DashboardAlertKind.pendingProduction => const Color(
+                      0xFFCFE5FF,
+                    ),
+                    DashboardAlertKind.lowStock => const Color(0xFFFEF3C6),
+                    DashboardAlertKind.monitoring => const Color(0xFFE0D5FF),
+                    DashboardAlertKind.unknown => AppColors.line,
+                    _ => const Color(0xFFFFCCD6),
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: AppSvgIcon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -170,6 +177,8 @@ class DashboardAlertCard extends StatelessWidget {
                   children: [
                     Text(
                       '${alert.count} $label',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -188,8 +197,8 @@ class DashboardAlertCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      detail,
-                      maxLines: 2,
+                      preview.title,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
@@ -213,22 +222,31 @@ class DashboardAlertCard extends StatelessWidget {
   }
 }
 
-String _unit(String? unit) => switch (unit) {
-  'KG' => 'kg',
-  'G' => 'g',
-  'L' => 'l',
-  'ML' => 'ml',
-  'PACK' => 'gói',
-  'BOTTLE' => 'chai',
-  'PCS' => 'cái',
-  _ => '',
-};
+String _alertContext(DashboardAlert alert) {
+  final preview = alert.preview;
+  final hidePond = switch (alert.kind) {
+    DashboardAlertKind.pendingProduction ||
+    DashboardAlertKind.pendingTreatment ||
+    DashboardAlertKind.inTreatment ||
+    DashboardAlertKind.monitoring => true,
+    _ => false,
+  };
+  return [
+    preview.farmName,
+    if (!hidePond && preview.pondName != null) preview.pondName!,
+    if (preview.seasonName != null) preview.seasonName!,
+  ].join(' · ');
+}
 
 void _showAlert(BuildContext context, DashboardAlert alert, String label) {
   final preview = alert.preview;
   if (alert.kind == DashboardAlertKind.pendingProduction ||
       alert.kind == DashboardAlertKind.pendingTreatment) {
     context.push('/protocols/${Uri.encodeComponent(preview.id)}');
+    return;
+  }
+  if (alert.kind == DashboardAlertKind.lowStock) {
+    context.push(_inventoryPath(preview.farmId), extra: preview.farmName);
     return;
   }
   showModalBottomSheet<void>(
@@ -252,17 +270,7 @@ void _showAlert(BuildContext context, DashboardAlert alert, String label) {
             const SizedBox(height: 12),
             Text(preview.title),
             const SizedBox(height: 8),
-            Text(
-              [
-                preview.farmName,
-                if (preview.pondName != null) preview.pondName!,
-                if (preview.seasonName != null) preview.seasonName!,
-              ].join(' · '),
-            ),
-            if (alert.kind == DashboardAlertKind.lowStock)
-              Text(
-                'Còn ${dashboardQuantity(preview.quantity)} ${_unit(preview.unit)} · Ngưỡng cảnh báo ${dashboardQuantity(preview.minAlertQuantity)} ${_unit(preview.unit)}',
-              ),
+            Text(_alertContext(alert)),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () {
@@ -287,6 +295,9 @@ void _showAlert(BuildContext context, DashboardAlert alert, String label) {
     ),
   );
 }
+
+String _inventoryPath(String farmId) =>
+    '/farms/${Uri.encodeComponent(farmId)}/inventory';
 
 String _seasonPath(String farmId, String pondId, String seasonId) =>
     '/farms/$farmId/ponds/$pondId/seasons/$seasonId';
@@ -364,33 +375,9 @@ class DashboardInventoryCard extends StatelessWidget {
   final DashboardInventory inventory;
   @override
   Widget build(BuildContext context) => DashboardCard(
-    onTap: () => showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Kho ${inventory.farmName}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${inventory.productCount} vật tư · ${inventory.lowStockCount} vật tư sắp hết',
-              ),
-              const SizedBox(height: 8),
-              Text('Giá trị tồn kho: ${dashboardMoney(inventory.stockValue)}'),
-            ],
-          ),
-        ),
-      ),
+    onTap: () => context.push(
+      _inventoryPath(inventory.farmId),
+      extra: inventory.farmName,
     ),
     child: Row(
       children: [

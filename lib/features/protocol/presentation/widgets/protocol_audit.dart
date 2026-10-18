@@ -45,6 +45,38 @@ class ProtocolAudit extends StatelessWidget {
             'Đã thay thế lúc',
             protocolDate(detail.supersededAt, time: true),
           ),
+        if (detail.card.status == ProtocolStatus.rejected &&
+            detail.rejectionReason?.isNotEmpty == true) ...[
+          const SizedBox(height: 8),
+          ProtocolSurface(
+            color: protocolRosePanel,
+            radius: 8,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Lý do từ chối',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: protocolRose,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  detail.rejectionReason!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.625,
+                    color: protocolRose,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         const Divider(height: 1, color: Color(0xFFEEF1F7)),
         const SizedBox(height: 12),

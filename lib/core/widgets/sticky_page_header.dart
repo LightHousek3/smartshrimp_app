@@ -18,6 +18,7 @@ class StickyPageHeader extends StatelessWidget {
     this.titleSize = 16,
     this.backgroundColor = AppColors.backgroundTop,
     this.titleStyle,
+    this.subtitleStyle,
     this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
     super.key,
   });
@@ -33,6 +34,7 @@ class StickyPageHeader extends StatelessWidget {
   final double titleSize;
   final Color backgroundColor;
   final TextStyle? titleStyle;
+  final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
 
   @override
@@ -50,6 +52,7 @@ class StickyPageHeader extends StatelessWidget {
       titleSize: titleSize,
       backgroundColor: backgroundColor,
       titleStyle: titleStyle,
+      subtitleStyle: subtitleStyle,
       contentPadding: contentPadding,
     ),
   );
@@ -68,6 +71,8 @@ class PageHeaderBar extends StatelessWidget {
     this.backgroundColor = AppColors.backgroundTop,
     this.backButton,
     this.titleStyle,
+    this.subtitleStyle,
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
     super.key,
   });
 
@@ -81,6 +86,8 @@ class PageHeaderBar extends StatelessWidget {
   final Color backgroundColor;
   final Widget? backButton;
   final TextStyle? titleStyle;
+  final TextStyle? subtitleStyle;
+  final EdgeInsetsGeometry contentPadding;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -96,6 +103,8 @@ class PageHeaderBar extends StatelessWidget {
       backgroundColor: backgroundColor,
       backButton: backButton,
       titleStyle: titleStyle,
+      subtitleStyle: subtitleStyle,
+      contentPadding: contentPadding,
     ),
   );
 }
@@ -113,6 +122,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.titleSize,
     required this.backgroundColor,
     required this.titleStyle,
+    required this.subtitleStyle,
     required this.contentPadding,
   });
 
@@ -127,6 +137,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double titleSize;
   final Color backgroundColor;
   final TextStyle? titleStyle;
+  final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
 
   @override
@@ -155,6 +166,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
             titleSize: titleSize,
             backgroundColor: backgroundColor,
             titleStyle: titleStyle,
+            subtitleStyle: subtitleStyle,
             contentPadding: contentPadding,
           ),
         ),
@@ -177,6 +189,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
       titleSize != oldDelegate.titleSize ||
       backgroundColor != oldDelegate.backgroundColor ||
       titleStyle != oldDelegate.titleStyle ||
+      subtitleStyle != oldDelegate.subtitleStyle ||
       contentPadding != oldDelegate.contentPadding;
 }
 
@@ -191,6 +204,7 @@ class _PageHeaderContent extends StatelessWidget {
     required this.backgroundColor,
     this.backButton,
     this.titleStyle,
+    this.subtitleStyle,
     this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
   });
 
@@ -203,6 +217,7 @@ class _PageHeaderContent extends StatelessWidget {
   final Color backgroundColor;
   final Widget? backButton;
   final TextStyle? titleStyle;
+  final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
 
   @override
@@ -256,11 +271,13 @@ class _PageHeaderContent extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style:
+                          subtitleStyle ??
+                          const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                            height: 1.5,
+                          ),
                     ),
                 ],
               ),

@@ -48,6 +48,62 @@ void main() {
     );
   });
   test(
+    'N/A: protocol and disease previews accept omitted pondName but require navigation IDs',
+    () {
+      final json = {
+        ...overviewFixture.toJson(),
+        'summary': overviewFixture.summary.toJson(),
+        'personnel': overviewFixture.personnel.toJson(),
+        'financeFarms': [
+          for (final farm in overviewFixture.financeFarms) farm.toJson(),
+        ],
+        'seasons': [
+          for (final season in overviewFixture.seasons) season.toJson(),
+        ],
+        'inventories': [
+          for (final inventory in overviewFixture.inventories)
+            inventory.toJson(),
+        ],
+        'alerts': [
+          for (final alert in overviewFixture.alerts.where(
+            (alert) => [
+              DashboardAlertKind.pendingProduction,
+              DashboardAlertKind.pendingTreatment,
+              DashboardAlertKind.inTreatment,
+              DashboardAlertKind.monitoring,
+            ].contains(alert.kind),
+          ))
+            {
+              ...alert.toJson(),
+              'preview': Map<String, dynamic>.from(alert.preview.toJson())
+                ..remove('pondName'),
+            },
+        ],
+      };
+      final parsed = OwnerDashboard.parse(json);
+      expect(parsed.alerts.length, 4);
+      expect(
+        parsed.alerts.every((alert) => alert.preview.pondName == null),
+        isTrue,
+      );
+      expect(
+        parsed.alerts.every((alert) => alert.preview.pondId != null),
+        isTrue,
+      );
+      expect(
+        parsed.seasons.first.pondName,
+        overviewFixture.seasons.first.pondName,
+      );
+      final preview = ((json['alerts'] as List).first as Map)['preview'] as Map;
+      preview.remove('pondId');
+      expect(
+        () => OwnerDashboard.parse(json),
+        throwsA(isA<InvalidResponseException>()),
+      );
+    },
+  );
+
+  test(
     'A: financial farm choices reject empty identifiers and duplicated IDs',
     () {
       for (final choices in [

@@ -7,10 +7,11 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_form_field.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
-import 'package:smartshrimp_app/features/profile/domain/profile_rules.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
-import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_screen_header.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 
 class ChangePasswordPage extends ConsumerStatefulWidget {
   const ChangePasswordPage({super.key});
@@ -47,12 +48,22 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
         bottom: false,
         child: Column(
           children: <Widget>[
-            const ProfileScreenHeader(title: 'Đổi mật khẩu'),
+            PageHeaderBar(
+              title: 'Đổi mật khẩu',
+              onBack: context.pop,
+              contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              titleStyle: AppTypography.display(
+                fontSize: 16,
+                height: 1.25,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -64,7 +75,6 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                         controller: _currentController,
                         obscureText: _obscureCurrent,
                         enabled: !_isSaving,
-                        autoFocus: true,
                         validator: (value) =>
                             _currentServerError ??
                             ProfileFormUtils.validateCurrentPassword(value),
@@ -73,7 +83,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                         onToggle: () =>
                             setState(() => _obscureCurrent = !_obscureCurrent),
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 16),
                       _PasswordField(
                         fieldKey: const Key('new_password_field'),
                         label: 'Mật khẩu mới',
@@ -92,12 +102,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                         onToggle: () =>
                             setState(() => _obscureNew = !_obscureNew),
                       ),
-                      AnimatedBuilder(
-                        animation: _newController,
-                        builder: (_, _) =>
-                            _PasswordStrength(password: _newController.text),
-                      ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 16),
                       _PasswordField(
                         fieldKey: const Key('confirm_password_field'),
                         label: 'Xác nhận mật khẩu mới',
@@ -114,10 +119,24 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                             setState(() => _obscureConfirm = !_obscureConfirm),
                         onSubmitted: (_) => _submit(),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
                       GradientButton(
                         label: 'Xác nhận đổi mật khẩu',
-                        icon: Icons.shield_outlined,
+                        compact: true,
+                        height: 45,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1A000000),
+                            blurRadius: 3,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                        borderRadius: 12,
+                        leading: const AppSvgIcon(
+                          AppSvgIconName.shieldOutline,
+                          size: 18,
+                          color: Colors.white,
+                        ),
                         isLoading: _isSaving,
                         onPressed: _isSaving ? null : _submit,
                       ),
@@ -187,7 +206,6 @@ class _PasswordField extends StatelessWidget {
     required this.onChanged,
     required this.onToggle,
     this.hint,
-    this.autoFocus = false,
     this.onSubmitted,
   });
 
@@ -197,7 +215,6 @@ class _PasswordField extends StatelessWidget {
   final TextEditingController controller;
   final bool obscureText;
   final bool enabled;
-  final bool autoFocus;
   final String? Function(String?) validator;
   final ValueChanged<String> onChanged;
   final VoidCallback onToggle;
@@ -205,109 +222,39 @@ class _PasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.inkSoft,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+    return ProfileFormField(
+      label: label,
+      helpText: hint,
+      child: TextFormField(
+        key: fieldKey,
+        controller: controller,
+        enabled: enabled,
+        obscureText: obscureText,
+        keyboardType: TextInputType.visiblePassword,
+        textInputAction: onSubmitted == null
+            ? TextInputAction.next
+            : TextInputAction.done,
+        autocorrect: false,
+        enableSuggestions: false,
+        style: profileInputStyle,
+        decoration: profileInputDecoration(
+          hintText: '••••••••',
+          suffixIcon: IconButton(
+            style: IconButton.styleFrom(
+              minimumSize: const Size(40, 40),
+              fixedSize: const Size(40, 40),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            tooltip: obscureText ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+            onPressed: enabled ? onToggle : null,
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+            padding: const EdgeInsets.all(10),
+            icon: const AppSvgIcon(AppSvgIconName.eye, size: 17),
           ),
         ),
-        const SizedBox(height: 7),
-        TextFormField(
-          key: fieldKey,
-          controller: controller,
-          enabled: enabled,
-          autofocus: autoFocus,
-          obscureText: obscureText,
-          keyboardType: TextInputType.visiblePassword,
-          textInputAction: onSubmitted == null
-              ? TextInputAction.next
-              : TextInputAction.done,
-          autocorrect: false,
-          enableSuggestions: false,
-          decoration: InputDecoration(
-            hintText: '••••••••',
-            helperText: hint,
-            suffixIcon: IconButton(
-              tooltip: obscureText ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
-              onPressed: enabled ? onToggle : null,
-              icon: Icon(
-                obscureText
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: AppColors.inkMuted,
-                size: 20,
-              ),
-            ),
-          ),
-          validator: validator,
-          onChanged: onChanged,
-          onFieldSubmitted: onSubmitted,
-        ),
-      ],
-    );
-  }
-}
-
-class _PasswordStrength extends StatelessWidget {
-  const _PasswordStrength({required this.password});
-
-  final String password;
-
-  @override
-  Widget build(BuildContext context) {
-    if (password.isEmpty) return const SizedBox.shrink();
-    final strength = ProfileFormUtils.passwordStrength(password);
-    final color = switch (strength) {
-      PasswordStrength.tooShort => AppColors.error,
-      PasswordStrength.medium => const Color(0xFFE0A000),
-      PasswordStrength.fairlyStrong => const Color(0xFF0F9B8E),
-      PasswordStrength.strong => const Color(0xFF15945D),
-    };
-    final label = switch (strength) {
-      PasswordStrength.tooShort => 'Quá ngắn',
-      PasswordStrength.medium => 'Trung bình',
-      PasswordStrength.fairlyStrong => 'Khá mạnh',
-      PasswordStrength.strong => 'Mạnh',
-    };
-    final strengthLevel = strength.index + 1;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 9),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: List<Widget>.generate(
-              4,
-              (index) => Expanded(
-                child: Container(
-                  height: 5,
-                  margin: EdgeInsets.only(right: index == 3 ? 0 : 6),
-                  decoration: BoxDecoration(
-                    color: index < strengthLevel
-                        ? color
-                        : const Color(0xDDECF0F5),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        validator: validator,
+        onChanged: onChanged,
+        onFieldSubmitted: onSubmitted,
       ),
     );
   }

@@ -332,9 +332,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         path: 'inventory',
                         builder: (_, state) => InventoryPage(
                           farmId: state.pathParameters['farmId']!,
-                          farmName: state.extra is Farm
-                              ? (state.extra! as Farm).name
-                              : null,
+                          farmName: switch (state.extra) {
+                            Farm(:final id, :final name)
+                                when id == state.pathParameters['farmId'] =>
+                              name,
+                            String name when name.trim().isNotEmpty => name,
+                            _ => null,
+                          },
                         ),
                         routes: <RouteBase>[
                           GoRoute(

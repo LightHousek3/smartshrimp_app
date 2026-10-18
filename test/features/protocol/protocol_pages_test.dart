@@ -148,6 +148,24 @@ Future<void> scrollTo(WidgetTester tester, String label) async {
 
 void main() {
   _ProtocolTestBinding();
+  testWidgets('N: rejection reason precedes status history in the audit card', (
+    tester,
+  ) async {
+    final repo = ProtocolFixtureRepository(status: 'REJECTED')
+      ..rejectionReason = 'Cần làm rõ liều lượng và thời điểm sử dụng.';
+    await open(tester, repository: repo);
+    await scrollTo(tester, 'Lý do từ chối');
+    expect(find.text(repo.rejectionReason!), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Lý do từ chối')).dy,
+      lessThan(tester.getTopLeft(find.text('LỊCH SỬ TRẠNG THÁI')).dy),
+    );
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/rejected_audit.png'),
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'N: production opens at current Vietnam DOC and preserves manual day selection',
     (tester) async {
@@ -388,6 +406,8 @@ void main() {
       );
       repo.reviewGate!.complete();
       await tester.pumpAndSettle();
+      expect(find.text('Thành công'), findsOneWidget);
+      expect(find.text('Đã từ chối phác đồ.'), findsOneWidget);
       expect(repo.approved, isFalse);
       expect(repo.rejectionReason?.trim(), 'Cần làm rõ liều');
       expect(find.text('Quyết định của Chủ trại'), findsNothing);
@@ -407,6 +427,11 @@ void main() {
       await scrollTo(tester, 'Xác nhận duyệt');
       await tester.tap(find.text('Xác nhận duyệt'));
       await tester.pumpAndSettle();
+      expect(find.text('Thành công'), findsOneWidget);
+      expect(
+        find.text('Đã phê duyệt. Hệ thống sẽ sinh lịch vận hành gần nhất.'),
+        findsOneWidget,
+      );
       expect(repo.approved, isTrue);
       expect(repo.version, DateTime.parse('2026-06-20T02:00:00Z'));
       expect(repo.detailCalls, 2);

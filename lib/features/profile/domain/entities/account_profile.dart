@@ -23,7 +23,6 @@ abstract class AccountProfile with _$AccountProfile {
     ManagedOwner? managedByOwner,
     TechnicianKpi? technicianKpi,
     ExpertKpi? expertKpi,
-    FarmOwnerKpi? farmOwnerKpi,
     DateTime? activatedAt,
     DateTime? lastLoginAt,
     DateTime? createdAt,
@@ -110,16 +109,4 @@ abstract class ExpertKpi with _$ExpertKpi {
 
   factory ExpertKpi.fromJson(Map<String, dynamic> json) =>
       _$ExpertKpiFromJson(json);
-}
-
-@freezed
-abstract class FarmOwnerKpi with _$FarmOwnerKpi {
-  const factory FarmOwnerKpi({
-    required int farmsOwned,
-    required int pondsManaged,
-    required int activeSeasons,
-  }) = _FarmOwnerKpi;
-
-  factory FarmOwnerKpi.fromJson(Map<String, dynamic> json) =>
-      _$FarmOwnerKpiFromJson(json);
 }

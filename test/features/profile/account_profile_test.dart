@@ -61,17 +61,12 @@ void main() {
     expect(profile.technicianKpi, isNull);
   });
 
-  test('parses Farm Owner and Expert role-specific KPI contracts', () {
+  test('parses an Owner profile without KPIs and preserves Expert KPIs', () {
     final owner = AccountProfile.parse(<String, dynamic>{
       'id': 'owner-1',
       'email': 'owner@smartshrimp.vn',
       'role': 'FARM_OWNER',
       'status': 'ACTIVE',
-      'farmOwnerKpi': <String, dynamic>{
-        'farmsOwned': 2,
-        'pondsManaged': 8,
-        'activeSeasons': 3,
-      },
     });
     final expert = AccountProfile.parse(<String, dynamic>{
       'id': 'expert-1',
@@ -86,9 +81,9 @@ void main() {
       },
     });
 
-    expect(owner.farmOwnerKpi?.farmsOwned, 2);
-    expect(owner.farmOwnerKpi?.pondsManaged, 8);
-    expect(owner.farmOwnerKpi?.activeSeasons, 3);
+    expect(owner.role, AccountRole.farmOwner);
+    expect(owner.technicianKpi, isNull);
+    expect(owner.expertKpi, isNull);
     expect(expert.expertKpi?.seasonsParticipated, 7);
     expect(expert.expertKpi?.diseaseCasesHandled, 12);
     expect(expert.expertKpi?.diseaseCasesResolved, 9);
@@ -133,11 +128,6 @@ void main() {
         diseaseCasesResolved: 9,
         avgResolutionHours: 18.5,
       ),
-      farmOwnerKpi: FarmOwnerKpi(
-        farmsOwned: 2,
-        pondsManaged: 8,
-        activeSeasons: 3,
-      ),
     );
 
     final json = profile.toJson();
@@ -147,7 +137,7 @@ void main() {
     expect(json['managedByOwner'], isA<Map<String, dynamic>>());
     expect(json['technicianKpi'], isA<Map<String, dynamic>>());
     expect(json['expertKpi'], isA<Map<String, dynamic>>());
-    expect(json['farmOwnerKpi'], isA<Map<String, dynamic>>());
+    expect(json.containsKey('farmOwnerKpi'), isFalse);
   });
 
   test('rejects malformed nested profile data at the parsing boundary', () {

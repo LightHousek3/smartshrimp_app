@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -29,6 +30,20 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(protocolReviewProvider(widget.protocolId), (previous, next) {
+      if (previous?.isLoading != true || next.isLoading) return;
+      if (next.hasError) {
+        AppNoticeService.danger(context, protocolError(next.error!));
+      } else if (next.value != null) {
+        // The page survives the refresh that removes the decision form.
+        AppNoticeService.success(
+          context,
+          next.value == true
+              ? 'Đã phê duyệt. Hệ thống sẽ sinh lịch vận hành gần nhất.'
+              : 'Đã từ chối phác đồ.',
+        );
+      }
+    });
     final state = ref.watch(protocolDetailProvider(widget.protocolId));
     final detail = state.value;
     final now = ref.watch(protocolClockProvider)();
@@ -190,35 +205,6 @@ class _DetailContent extends ConsumerWidget {
           if (detail.canReview) ...[
             const SizedBox(height: 16),
             ProtocolDecision(detail: detail),
-          ],
-          if (detail.rejectionReason?.isNotEmpty == true) ...[
-            const SizedBox(height: 16),
-            ProtocolSurface(
-              color: protocolRosePanel,
-              border: const Color(0xFFFFC7D3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Lý do từ chối',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: protocolRose,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    detail.rejectionReason!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.625,
-                      color: protocolRose,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ],
       ),

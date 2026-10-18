@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -15,8 +17,65 @@ import 'package:smartshrimp_app/features/personnel/presentation/view_models/pers
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/domain/repositories/profile_repository.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
+import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import '../../support/load_app_fonts.dart';
 
 void main() {
+  for (final (route, title, golden) in [
+    (AppRoutes.profileEdit, 'Cập nhật thông tin', 'profile_edit'),
+    (AppRoutes.changePassword, 'Đổi mật khẩu', 'change_password'),
+  ]) {
+    testWidgets('$title follows the Figma form layout and shared icons', (
+      tester,
+    ) async {
+      await loadAppFonts();
+      tester.view.physicalSize = const Size(402, 874);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      await tester.pumpWidget(
+        _testApp(
+          _FakeAuthRepository(account: _authAccountFor(AccountRole.farmOwner)),
+          _FakeProfileRepository(profile: _profileFor(AccountRole.farmOwner)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      ProviderScope.containerOf(
+        tester.element(find.byType(SmartShrimpApp)),
+      ).read(appRouterProvider).go(route);
+      await tester.pumpAndSettle();
+      expect(find.text(title), findsOneWidget);
+      expect(find.byType(PageHeaderBar), findsOneWidget);
+      expect(find.byType(StickyPageHeader), findsNothing);
+      expect(find.text('Trang trại'), findsOneWidget);
+      final field = tester.getSize(find.byType(TextFormField).first);
+      expect(field.width, 370);
+      expect(field.height, closeTo(44, 3));
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/$golden.png'),
+      );
+      if (route == AppRoutes.changePassword) {
+        expect(tester.testTextInput.isVisible, isFalse);
+        final current = find.byKey(const Key('current_password_field'));
+        final currentInput = find.descendant(
+          of: current,
+          matching: find.byType(TextField),
+        );
+        expect(tester.widget<TextField>(currentInput).obscureText, isTrue);
+        await tester.tap(find.byTooltip('Hiện mật khẩu').first);
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(currentInput).obscureText, isFalse);
+        await tester.tap(find.byTooltip('Ẩn mật khẩu'));
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(currentInput).obscureText, isTrue);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('account tab shows the authenticated technician profile', (
     tester,
   ) async {
@@ -42,6 +101,13 @@ void main() {
   testWidgets('account tab adapts account details for a farm owner', (
     tester,
   ) async {
+    await loadAppFonts();
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 24);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
     final ownerAccount = _authAccountFor(AccountRole.farmOwner);
     final ownerProfile = _profileFor(AccountRole.farmOwner);
     await tester.pumpWidget(
@@ -58,18 +124,35 @@ void main() {
     expect(find.text('Chủ trang trại'), findsNWidgets(2));
     expect(find.text('Vai trò hệ thống'), findsOneWidget);
     expect(find.text('Chủ trang trại phụ trách'), findsNothing);
-    expect(find.text('TRANG TRẠI'), findsOneWidget);
-    expect(find.text('AO NUÔI'), findsOneWidget);
-    expect(find.text('VỤ NUÔI'), findsOneWidget);
-    expect(find.text('Đang sở hữu'), findsOneWidget);
-    expect(find.text('Đang quản lý'), findsOneWidget);
-    expect(find.text('Đang hoạt động'), findsOneWidget);
-    expect(find.text('2'), findsOneWidget);
-    expect(find.text('8'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
+    expect(find.text('TRANG TRẠI'), findsNothing);
+    expect(find.text('AO NUÔI'), findsNothing);
+    expect(find.text('VỤ NUÔI'), findsNothing);
+    expect(find.text('Đang sở hữu'), findsNothing);
+    expect(find.text('Đang quản lý'), findsNothing);
+    expect(find.text('Đang hoạt động'), findsNothing);
+    for (final value in ['2', '8', '3']) {
+      expect(
+        find.descendant(
+          of: find.byType(AccountPage),
+          matching: find.text(value),
+        ),
+        findsNothing,
+      );
+    }
     expect(find.byKey(const Key('account_personnel_entry')), findsOneWidget);
     expect(find.text('3 KTV · 2 Chuyên gia'), findsOneWidget);
     expect(find.text('5 đang hoạt động'), findsOneWidget);
+    expect(find.text('Quản lý hồ sơ & nhân sự'), findsOneWidget);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/owner_account.png'),
+    );
+    final header = find.text('Quản lý hồ sơ & nhân sự');
+    final topBefore = tester.getTopLeft(header).dy;
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -450));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(header).dy, topBefore);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('profile edit validates and sends normalized values', (
@@ -202,6 +285,10 @@ Widget _testApp(
 ) {
   return ProviderScope(
     overrides: [
+      notificationRepositoryProvider.overrideWithValue(
+        DashboardFixtureNotifications(),
+      ),
+      notificationSocketProvider.overrideWith((ref) => null),
       ownerDashboardRepositoryProvider.overrideWithValue(
         DashboardFixtureRepository(),
       ),
@@ -257,9 +344,6 @@ AccountProfile _profileFor(AccountRole role) => AccountProfile(
   phone: '0987654321',
   role: role,
   status: AccountStatus.active,
-  farmOwnerKpi: role == AccountRole.farmOwner
-      ? const FarmOwnerKpi(farmsOwned: 2, pondsManaged: 8, activeSeasons: 3)
-      : null,
 );
 
 final class _FakeAuthRepository implements AuthRepository {
@@ -333,7 +417,6 @@ final class _FakeProfileRepository implements ProfileRepository {
       managedByOwner: current.managedByOwner,
       technicianKpi: current.technicianKpi,
       expertKpi: current.expertKpi,
-      farmOwnerKpi: current.farmOwnerKpi,
       updatedAt: DateTime.utc(2026, 9, 17, 0, 0, updateProfileCalls),
     );
     return current;

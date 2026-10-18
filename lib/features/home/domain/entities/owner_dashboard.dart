@@ -216,7 +216,7 @@ abstract class OwnerDashboard with _$OwnerDashboard {
             alert.preview.seasonId,
             alert.preview.seasonName,
             alert.preview.pondId,
-            alert.preview.pondName,
+            if (alert.preview.pondName != null) alert.preview.pondName,
           ]);
         }
         _nonNegative([

@@ -7,10 +7,12 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
-import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_screen_header.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_form_field.dart';
 
 class ProfileEditPage extends ConsumerWidget {
   const ProfileEditPage({super.key});
@@ -79,51 +81,78 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const ProfileScreenHeader(title: 'Cập nhật thông tin'),
+        PageHeaderBar(
+          title: 'Cập nhật thông tin',
+          onBack: context.pop,
+          contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          titleStyle: AppTypography.display(
+            fontSize: 16,
+            height: 1.25,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
+        ),
         Expanded(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const _FieldLabel('Họ và tên'),
-                  const SizedBox(height: 7),
-                  TextFormField(
-                    key: const Key('profile_name_field'),
-                    controller: _nameController,
-                    enabled: !_isSaving,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    maxLength: 50,
-                    decoration: const InputDecoration(
-                      hintText: 'VD: Trần Quốc Bảo',
-                      counterText: '',
+                  ProfileFormField(
+                    label: 'Họ và tên',
+                    child: TextFormField(
+                      key: const Key('profile_name_field'),
+                      controller: _nameController,
+                      enabled: !_isSaving,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      maxLength: 50,
+                      style: profileIdentityInputStyle,
+                      decoration: profileInputDecoration(
+                        hintText: 'VD: Trần Quốc Bảo',
+                      ),
+                      validator: ProfileFormUtils.validateFullName,
                     ),
-                    validator: ProfileFormUtils.validateFullName,
                   ),
                   const SizedBox(height: 16),
-                  const _FieldLabel('Số điện thoại'),
-                  const SizedBox(height: 7),
-                  TextFormField(
-                    key: const Key('profile_phone_field'),
-                    controller: _phoneController,
-                    enabled: !_isSaving,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.done,
-                    maxLength: 20,
-                    decoration: const InputDecoration(
-                      hintText: '09xx xxx xxx',
-                      counterText: '',
+                  ProfileFormField(
+                    label: 'Số điện thoại',
+                    child: TextFormField(
+                      key: const Key('profile_phone_field'),
+                      controller: _phoneController,
+                      enabled: !_isSaving,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      maxLength: 20,
+                      style: profileIdentityInputStyle,
+                      decoration: profileInputDecoration(
+                        hintText: '09xx xxx xxx',
+                      ),
+                      validator: ProfileFormUtils.validatePhone,
+                      onFieldSubmitted: (_) => _submit(),
                     ),
-                    validator: ProfileFormUtils.validatePhone,
-                    onFieldSubmitted: (_) => _submit(),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   GradientButton(
                     label: 'Lưu thay đổi',
+                    compact: true,
+                    height: 45,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                    borderRadius: 12,
+                    leading: const AppSvgIcon(
+                      AppSvgIconName.check,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                     isLoading: _isSaving,
                     onPressed: _isSaving ? null : _submit,
                   ),
@@ -168,23 +197,5 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
 
   void _showError(String message) {
     AppNoticeService.danger(context, message);
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.inkSoft,
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-      ),
-    );
   }
 }

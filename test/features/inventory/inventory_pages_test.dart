@@ -34,11 +34,14 @@ import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_stock_out_lot_picker.dart';
+import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
+import '../../support/farm_context_repository.dart';
 
 void main() {
   Widget buildTestableWidget(Widget child, {_SupplierRepository? suppliers}) =>
       ProviderScope(
         overrides: [
+          farmRepositoryProvider.overrideWithValue(FarmContextRepository()),
           authRepositoryProvider.overrideWithValue(
             const _OwnerAuthRepository(),
           ),

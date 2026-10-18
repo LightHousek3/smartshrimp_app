@@ -78,10 +78,12 @@ class OwnerHomePage extends ConsumerWidget {
                           title: 'Không có cảnh báo quan trọng',
                           hint: 'Các cảnh báo cần chú ý sẽ xuất hiện ở đây.',
                         ),
-                      for (final alert in dashboard.alerts)
+                      for (int i = 0; i < dashboard.alerts.length; i++)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: DashboardAlertCard(alert),
+                          padding: EdgeInsets.only(
+                            bottom: i == dashboard.alerts.length - 1 ? 8 : 16,
+                          ),
+                          child: DashboardAlertCard(dashboard.alerts[i]),
                         ),
                       const DashboardSectionTitle('Vụ đang nuôi'),
                       if (dashboard.seasons.isEmpty)
