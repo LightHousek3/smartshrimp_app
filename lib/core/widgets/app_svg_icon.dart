@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 
 enum AppSvgIconName {
+  plus,
+  dropdownChevron,
   home,
   farm,
   shrimp,
@@ -49,7 +51,9 @@ class AppSvgIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-    'assets/icons/common/${icon == AppSvgIconName.shrimpFeed
+    'assets/icons/common/${icon == AppSvgIconName.dropdownChevron
+        ? 'dropdown-chevron'
+        : icon == AppSvgIconName.shrimpFeed
         ? 'shrimp-feed'
         : icon == AppSvgIconName.chevronDown
         ? 'chevron-down'
@@ -57,7 +61,7 @@ class AppSvgIcon extends StatelessWidget {
         ? 'shield-outline'
         : icon.name}.svg',
     width: size,
-    height: size,
+    height: icon == AppSvgIconName.dropdownChevron ? size * .6 : size,
     fit: BoxFit.contain,
     colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
     excludeFromSemantics: true,
