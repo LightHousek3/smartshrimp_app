@@ -146,7 +146,7 @@ class MainShell extends ConsumerWidget {
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: <Widget>[
-                                    if (isOwner)
+                                    if (isOwner || item.path == '/tasks')
                                       AppSvgIcon(
                                         switch (item.path) {
                                           '/' => AppSvgIconName.home,

@@ -24,7 +24,9 @@ import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_seas
 import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
 import 'package:smartshrimp_app/features/season/presentation/pages/season_detail_page.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
-import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
+import 'package:smartshrimp_app/features/task/presentation/pages/task_list_page.dart';
+import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
+import '../task/task_fixtures.dart';
 
 void main() {
   testWidgets('owner can filter personnel and open details', (tester) async {
@@ -209,6 +211,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          taskRepositoryProvider.overrideWithValue(TaskFixtureRepository()),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -229,15 +232,13 @@ void main() {
 
     await tester.tap(find.text('Nhiệm vụ'));
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<EmptyTabPage>(find.byType(EmptyTabPage)).semanticLabel,
-      'Nhiệm vụ',
-    );
+    expect(find.byType(TaskListPage), findsOneWidget);
 
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
     expect(find.byType(AccountPage), findsOneWidget);
     expect(find.byKey(const Key('account_personnel_entry')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 }
 
