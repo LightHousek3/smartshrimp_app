@@ -316,7 +316,20 @@ class _PondCard extends StatelessWidget {
                 subtitle: 'Thả vào: ${_date(season.stockingDate)}',
               ),
               const SizedBox(width: 10),
-              const _Metric('SỨC KHỎE ĐÀN', 'Chưa có dữ liệu'),
+              _Metric(
+                'SỨC KHỎE ĐÀN',
+                'Xem chi tiết',
+                subtitle: 'Nhật ký & thể trạng',
+                onTap: () => context.push(
+                  '/seasons/${season.id}/shrimp-health',
+                  extra: <String, dynamic>{
+                    'farmName': season.farmName,
+                    'seasonName': season.name,
+                    'pondName': season.pondName,
+                    'isSeasonActive': season.status == AssignedSeasonStatus.active,
+                  },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -429,6 +442,16 @@ class _FeatureActions extends ConsumerWidget {
             },
           );
           if (context.mounted) invalidateWaterLogViews(ref, seasonId);
+        },
+        1 => () async {
+          await context.push(
+            '/seasons/$seasonId/shrimp-health',
+            extra: <String, String>{
+              'farmName': farmName,
+              'seasonName': seasonName,
+              'pondName': pondName,
+            },
+          );
         },
         2 => () => context.push('/seasons/$seasonId/operations'),
         4 => () => context.push('/seasons/$seasonId/rag'),
@@ -1068,32 +1091,48 @@ class _PondFact extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric(this.label, this.value, {this.subtitle});
+  const _Metric(this.label, this.value, {this.subtitle, this.onTap});
   final String label, value;
   final String? subtitle;
+  final VoidCallback? onTap;
+
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
+  Widget build(BuildContext context) {
+    final body = Container(
       constraints: const BoxConstraints(minHeight: 76),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.line),
+        color: onTap != null ? const Color(0xFFFAFBFC) : Colors.transparent,
+        border: Border.all(
+          color: onTap != null ? const Color(0xFFC4E0FF) : AppColors.line,
+        ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
+              ),
+              if (onTap != null)
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 10,
+                  color: AppColors.ocean,
+                ),
+            ],
           ),
           const SizedBox(height: 3),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: onTap != null ? AppColors.ocean : AppColors.ink,
               fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
@@ -1109,8 +1148,21 @@ class _Metric extends StatelessWidget {
           ],
         ],
       ),
-    ),
-  );
+    );
+
+    return Expanded(
+      child: onTap != null
+          ? Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(16),
+                child: body,
+              ),
+            )
+          : body,
+    );
+  }
 }
 
 class _Title extends StatelessWidget {
@@ -1207,3 +1259,4 @@ String _pondStatusLabel(String value) => switch (value) {
   'INACTIVE' => 'Ngừng dùng',
   _ => 'Không rõ',
 };
+
