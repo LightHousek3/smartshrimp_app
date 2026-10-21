@@ -5,6 +5,24 @@ import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 
 void main() {
   group('ErrorMapper', () {
+    test('preserves operational errorCode for harvest field errors', () {
+      final request = RequestOptions(path: '/owner/seasons/season/harvests');
+      final error = DioException(
+        requestOptions: request,
+        type: DioExceptionType.badResponse,
+        response: Response<Map<String, dynamic>>(
+          requestOptions: request,
+          statusCode: 400,
+          data: {
+            'message': 'Population changed',
+            'errorCode': 'HARVEST_POPULATION_MISMATCH',
+          },
+        ),
+      );
+      expect(ErrorMapper.fromDio(error).details, {
+        'code': 'HARVEST_POPULATION_MISMATCH',
+      });
+    });
     test('maps connectivity failures to NetworkException', () {
       final request = RequestOptions(path: '/profile');
       final error = DioException(

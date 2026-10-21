@@ -28,7 +28,10 @@ abstract final class ErrorMapper {
     final message = body is Map<String, dynamic> && body['message'] is String
         ? body['message']! as String
         : _fallbackMessage(statusCode);
-    final details = body is Map<String, dynamic> ? body['errors'] : null;
+    final details = body is Map<String, dynamic>
+        ? body['errors'] ??
+              (body['errorCode'] is String ? {'code': body['errorCode']} : null)
+        : null;
 
     return ApiException(message, statusCode: statusCode, details: details);
   }
