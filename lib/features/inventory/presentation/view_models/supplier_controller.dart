@@ -84,6 +84,7 @@ final class SupplierListController
     String? email,
     String? address,
     String? note,
+    bool isActive = true,
   }) => _mutate(() async {
     final result = await ref
         .read(supplierRepositoryProvider)
@@ -96,8 +97,10 @@ final class SupplierListController
           email: email,
           address: address,
           note: note,
+          isActive: isActive,
         );
     if (ref.mounted) {
+      ref.invalidate(supplierListControllerProvider);
       final current = state.value;
       if (current != null) {
         final updated = [
@@ -122,6 +125,7 @@ final class SupplierListController
         .read(supplierRepositoryProvider)
         .deleteSupplier(farmId, supplierId);
     if (ref.mounted) {
+      ref.invalidate(supplierListControllerProvider);
       final current = state.value;
       if (current != null) {
         state = AsyncData(current.where((s) => s.id != supplierId).toList());

@@ -41,6 +41,7 @@ class _InventorySupplierFormPageState
   bool _saving = false;
   bool _conflict = false;
   bool _reloadLatest = false;
+  bool _isActive = true;
 
   @override
   void dispose() {
@@ -64,6 +65,7 @@ class _InventorySupplierFormPageState
             email: _fields['email']!.text,
             address: _fields['address']!.text,
             note: _fields['note']!.text,
+            isActive: _isActive,
           );
       if (!mounted) return;
       AppNoticeService.success(
@@ -95,11 +97,7 @@ class _InventorySupplierFormPageState
     if (widget.supplierId != null) {
       final initial = widget.initialSupplier;
       InventorySupplier? supplier =
-          !_reloadLatest &&
-              initial?.id == widget.supplierId &&
-              initial?.farmId == widget.farmId
-          ? initial
-          : null;
+          !_reloadLatest && initial?.id == widget.supplierId ? initial : null;
       if (supplier == null) {
         final state = ref.watch(
           supplierDetailProvider((
@@ -137,6 +135,7 @@ class _InventorySupplierFormPageState
       }
       if (_existing == null) {
         _existing = supplier;
+        _isActive = supplier.isActive;
         final values = {
           'name': _existing!.name,
           'contactName': _existing!.contactName,
@@ -155,7 +154,7 @@ class _InventorySupplierFormPageState
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
-          const Text('Danh bạ nhà cung cấp dùng riêng cho trang trại này.'),
+          const Text('Nhà cung cấp dùng chung cho tất cả trang trại của bạn.'),
           const SizedBox(height: 12),
           AbsorbPointer(
             absorbing: _saving,
@@ -201,6 +200,27 @@ class _InventorySupplierFormPageState
                   ),
                   _field('address', 'Địa chỉ', 1000, lines: 2),
                   _field('note', 'Ghi chú', 2000, lines: 3),
+                  InventoryField(
+                    label: 'Trạng thái',
+                    child: DropdownButtonFormField<bool>(
+                      initialValue: _isActive,
+                      isExpanded: true,
+                      style: inventoryInputTextStyle,
+                      decoration: inventoryInputDecoration(),
+                      items: const [
+                        DropdownMenuItem(
+                          value: true,
+                          child: Text('Đang hoạt động'),
+                        ),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Tạm ngưng'),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _isActive = value ?? true),
+                    ),
+                  ),
                 ],
               ),
             ),

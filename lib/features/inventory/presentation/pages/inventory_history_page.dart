@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -257,16 +258,10 @@ class _HistoryContent extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         if (transactions.isEmpty)
-          const InventorySurface(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 28),
-              child: Center(
-                child: Text(
-                  'Không có giao dịch phù hợp.',
-                  style: TextStyle(color: AppColors.inkMuted),
-                ),
-              ),
-            ),
+          const InventoryEmptyState(
+            title: 'Không có giao dịch phù hợp',
+            message: 'Hãy thử từ khóa hoặc bộ lọc truy vết khác.',
+            icon: Icons.receipt_long_outlined,
           )
         else
           ...transactions.map(

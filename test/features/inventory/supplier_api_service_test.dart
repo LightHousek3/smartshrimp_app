@@ -52,8 +52,15 @@ void main() {
       expect((requests.last.data as Map)['phone'], isNull);
       await repo.getSupplier('farm-1', created.id);
       expect(requests.last.method, 'GET');
-      await repo.saveSupplier(farmId: 'farm-1', existing: created, name: 'New');
+      await repo.saveSupplier(
+        farmId: 'farm-2',
+        existing: created,
+        name: 'New',
+        isActive: false,
+      );
       expect(requests.last.method, 'PATCH');
+      expect(requests.last.path, '/owner/farms/farm-2/suppliers/supplier-1');
+      expect((requests.last.data as Map)['isActive'], isFalse);
       expect(
         (requests.last.data as Map)['expectedUpdatedAt'],
         '2026-10-01T00:00:00.000Z',
@@ -109,6 +116,14 @@ void main() {
     },
   );
   test('rejects malformed supplier records', () {
+    expect(
+      InventorySupplier.parse({...supplier, 'isActive': false}).isActive,
+      isFalse,
+    );
+    expect(
+      () => InventorySupplier.parse({...supplier, 'isActive': 'active'}),
+      throwsA(isA<InvalidResponseException>()),
+    );
     expect(
       () => InventorySupplier.parse({...supplier, 'updatedAt': 'bad-date'}),
       throwsA(isA<InvalidResponseException>()),

@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -170,36 +171,14 @@ class _InventorySuppliersPageState
                       ),
                     ),
                     if (items.isEmpty)
-                      InventorySurface(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.storefront_outlined,
-                                size: 40,
-                                color: AppColors.inkMuted,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                _search.isEmpty
-                                    ? 'Chưa có nhà cung cấp.'
-                                    : 'Không tìm thấy nhà cung cấp phù hợp.',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.inkSoft,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              if (_search.isEmpty)
-                                TextButton.icon(
-                                  icon: const Icon(Icons.add_rounded, size: 18),
-                                  label: const Text('Thêm nhà cung cấp'),
-                                  onPressed: _addSupplier,
-                                ),
-                            ],
-                          ),
-                        ),
+                      InventoryEmptyState(
+                        title: _search.isEmpty
+                            ? 'Chưa có nhà cung cấp'
+                            : 'Không tìm thấy nhà cung cấp',
+                        message: _search.isEmpty
+                            ? 'Thêm nhà cung cấp để dùng chung cho các trang trại của bạn.'
+                            : 'Hãy thử tên hoặc thông tin liên hệ khác.',
+                        icon: Icons.storefront_outlined,
                       ),
                     for (final supplier in items)
                       Padding(
@@ -269,6 +248,17 @@ class _SupplierCard extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      supplier.isActive ? 'Đang hoạt động' : 'Tạm ngưng',
+                      style: TextStyle(
+                        color: supplier.isActive
+                            ? const Color(0xFF0F9B8E)
+                            : AppColors.inkMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (supplier.contactName?.trim().isNotEmpty == true) ...[

@@ -37,7 +37,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: <Widget>[
       Material(
-        color: const Color(0xFFEAF4FF),
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.line),
@@ -202,7 +202,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                           foregroundColor: AppColors.inkSoft,
                           side: const BorderSide(color: AppColors.line),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                         ),
                         child: const Text('Đặt lại'),
@@ -213,6 +213,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                   Expanded(
                     child: InventoryGradientButton(
                       label: 'Xem kết quả',
+                      radius: 22,
                       iconAsset: InventoryAssets.search,
                       height: 44,
                       onPressed: loading ? null : onApply,

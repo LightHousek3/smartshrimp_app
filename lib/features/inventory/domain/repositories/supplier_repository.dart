@@ -12,6 +12,7 @@ abstract interface class SupplierRepository {
     String? email,
     String? address,
     String? note,
+    bool isActive = true,
   });
   Future<void> deleteSupplier(String farmId, String supplierId);
 }

@@ -16,6 +16,7 @@ _InventorySupplier _$InventorySupplierFromJson(Map<String, dynamic> json) =>
       email: json['email'] as String?,
       address: json['address'] as String?,
       note: json['note'] as String?,
+      isActive: json['isActive'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -30,6 +31,7 @@ Map<String, dynamic> _$InventorySupplierToJson(_InventorySupplier instance) =>
       'email': instance.email,
       'address': instance.address,
       'note': instance.note,
+      'isActive': instance.isActive,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
     };

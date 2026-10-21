@@ -160,8 +160,8 @@ void main() {
       ),
       matching: find.byType(TextFormField),
     );
-    await tester.ensureVisible(field);
-    await tester.enterText(field, value);
+    await tester.ensureVisible(field.first);
+    await tester.enterText(field.first, value);
     await tester.pump();
   }
 
@@ -462,14 +462,41 @@ void main() {
     expect(find.byTooltip('Gỡ ảnh 1'), findsOneWidget);
     expect(find.byTooltip('Gỡ ảnh 2'), findsOneWidget);
     expect(find.text('Chụp ảnh'), findsNothing);
-    expect(find.text('Đã đủ 2 ảnh'), findsOneWidget);
+    expect(find.byKey(const ValueKey('inventory-photo-2')), findsOneWidget);
+    expect(find.text('Thêm ảnh khác'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('rejects selecting a third photo before adding any files', (
+  testWidgets(
+    'accepts three photos and preserves the third slot after removal',
+    (tester) async {
+      final picker = _FileImagePicker(fileCount: 3);
+      await openForm(
+        tester,
+        const InventoryProductFormPage.create(farmId: 'farm-1'),
+        _InventoryRepository(product: _product(), history: _history()),
+        picker: picker,
+      );
+      await tester.ensureVisible(find.text('Chọn nhiều ảnh'));
+      await tester.tap(find.text('Chọn nhiều ảnh'));
+      await tester.pumpAndSettle();
+      expect(find.text('Đã đủ 3 ảnh'), findsOneWidget);
+      await tester.ensureVisible(find.byTooltip('Gỡ ảnh 3'));
+      await tester.tap(find.byTooltip('Gỡ ảnh 3'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Gỡ ảnh 3'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('inventory-photo-2')));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Gỡ ảnh 3'), findsOneWidget);
+      expect(find.text('Đã đủ 3 ảnh'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('rejects selecting a fourth photo before adding any files', (
     tester,
   ) async {
-    final picker = _FileImagePicker(fileCount: 3);
+    final picker = _FileImagePicker(fileCount: 4);
     await openForm(
       tester,
       const InventoryProductFormPage.create(farmId: 'farm-1'),
@@ -479,10 +506,7 @@ void main() {
     await tester.ensureVisible(find.text('Chọn nhiều ảnh'));
     await tester.tap(find.text('Chọn nhiều ảnh'));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Mỗi vật tư có tối đa 2 ảnh: mặt trước và mặt sau.'),
-      findsOneWidget,
-    );
+    expect(find.text('Mỗi vật tư có tối đa 3 ảnh.'), findsOneWidget);
     expect(find.byTooltip('Gỡ ảnh 1'), findsNothing);
     expect(find.byTooltip('Gỡ ảnh 2'), findsNothing);
   });
@@ -698,103 +722,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'delete button stays visible while remaining stock blocks confirmation',
-    (tester) async {
-      final repository = _InventoryRepository(
-        product: _product().copyWith(canArchive: true),
-        history: _history(),
-      );
-      await openForm(
-        tester,
-        const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
-        repository,
-      );
-      final deleteButton = find.widgetWithText(OutlinedButton, 'Xóa vật tư');
-      await tester.scrollUntilVisible(
-        deleteButton,
-        250,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await capture(tester, 'detail-actions');
-      await tester.tap(deleteButton);
-      await tester.pumpAndSettle();
-      expect(find.text('Chưa thể xóa vật tư'), findsOneWidget);
-      expect(find.text('Kho vẫn còn 80 kg'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Xóa vật tư'), findsNothing);
-      await capture(tester, 'cannot-delete-stock');
-      expect(repository.deleteCalls, 0);
-      await tester.tap(find.text('Đã hiểu'));
-      await tester.pumpAndSettle();
-      expect(find.text('Chưa thể xóa vật tư'), findsNothing);
-    },
-  );
-
-  testWidgets('planned use also blocks deletion with an acknowledgement', (
+  testWidgets('products expose pause and never expose deletion', (
     tester,
   ) async {
-    final repository = _InventoryRepository(
-      product: _product().copyWith(
-        currentStock: 0,
-        plannedUseCount: 2,
-        canArchive: false,
-      ),
-      history: _history(),
-    );
     await openForm(
       tester,
       const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
-      repository,
+      _InventoryRepository(product: _product(), history: _history()),
     );
-    final deleteButton = find.widgetWithText(OutlinedButton, 'Xóa vật tư');
+    expect(find.text('Xóa vật tư'), findsNothing);
+    final pause = find.widgetWithText(OutlinedButton, 'Tạm ngưng vật tư');
     await tester.scrollUntilVisible(
-      deleteButton,
+      pause,
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(deleteButton);
+    await tester.tap(pause);
     await tester.pumpAndSettle();
-    expect(find.text('Chưa thể xóa vật tư'), findsOneWidget);
-    expect(find.textContaining('2 lịch vận hành dự kiến'), findsOneWidget);
-    expect(repository.deleteCalls, 0);
-    await tester.tap(find.text('Đã hiểu'));
+    expect(find.text('Tạm ngưng vật tư?'), findsOneWidget);
+    await tester.tap(find.text('Hủy'));
     await tester.pumpAndSettle();
+    expect(find.text('Tạm ngưng vật tư?'), findsNothing);
   });
-
-  testWidgets(
-    'deleting an empty material requires confirmation and returns to the list',
-    (tester) async {
-      final repository = _InventoryRepository(
-        product: _product().copyWith(
-          currentStock: 0,
-          inventoryValue: 0,
-          lots: [],
-          canArchive: true,
-          plannedUseCount: 0,
-        ),
-        history: _history(),
-      );
-      await openForm(
-        tester,
-        const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
-        repository,
-      );
-      final deleteButton = find.widgetWithText(OutlinedButton, 'Xóa vật tư');
-      await tester.scrollUntilVisible(
-        deleteButton,
-        250,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.tap(deleteButton);
-      await tester.pumpAndSettle();
-      expect(repository.deleteCalls, 0);
-      await tester.tap(find.widgetWithText(FilledButton, 'Xóa vật tư'));
-      await tester.pumpAndSettle();
-      expect(repository.deleteCalls, 1);
-      expect(find.text('Open inventory form'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
 
   testWidgets(
     'supplier directory displays details and confirms soft deletion',
@@ -821,9 +770,9 @@ void main() {
       await tester.tap(find.text('Xóa nhà cung cấp'));
       await tester.pumpAndSettle();
       expect(suppliers.deleted, 1);
-      expect(suppliers.listCalls, 1);
+      expect(suppliers.listCalls, 2);
       expect(suppliers.detailCalls, 0);
-      expect(find.text('Chưa có nhà cung cấp.'), findsOneWidget);
+      expect(find.text('Chưa có nhà cung cấp'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -843,7 +792,7 @@ void main() {
       expect(suppliers.listCalls, 1);
       await tester.enterText(find.byType(TextField), 'không tồn tại');
       await tester.pumpAndSettle();
-      expect(find.text('Không tìm thấy nhà cung cấp phù hợp.'), findsOneWidget);
+      expect(find.text('Không tìm thấy nhà cung cấp'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'Cần Thơ');
       await tester.pumpAndSettle();
       expect(find.text('Nhà cung cấp B'), findsOneWidget);
@@ -891,7 +840,7 @@ void main() {
     await tester.tap(find.text('Cửa hàng An Phú'));
     await tester.pumpAndSettle();
     expect(find.text('Cửa hàng phân phối'), findsOneWidget);
-    expect(suppliers.listCalls, 1);
+    expect(suppliers.listCalls, 2);
     expect(suppliers.detailCalls, 0);
     expect(tester.takeException(), isNull);
   });
@@ -1000,7 +949,7 @@ void main() {
       await submitForm(tester, 'Lưu nhà cung cấp');
       expect(suppliers.lastExisting?.updatedAt, latest.updatedAt);
       expect(suppliers.saved?.contactName, 'Người liên hệ mới');
-      expect(suppliers.listCalls, 1);
+      expect(suppliers.listCalls, 2);
       expect(tester.takeException(), isNull);
     },
   );
@@ -1138,80 +1087,37 @@ void main() {
       }
     });
 
-    for (final pointerKind in [
-      ui.PointerDeviceKind.touch,
-      ui.PointerDeviceKind.mouse,
-    ]) {
-      testWidgets('category filters scroll and select with $pointerKind', (
-        tester,
-      ) async {
+    testWidgets(
+      'dropdown filters combine and all resets them on a small screen',
+      (tester) async {
         configureMobileViewport(tester);
         tester.view.physicalSize = const Size(320, 800);
         await tester.pumpWidget(
           buildTestableWidget(const InventoryPage(farmId: 'farm-1')),
         );
         await tester.pumpAndSettle();
-        final filters = find.byKey(
-          const ValueKey('inventory-category-filters'),
-        );
-        await tester.drag(filters, const Offset(-500, 0), kind: pointerKind);
+        await capture(tester, 'catalog-filters', waitForFonts: false);
+        await tester.tap(find.byTooltip('Lọc loại vật tư'));
         await tester.pumpAndSettle();
-        expect(find.text('Khác').hitTestable(), findsOneWidget);
         await tester.tap(find.text('Khác'));
         await tester.pumpAndSettle();
-        expect(find.text('Thức ăn CP 9004'), findsNothing);
         expect(find.text('0 sản phẩm'), findsOneWidget);
-
-        await tester.drag(filters, const Offset(500, 0), kind: pointerKind);
+        expect(find.text('Không tìm thấy vật tư'), findsOneWidget);
+        await capture(tester, 'catalog-empty', waitForFonts: false);
+        await tester.tap(find.text('Tất cả'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Tất cả').hitTestable());
+        expect(find.text('Thức ăn CP 9004'), findsOneWidget);
+        await tester.tap(find.byTooltip('Lọc trạng thái'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Tạm ngưng').last);
+        await tester.pumpAndSettle();
+        expect(find.text('0 sản phẩm'), findsOneWidget);
+        await tester.tap(find.text('Tất cả'));
         await tester.pumpAndSettle();
         expect(find.text('Thức ăn CP 9004'), findsOneWidget);
         expect(tester.takeException(), isNull);
-      });
-    }
-
-    testWidgets('category arrows reach both ends on a small screen', (
-      tester,
-    ) async {
-      configureMobileViewport(tester);
-      tester.view.physicalSize = const Size(320, 800);
-      await tester.pumpWidget(
-        buildTestableWidget(
-          const RepaintBoundary(child: InventoryPage(farmId: 'farm-1')),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final previous = find.byWidgetPredicate(
-        (widget) => widget is IconButton && widget.tooltip == 'Danh mục trước',
-      );
-      final next = find.byWidgetPredicate(
-        (widget) =>
-            widget is IconButton && widget.tooltip == 'Danh mục tiếp theo',
-      );
-      expect(tester.widget<IconButton>(previous).onPressed, isNull);
-      for (var i = 0; i < 5; i++) {
-        if (tester.widget<IconButton>(next).onPressed == null) break;
-        await tester.tap(next);
-        await tester.pumpAndSettle();
-      }
-      expect(find.text('Khác').hitTestable(), findsOneWidget);
-      expect(tester.widget<IconButton>(next).onPressed, isNull);
-      await tester.tap(find.text('Khác'));
-      await tester.pumpAndSettle();
-      expect(find.text('0 sản phẩm'), findsOneWidget);
-      for (var i = 0; i < 5; i++) {
-        if (tester.widget<IconButton>(previous).onPressed == null) break;
-        await tester.tap(previous);
-        await tester.pumpAndSettle();
-      }
-      expect(find.text('Tất cả').hitTestable(), findsOneWidget);
-      expect(tester.widget<IconButton>(previous).onPressed, isNull);
-      await tester.tap(find.text('Tất cả'));
-      await tester.pumpAndSettle();
-      expect(find.text('Thức ăn CP 9004'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+      },
+    );
 
     testWidgets('list renders API-backed summary, filters and products', (
       tester,
@@ -1233,48 +1139,8 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).textAlignVertical,
         TextAlignVertical.center,
       );
-      for (final label in <String>['Tất cả', 'Thức ăn']) {
-        final chip = find.ancestor(
-          of: find.text(label),
-          matching: find.byType(AnimatedContainer),
-        );
-        final text = find.descendant(of: chip, matching: find.text(label));
-        expect(
-          tester.getCenter(text).dy,
-          closeTo(tester.getCenter(chip).dy, 0.5),
-        );
-        expect(
-          tester.getCenter(text).dx,
-          closeTo(tester.getCenter(chip).dx, 0.5),
-        );
-      }
-      for (final label in <String>['Đang dùng', 'Đã lưu trữ']) {
-        final chip = find.ancestor(
-          of: find.text(label),
-          matching: find.byType(InventoryFilterChip),
-        );
-        expect(
-          tester.getCenter(find.text(label)).dx,
-          closeTo(tester.getCenter(chip).dx, 0.5),
-        );
-        expect(
-          tester.getCenter(find.text(label)).dy,
-          closeTo(tester.getCenter(chip).dy, 0.5),
-        );
-      }
-      for (final label in <String>['Tất cả (1)', 'Sắp hết (1)']) {
-        final segment = find.ancestor(
-          of: find.text(label),
-          matching: find.byType(InkWell),
-        );
-        expect(
-          tester.getCenter(find.text(label)).dx,
-          closeTo(tester.getCenter(segment).dx, 0.5),
-        );
-        expect(
-          tester.getCenter(find.text(label)).dy,
-          closeTo(tester.getCenter(segment).dy, 0.5),
-        );
+      for (final label in ['Tất cả', 'Sắp hết', 'Trạng thái', 'Loại']) {
+        expect(find.text(label), findsOneWidget);
       }
       final stats = find.byWidgetPredicate(
         (widget) => widget is Container && widget.constraints?.maxHeight == 61,
@@ -1352,12 +1218,7 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'not-in-stock');
       await tester.pump(const Duration(milliseconds: 100));
-      await tester.tap(
-        find.ancestor(
-          of: find.text('Thức ăn'),
-          matching: find.byType(AnimatedContainer),
-        ),
-      );
+      await tester.tap(find.text('Sắp hết'));
       await tester.pump();
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 250));
@@ -1495,10 +1356,7 @@ void main() {
         await tester.ensureVisible(find.text('chai'));
         await tester.tap(find.text('chai'));
         await tester.pumpAndSettle();
-        expect(
-          find.text('Ngưỡng cảnh báo tồn kho tối thiểu (đơn vị quy đổi)'),
-          findsOneWidget,
-        );
+        expect(find.text('Ngưỡng cảnh báo tồn kho tối thiểu'), findsOneWidget);
         await enterField(tester, 'Quy đổi mỗi chai', '1500');
         final dropdown = find.byType(
           DropdownButtonFormField<domain.InventoryConversionUnit>,
@@ -1508,27 +1366,18 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('ml').last);
         await tester.pumpAndSettle();
-        expect(
-          find.text('Ngưỡng cảnh báo tồn kho tối thiểu (ml)'),
-          findsOneWidget,
-        );
+        expect(find.text('Ngưỡng cảnh báo tồn kho tối thiểu'), findsOneWidget);
         await enterField(tester, 'Ngưỡng cảnh báo', '1000');
         await tester.ensureVisible(dropdown);
         await tester.tap(dropdown);
         await tester.pumpAndSettle();
         await tester.tap(find.text('g').last);
         await tester.pumpAndSettle();
-        expect(
-          find.text('Ngưỡng cảnh báo tồn kho tối thiểu (g)'),
-          findsOneWidget,
-        );
+        expect(find.text('Ngưỡng cảnh báo tồn kho tối thiểu'), findsOneWidget);
         await tester.ensureVisible(find.text('kg').first);
         await tester.tap(find.text('kg').first);
         await tester.pumpAndSettle();
-        expect(
-          find.text('Ngưỡng cảnh báo tồn kho tối thiểu (kg)'),
-          findsOneWidget,
-        );
+        expect(find.text('Ngưỡng cảnh báo tồn kho tối thiểu'), findsOneWidget);
         await tester.ensureVisible(find.text('chai'));
         await tester.tap(find.text('chai'));
         await tester.pumpAndSettle();
@@ -1808,16 +1657,7 @@ class _FileImagePicker extends ImagePicker {
 }
 
 final class _InventoryRepository implements InventoryRepository {
-  int deleteCalls = 0;
   Map<String, Object?>? stockOutPayload;
-  @override
-  Future<void> deleteProduct({
-    required String farmId,
-    required String productId,
-  }) async {
-    deleteCalls++;
-  }
-
   @override
   Future<domain.InventoryStockResult> recordStockOut({
     required String farmId,
@@ -2050,6 +1890,7 @@ final class _SupplierRepository implements SupplierRepository {
     String? email,
     String? address,
     String? note,
+    bool isActive = true,
   }) async {
     lastExisting = existing;
     if (failNextSaveWithConflict) {
@@ -2065,6 +1906,7 @@ final class _SupplierRepository implements SupplierRepository {
       email: email,
       address: address,
       note: note,
+      isActive: isActive,
       createdAt: existing?.createdAt ?? DateTime.utc(2026, 10, 15),
       updatedAt: DateTime.utc(2026, 10, 15),
     );

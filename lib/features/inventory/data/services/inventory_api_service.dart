@@ -22,8 +22,6 @@ abstract interface class InventoryRemoteDataSource {
 
   Future<InventoryProduct> archiveProduct(String farmId, String productId);
 
-  Future<void> deleteProduct(String farmId, String productId);
-
   Future<InventoryProduct> restoreProduct(String farmId, String productId);
 
   Future<InventoryStockResult> recordStockTransaction(
@@ -106,14 +104,6 @@ final class InventoryApiService implements InventoryRemoteDataSource {
       authenticated: true,
     );
     return InventoryProduct.parse(response.requireMapData());
-  }
-
-  @override
-  Future<void> deleteProduct(String farmId, String productId) async {
-    await _client.delete(
-      '${_basePath(farmId)}/products/${Uri.encodeComponent(productId)}',
-      authenticated: true,
-    );
   }
 
   @override

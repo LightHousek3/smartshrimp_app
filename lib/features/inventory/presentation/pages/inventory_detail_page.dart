@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
-import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
@@ -86,9 +86,9 @@ class InventoryDetailPage extends ConsumerWidget {
                 onReplace: product.isArchived || mutation.isLoading
                     ? null
                     : (index) => _replacePhoto(context, ref, product, index),
-                onDelete: mutation.isLoading
+                onPause: mutation.isLoading
                     ? null
-                    : () => _delete(context, ref, product),
+                    : () => _pause(context, ref, product),
                 onRestore: mutation.isLoading
                     ? null
                     : () => _restore(context, ref, product),
@@ -135,117 +135,26 @@ class InventoryDetailPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _delete(
+  Future<void> _pause(
     BuildContext context,
     WidgetRef ref,
     InventoryProduct product,
   ) async {
-    final canDelete =
-        product.currentStock == 0 &&
-        (product.plannedUseCount ?? 0) == 0 &&
-        product.canArchive != false;
-    if (!canDelete) {
-      final blockers = <String>[
-        if (product.currentStock > 0)
-          'Kho vẫn còn ${formatInventoryQuantity(product.currentStock)} ${product.unit.label}',
-        if ((product.plannedUseCount ?? 0) > 0)
-          'Vật tư đang được dùng trong ${product.plannedUseCount} lịch vận hành dự kiến',
-      ];
-      if (blockers.isEmpty) blockers.add('Vật tư chưa đủ điều kiện xóa.');
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AppDialog(
-          title: 'Chưa thể xóa vật tư',
-          description: 'Hoàn tất các mục bên dưới rồi thử lại.',
-          level: AppNoticeLevel.warning,
-          icon: Icons.warning_amber_rounded,
-          verticalHeader: true,
-          separatedActions: true,
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final blocker in blockers)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF2DD),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            size: 14,
-                            color: Color(0xFFEA580C),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              blocker,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                height: 1.4,
-                                color: Color(0xFFB45309),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.inkSoft,
-                  side: const BorderSide(color: AppColors.line),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Đã hiểu',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    final message =
-        'Xóa vật tư “${product.name}” khỏi kho? Lịch sử giao dịch vẫn được giữ lại.';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa vật tư?'),
-        content: Text(message),
+        title: const Text('Tạm ngưng vật tư?'),
+        content: Text(
+          'Tạm ngưng sử dụng “${product.name}”? Vật tư cần hết tồn kho và không còn lịch vận hành dự kiến.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Hủy'),
           ),
           FilledButton(
-            onPressed: canDelete
-                ? () => Navigator.pop(dialogContext, true)
-                : null,
-            child: const Text('Xóa vật tư'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Tạm ngưng'),
           ),
         ],
       ),
@@ -254,10 +163,10 @@ class InventoryDetailPage extends ConsumerWidget {
     try {
       await ref
           .read(inventoryMutationControllerProvider(farmId).notifier)
-          .deleteProduct(product.id);
-      if (!context.mounted) return;
-      AppNoticeService.success(context, 'Đã xóa vật tư.');
-      context.pop();
+          .archive(product.id);
+      if (context.mounted) {
+        AppNoticeService.success(context, 'Đã tạm ngưng vật tư.');
+      }
     } on AppException catch (error) {
       if (context.mounted) AppNoticeService.danger(context, error.message);
     }
@@ -273,7 +182,10 @@ class InventoryDetailPage extends ConsumerWidget {
           .read(inventoryMutationControllerProvider(farmId).notifier)
           .restore(product.id);
       if (context.mounted) {
-        AppNoticeService.success(context, 'Đã khôi phục vật tư.');
+        AppNoticeService.success(
+          context,
+          'Đã chuyển vật tư sang đang sử dụng.',
+        );
       }
     } on Object catch (error) {
       if (context.mounted) {
@@ -288,13 +200,13 @@ class _DetailContent extends StatelessWidget {
     required this.product,
     required this.farmId,
     this.onReplace,
-    required this.onDelete,
+    required this.onPause,
     required this.onRestore,
   });
   final InventoryProduct product;
   final String farmId;
   final Future<void> Function(int)? onReplace;
-  final VoidCallback? onDelete;
+  final VoidCallback? onPause;
   final VoidCallback? onRestore;
 
   @override
@@ -314,7 +226,10 @@ class _DetailContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
                     width: 32,
@@ -330,16 +245,18 @@ class _DetailContent extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   InventoryCategoryBadge(category: product.category),
-                  const Spacer(),
                   if (product.isArchived)
                     const Text(
-                      'Đã lưu trữ',
+                      'Tạm ngưng',
                       style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                     )
-                  else if (product.isLowStock)
-                    const LowStockBadge(),
+                  else
+                    const Text(
+                      'Đang sử dụng',
+                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
+                    ),
+                  if (product.isLowStock) const LowStockBadge(),
                 ],
               ),
               const SizedBox(height: 12),
@@ -519,11 +436,9 @@ class _DetailContent extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         if (lots.isEmpty)
-          const InventorySurface(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(child: Text('Chưa có lô hàng nào.')),
-            ),
+          const InventoryEmptyState(
+            title: 'Chưa có lô hàng',
+            message: 'Nhập kho vật tư để theo dõi các lô hàng tại đây.',
           )
         else
           ...lots.map(
@@ -539,7 +454,7 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 18),
         if (product.isArchived)
           InventoryGradientButton(
-            label: 'Khôi phục vật tư',
+            label: 'Sử dụng lại vật tư',
             iconAsset: InventoryAssets.save,
             onPressed: onRestore,
           )
@@ -547,10 +462,10 @@ class _DetailContent extends StatelessWidget {
           SizedBox(
             height: 46,
             child: OutlinedButton.icon(
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline, size: 17),
+              onPressed: onPause,
+              icon: const Icon(Icons.pause_circle_outline, size: 17),
               label: const Text(
-                'Xóa vật tư',
+                'Tạm ngưng vật tư',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(

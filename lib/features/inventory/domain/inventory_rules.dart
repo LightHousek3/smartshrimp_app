@@ -3,7 +3,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
 abstract final class InventoryRules {
-  static const maxProductImages = 2;
+  static const maxProductImages = 3;
   static const maxImageBytes = 5 * 1024 * 1024;
 
   static void validateImage(Uint8List bytes) {

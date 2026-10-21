@@ -308,13 +308,6 @@ final class InventoryMutationController
     productId: productId,
   );
 
-  Future<void> deleteProduct(String productId) => _mutate(
-    () => ref
-        .read(inventoryRepositoryProvider)
-        .deleteProduct(farmId: farmId, productId: productId),
-    productId: productId,
-  );
-
   Future<InventoryStockResult> stockOut({
     required String productId,
     required String inventoryBalanceId,

@@ -48,11 +48,6 @@ abstract interface class InventoryRepository {
     required String productId,
   });
 
-  Future<void> deleteProduct({
-    required String farmId,
-    required String productId,
-  });
-
   Future<InventoryStockResult> recordStockOut({
     required String farmId,
     required String productId,

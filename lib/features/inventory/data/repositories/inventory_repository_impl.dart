@@ -119,12 +119,6 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   }) => _remoteDataSource.archiveProduct(farmId, productId);
 
   @override
-  Future<void> deleteProduct({
-    required String farmId,
-    required String productId,
-  }) => _remoteDataSource.deleteProduct(farmId, productId);
-
-  @override
   Future<InventoryStockResult> recordStockOut({
     required String farmId,
     required String productId,

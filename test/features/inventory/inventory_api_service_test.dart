@@ -8,28 +8,6 @@ import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/inventory/data/services/inventory_api_service.dart';
 
 void main() {
-  test(
-    'deletes a material with authenticated DELETE and handles 204',
-    () async {
-      late RequestOptions captured;
-      final service = InventoryApiService(
-        ApiClient(
-          _dioWithHandler((request, handler) {
-            captured = request;
-            handler.resolve(
-              Response<dynamic>(requestOptions: request, statusCode: 204),
-            );
-          }),
-          _SessionStore(),
-        ),
-      );
-      await service.deleteProduct('farm-1', 'product-1');
-      expect(captured.method, 'DELETE');
-      expect(captured.uri.path, '/owner/farms/farm-1/products/product-1');
-      expect(captured.headers['Authorization'], 'Bearer access-token');
-    },
-  );
-
   test('archiving uses its distinct action endpoint', () async {
     late RequestOptions captured;
     final service = InventoryApiService(

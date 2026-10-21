@@ -217,7 +217,7 @@ void main() {
       await select('Hình thức', 'Xuất kho', tester);
       await select('Vật tư', 'Thuốc kiểm thử (đã xóa)', tester);
       await apply(tester);
-      expect(find.text('Không có giao dịch phù hợp.'), findsOneWidget);
+      expect(find.text('Không có giao dịch phù hợp'), findsOneWidget);
       expect(find.text('0 ₫'), findsNWidgets(2));
       expect(dropdown('Vật tư', tester).items, hasLength(3));
       await tester.ensureVisible(find.text('Đặt lại'));
@@ -227,7 +227,7 @@ void main() {
       expect(find.text('Tất cả, kể cả không gắn vụ'), findsOneWidget);
       expect(find.text('Giao dịch nhập CP'), findsOneWidget);
       expect(find.text('2.920.000 ₫'), findsOneWidget);
-      expect(find.text('Không có giao dịch phù hợp.'), findsNothing);
+      expect(find.text('Không có giao dịch phù hợp'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -241,7 +241,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 349));
       expect(find.text('2.920.000 ₫'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
-      expect(find.text('Không có giao dịch phù hợp.'), findsOneWidget);
+      expect(find.text('Không có giao dịch phù hợp'), findsOneWidget);
       expect(find.text('0 ₫'), findsNWidgets(2));
       await tester.enterText(searchField(), 'CP');
       await tester.pump(const Duration(milliseconds: 350));
@@ -316,7 +316,7 @@ void main() {
       remote.pending!.complete(_page(<domain.InventoryTransaction>[]));
       await tester.pumpAndSettle();
       expect(find.text('2.920.000 ₫'), findsOneWidget);
-      expect(find.text('Không có giao dịch phù hợp.'), findsNothing);
+      expect(find.text('Không có giao dịch phù hợp'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

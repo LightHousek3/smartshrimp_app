@@ -24,6 +24,11 @@ class InventorySupplierDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _InformationRow(
+            icon: Icons.circle_outlined,
+            label: 'Trạng thái',
+            value: supplier.isActive ? 'Đang hoạt động' : 'Tạm ngưng',
+          ),
+          _InformationRow(
             icon: Icons.person_outline_rounded,
             label: 'Người liên hệ',
             value: supplier.contactName,

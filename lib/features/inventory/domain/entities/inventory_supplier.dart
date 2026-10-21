@@ -15,6 +15,7 @@ abstract class InventorySupplier with _$InventorySupplier {
     String? email,
     String? address,
     String? note,
+    @Default(true) bool isActive,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _InventorySupplier;
@@ -23,6 +24,9 @@ abstract class InventorySupplier with _$InventorySupplier {
       _$InventorySupplierFromJson(json);
 
   static InventorySupplier parse(Map<String, dynamic> json) {
+    if (json.containsKey('isActive') && json['isActive'] is! bool) {
+      throw const InvalidResponseException();
+    }
     for (final field in ['id', 'farmId', 'name', 'createdAt', 'updatedAt']) {
       if (json[field] is! String || (json[field] as String).trim().isEmpty) {
         throw const InvalidResponseException();

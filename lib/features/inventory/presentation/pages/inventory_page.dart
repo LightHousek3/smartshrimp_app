@@ -1,5 +1,8 @@
 import 'dart:async';
-import 'package:flutter/gestures.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_catalog_filters.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
+
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
 
 import 'package:flutter/material.dart';
@@ -29,7 +32,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
   Timer? _searchDebounce;
   var _searchQuery = '';
   var _showLowStockOnly = false;
-  var _showArchived = false;
+  var _statusFilter = InventoryArchiveStatus.all;
   InventoryCategory? _categoryFilter; // null = Tất cả
 
   @override
@@ -84,7 +87,12 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
     }
     final query = _searchQuery;
     final sourceProducts = page.items
-        .where((product) => product.isArchived == _showArchived)
+        .where(
+          (product) =>
+              _statusFilter == InventoryArchiveStatus.all ||
+              product.isArchived ==
+                  (_statusFilter == InventoryArchiveStatus.archived),
+        )
         .toList(growable: false);
     final lowStockCount = sourceProducts
         .where((product) => product.isLowStock)
@@ -159,25 +167,20 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
             const SizedBox(height: 12),
             _InventorySearch(controller: _searchController),
             const SizedBox(height: 10),
-            _CategoryFilterBar(
-              selected: _categoryFilter,
-              onChanged: (cat) => setState(() => _categoryFilter = cat),
-            ),
-            const SizedBox(height: 10),
-            _ArchiveToggle(
-              showArchived: _showArchived,
-              onChanged: (value) => setState(() {
-                _showArchived = value;
-                if (value) _showLowStockOnly = false;
+            InventoryCatalogFilters(
+              status: _statusFilter,
+              category: _categoryFilter,
+              lowStockOnly: _showLowStockOnly,
+              onStatusChanged: (value) => setState(() => _statusFilter = value),
+              onCategoryChanged: (value) =>
+                  setState(() => _categoryFilter = value),
+              onLowStockChanged: (value) =>
+                  setState(() => _showLowStockOnly = value),
+              onReset: () => setState(() {
+                _statusFilter = InventoryArchiveStatus.all;
+                _categoryFilter = null;
+                _showLowStockOnly = false;
               }),
-            ),
-            const SizedBox(height: 10),
-            _StockSegmentedControl(
-              totalCount: sourceProducts.length,
-              lowStockCount: lowStockCount,
-              showLowStockOnly: _showLowStockOnly,
-              enabled: !_showArchived,
-              onChanged: (value) => setState(() => _showLowStockOnly = value),
             ),
             const SizedBox(height: 12),
             Padding(
@@ -204,7 +207,14 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
             ),
             const SizedBox(height: 12),
             if (products.isEmpty)
-              const _EmptyProducts()
+              InventoryEmptyState(
+                title: page.items.isEmpty
+                    ? 'Chưa có vật tư'
+                    : 'Không tìm thấy vật tư',
+                message: page.items.isEmpty
+                    ? 'Thêm vật tư để bắt đầu quản lý kho của trang trại.'
+                    : 'Hãy thử tên hoặc bộ lọc khác.',
+              )
             else
               ...products.indexed.map(
                 (entry) => Padding(
@@ -225,22 +235,40 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
     );
   }
 
-  Widget _supplierButton(BuildContext context) => TextButton.icon(
-    onPressed: () =>
-        context.push('/farms/${widget.farmId}/inventory/suppliers'),
-    style: TextButton.styleFrom(
-      foregroundColor: Colors.black,
-      backgroundColor: Colors.white,
-      minimumSize: const Size(0, 40),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
-    icon: const Icon(Icons.storefront_outlined, size: 18),
-    label: const Text(
-      'Nhà cung cấp',
-      style: TextStyle(fontSize: 12, color: Colors.black),
-    ),
-  );
+  Widget _supplierButton(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 360
+      ? IconButton(
+          tooltip: 'Nhà cung cấp',
+          onPressed: () =>
+              context.push('/farms/${widget.farmId}/inventory/suppliers'),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.ink,
+            minimumSize: const Size(40, 40),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: const Icon(Icons.storefront_outlined, size: 20),
+        )
+      : TextButton.icon(
+          onPressed: () =>
+              context.push('/farms/${widget.farmId}/inventory/suppliers'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+            backgroundColor: Colors.white,
+            minimumSize: const Size(0, 40),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: const Icon(Icons.storefront_outlined, size: 18),
+          label: const Text(
+            'Nhà cung cấp',
+            style: TextStyle(fontSize: 12, color: Colors.black),
+          ),
+        );
 }
 
 // ---------------------------------------------------------------------------
@@ -410,316 +438,6 @@ class _InventorySearch extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Category filter horizontal tabs
-// ---------------------------------------------------------------------------
-
-class _CategoryFilterBar extends StatefulWidget {
-  const _CategoryFilterBar({required this.selected, required this.onChanged});
-
-  final InventoryCategory? selected;
-  final ValueChanged<InventoryCategory?> onChanged;
-
-  @override
-  State<_CategoryFilterBar> createState() => _CategoryFilterBarState();
-}
-
-class _CategoryFilterBarState extends State<_CategoryFilterBar> {
-  final _scrollController = ScrollController();
-  var _canScrollBack = false;
-  var _canScrollForward = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _onScroll() => _updateAvailability(_scrollController.position);
-
-  void _updateAvailability(ScrollMetrics metrics) {
-    final back = metrics.extentBefore > 1;
-    final forward = metrics.extentAfter > 1;
-    if (back == _canScrollBack && forward == _canScrollForward) return;
-    setState(() {
-      _canScrollBack = back;
-      _canScrollForward = forward;
-    });
-  }
-
-  void _scroll(int direction) {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    unawaited(
-      _scrollController.animateTo(
-        (position.pixels + direction * position.viewportDimension * 0.75).clamp(
-          position.minScrollExtent,
-          position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 44,
-    child: Row(
-      children: [
-        SizedBox(
-          width: 28,
-          child: IconButton(
-            tooltip: 'Danh mục trước',
-            padding: EdgeInsets.zero,
-            iconSize: 20,
-            color: AppColors.ocean,
-            onPressed: _canScrollBack ? () => _scroll(-1) : null,
-            icon: const Icon(Icons.chevron_left_rounded),
-          ),
-        ),
-        Expanded(
-          child: NotificationListener<ScrollMetricsNotification>(
-            onNotification: (notification) {
-              _updateAvailability(notification.metrics);
-              return false;
-            },
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: {
-                  ...ScrollConfiguration.of(context).dragDevices,
-                  PointerDeviceKind.mouse,
-                },
-              ),
-              child: ListView(
-                key: const ValueKey('inventory-category-filters'),
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                children: <Widget>[
-                  _CategoryChip(
-                    label: 'Tất cả',
-                    selected: widget.selected == null,
-                    foreground: AppColors.ocean,
-                    background: const Color(0xFFEAF4FF),
-                    onTap: () => widget.onChanged(null),
-                  ),
-                  ...InventoryCategory.values
-                      .where(
-                        (category) => category != InventoryCategory.unknown,
-                      )
-                      .map(
-                        (cat) => Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: _CategoryChip(
-                            label: cat.label,
-                            selected: widget.selected == cat,
-                            foreground: cat.foreground,
-                            background: cat.background,
-                            onTap: () => widget.onChanged(cat),
-                          ),
-                        ),
-                      ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 28,
-          child: IconButton(
-            tooltip: 'Danh mục tiếp theo',
-            padding: EdgeInsets.zero,
-            iconSize: 20,
-            color: AppColors.ocean,
-            onPressed: _canScrollForward ? () => _scroll(1) : null,
-            icon: const Icon(Icons.chevron_right_rounded),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.selected,
-    required this.foreground,
-    required this.background,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final Color foreground;
-  final Color background;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: selected ? background : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: selected ? foreground.withValues(alpha: 0.5) : AppColors.line,
-          width: selected ? 1.2 : 1,
-        ),
-      ),
-      child: Center(
-        widthFactor: 1,
-        child: Text(
-          label,
-          maxLines: 1,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? foreground : AppColors.inkMuted,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            height: 1.25,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _ArchiveToggle extends StatelessWidget {
-  const _ArchiveToggle({required this.showArchived, required this.onChanged});
-
-  final bool showArchived;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      const Text(
-        'Trạng thái vật tư',
-        style: TextStyle(
-          color: AppColors.inkSoft,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        children: <Widget>[
-          InventoryFilterChip(
-            label: 'Đang dùng',
-            selected: !showArchived,
-            onSelected: (_) => onChanged(false),
-          ),
-          InventoryFilterChip(
-            label: 'Đã lưu trữ',
-            selected: showArchived,
-            onSelected: (_) => onChanged(true),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Segmented Control (Tất cả / Sắp hết)
-// ---------------------------------------------------------------------------
-
-class _StockSegmentedControl extends StatelessWidget {
-  const _StockSegmentedControl({
-    required this.totalCount,
-    required this.lowStockCount,
-    required this.showLowStockOnly,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final int totalCount;
-  final int lowStockCount;
-  final bool showLowStockOnly;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 52,
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: const Color(0xB3D3E8FF),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      children: <Widget>[
-        Expanded(
-          child: _SegmentButton(
-            label: 'Tất cả ($totalCount)',
-            selected: !showLowStockOnly,
-            onTap: enabled ? () => onChanged(false) : () {},
-          ),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: _SegmentButton(
-            label: 'Sắp hết ($lowStockCount)',
-            selected: showLowStockOnly,
-            onTap: enabled ? () => onChanged(true) : () {},
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SegmentButton extends StatelessWidget {
-  const _SegmentButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: selected ? const Color(0xFF1D7AD6) : const Color(0x8CFFFFFF),
-    borderRadius: BorderRadius.circular(12),
-    elevation: selected ? 1 : 0,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Center(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? Colors.white : AppColors.inkSoft,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            height: 1.25,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Add Product Button
 // ---------------------------------------------------------------------------
 
@@ -847,8 +565,13 @@ class _ProductCard extends StatelessWidget {
                       children: <Widget>[
                         InventoryCategoryBadge(category: product.category),
                         if (product.isLowStock) const LowStockBadge(),
-                        if (product.isArchived)
-                          const Chip(label: Text('Đã lưu trữ')),
+                        Text(
+                          product.isArchived ? 'Tạm ngưng' : 'Đang sử dụng',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -938,36 +661,6 @@ class _HistoryButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Empty state
 // ---------------------------------------------------------------------------
-
-class _EmptyProducts extends StatelessWidget {
-  const _EmptyProducts();
-
-  @override
-  Widget build(BuildContext context) => const InventorySurface(
-    child: Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: <Widget>[
-          InventorySvgIcon(InventoryAssets.inventoryBox, size: 30),
-          SizedBox(height: 10),
-          Text(
-            'Không tìm thấy vật tư',
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'Hãy thử tên hoặc bộ lọc khác.',
-            style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 class _InventoryLoadError extends StatelessWidget {
   const _InventoryLoadError({required this.message, required this.onRetry});

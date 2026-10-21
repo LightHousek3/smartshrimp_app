@@ -56,7 +56,11 @@ class _InventoryProductFormPageState
   bool _initialized = false;
   bool _saving = false;
   bool _picking = false;
-  final _images = <_MaterialPhoto>[_emptyPhoto, _emptyPhoto];
+  final _images = List<_MaterialPhoto>.filled(
+    InventoryRules.maxProductImages,
+    _emptyPhoto,
+    growable: true,
+  );
   int get _imageCount => _images.where(_hasPhoto).length;
 
   bool get _isEdit => widget.productId != null;
@@ -85,7 +89,7 @@ class _InventoryProductFormPageState
         (url) => (url: url, bytes: null, fileName: null),
       ),
     );
-    while (_images.length < 2) {
+    while (_images.length < InventoryRules.maxProductImages) {
       _images.add(_emptyPhoto);
     }
     final replacement = widget.photoReplacement;
@@ -126,10 +130,7 @@ class _InventoryProductFormPageState
   Future<void> _pickImage({int? slot}) async {
     if (_saving || _picking) return;
     if (slot == null && _imageCount >= InventoryRules.maxProductImages) {
-      AppNoticeService.danger(
-        context,
-        'Mỗi vật tư có tối đa 2 ảnh: mặt trước và mặt sau.',
-      );
+      AppNoticeService.danger(context, 'Mỗi vật tư có tối đa 3 ảnh.');
       return;
     }
     setState(() => _picking = true);
@@ -148,9 +149,7 @@ class _InventoryProductFormPageState
       if (files.isEmpty || !mounted) return;
       if (slot == null &&
           _imageCount + files.length > InventoryRules.maxProductImages) {
-        throw const ApiException(
-          'Mỗi vật tư có tối đa 2 ảnh: mặt trước và mặt sau.',
-        );
+        throw const ApiException('Mỗi vật tư có tối đa 3 ảnh.');
       }
       final selected = <({String? url, Uint8List? bytes, String? fileName})>[];
       for (final file in files) {
@@ -190,10 +189,7 @@ class _InventoryProductFormPageState
     if (_saving || _picking) return;
     if (_formKey.currentState?.validate() != true) return;
     if (_imageCount > InventoryRules.maxProductImages) {
-      AppNoticeService.danger(
-        context,
-        'Mỗi vật tư có tối đa 2 ảnh: mặt trước và mặt sau.',
-      );
+      AppNoticeService.danger(context, 'Mỗi vật tư có tối đa 3 ảnh.');
       return;
     }
     if (!_hasPhoto(_images[0]) && _hasPhoto(_images[1])) {
@@ -453,7 +449,7 @@ class _InventoryProductFormPageState
                       labelSize: 12,
                       spacing: 6,
                       key: _imageFieldKey,
-                      label: 'Hình ảnh vật tư (tối đa 2 ảnh)',
+                      label: 'Hình ảnh vật tư (tối đa 3 ảnh)',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -583,13 +579,17 @@ class _InventoryProductFormPageState
                                           onPressed: () => setState(() {
                                             if (_selectedPhotoIndex == index) {
                                               _selectedPhotoIndex = null;
-                                            } else if (index >= 2 &&
+                                            } else if (index >=
+                                                    InventoryRules
+                                                        .maxProductImages &&
                                                 _selectedPhotoIndex != null &&
                                                 _selectedPhotoIndex! > index) {
                                               _selectedPhotoIndex =
                                                   _selectedPhotoIndex! - 1;
                                             }
-                                            if (index < 2) {
+                                            if (index <
+                                                InventoryRules
+                                                    .maxProductImages) {
                                               _images[index] = _emptyPhoto;
                                             } else {
                                               _images.removeAt(index);
@@ -648,7 +648,9 @@ class _InventoryProductFormPageState
                                 color: const Color(0xFFEAF4FF),
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
-                                  onTap: _imageCount >= 2
+                                  onTap:
+                                      _imageCount >=
+                                          InventoryRules.maxProductImages
                                       ? null
                                       : () => _pickImage(),
                                   borderRadius: BorderRadius.circular(12),
@@ -663,8 +665,10 @@ class _InventoryProductFormPageState
                                       Text(
                                         _picking
                                             ? 'Đang mở tệp…'
-                                            : _imageCount >= 2
-                                            ? 'Đã đủ 2 ảnh'
+                                            : _imageCount >=
+                                                  InventoryRules
+                                                      .maxProductImages
+                                            ? 'Đã đủ 3 ảnh'
                                             : _imageCount == 0
                                             ? 'Chọn nhiều ảnh'
                                             : 'Thêm ảnh khác',
@@ -682,7 +686,7 @@ class _InventoryProductFormPageState
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Ảnh 1: mặt trước · Ảnh 2: mặt sau.\nJPG, PNG, WebP · Tối đa 5 MB/ảnh, 2 ảnh/vật tư.',
+                            'Ảnh 1: mặt trước · Ảnh 2: mặt sau · Ảnh 3: bổ sung.\nJPG, PNG, WebP · Tối đa 5 MB/ảnh, 3 ảnh/vật tư.',
                             style: TextStyle(
                               fontSize: 10,
                               color: AppColors.inkMuted,
@@ -697,27 +701,47 @@ class _InventoryProductFormPageState
                     InventoryField(
                       labelSize: 12,
                       spacing: 6,
-                      label:
-                          'Ngưỡng cảnh báo tồn kho tối thiểu ($_alertUnitLabel)',
-                      child: TextFormField(
-                        controller: _thresholdController,
-                        style: AppTypography.mono(
-                          fontSize: 14,
-                          color: AppColors.ink,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: inventoryInputDecoration(
-                          hintText: 'VD: 100',
-                        ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? null
-                            : InventoryRules.quantityError(
-                                value,
-                                allowZero: true,
+                      label: 'Ngưỡng cảnh báo tồn kho tối thiểu',
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _thresholdController,
+                              style: AppTypography.mono(
+                                fontSize: 14,
+                                color: AppColors.ink,
                               ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: inventoryInputDecoration(
+                                hintText: 'VD: 100',
+                              ),
+                              validator: (value) =>
+                                  value == null || value.trim().isEmpty
+                                  ? null
+                                  : InventoryRules.quantityError(
+                                      value,
+                                      allowZero: true,
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              key: ValueKey(_alertUnitLabel),
+                              initialValue: _alertUnitLabel,
+                              readOnly: true,
+                              style: AppTypography.mono(
+                                fontSize: 14,
+                                color: AppColors.ink,
+                              ),
+                              decoration: inventoryInputDecoration(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -820,7 +844,11 @@ class _UnitSelector extends StatelessWidget {
     spacing: 8,
     runSpacing: 8,
     children: InventoryProductUnit.values
-        .where((item) => item != InventoryProductUnit.unknown)
+        .where(
+          (item) =>
+              item != InventoryProductUnit.unknown &&
+              item != InventoryProductUnit.pcs,
+        )
         .map(
           (unit) => _SelectionChip(
             label: unit.label,

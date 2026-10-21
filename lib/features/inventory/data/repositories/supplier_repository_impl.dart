@@ -32,6 +32,7 @@ final class SupplierRepositoryImpl implements SupplierRepository {
     String? email,
     String? address,
     String? note,
+    bool isActive = true,
   }) => _api.save(farmId, existing?.id, {
     'name': InventoryRules.normalizeText(name),
     'contactName': _text(contactName),
@@ -39,6 +40,7 @@ final class SupplierRepositoryImpl implements SupplierRepository {
     'email': _text(email)?.toLowerCase(),
     'address': _text(address),
     'note': _text(note),
+    'isActive': isActive,
     if (existing != null)
       'expectedUpdatedAt': existing.updatedAt.toUtc().toIso8601String(),
   });
