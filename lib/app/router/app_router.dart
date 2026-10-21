@@ -19,6 +19,9 @@ import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.da
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversations_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
+import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_list_page.dart';
+import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_detail_page.dart';
+import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_statistics_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_list_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_detail_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_stats_page.dart';
@@ -193,6 +196,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         ],
                       ),
                       GoRoute(
+                        path: 'shrimp-health',
+                        builder: (_, state) {
+                          final extra =
+                              state.extra as Map<String, dynamic>?;
+                          return ShrimpHealthListPage(
+                            seasonId: state.pathParameters['seasonId']!,
+                            pondName: extra?['pondName'] as String?,
+                            seasonName: extra?['seasonName'] as String?,
+                            isSeasonActive: extra?['isSeasonActive'] as bool? ?? true,
+                          );
+                        },
+                        routes: [
+                          GoRoute(
+                            path: 'statistics',
+                            builder: (_, state) {
+                              final extra =
+                                  state.extra as Map<String, dynamic>?;
+                              return ShrimpHealthStatisticsPage(
+                                seasonId: state.pathParameters['seasonId']!,
+                                pondName: extra?['pondName'] as String?,
+                                seasonName: extra?['seasonName'] as String?,
+                              );
+                            },
+                          ),
+                          GoRoute(
+                            path: ':logId',
+                            builder: (_, state) => ShrimpHealthDetailPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              logId: state.pathParameters['logId']!,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
                         path: 'rag',
                         parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) => RagConversationsPage(
@@ -345,6 +382,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                       seasonId:
                                           state.pathParameters['seasonId']!,
                                     ),
+                              ),
+                              GoRoute(
+                                path: 'shrimp-health',
+                                builder: (_, state) {
+                                  final extra =
+                                      state.extra as Map<String, dynamic>?;
+                                  return ShrimpHealthListPage(
+                            seasonId: state.pathParameters['seasonId']!,
+                            pondName: extra?['pondName'] as String?,
+                            seasonName: extra?['seasonName'] as String?,
+                            isSeasonActive: extra?['isSeasonActive'] as bool? ?? true,
+                          );
+                                },
+                                routes: [
+                                  GoRoute(
+                                    path: 'statistics',
+                                    builder: (_, state) {
+                                      final extra =
+                                          state.extra as Map<String, dynamic>?;
+                                      return ShrimpHealthStatisticsPage(
+                                        seasonId: state.pathParameters['seasonId']!,
+                                        pondName: extra?['pondName'] as String?,
+                                        seasonName: extra?['seasonName'] as String?,
+                                      );
+                                    },
+                                  ),
+                                  GoRoute(
+                                    path: ':logId',
+                                    builder: (_, state) => ShrimpHealthDetailPage(
+                                      seasonId: state.pathParameters['seasonId']!,
+                                      logId: state.pathParameters['logId']!,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -606,3 +677,4 @@ class _SplashPage extends StatelessWidget {
     );
   }
 }
+
