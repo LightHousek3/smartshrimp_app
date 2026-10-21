@@ -281,7 +281,13 @@ class _SeasonDetailContent extends ConsumerWidget {
           label: 'Sức khỏe',
           background: const Color(0xFFFBE6EA),
           foreground: AppColors.error,
-          onTap: () => _comingSoon(context, 'Nhật ký sức khỏe'),
+          onTap: () => context.push(
+            '/farms/$farmId/ponds/$pondId/seasons/${season.id}/shrimp-health',
+            extra: <String, String>{
+              'seasonName': season.name,
+              'pondName': season.pond.name,
+            },
+          ),
         ),
       ),
       const SizedBox(width: 8),
