@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
+/// Reuse domain entities in presentation; labels and styling stay in this file.
 typedef InventoryCategory = InventoryProductCategory;
 typedef InventoryProductViewData = InventoryProduct;
 typedef InventoryLotViewData = InventoryLot;
@@ -67,6 +67,7 @@ extension InventoryConversionUnitPresentation on InventoryConversionUnit {
   };
 }
 
+/// Display packaged-product thresholds in their configured conversion unit.
 extension InventoryProductAlertPresentation on InventoryProduct {
   String get alertUnitLabel =>
       (unit == InventoryProductUnit.pack ||
@@ -114,7 +115,7 @@ extension InventoryTransactionTypePresentation on InventoryTransactionType {
 String formatInventoryQuantity(num value) {
   final number = value.toDouble();
   final parts = number
-      .toStringAsFixed(3)
+      .toStringAsFixed(9)
       .replaceFirst(RegExp(r'0+$'), '')
       .replaceFirst(RegExp(r'\.$'), '')
       .split('.');
@@ -160,8 +161,14 @@ String inventoryPhotoLabel(int index) => switch (index) {
   _ => 'Ảnh ${index + 1}',
 };
 
-typedef InventoryPhotoReplacement = ({
-  int index,
-  Uint8List bytes,
-  String fileName,
-});
+/// Short money labels keep summary tiles readable; detailed amounts stay exact.
+String formatInventoryCompactMoney(num value) {
+  if (value.abs() < 1000000) return formatInventoryMoney(value);
+  final divisor = value.abs() >= 1000000000 ? 1000000000 : 1000000;
+  final suffix = divisor == 1000000000 ? 'tỷ' : 'tr';
+  final amount = (value / divisor)
+      .toStringAsFixed(1)
+      .replaceFirst(RegExp(r'\.0$'), '')
+      .replaceAll('.', ',');
+  return '$amount $suffix ₫';
+}

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
-import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_picker.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Create a receipt lot using an active supplier or quick supplier creation.
+/// Delegate movement retries and cache refreshes to the inventory layers.
 class InventoryStockInPage extends ConsumerStatefulWidget {
   const InventoryStockInPage({
     required this.farmId,
@@ -34,7 +36,9 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
   final _dateController = TextEditingController();
   final _supplierController = TextEditingController();
   final _reasonController = TextEditingController();
+  final _expiryController = TextEditingController();
   DateTime _receivedAt = DateTime.now();
+  DateTime? _expiryDate;
   String? _supplierId;
 
   Future<void> _selectSupplier() async {
@@ -75,6 +79,7 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
     _dateController.dispose();
     _supplierController.dispose();
     _reasonController.dispose();
+    _expiryController.dispose();
     super.dispose();
   }
 
@@ -93,6 +98,20 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
     });
   }
 
+  Future<void> _pickExpiryDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _expiryDate ?? _receivedAt,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100, 12, 31),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _expiryDate = DateTime(picked.year, picked.month, picked.day);
+      _expiryController.text = _formatDate(picked);
+    });
+  }
+
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
     try {
@@ -102,7 +121,11 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
             productId: widget.productId,
             lotNumber: _lotController.text,
             receivedAt: _receivedAt,
+            expiryDate: _expiryDate,
             quantity: InventoryRules.parseNumber(_quantityController.text)!,
+            quantityExact: InventoryRules.normalizedQuantity(
+              _quantityController.text,
+            ),
             unitPrice: InventoryRules.parseNumber(_priceController.text)!,
             supplierName: _supplierController.text,
             supplierId: _supplierId,
@@ -231,6 +254,52 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
                                   color: AppColors.inkMuted,
                                 ),
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          InventoryField(
+                            label: 'Hạn sử dụng',
+                            child: TextFormField(
+                              controller: _expiryController,
+                              style: inventoryInputTextStyle,
+                              readOnly: true,
+                              onTap: _pickExpiryDate,
+                              decoration:
+                                  inventoryInputDecoration(
+                                    hintText: 'dd/MM/yyyy',
+                                    suffixIcon: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        if (_expiryDate != null)
+                                          IconButton(
+                                            tooltip: 'Xóa hạn sử dụng',
+                                            icon: const Icon(
+                                              Icons.close,
+                                              size: 19,
+                                            ),
+                                            color: AppColors.inkMuted,
+                                            onPressed: () => setState(() {
+                                              _expiryDate = null;
+                                              _expiryController.clear();
+                                            }),
+                                          ),
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                          child: Icon(
+                                            Icons.calendar_today_outlined,
+                                            size: 19,
+                                            color: AppColors.inkMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ).copyWith(
+                                    helperText:
+                                        'Có thể bổ sung sau; lô chưa rõ hạn dùng chưa được dùng cho vận hành.',
+                                    helperMaxLines: 3,
+                                  ),
                             ),
                           ),
                           const SizedBox(height: 14),

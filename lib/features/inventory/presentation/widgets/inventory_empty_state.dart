@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 
+/// Share the dashed empty-state layout across catalog, lots and history.
 class InventoryEmptyState extends StatelessWidget {
   const InventoryEmptyState({
     required this.title,

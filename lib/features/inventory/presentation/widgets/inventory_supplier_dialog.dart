@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Return the chosen directory action for the caller to authorize and execute.
 enum InventorySupplierAction { edit, delete }
 
 /// Renders the directory snapshot without reading a detail provider.
@@ -85,26 +86,27 @@ class InventorySupplierDialog extends StatelessWidget {
     actions: [
       Row(
         children: [
-          Expanded(
-            child: SizedBox(
-              height: 44,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    Navigator.pop(context, InventorySupplierAction.delete),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.line),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          if (supplier.canDelete)
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.pop(context, InventorySupplierAction.delete),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.line),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text('Xóa'),
                 ),
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                label: const Text('Xóa'),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
+          if (supplier.canDelete) const SizedBox(width: 10),
           Expanded(
             child: InventoryGradientButton(
               label: 'Chỉnh sửa',

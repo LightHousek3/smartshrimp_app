@@ -125,11 +125,11 @@ void main() {
         contains('Vụ Đông Xuân · Ao A3'),
       );
       expect(remote.queries, <Map<String, dynamic>>[
-        {'limit': 100},
+        {'limit': 10},
       ]);
       tester.view.physicalSize = const Size(320, 852);
       await tester.pumpAndSettle();
-      await select('Vật tư', 'Thuốc kiểm thử (đã xóa)', tester);
+      await select('Vật tư', 'Thuốc kiểm thử', tester);
       expect(tester.takeException(), isNull);
     },
   );
@@ -145,7 +145,7 @@ void main() {
       expect(find.text('Có thay đổi chưa áp dụng'), findsOneWidget);
       await apply(tester);
       expect(remote.queries.last, <String, dynamic>{
-        'limit': 100,
+        'limit': 10,
         'transactionType': 'STOCK_OUT',
         'productId': 'product-1',
         'seasonId': 'season-1',
@@ -215,7 +215,7 @@ void main() {
     (tester) async {
       await openPage(tester);
       await select('Hình thức', 'Xuất kho', tester);
-      await select('Vật tư', 'Thuốc kiểm thử (đã xóa)', tester);
+      await select('Vật tư', 'Thuốc kiểm thử', tester);
       await apply(tester);
       expect(find.text('Không có giao dịch phù hợp'), findsOneWidget);
       expect(find.text('0 ₫'), findsNWidgets(2));
@@ -241,14 +241,122 @@ void main() {
       await tester.pump(const Duration(milliseconds: 349));
       expect(find.text('2.920.000 ₫'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
+      await tester.pumpAndSettle();
       expect(find.text('Không có giao dịch phù hợp'), findsOneWidget);
       expect(find.text('0 ₫'), findsNWidgets(2));
       await tester.enterText(searchField(), 'CP');
       await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
       expect(find.text('2.800.000 ₫'), findsWidgets);
       expect(find.text('350.000 ₫'), findsWidgets);
       expect(find.text('Giao dịch nhập thuốc'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'scrolling loads ten more, retains rows on failure and stops at the last page',
+    (tester) async {
+      remote.itemsOverride = List.generate(
+        24,
+        (index) => inventoryTestTransaction.copyWith(
+          id: 'paged-$index',
+          reason: 'Paged entry $index',
+        ),
+      );
+      await openPage(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(InventoryHistoryPage)),
+      );
+      final provider = inventoryHistoryControllerProvider('farm-1');
+      expect(remote.queries, [
+        {'limit': 10},
+      ]);
+      expect(container.read(provider).requireValue.items, hasLength(10));
+      expect(container.read(provider).requireValue.totalResults, 24);
+      expect(find.text('Xem thêm 10 giao dịch'), findsNothing);
+      final scroll = tester
+          .widget<ListView>(
+            find.byKey(const ValueKey('inventory-history-list')),
+          )
+          .controller!;
+      remote.failNext = true;
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      expect(container.read(provider).requireValue.items, hasLength(10));
+      expect(find.text('Không thể lọc lịch sử'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(remote.queries, hasLength(2));
+      await tester.ensureVisible(find.text('Thử tải thêm'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thử tải thêm'));
+      await tester.pumpAndSettle();
+      expect(container.read(provider).requireValue.items, hasLength(20));
+      expect(container.read(provider).requireValue.totalResults, 24);
+      expect(remote.queries.skip(1).map((query) => query['cursor']), [
+        'paged-9',
+        'paged-9',
+      ]);
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      expect(container.read(provider).requireValue.items, hasLength(24));
+      expect(container.read(provider).requireValue.hasNextPage, isFalse);
+      expect(remote.queries, hasLength(4));
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      expect(remote.queries, hasLength(4));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'automatic loading shows progress and ignores extra scroll events while pending',
+    (tester) async {
+      final items = List.generate(
+        24,
+        (index) => inventoryTestTransaction.copyWith(
+          id: 'pending-$index',
+          reason: 'Pending entry $index',
+        ),
+      );
+      remote.itemsOverride = items;
+      await openPage(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(InventoryHistoryPage)),
+      );
+      final provider = inventoryHistoryControllerProvider('farm-1');
+      remote.pendingMore = Completer<domain.InventoryHistoryPage>();
+      final scroll = tester
+          .widget<ListView>(
+            find.byKey(const ValueKey('inventory-history-list')),
+          )
+          .controller!;
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('inventory-history-loading-more')),
+        findsOneWidget,
+      );
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pump();
+      expect(remote.queries, hasLength(2));
+      expect(container.read(provider).requireValue.items, hasLength(10));
+      remote.pendingMore!.complete(
+        _page(items).copyWith(
+          items: items.sublist(10, 20),
+          limit: 10,
+          hasNextPage: true,
+          nextCursor: 'pending-19',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(provider).requireValue.items, hasLength(20));
+      expect(
+        find.byKey(const ValueKey('inventory-history-loading-more')),
+        findsNothing,
+      );
+      expect(remote.queries, hasLength(2));
       expect(tester.takeException(), isNull);
     },
   );
@@ -338,7 +446,6 @@ List<domain.InventoryTransaction> _transactions() {
     name: 'Thuốc kiểm thử',
     category: domain.InventoryProductCategory.medicine,
     unit: domain.InventoryProductUnit.kg,
-    isDeleted: true,
   );
   return <domain.InventoryTransaction>[
     inventoryTestTransaction.copyWith(
@@ -409,6 +516,8 @@ final class _HistoryRemote implements InventoryRemoteDataSource {
   final queries = <Map<String, dynamic>>[];
   bool failNext = false;
   Completer<domain.InventoryHistoryPage>? pending;
+  Completer<domain.InventoryHistoryPage>? pendingMore;
+  List<domain.InventoryTransaction>? itemsOverride;
 
   @override
   Future<domain.InventoryHistoryPage> getHistory(
@@ -423,7 +532,23 @@ final class _HistoryRemote implements InventoryRemoteDataSource {
     if (pending != null && query['transactionType'] == 'STOCK_OUT') {
       return pending!.future;
     }
-    final items = _transactions().where((item) {
+    if (pendingMore != null && query['cursor'] != null) {
+      return pendingMore!.future;
+    }
+    final all = itemsOverride ?? _transactions();
+    final items = all.where((item) {
+      final search = query['search'] as String?;
+      if (search != null &&
+          ![
+            item.product.name,
+            item.inventoryBalance.lotNumber,
+            item.inventoryBalance.supplierName,
+            item.reason ?? '',
+          ].any(
+            (value) => value.toLowerCase().contains(search.toLowerCase()),
+          )) {
+        return false;
+      }
       if (query['productId'] != null && query['productId'] != item.productId) {
         return false;
       }
@@ -445,7 +570,26 @@ final class _HistoryRemote implements InventoryRemoteDataSource {
       return (from == null || !item.createdAt.isBefore(DateTime.parse(from))) &&
           (to == null || !item.createdAt.isAfter(DateTime.parse(to)));
     }).toList();
-    return _page(items);
+    final limit = query['limit'] as int;
+    final cursor = query['cursor'] as String?;
+    final start = cursor == null
+        ? 0
+        : items.indexWhere((row) => row.id == cursor) + 1;
+    final rows = items.skip(start).take(limit).toList();
+    final hasMore = start + rows.length < items.length;
+    return _page(items).copyWith(
+      items: rows,
+      limit: limit,
+      hasNextPage: hasMore,
+      nextCursor: hasMore ? rows.last.id : null,
+      filterProducts: {
+        for (final row in all) row.product.id: row.product,
+      }.values.toList(),
+      filterSeasons: {
+        for (final row in all)
+          if (row.season != null) row.season!.id: row.season!,
+      }.values.toList(),
+    );
   }
 
   @override

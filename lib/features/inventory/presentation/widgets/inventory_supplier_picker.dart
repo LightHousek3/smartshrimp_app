@@ -4,8 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 
+/// Offer active suppliers from the owner directory for a new receipt.
+/// Inactive suppliers remain managed in the directory, outside this picker.
 class InventorySupplierPicker extends ConsumerStatefulWidget {
-  const InventorySupplierPicker({required this.farmId, super.key});
+  const InventorySupplierPicker({
+    required this.farmId,
+    this.manufacturerOnly = false,
+    super.key,
+  });
+  final bool manufacturerOnly;
   final String farmId;
 
   @override
@@ -69,6 +76,7 @@ class _InventorySupplierPickerState
                       .where(
                         (s) =>
                             s.isActive &&
+                            (!widget.manufacturerOnly || s.isManufacturer) &&
                             (s.name.toLowerCase().contains(_search) ||
                                 (s.phone?.contains(_search) ?? false)),
                       )

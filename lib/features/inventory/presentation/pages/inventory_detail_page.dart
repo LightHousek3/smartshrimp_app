@@ -1,7 +1,6 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,12 +8,15 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_stock_out_lot_picker.dart';
 
+/// Show product lots and expose actions allowed by the loaded product state.
+/// Pause eligibility is a UI hint; the backend rechecks stock and planned use.
 class InventoryDetailPage extends ConsumerWidget {
   const InventoryDetailPage({
     required this.farmId,
@@ -36,7 +38,7 @@ class InventoryDetailPage extends ConsumerWidget {
       title: product?.name ?? 'Chi tiết vật tư',
       headerHeight: 60,
       onBack: context.pop,
-      trailing: product != null && !product.isArchived
+      trailing: product != null && !product.isArchived && !product.readOnly
           ? Semantics(
               button: true,
               label: 'Chỉnh sửa vật tư',
@@ -83,56 +85,23 @@ class InventoryDetailPage extends ConsumerWidget {
               child: _DetailContent(
                 product: product,
                 farmId: farmId,
-                onReplace: product.isArchived || mutation.isLoading
-                    ? null
-                    : (index) => _replacePhoto(context, ref, product, index),
-                onPause: mutation.isLoading
+                onPause: (mutation.isLoading || product.readOnly)
                     ? null
                     : () => _pause(context, ref, product),
-                onRestore: mutation.isLoading
+                onRestore: (mutation.isLoading || product.readOnly)
                     ? null
                     : () => _restore(context, ref, product),
+                onDelete:
+                    product.canDelete &&
+                        !(mutation.isLoading || product.readOnly)
+                    ? () => _delete(context, ref, product)
+                    : null,
+                onSetExpiry: (mutation.isLoading || product.readOnly)
+                    ? null
+                    : (lot) => _setExpiry(context, ref, product.id, lot),
               ),
             ),
     );
-  }
-
-  Future<void> _replacePhoto(
-    BuildContext context,
-    WidgetRef ref,
-    InventoryProduct product,
-    int index,
-  ) async {
-    try {
-      final file = await ref
-          .read(inventoryImagePickerProvider)
-          .pickImage(source: ImageSource.gallery, requestFullMetadata: false);
-      if (file == null || !context.mounted) return;
-      if (await file.length() > InventoryRules.maxImageBytes) {
-        throw const ApiException('Ảnh vật tư không được vượt quá 5 MB.');
-      }
-      final bytes = await file.readAsBytes();
-      InventoryRules.validateImage(bytes);
-      if (!context.mounted) return;
-      final InventoryPhotoReplacement replacement = (
-        index: index,
-        bytes: bytes,
-        fileName: file.name,
-      );
-      await context.push<void>(
-        '/farms/$farmId/inventory/${product.id}/edit',
-        extra: replacement,
-      );
-    } on AppException catch (error) {
-      if (context.mounted) AppNoticeService.danger(context, error.message);
-    } on PlatformException {
-      if (context.mounted) {
-        AppNoticeService.danger(
-          context,
-          'Không thể mở trình chọn tệp ảnh. Vui lòng thử lại.',
-        );
-      }
-    }
   }
 
   Future<void> _pause(
@@ -145,7 +114,7 @@ class InventoryDetailPage extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Tạm ngưng vật tư?'),
         content: Text(
-          'Tạm ngưng sử dụng “${product.name}”? Vật tư cần hết tồn kho và không còn lịch vận hành dự kiến.',
+          'Tạm ngưng sử dụng “${product.name}” cho nghiệp vụ mới? Tồn kho và lịch sử vẫn được giữ nguyên.',
         ),
         actions: [
           TextButton(
@@ -166,6 +135,90 @@ class InventoryDetailPage extends ConsumerWidget {
           .archive(product.id);
       if (context.mounted) {
         AppNoticeService.success(context, 'Đã tạm ngưng vật tư.');
+      }
+    } on AppException catch (error) {
+      if (context.mounted) AppNoticeService.danger(context, error.message);
+    }
+  }
+
+  Future<void> _setExpiry(
+    BuildContext context,
+    WidgetRef ref,
+    String productId,
+    InventoryLot lot,
+  ) async {
+    final form = GlobalKey<FormState>();
+    var value = '';
+    final dateText = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Hạn dùng lô ${lot.lotNumber}'),
+        content: Form(
+          key: form,
+          child: TextFormField(
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Hạn sử dụng (yyyy-MM-dd)',
+            ),
+            onChanged: (text) => value = text.trim(),
+            validator: (text) {
+              final date = DateTime.tryParse(text?.trim() ?? '');
+              return date == null ||
+                      InventoryRules.dateText(date) != text?.trim()
+                  ? 'Nhập ngày hợp lệ theo yyyy-MM-dd'
+                  : null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (form.currentState!.validate()) {
+                Navigator.pop(dialogContext, value);
+              }
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+    if (dateText == null || !context.mounted) return;
+    try {
+      await ref
+          .read(inventoryMutationControllerProvider(farmId).notifier)
+          .updateLotExpiry(productId, lot, DateTime.parse(dateText));
+      if (context.mounted) {
+        AppNoticeService.success(context, 'Đã bổ sung hạn sử dụng.');
+      }
+    } on AppException catch (error) {
+      if (context.mounted) AppNoticeService.danger(context, error.message);
+    }
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryProduct product,
+  ) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      entityLabel: 'vật tư',
+      entityName: product.name,
+      retentionMessage: 'Chỉ xóa vật tư chưa có phát sinh hoặc tham chiếu.',
+      confirmLabel: 'Xóa vật tư',
+    );
+    if (!confirmed || !context.mounted) return;
+    try {
+      await ref
+          .read(inventoryMutationControllerProvider(farmId).notifier)
+          .delete(product.id);
+      if (context.mounted) {
+        AppNoticeService.success(context, 'Đã xóa vật tư.');
+        context.pop();
       }
     } on AppException catch (error) {
       if (context.mounted) AppNoticeService.danger(context, error.message);
@@ -199,20 +252,28 @@ class _DetailContent extends StatelessWidget {
   const _DetailContent({
     required this.product,
     required this.farmId,
-    this.onReplace,
     required this.onPause,
     required this.onRestore,
+    this.onDelete,
+    this.onSetExpiry,
   });
   final InventoryProduct product;
   final String farmId;
-  final Future<void> Function(int)? onReplace;
   final VoidCallback? onPause;
   final VoidCallback? onRestore;
+  final VoidCallback? onDelete;
+  final Future<void> Function(InventoryLot)? onSetExpiry;
 
   @override
   Widget build(BuildContext context) {
     final lots = [...product.lots]
       ..sort((a, b) {
+        final expiry = a.expiryDate == null
+            ? (b.expiryDate == null ? 0 : 1)
+            : (b.expiryDate == null
+                  ? -1
+                  : a.expiryDate!.compareTo(b.expiryDate!));
+        if (expiry != 0) return expiry;
         final date = a.receivedAt.compareTo(b.receivedAt);
         return date == 0 ? a.id.compareTo(b.id) : date;
       });
@@ -221,6 +282,14 @@ class _DetailContent extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 32),
       children: [
+        if (product.readOnly) const InventoryReadOnlyNotice(),
+        if (!product.readOnly && product.manufacturerId.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Text(
+              'Vật tư cũ chưa có nhà cung cấp. Chọn chỉnh sửa để bổ sung.',
+            ),
+          ),
         InventorySurface(
           radius: 18,
           child: Column(
@@ -334,16 +403,53 @@ class _DetailContent extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        InventorySurface(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Nhà cung cấp: ${product.manufacturer['name'] ?? 'Chưa cập nhật'}',
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Hồ sơ: ${switch (product.compliance?.complianceStatus) {
+                  'reviewed' => 'Đã đối chiếu',
+                  'blocked' => 'Đang chặn sử dụng',
+                  _ => product.readOnly ? 'Chưa được đối chiếu' : 'Bản nháp',
+                }}',
+              ),
+              if (product.compliance?.registrationNumber != null)
+                Text('Mã hồ sơ: ${product.compliance!.registrationNumber}'),
+              if (product.compliance?.withdrawalDays != null)
+                Text(
+                  'Thời gian ngừng: ${product.compliance!.withdrawalDays} ngày',
+                ),
+              if (product.compliance?.reviewNote != null)
+                Text(product.compliance!.reviewNote!),
+            ],
+          ),
+        ),
+        if (!product.readOnly && product.canDelete) ...[
+          const SizedBox(height: 12),
+          InventoryDangerButton(label: 'Xóa vật tư', onPressed: onDelete),
+        ],
         if (product.effectiveImageUrls.isNotEmpty) ...[
           const SizedBox(height: 16),
           _ProductGallery(
             key: ValueKey(product.id),
             urls: product.effectiveImageUrls,
-            onReplace: onReplace,
+            category: product.category,
           ),
         ],
         const SizedBox(height: 16),
-        if (!product.isArchived)
+        if (!product.readOnly && product.isArchived && available.isNotEmpty)
+          OutlinedButton.icon(
+            onPressed: () => _chooseStockOut(context, available),
+            icon: const Icon(Icons.assignment_return_outlined),
+            label: const Text('Xuất hủy / trả'),
+          ),
+        if (!product.readOnly && !product.isArchived)
           Row(
             children: [
               Expanded(
@@ -411,7 +517,7 @@ class _DetailContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   const Text(
-                    'Ưu tiên xuất lô nhập trước',
+                    'Ưu tiên hạn dùng sớm, nhập trước khi cùng hạn',
                     style: TextStyle(color: AppColors.inkMuted, fontSize: 10),
                   ),
                 ],
@@ -448,6 +554,9 @@ class _DetailContent extends StatelessWidget {
                 lot: lot,
                 unit: product.unit,
                 firstOut: available.isNotEmpty && lot.id == available.first.id,
+                onSetExpiry: onSetExpiry == null
+                    ? null
+                    : () => onSetExpiry!(lot),
               ),
             ),
           ),
@@ -565,8 +674,12 @@ class _StatCell extends StatelessWidget {
 }
 
 class _ProductGallery extends StatefulWidget {
-  const _ProductGallery({required this.urls, this.onReplace, super.key});
-  final Future<void> Function(int)? onReplace;
+  const _ProductGallery({
+    required this.urls,
+    required this.category,
+    super.key,
+  });
+  final InventoryCategory category;
   final List<String> urls;
   @override
   State<_ProductGallery> createState() => _ProductGalleryState();
@@ -574,22 +687,11 @@ class _ProductGallery extends StatefulWidget {
 
 class _ProductGalleryState extends State<_ProductGallery> {
   int selected = 0;
-  bool replacing = false;
   @override
   void didUpdateWidget(covariant _ProductGallery oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (selected >= widget.urls.length) {
       selected = widget.urls.isEmpty ? 0 : widget.urls.length - 1;
-    }
-  }
-
-  Future<void> _replace() async {
-    if (replacing || widget.onReplace == null) return;
-    setState(() => replacing = true);
-    try {
-      await widget.onReplace!(selected);
-    } finally {
-      if (mounted) setState(() => replacing = false);
     }
   }
 
@@ -625,6 +727,7 @@ class _ProductGalleryState extends State<_ProductGallery> {
         const SizedBox(height: 12),
         InventoryProductImage(
           url: widget.urls[selected],
+          category: widget.category,
           width: double.infinity,
           height: 176,
           fit: BoxFit.contain,
@@ -661,6 +764,7 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   ),
                   child: InventoryProductImage(
                     url: widget.urls[index],
+                    category: widget.category,
                     size: 50,
                     fit: BoxFit.contain,
                   ),
@@ -669,18 +773,6 @@ class _ProductGalleryState extends State<_ProductGallery> {
             ),
           ),
         ),
-        if (widget.onReplace != null)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: replacing ? null : _replace,
-              icon: const Icon(Icons.edit_outlined, size: 16),
-              label: Text(replacing ? 'Đang chọn ảnh…' : 'Đổi ảnh'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF0F62B4),
-              ),
-            ),
-          ),
       ],
     ),
   );
@@ -691,10 +783,12 @@ class _LotCard extends StatelessWidget {
     required this.lot,
     required this.unit,
     required this.firstOut,
+    this.onSetExpiry,
   });
   final InventoryLot lot;
   final InventoryProductUnit unit;
   final bool firstOut;
+  final VoidCallback? onSetExpiry;
   @override
   Widget build(BuildContext context) => InventorySurface(
     radius: 18,
@@ -737,6 +831,17 @@ class _LotCard extends StatelessWidget {
           'Nhập ${formatInventoryDate(lot.receivedAt)}',
           style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
         ),
+        Text(
+          lot.expiryDate == null
+              ? 'Chưa rõ hạn sử dụng — chưa dùng cho vận hành'
+              : 'Hạn sử dụng: ${formatInventoryDate(lot.expiryDate!)}',
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
+        ),
+        if (lot.expiryDate == null)
+          TextButton(
+            onPressed: onSetExpiry,
+            child: const Text('Bổ sung hạn dùng'),
+          ),
         const SizedBox(height: 4),
         Text(
           'Nhà cung cấp: ${lot.supplierName}',

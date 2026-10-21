@@ -20,7 +20,9 @@ void main() {
       expect(InventoryRules.quantityError('0'), isNotNull);
       expect(InventoryRules.quantityError('0', allowZero: true), isNull);
       expect(InventoryRules.quantityError('0.001'), isNull);
-      expect(InventoryRules.quantityError('0.0001'), isNotNull);
+      expect(InventoryRules.quantityError('0.000000001'), isNull);
+      expect(InventoryRules.quantityError('0.0000000001'), isNotNull);
+      expect(InventoryRules.normalizedQuantity('000,000000001'), '0.000000001');
       expect(InventoryRules.quantityError('99999999999.999'), isNull);
       expect(InventoryRules.quantityError('100000000000'), isNotNull);
       expect(InventoryRules.quantityError('NaN'), isNotNull);

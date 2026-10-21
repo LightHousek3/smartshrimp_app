@@ -7,6 +7,8 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_sup
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Create or edit supplier details and activity in the shared owner directory.
+/// Pass the existing record so updates include its version token.
 class InventorySupplierFormPage extends ConsumerStatefulWidget {
   const InventorySupplierFormPage({
     required this.farmId,
@@ -42,6 +44,7 @@ class _InventorySupplierFormPageState
   bool _conflict = false;
   bool _reloadLatest = false;
   bool _isActive = true;
+  String _supplierType = 'MANUFACTURER';
 
   @override
   void dispose() {
@@ -66,6 +69,7 @@ class _InventorySupplierFormPageState
             address: _fields['address']!.text,
             note: _fields['note']!.text,
             isActive: _isActive,
+            supplierType: _supplierType,
           );
       if (!mounted) return;
       AppNoticeService.success(
@@ -136,6 +140,7 @@ class _InventorySupplierFormPageState
       if (_existing == null) {
         _existing = supplier;
         _isActive = supplier.isActive;
+        _supplierType = supplier.supplierType;
         final values = {
           'name': _existing!.name,
           'contactName': _existing!.contactName,
@@ -169,6 +174,33 @@ class _InventorySupplierFormPageState
                         ? 'Vui lòng nhập tên nhà cung cấp'
                         : null,
                   ),
+                  DropdownButtonFormField<String>(
+                    initialValue: _supplierType == 'UNKNOWN'
+                        ? null
+                        : _supplierType,
+                    decoration: const InputDecoration(
+                      labelText: 'Vai trò cung ứng',
+                    ),
+                    validator: (value) => value == null
+                        ? 'Vui lòng xác nhận vai trò cung ứng'
+                        : null,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'MANUFACTURER',
+                        child: Text('Nhà sản xuất'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'DISTRIBUTOR',
+                        child: Text('Nhà phân phối'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'BOTH',
+                        child: Text('Sản xuất và phân phối'),
+                      ),
+                    ],
+                    onChanged: (type) => setState(() => _supplierType = type!),
+                  ),
+                  const SizedBox(height: 12),
                   _field('contactName', 'Người liên hệ', 255),
                   _field(
                     'phone',
@@ -200,27 +232,28 @@ class _InventorySupplierFormPageState
                   ),
                   _field('address', 'Địa chỉ', 1000, lines: 2),
                   _field('note', 'Ghi chú', 2000, lines: 3),
-                  InventoryField(
-                    label: 'Trạng thái',
-                    child: DropdownButtonFormField<bool>(
-                      initialValue: _isActive,
-                      isExpanded: true,
-                      style: inventoryInputTextStyle,
-                      decoration: inventoryInputDecoration(),
-                      items: const [
-                        DropdownMenuItem(
-                          value: true,
-                          child: Text('Đang hoạt động'),
-                        ),
-                        DropdownMenuItem(
-                          value: false,
-                          child: Text('Tạm ngưng'),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _isActive = value ?? true),
+                  if (widget.supplierId != null)
+                    InventoryField(
+                      label: 'Trạng thái',
+                      child: DropdownButtonFormField<bool>(
+                        initialValue: _isActive,
+                        isExpanded: true,
+                        style: inventoryInputTextStyle,
+                        decoration: inventoryInputDecoration(),
+                        items: const [
+                          DropdownMenuItem(
+                            value: true,
+                            child: Text('Đang hoạt động'),
+                          ),
+                          DropdownMenuItem(
+                            value: false,
+                            child: Text('Tạm ngưng'),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _isActive = value ?? true),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_compliance_editor.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_picker.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 typedef _MaterialPhoto = ({String? url, Uint8List? bytes, String? fileName});
@@ -18,21 +22,20 @@ const _emptyPhoto = (url: null, bytes: null, fileName: null);
 bool _hasPhoto(_MaterialPhoto photo) =>
     photo.url != null || photo.bytes != null;
 
+/// Create or edit a product with conversion and three-image validation.
+/// Keep successful uploads available when a failed save is retried.
 class InventoryProductFormPage extends ConsumerStatefulWidget {
   const InventoryProductFormPage.create({required this.farmId, super.key})
-    : productId = null,
-      photoReplacement = null;
+    : productId = null;
 
   const InventoryProductFormPage.edit({
     required this.farmId,
     required String this.productId,
-    this.photoReplacement,
     super.key,
   });
 
   final String farmId;
   final String? productId;
-  final InventoryPhotoReplacement? photoReplacement;
 
   @override
   ConsumerState<InventoryProductFormPage> createState() =>
@@ -42,7 +45,6 @@ class InventoryProductFormPage extends ConsumerStatefulWidget {
 class _InventoryProductFormPageState
     extends ConsumerState<InventoryProductFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final _imageFieldKey = GlobalKey();
   int? _selectedPhotoIndex;
   final _nameController = TextEditingController();
   final _thresholdController = TextEditingController();
@@ -53,6 +55,10 @@ class _InventoryProductFormPageState
   InventoryProductUnit? _unit;
   InventoryConversionUnit? _conversionUnit;
   InventoryProduct? _product;
+  String? _manufacturerId;
+  String _manufacturerName = '';
+  InventoryCompliance _compliance = const InventoryCompliance();
+  bool _complianceChanged = false;
   bool _initialized = false;
   bool _saving = false;
   bool _picking = false;
@@ -83,6 +89,9 @@ class _InventoryProductFormPageState
     if (_initialized) return;
     _initialized = true;
     _product = product;
+    _manufacturerId = product.manufacturerId;
+    _manufacturerName = product.manufacturer['name'] as String? ?? '';
+    _compliance = product.compliance ?? const InventoryCompliance();
     _images.clear();
     _images.addAll(
       product.effectiveImageUrls.map(
@@ -91,28 +100,6 @@ class _InventoryProductFormPageState
     );
     while (_images.length < InventoryRules.maxProductImages) {
       _images.add(_emptyPhoto);
-    }
-    final replacement = widget.photoReplacement;
-    if (replacement != null &&
-        replacement.index >= 0 &&
-        replacement.index < _images.length) {
-      _selectedPhotoIndex = replacement.index;
-      _images[replacement.index] = (
-        url: null,
-        bytes: replacement.bytes,
-        fileName: replacement.fileName,
-      );
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final fieldContext = _imageFieldKey.currentContext;
-        if (fieldContext != null) {
-          Scrollable.ensureVisible(
-            fieldContext,
-            alignment: 0.15,
-            duration: const Duration(milliseconds: 250),
-          );
-        }
-      });
     }
     _nameController.text = product.name;
     _thresholdController.text = product.minAlertQuantity == 0
@@ -129,6 +116,10 @@ class _InventoryProductFormPageState
 
   Future<void> _pickImage({int? slot}) async {
     if (_saving || _picking) return;
+    if (slot != null &&
+        (slot < 0 || slot >= _images.length || _hasPhoto(_images[slot]))) {
+      return;
+    }
     if (slot == null && _imageCount >= InventoryRules.maxProductImages) {
       AppNoticeService.danger(context, 'Mỗi vật tư có tối đa 3 ảnh.');
       return;
@@ -164,9 +155,14 @@ class _InventoryProductFormPageState
         setState(() {
           if (slot != null) {
             _images[slot] = selected.single;
+            _selectedPhotoIndex = slot;
           } else {
             for (final photo in selected) {
-              _images[_images.indexWhere((image) => !_hasPhoto(image))] = photo;
+              final photoIndex = _images.indexWhere(
+                (image) => !_hasPhoto(image),
+              );
+              _images[photoIndex] = photo;
+              _selectedPhotoIndex = photoIndex;
             }
           }
         });
@@ -188,6 +184,13 @@ class _InventoryProductFormPageState
   Future<void> _submit() async {
     if (_saving || _picking) return;
     if (_formKey.currentState?.validate() != true) return;
+    if (_manufacturerId == null || _manufacturerId!.isEmpty) {
+      AppNoticeService.danger(
+        context,
+        'Vui lòng chọn nhà sản xuất đang hoạt động.',
+      );
+      return;
+    }
     if (_imageCount > InventoryRules.maxProductImages) {
       AppNoticeService.danger(context, 'Mỗi vật tư có tối đa 3 ảnh.');
       return;
@@ -255,6 +258,8 @@ class _InventoryProductFormPageState
           product: _product!,
           name: _nameController.text,
           category: category,
+          manufacturerId: _manufacturerId!,
+          compliance: _complianceChanged ? _compliance.toDraftJson() : null,
           unit: unit,
           conversionQuantity: conversionQuantity,
           conversionUnit: InventoryRules.isPackaged(unit)
@@ -269,6 +274,8 @@ class _InventoryProductFormPageState
         await notifier.create(
           name: _nameController.text,
           category: category,
+          manufacturerId: _manufacturerId!,
+          compliance: _compliance.toDraftJson(),
           unit: unit,
           conversionQuantity: conversionQuantity,
           conversionUnit: InventoryRules.isPackaged(unit)
@@ -343,11 +350,64 @@ class _InventoryProductFormPageState
     final mutation = ref.watch(
       inventoryMutationControllerProvider(widget.farmId),
     );
+    if (_product?.metadataLocked == true) {
+      return _frame(
+        Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Vật tư đã được sử dụng. Hồ sơ gốc được giữ nguyên; bạn vẫn có thể đổi ngưỡng cảnh báo.',
+              ),
+              const SizedBox(height: 16),
+              if (_product!.manufacturerId.isEmpty) ...[
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.factory_outlined),
+                  label: Text(
+                    _manufacturerName.isEmpty
+                        ? 'Bổ sung nhà sản xuất'
+                        : _manufacturerName,
+                  ),
+                  onPressed: _saving
+                      ? null
+                      : () async {
+                          final supplier =
+                              await showModalBottomSheet<InventorySupplier>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) => InventorySupplierPicker(
+                                  farmId: widget.farmId,
+                                  manufacturerOnly: true,
+                                ),
+                              );
+                          if (supplier != null && mounted) {
+                            setState(() {
+                              _manufacturerId = supplier.id;
+                              _manufacturerName = supplier.name;
+                            });
+                          }
+                        },
+                ),
+                const SizedBox(height: 16),
+              ],
+              _buildThresholdField(),
+              const SizedBox(height: 16),
+              InventoryGradientButton(
+                label: 'Lưu thay đổi',
+                iconAsset: InventoryAssets.save,
+                onPressed: _saving ? null : _submit,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return _frame(
       Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 32),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
           children: <Widget>[
             AbsorbPointer(
               absorbing: _saving || _picking,
@@ -362,10 +422,7 @@ class _InventoryProductFormPageState
                       label: 'Tên vật tư *',
                       child: TextFormField(
                         controller: _nameController,
-                        style: AppTypography.mono(
-                          fontSize: 14,
-                          color: AppColors.ink,
-                        ),
+                        style: inventoryInputTextStyle,
                         maxLength: InventoryRules.maxNameLength,
                         textCapitalization: TextCapitalization.sentences,
                         decoration: inventoryInputDecoration(
@@ -448,324 +505,72 @@ class _InventoryProductFormPageState
                     InventoryField(
                       labelSize: 12,
                       spacing: 6,
-                      key: _imageFieldKey,
-                      label: 'Hình ảnh vật tư (tối đa 3 ảnh)',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                            itemCount: _images.length,
-                            itemBuilder: (context, index) {
-                              final image = _images[index];
-                              final label = inventoryPhotoLabel(index);
-                              return Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  Material(
-                                    color: const Color(0xFFEAF4FF),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: InkWell(
-                                      key: ValueKey('inventory-photo-$index'),
-                                      onTap: () {
-                                        setState(
-                                          () => _selectedPhotoIndex = index,
-                                        );
-                                        if (!_hasPhoto(image)) {
-                                          _pickImage(slot: index);
-                                        }
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Semantics(
-                                        button: true,
-                                        selected: _selectedPhotoIndex == index,
-                                        label:
-                                            'Chọn ảnh ${label.toLowerCase()}',
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          child: image.bytes != null
-                                              ? Image.memory(
-                                                  image.bytes!,
-                                                  fit: BoxFit.contain,
-                                                )
-                                              : image.url != null
-                                              ? InventoryProductImage(
-                                                  url: image.url,
-                                                  fit: BoxFit.contain,
-                                                  width: double.infinity,
-                                                  height: double.infinity,
-                                                )
-                                              : const Center(
-                                                  child: InventorySvgIcon(
-                                                    InventoryAssets.camera,
-                                                    size: 16,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    child: IgnorePointer(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 5,
-                                        ),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xEFFFFFFF),
-                                          borderRadius: BorderRadius.vertical(
-                                            bottom: Radius.circular(12),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          label,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: AppColors.inkSoft,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_selectedPhotoIndex == index)
-                                    Positioned.fill(
-                                      child: IgnorePointer(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            border: Border.all(
-                                              color: const Color(0xFF3F97E8),
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  if (_hasPhoto(image))
-                                    Positioned(
-                                      top: 6,
-                                      right: 6,
-                                      child: SizedBox.square(
-                                        dimension: 24,
-                                        child: IconButton(
-                                          tooltip: 'Gỡ ảnh ${index + 1}',
-                                          padding: EdgeInsets.zero,
-                                          style: IconButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xB30F1C2E,
-                                            ),
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          icon: const InventorySvgIcon(
-                                            InventoryAssets.removeImage,
-                                            size: 12,
-                                          ),
-                                          onPressed: () => setState(() {
-                                            if (_selectedPhotoIndex == index) {
-                                              _selectedPhotoIndex = null;
-                                            } else if (index >=
-                                                    InventoryRules
-                                                        .maxProductImages &&
-                                                _selectedPhotoIndex != null &&
-                                                _selectedPhotoIndex! > index) {
-                                              _selectedPhotoIndex =
-                                                  _selectedPhotoIndex! - 1;
-                                            }
-                                            if (index <
-                                                InventoryRules
-                                                    .maxProductImages) {
-                                              _images[index] = _emptyPhoto;
-                                            } else {
-                                              _images.removeAt(index);
-                                            }
-                                          }),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _selectedPhotoIndex == null
-                                      ? 'Chọn ảnh cần đổi'
-                                      : 'Đã chọn: ${inventoryPhotoLabel(_selectedPhotoIndex!)}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.inkMuted,
-                                  ),
-                                ),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed:
-                                    _selectedPhotoIndex != null &&
-                                        _hasPhoto(_images[_selectedPhotoIndex!])
-                                    ? () =>
-                                          _pickImage(slot: _selectedPhotoIndex)
-                                    : null,
-                                icon: const Icon(Icons.edit_outlined, size: 16),
-                                label: const Text('Đổi ảnh'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF0F62B4),
-                                  backgroundColor: Colors.white,
-                                  side: const BorderSide(
-                                    color: Color(0xFFD3E8FF),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          CustomPaint(
-                            foregroundPainter: const _DashedOutline(),
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: 44,
-                              child: Material(
-                                color: const Color(0xFFEAF4FF),
-                                borderRadius: BorderRadius.circular(12),
-                                child: InkWell(
-                                  onTap:
-                                      _imageCount >=
-                                          InventoryRules.maxProductImages
-                                      ? null
-                                      : () => _pickImage(),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const InventorySvgIcon(
-                                        InventoryAssets.camera,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _picking
-                                            ? 'Đang mở tệp…'
-                                            : _imageCount >=
-                                                  InventoryRules
-                                                      .maxProductImages
-                                            ? 'Đã đủ 3 ảnh'
-                                            : _imageCount == 0
-                                            ? 'Chọn nhiều ảnh'
-                                            : 'Thêm ảnh khác',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF0C4E8F),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Ảnh 1: mặt trước · Ảnh 2: mặt sau · Ảnh 3: bổ sung.\nJPG, PNG, WebP · Tối đa 5 MB/ảnh, 3 ảnh/vật tư.',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.inkMuted,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                      label: 'Nhà sản xuất *',
+                      child: _buildManufacturerDropdown(),
                     ),
-
-                    const SizedBox(height: 16),
-                    InventoryField(
-                      labelSize: 12,
-                      spacing: 6,
-                      label: 'Ngưỡng cảnh báo tồn kho tối thiểu',
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _thresholdController,
-                              style: AppTypography.mono(
-                                fontSize: 14,
-                                color: AppColors.ink,
-                              ),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: inventoryInputDecoration(
-                                hintText: 'VD: 100',
-                              ),
-                              validator: (value) =>
-                                  value == null || value.trim().isEmpty
-                                  ? null
-                                  : InventoryRules.quantityError(
-                                      value,
-                                      allowZero: true,
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              key: ValueKey(_alertUnitLabel),
-                              initialValue: _alertUnitLabel,
-                              readOnly: true,
-                              style: AppTypography.mono(
-                                fontSize: 14,
-                                color: AppColors.ink,
-                              ),
-                              decoration: inventoryInputDecoration(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    InventoryField(
-                      labelSize: 12,
-                      spacing: 6,
-                      label: 'Mô tả (tùy chọn)',
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        style: AppTypography.mono(
-                          fontSize: 14,
-                          color: AppColors.ink,
+                    TextButton.icon(
+                      icon: const Icon(Icons.add_business_outlined, size: 16),
+                      label: const Text(
+                        'Thêm nhà sản xuất',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
-                        maxLength: InventoryRules.maxDescriptionLength,
-                        maxLines: 4,
-                        minLines: 2,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: inventoryInputDecoration(
-                          hintText: 'Mô tả ngắn về vật tư…',
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                        ).copyWith(counterText: ''),
+                      ),
+                      onPressed: () async {
+                        final supplier = await context.push<InventorySupplier>(
+                          '/farms/${widget.farmId}/inventory/suppliers/new',
+                        );
+                        if (supplier != null &&
+                            supplier.isActive &&
+                            supplier.isManufacturer &&
+                            mounted) {
+                          setState(() {
+                            _manufacturerId = supplier.id;
+                            _manufacturerName = supplier.name;
+                          });
+                        }
+                      },
+                    ),
+                    const Text(
+                      'Đơn vị in trên nhãn. Bên bán được ghi riêng ở từng lần nhập kho.',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.6,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    InventoryComplianceEditor(
+                      value: _compliance,
+                      imageSection: _buildPhotoSection(),
+                      onChanged: (value) => setState(() {
+                        _compliance = value;
+                        _complianceChanged = true;
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildThresholdField(),
+                    const SizedBox(height: 16),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _descriptionController,
+                      builder: (context, value, _) => InventoryField(
+                        labelSize: 12,
+                        spacing: 6,
+                        label:
+                            'Mô tả (tùy chọn · ${value.text.characters.length}/${InventoryRules.maxDescriptionLength})',
+                        child: TextFormField(
+                          controller: _descriptionController,
+                          style: inventoryInputTextStyle,
+                          maxLength: InventoryRules.maxDescriptionLength,
+                          maxLines: 4,
+                          minLines: 2,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: inventoryInputDecoration(
+                            hintText: 'Ghi chú thêm về vật tư…',
+                          ).copyWith(counterText: ''),
+                        ),
                       ),
                     ),
                   ],
@@ -775,13 +580,12 @@ class _InventoryProductFormPageState
             const SizedBox(height: 24),
             InventoryGradientButton(
               radius: 12,
-              gradientColors: const [AppColors.oceanLight, AppColors.tealLight],
               label: _saving || mutation.isLoading
                   ? 'Đang lưu…'
                   : _isEdit
                   ? 'Lưu thay đổi'
-                  : 'Lưu vật tư',
-              iconAsset: InventoryAssets.save,
+                  : 'Thêm vào kho',
+              iconAsset: InventoryAssets.formSubmit,
               onPressed: _saving || _picking || mutation.isLoading
                   ? null
                   : _submit,
@@ -792,10 +596,335 @@ class _InventoryProductFormPageState
     );
   }
 
+  Widget _buildThresholdField() => InventoryField(
+    label: 'Ngưỡng cảnh báo tồn kho tối thiểu',
+    labelSize: 12,
+    spacing: 6,
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextFormField(
+            key: const ValueKey('inventory-threshold-quantity'),
+            controller: _thresholdController,
+            style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: inventoryInputDecoration(hintText: '0'),
+            validator: (value) => value == null || value.trim().isEmpty
+                ? null
+                : InventoryRules.quantityError(value, allowZero: true),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextFormField(
+            key: ValueKey('inventory-threshold-unit-$_alertUnitLabel'),
+            initialValue: _alertUnitLabel,
+            readOnly: true,
+            style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
+            decoration: inventoryInputDecoration(),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildPhotoSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (_imageCount > 0) ...[
+        _buildPhotoPreview(),
+        const SizedBox(height: 16),
+      ],
+      Row(
+        children: [
+          Expanded(
+            child: InventoryGradientButton(
+              label: _picking
+                  ? 'Đang mở tệp…'
+                  : _imageCount >= InventoryRules.maxProductImages
+                  ? 'Đã đủ 3 ảnh'
+                  : _imageCount == 0
+                  ? 'Thêm ảnh'
+                  : 'Thêm ảnh khác',
+              iconAsset: InventoryAssets.formImage,
+              radius: 12,
+              fitContent: true,
+              onPressed:
+                  _saving ||
+                      _picking ||
+                      _imageCount >= InventoryRules.maxProductImages
+                  ? null
+                  : () => _imageCount == 0
+                        ? _pickImage()
+                        : _pickImage(
+                            slot: _images.indexWhere(
+                              (image) => !_hasPhoto(image),
+                            ),
+                          ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Tooltip(
+              message:
+                  'Đọc nhãn OCR chưa khả dụng. Bạn có thể nhập thông tin theo nhãn bên dưới.',
+              child: Opacity(
+                opacity: .45,
+                child: InventoryGradientButton(
+                  label: 'Đọc nhãn OCR',
+                  iconAsset: InventoryAssets.formOcr,
+                  radius: 12,
+                  fitContent: true,
+                  disabledGradientColors: [
+                    AppColors.oceanLight,
+                    AppColors.tealLight,
+                    AppColors.oceanLight,
+                  ],
+                  onPressed: null,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      Text(
+        '$_imageCount/${InventoryRules.maxProductImages} ảnh · JPG, PNG, WebP · tối đa ${InventoryRules.maxImageBytes ~/ (1024 * 1024)} MB/ảnh.',
+        style: const TextStyle(
+          fontSize: 12,
+          height: 1.6,
+          color: AppColors.inkMuted,
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildPhotoPreview() {
+    final selected =
+        _selectedPhotoIndex != null &&
+            _selectedPhotoIndex! < _images.length &&
+            _hasPhoto(_images[_selectedPhotoIndex!])
+        ? _selectedPhotoIndex!
+        : _images.indexWhere(_hasPhoto);
+    final photo = _images[selected];
+    final last = _images.lastIndexWhere(_hasPhoto);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          key: const ValueKey('inventory-photo-preview'),
+          height: 192,
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF1F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: photo.bytes != null
+              ? Image.memory(photo.bytes!, fit: BoxFit.contain)
+              : InventoryProductImage(
+                  category: _category ?? InventoryProductCategory.other,
+                  url: photo.url,
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                  height: 192,
+                ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var index = 0; index <= last; index++) ...[
+              if (index > 0) const SizedBox(width: 6),
+              Expanded(
+                child: SizedBox(
+                  height: 36,
+                  child: OutlinedButton(
+                    key: ValueKey('inventory-photo-$index'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      backgroundColor: selected == index
+                          ? const Color(0xFFEAF4FF)
+                          : Colors.white,
+                      foregroundColor: const Color(0xFF0C4E8F),
+                      side: BorderSide(
+                        color: selected == index
+                            ? const Color(0xFF3F97E8)
+                            : AppColors.line,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_hasPhoto(_images[index])) {
+                        setState(() => _selectedPhotoIndex = index);
+                      } else {
+                        _pickImage(slot: index);
+                      }
+                    },
+                    child: Text('Ảnh ${index + 1}'),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 8),
+            SizedBox.square(
+              dimension: 36,
+              child: IconButton(
+                tooltip: 'Gỡ ảnh ${selected + 1}',
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFBE6EA),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const InventorySvgIcon(
+                  InventoryAssets.formDelete,
+                  size: 17,
+                ),
+                onPressed: () => setState(() {
+                  if (selected < InventoryRules.maxProductImages) {
+                    _images[selected] = _emptyPhoto;
+                  } else {
+                    _images.removeAt(selected);
+                  }
+                  _selectedPhotoIndex = null;
+                }),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Đã chọn: ${inventoryPhotoLabel(selected)}',
+          style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildManufacturerDropdown() {
+    final suppliers = ref.watch(supplierListControllerProvider(widget.farmId));
+    return suppliers.when(
+      loading: () => InputDecorator(
+        decoration: inventoryInputDecoration(),
+        child: const Row(
+          children: [
+            SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Đang tải nhà sản xuất…', style: inventoryInputTextStyle),
+          ],
+        ),
+      ),
+      error: (error, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            error is AppException
+                ? error.message
+                : 'Không thể tải nhà sản xuất.',
+            style: const TextStyle(color: AppColors.error, fontSize: 12),
+          ),
+          TextButton(
+            onPressed: () =>
+                ref.invalidate(supplierListControllerProvider(widget.farmId)),
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
+      data: (all) {
+        final items = all
+            .where((item) => item.isActive && item.isManufacturer)
+            .toList();
+        final listed = items.any((item) => item.id == _manufacturerId);
+        // Keep the saved manufacturer when editing an existing material, even
+        // if that manufacturer is no longer offered for new selections.
+        final retainCurrent =
+            _isEdit && (_manufacturerId?.isNotEmpty ?? false) && !listed;
+        final selected = listed || retainCurrent ? _manufacturerId : null;
+        return DropdownButtonFormField<String>(
+          key: ValueKey(_manufacturerId),
+          initialValue: selected,
+          isExpanded: true,
+          menuMaxHeight: 300,
+          style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
+          icon: const Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: SizedBox(
+              width: 10,
+              height: 6,
+              child: InventorySvgIcon(InventoryAssets.formDropdown, size: 10),
+            ),
+          ),
+          hint: Text(
+            items.isEmpty
+                ? 'Chưa có nhà sản xuất đang hoạt động'
+                : 'Chọn nhà sản xuất',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
+          ),
+          decoration: inventoryInputDecoration().copyWith(
+            prefixIcon: const Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: InventorySvgIcon(
+                InventoryAssets.formManufacturer,
+                size: 17,
+              ),
+            ),
+          ),
+          items: [
+            if (retainCurrent)
+              DropdownMenuItem(
+                value: _manufacturerId,
+                enabled: false,
+                child: Text(
+                  _manufacturerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ...items.map(
+              (item) => DropdownMenuItem(
+                value: item.id,
+                child: Text(
+                  item.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+          onChanged: (id) {
+            if (id == null) return;
+            final item = items.firstWhere((item) => item.id == id);
+            setState(() {
+              _manufacturerId = item.id;
+              _manufacturerName = item.name;
+            });
+          },
+          validator: (id) => id == null ? 'Vui lòng chọn nhà sản xuất' : null,
+        );
+      },
+    );
+  }
+
   Widget _frame(Widget child) => PopScope(
     canPop: !_saving,
     child: InventoryPageFrame(
-      title: _isEdit ? 'Chỉnh sửa vật tư' : 'Thêm vật tư',
+      title: _isEdit ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới',
+      backIconAsset: InventoryAssets.formBack,
       headerHeight: 60,
       onBack: () {
         if (!_saving) context.pop();
@@ -962,27 +1091,4 @@ String _errorMessage(Object? error) {
   return error is AppException
       ? error.message
       : 'Không thể tải dữ liệu kho. Vui lòng thử lại.';
-}
-
-class _DashedOutline extends CustomPainter {
-  const _DashedOutline();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)),
-      );
-    final paint = Paint()
-      ..color = const Color(0xFF3F97E8)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-    for (final metric in path.computeMetrics()) {
-      for (double distance = 0; distance < metric.length; distance += 6) {
-        canvas.drawPath(metric.extractPath(distance, distance + 3), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedOutline oldDelegate) => false;
 }

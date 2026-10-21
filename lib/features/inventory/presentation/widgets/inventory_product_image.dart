@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Prefer the product photo and keep its category icon while loading or unavailable.
 class InventoryProductImage extends StatelessWidget {
   const InventoryProductImage({
     this.url,
@@ -7,6 +10,9 @@ class InventoryProductImage extends StatelessWidget {
     this.width,
     this.height,
     this.fit = BoxFit.cover,
+    this.category = InventoryProductCategory.other,
+    this.isArchived = false,
+    this.isLowStock = false,
     super.key,
   });
   final String? url;
@@ -14,6 +20,23 @@ class InventoryProductImage extends StatelessWidget {
   final double? width;
   final double? height;
   final BoxFit fit;
+  final InventoryProductCategory category;
+  final bool isArchived;
+  final bool isLowStock;
+
+  String get _iconAsset => switch (category) {
+    InventoryProductCategory.feed => InventoryAssets.catalogFeed,
+    InventoryProductCategory.mineral => InventoryAssets.catalogMineral,
+    InventoryProductCategory.medicine =>
+      isLowStock
+          ? InventoryAssets.catalogMedicineLow
+          : InventoryAssets.catalogMedicine,
+    InventoryProductCategory.chemical =>
+      isArchived
+          ? InventoryAssets.catalogChemicalInactive
+          : InventoryAssets.catalogChemical,
+    _ => InventoryAssets.inventoryBox,
+  };
 
   @override
   Widget build(BuildContext context) => ClipRRect(
@@ -21,10 +44,10 @@ class InventoryProductImage extends StatelessWidget {
     child: SizedBox(
       width: width ?? size,
       height: height ?? size,
-      child: url == null
+      child: url == null || url!.trim().isEmpty
           ? _placeholder()
           : Image.network(
-              url!,
+              url!.trim(),
               fit: fit,
               semanticLabel: 'Ảnh vật tư',
               loadingBuilder: (_, child, progress) =>
@@ -35,12 +58,15 @@ class InventoryProductImage extends StatelessWidget {
   );
 
   Widget _placeholder() => ColoredBox(
-    color: const Color(0xFFEAF4FF),
+    color: isArchived
+        ? const Color(0xFFF1F5F9)
+        : category == InventoryProductCategory.medicine && isLowStock
+        ? const Color(0xFFFBE6EA)
+        : const Color(0xFFEAF4FF),
     child: Center(
-      child: Icon(
-        Icons.inventory_2_outlined,
-        size: size > 80 ? 44 : 24,
-        color: const Color(0xFF1D7AD6),
+      child: InventorySvgIcon(
+        _iconAsset,
+        size: (height ?? size) > 80 ? 44 : 20,
       ),
     ),
   );

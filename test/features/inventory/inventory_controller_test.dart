@@ -31,6 +31,7 @@ void main() {
 
   test('retains all combined history filters across cursor pages', () async {
     final filters = InventoryHistoryFilters(
+      search: 'mã lô',
       productId: 'product-1',
       seasonId: 'season-1',
       transactionType: InventoryTransactionType.stockOut,
@@ -43,6 +44,7 @@ void main() {
     final secondItem = firstItem.copyWith(id: 'transaction-2');
     repository.historyPages[null] = inventoryTestHistoryPage.copyWith(
       items: [firstItem],
+      totalResults: 42,
       hasNextPage: true,
       nextCursor: firstItem.id,
       summary: const InventoryHistorySummary(
@@ -52,6 +54,11 @@ void main() {
     );
     repository.historyPages[firstItem.id] = inventoryTestHistoryPage.copyWith(
       items: [secondItem],
+      totalResults: 42,
+      summary: const InventoryHistorySummary(
+        totalInboundValue: 0,
+        totalOutboundValue: 5600000,
+      ),
     );
     final provider = filteredInventoryHistoryControllerProvider((
       farmId: 'farm-1',
@@ -59,12 +66,19 @@ void main() {
     ));
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
-    final result = await container.read(provider.future);
+    final first = await container.read(provider.future);
+    expect(first.items, [firstItem]);
+    expect(first.totalResults, 42);
+    expect(repository.historyRequests, hasLength(1));
+    await container.read(provider.notifier).loadMore();
+    final result = container.read(provider).requireValue;
     expect(result.items, [firstItem, secondItem]);
-    expect(result.totalResults, 2);
+    expect(result.totalResults, 42);
     expect(result.summary.totalOutboundValue, 5600000);
     expect(repository.historyRequests, hasLength(2));
     for (final request in repository.historyRequests) {
+      expect(request['limit'], 10);
+      expect(request['search'], 'mã lô');
       expect(request['productId'], 'product-1');
       expect(request['seasonId'], 'season-1');
       expect(request['transactionType'], InventoryTransactionType.stockOut);
@@ -101,7 +115,7 @@ void main() {
       repository.pages[2] = inventoryTestProductPage(
         page: 2,
         items: <InventoryProduct>[
-          inventoryTestProduct.copyWith(id: 'product-2', isArchived: true),
+          inventoryTestProduct.copyWith(id: 'product-2', status: 'INACTIVE'),
         ],
       );
       final subscription = container.listen(
@@ -136,11 +150,56 @@ void main() {
         (_, _) {},
       );
       addTearDown(subscription.close);
+      await container.read(inventoryHistoryControllerProvider('farm-1').future);
       await expectLater(
-        container.read(inventoryHistoryControllerProvider('farm-1').future),
+        container
+            .read(inventoryHistoryControllerProvider('farm-1').notifier)
+            .loadMore(),
         throwsA(isA<InvalidResponseException>()),
       );
       expect(repository.historyCalls, 2);
+      expect(
+        container
+            .read(inventoryHistoryControllerProvider('farm-1'))
+            .requireValue
+            .items,
+        inventoryTestHistoryPage.items,
+      );
+    },
+  );
+
+  test(
+    'duplicate load-more calls issue one request and a refresh discards its late page',
+    () async {
+      final provider = inventoryHistoryControllerProvider('farm-1');
+      repository.history = inventoryTestHistoryPage.copyWith(
+        hasNextPage: true,
+        nextCursor: 'page-two',
+      );
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      await container.read(provider.future);
+      repository.historyPending = Completer<InventoryHistoryPage>();
+      final notifier = container.read(provider.notifier);
+      final pending = notifier.loadMore();
+      await notifier.loadMore();
+      expect(repository.historyCalls, 2);
+      final fresh = inventoryTestHistoryPage.copyWith(
+        items: [inventoryTestTransaction.copyWith(id: 'refreshed')],
+      );
+      repository.history = fresh;
+      await notifier.refresh();
+      repository.historyPending!.complete(
+        inventoryTestHistoryPage.copyWith(
+          items: [inventoryTestTransaction.copyWith(id: 'stale')],
+        ),
+      );
+      await pending;
+      expect(
+        container.read(provider).requireValue.items.single.id,
+        'refreshed',
+      );
+      expect(repository.historyCalls, 3);
     },
   );
 
@@ -254,6 +313,7 @@ final class _InventoryRepository implements InventoryRepository {
   InventoryProduct product = inventoryTestProduct;
   InventoryHistoryPage history = inventoryTestHistoryPage;
   Completer<InventoryStockResult>? pending;
+  Completer<InventoryHistoryPage>? historyPending;
   int historyCalls = 0;
   int archiveCalls = 0;
   int adjustmentCalls = 0;
@@ -284,6 +344,7 @@ final class _InventoryRepository implements InventoryRepository {
   @override
   Future<InventoryHistoryPage> getHistory({
     required String farmId,
+    String? search,
     String? cursor,
     int limit = 100,
     String? productId,
@@ -294,6 +355,8 @@ final class _InventoryRepository implements InventoryRepository {
   }) async {
     historyCalls++;
     historyRequests.add(<String, Object?>{
+      'limit': limit,
+      'search': search,
       'cursor': cursor,
       'productId': productId,
       'transactionType': transactionType,
@@ -301,6 +364,7 @@ final class _InventoryRepository implements InventoryRepository {
       'createdFrom': createdFrom,
       'createdTo': createdTo,
     });
+    if (cursor != null && historyPending != null) return historyPending!.future;
     return historyPages[cursor] ?? history;
   }
 
@@ -310,7 +374,7 @@ final class _InventoryRepository implements InventoryRepository {
     required String productId,
   }) async {
     archiveCalls++;
-    product = product.copyWith(isArchived: true, archivedAt: DateTime.now());
+    product = product.copyWith(status: 'INACTIVE');
     return product;
   }
 
@@ -321,6 +385,7 @@ final class _InventoryRepository implements InventoryRepository {
     required String inventoryBalanceId,
     required bool increase,
     required double quantity,
+    String? quantityExact,
     required String reason,
   }) {
     adjustmentCalls++;

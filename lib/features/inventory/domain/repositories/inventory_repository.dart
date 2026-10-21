@@ -1,5 +1,7 @@
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
+/// Expose catalog and lot movements without coupling the domain to HTTP.
+/// Writes report server conflicts so callers can refresh before retrying.
 abstract interface class InventoryRepository {
   Future<InventoryProductPage> getProducts({
     required String farmId,
@@ -20,6 +22,8 @@ abstract interface class InventoryRepository {
     required String farmId,
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -34,6 +38,8 @@ abstract interface class InventoryRepository {
     required InventoryProduct product,
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -53,7 +59,20 @@ abstract interface class InventoryRepository {
     required String productId,
     required String inventoryBalanceId,
     required double quantity,
+    String? quantityExact,
     String? reason,
+  });
+
+  Future<void> deleteProduct({
+    required String farmId,
+    required String productId,
+  });
+
+  Future<InventoryLot> updateLotExpiry({
+    required String farmId,
+    required String productId,
+    required InventoryLot lot,
+    required DateTime expiryDate,
   });
 
   Future<InventoryProduct> restoreProduct({
@@ -66,7 +85,9 @@ abstract interface class InventoryRepository {
     required String productId,
     required String lotNumber,
     required DateTime receivedAt,
+    DateTime? expiryDate,
     required double quantity,
+    String? quantityExact,
     required double unitPrice,
     required String supplierName,
     String? supplierId,
@@ -79,13 +100,15 @@ abstract interface class InventoryRepository {
     required String inventoryBalanceId,
     required bool increase,
     required double quantity,
+    String? quantityExact,
     required String reason,
   });
 
   Future<InventoryHistoryPage> getHistory({
     required String farmId,
+    String? search,
     String? cursor,
-    int limit = 100,
+    int limit = 10,
     String? productId,
     InventoryTransactionType? transactionType,
     String? seasonId,
