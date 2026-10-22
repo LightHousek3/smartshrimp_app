@@ -26,6 +26,7 @@ abstract class InventorySupplier with _$InventorySupplier {
     @Default('ACTIVE') String status,
     @Default('MANUFACTURER') String supplierType,
     @Default(false) bool canDelete,
+    @Default(false) bool metadataLocked,
     int? manufacturedProductCount,
     int? receiptCount,
     List<Map<String, dynamic>>? manufacturedProducts,

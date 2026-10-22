@@ -99,10 +99,13 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
   }
 
   Future<void> _pickExpiryDate() async {
+    final today = InventoryRules.today;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _expiryDate ?? _receivedAt,
-      firstDate: DateTime(1900),
+      initialDate: _expiryDate != null && !_expiryDate!.isBefore(today)
+          ? _expiryDate!
+          : today,
+      firstDate: today,
       lastDate: DateTime(2100, 12, 31),
     );
     if (picked == null || !mounted) return;
@@ -258,9 +261,11 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
                           ),
                           const SizedBox(height: 14),
                           InventoryField(
-                            label: 'Hạn sử dụng',
+                            label: 'Hạn sử dụng *',
                             child: TextFormField(
                               controller: _expiryController,
+                              validator: (_) =>
+                                  InventoryRules.expiryDateError(_expiryDate),
                               style: inventoryInputTextStyle,
                               readOnly: true,
                               onTap: _pickExpiryDate,
@@ -297,7 +302,7 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
                                     ),
                                   ).copyWith(
                                     helperText:
-                                        'Có thể bổ sung sau; lô chưa rõ hạn dùng chưa được dùng cho vận hành.',
+                                        'Bắt buộc nhập hạn sử dụng từ hôm nay trở đi.',
                                     helperMaxLines: 3,
                                   ),
                             ),

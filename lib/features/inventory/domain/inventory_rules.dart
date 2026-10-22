@@ -64,6 +64,19 @@ abstract final class InventoryRules {
     date.day.toString().padLeft(2, '0'),
   ].join('-');
 
+  static String? expiryDateError(DateTime? date) {
+    if (date == null) return 'Vui lòng chọn hạn sử dụng';
+    final today = DateTime.now().toUtc().add(const Duration(hours: 7));
+    return dateText(date).compareTo(dateText(today)) < 0
+        ? 'Hạn sử dụng không được trong quá khứ'
+        : null;
+  }
+
+  static DateTime get today {
+    final now = DateTime.now().toUtc().add(const Duration(hours: 7));
+    return DateTime(now.year, now.month, now.day);
+  }
+
   static String normalizeText(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');
 

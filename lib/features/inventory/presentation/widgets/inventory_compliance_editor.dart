@@ -105,6 +105,10 @@ class InventoryComplianceEditor extends StatelessWidget {
             icon: _dropdownIcon,
             style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
             decoration: inventoryInputDecoration(),
+            validator: (type) =>
+                enabled && (type == null || type == 'unclassified')
+                ? 'Vui lòng chọn loại sản phẩm'
+                : null,
             items: const [
               DropdownMenuItem(
                 value: 'unclassified',
@@ -125,6 +129,14 @@ class InventoryComplianceEditor extends StatelessWidget {
                 ? (type) => onChanged(value.copyWith(regulatoryType: type!))
                 : null,
           ),
+        ),
+        _text(
+          'Mã số tiếp nhận *',
+          value.registrationNumber,
+          (text) =>
+              onChanged(value.copyWith(registrationNumber: _nullable(text))),
+          hint: 'Nhập mã số tiếp nhận theo nhãn',
+          maxLength: 100,
         ),
         if (value.regulatoryType == 'unclassified') ...[
           const SizedBox(height: 6),
@@ -154,7 +166,7 @@ class InventoryComplianceEditor extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         InventoryField(
-          label: 'Có chứa kháng sinh?',
+          label: 'Có chứa kháng sinh? *',
           labelSize: 12,
           spacing: 6,
           child: DropdownButtonFormField<String>(
@@ -163,6 +175,9 @@ class InventoryComplianceEditor extends StatelessWidget {
             icon: _dropdownIcon,
             style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
             decoration: inventoryInputDecoration(),
+            validator: (text) => enabled && (text == null || text == 'unknown')
+                ? 'Vui lòng xác nhận có chứa kháng sinh'
+                : null,
             items: const [
               DropdownMenuItem(value: 'unknown', child: Text('Chưa xác định')),
               DropdownMenuItem(value: 'true', child: Text('Có kháng sinh')),
@@ -184,7 +199,7 @@ class InventoryComplianceEditor extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         InventoryField(
-          label: 'Thời gian ngừng (ngày)',
+          label: 'Thời gian ngừng (ngày) *',
           labelSize: 12,
           spacing: 6,
           child: TextFormField(
@@ -201,7 +216,10 @@ class InventoryComplianceEditor extends StatelessWidget {
               ),
             ),
             validator: (text) {
-              if (text == null || text.trim().isEmpty) return null;
+              if (!enabled) return null;
+              if (text == null || text.trim().isEmpty) {
+                return 'Vui lòng nhập thời gian ngừng; nhập 0 nếu không áp dụng';
+              }
               final number = double.tryParse(text.replaceAll(',', '.'));
               return number == null ||
                       !number.isFinite ||
@@ -258,6 +276,9 @@ class InventoryComplianceEditor extends StatelessWidget {
           hintText: hint,
         ).copyWith(counterText: ''),
         onChanged: changed,
+        validator: (text) => enabled && (text == null || text.trim().isEmpty)
+            ? 'Vui lòng nhập ${label.replaceAll(' *', '').toLowerCase()}'
+            : null,
       ),
     ),
   );

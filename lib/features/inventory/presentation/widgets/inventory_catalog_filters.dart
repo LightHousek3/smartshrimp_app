@@ -109,17 +109,17 @@ class InventoryCatalogFilters extends StatelessWidget {
                     onPressed: () => onLowStockChanged(!lowStockOnly),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: lowStockOnly
-                          ? const Color(0xFFFBE6EA)
+                          ? const Color(0xFFEAF4FF)
                           : Colors.white,
                       foregroundColor: lowStockOnly
-                          ? AppColors.error
+                          ? AppColors.ocean
                           : AppColors.inkSoft,
                       minimumSize: const Size(0, 40),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.standard,
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       side: BorderSide(
-                        color: lowStockOnly ? AppColors.error : AppColors.line,
+                        color: lowStockOnly ? AppColors.ocean : AppColors.line,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

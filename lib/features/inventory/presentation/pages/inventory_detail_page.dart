@@ -17,6 +17,45 @@ import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventor
 
 /// Show product lots and expose actions allowed by the loaded product state.
 /// Pause eligibility is a UI hint; the backend rechecks stock and planned use.
+class _ProductInfoRow extends StatelessWidget {
+  const _ProductInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 130,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              color: AppColors.inkMuted,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.inkSoft,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class InventoryDetailPage extends ConsumerWidget {
   const InventoryDetailPage({
     required this.farmId,
@@ -111,21 +150,13 @@ class InventoryDetailPage extends ConsumerWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Tạm ngưng vật tư?'),
-        content: Text(
-          'Tạm ngưng sử dụng “${product.name}” cho nghiệp vụ mới? Tồn kho và lịch sử vẫn được giữ nguyên.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Tạm ngưng'),
-          ),
-        ],
+      builder: (dialogContext) => AppConfirmDialog(
+        title: 'Tạm ngưng vật tư?',
+        description:
+            'Tạm ngưng sử dụng “${product.name}” cho nghiệp vụ mới? Tồn kho và lịch sử vẫn được giữ nguyên.',
+        confirmLabel: 'Tạm ngưng',
+        onConfirm: () => Navigator.pop(dialogContext, true),
+        onCancel: () => Navigator.pop(dialogContext, false),
       ),
     );
     if (confirmed != true || !context.mounted) return;
@@ -163,10 +194,11 @@ class InventoryDetailPage extends ConsumerWidget {
             onChanged: (text) => value = text.trim(),
             validator: (text) {
               final date = DateTime.tryParse(text?.trim() ?? '');
-              return date == null ||
-                      InventoryRules.dateText(date) != text?.trim()
-                  ? 'Nhập ngày hợp lệ theo yyyy-MM-dd'
-                  : null;
+              if (date == null ||
+                  InventoryRules.dateText(date) != text?.trim()) {
+                return 'Nhập ngày hợp lệ theo yyyy-MM-dd';
+              }
+              return InventoryRules.expiryDateError(date);
             },
           ),
         ),
@@ -406,24 +438,30 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 12),
         InventorySurface(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Nhà cung cấp: ${product.manufacturer['name'] ?? 'Chưa cập nhật'}',
+              _ProductInfoRow(
+                label: 'Nhà cung cấp',
+                value: '${product.manufacturer['name'] ?? 'Chưa cập nhật'}',
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Hồ sơ: ${switch (product.compliance?.complianceStatus) {
+              _ProductInfoRow(
+                label: 'Hồ sơ',
+                value: switch (product.compliance?.complianceStatus) {
                   'reviewed' => 'Đã đối chiếu',
                   'blocked' => 'Đang chặn sử dụng',
                   _ => product.readOnly ? 'Chưa được đối chiếu' : 'Bản nháp',
-                }}',
+                },
               ),
               if (product.compliance?.registrationNumber != null)
-                Text('Mã hồ sơ: ${product.compliance!.registrationNumber}'),
+                _ProductInfoRow(
+                  label: 'Mã số tiếp nhận',
+                  value: product.compliance!.registrationNumber!,
+                ),
               if (product.compliance?.withdrawalDays != null)
-                Text(
-                  'Thời gian ngừng: ${product.compliance!.withdrawalDays} ngày',
+                _ProductInfoRow(
+                  label: 'Thời gian ngừng',
+                  value:
+                      '${formatInventoryQuantity(product.compliance!.withdrawalDays!)} ngày',
                 ),
               if (product.compliance?.reviewNote != null)
                 Text(product.compliance!.reviewNote!),
@@ -447,7 +485,7 @@ class _DetailContent extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => _chooseStockOut(context, available),
             icon: const Icon(Icons.assignment_return_outlined),
-            label: const Text('Xuất hủy / trả'),
+            label: const Text('Xuất kho'),
           ),
         if (!product.readOnly && !product.isArchived)
           Row(

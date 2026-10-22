@@ -32,21 +32,67 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
   static const _searchDelay = Duration(milliseconds: 350);
 
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _loadingMore = false;
+  Object? _loadMoreError;
   Timer? _searchDebounce;
   var _searchQuery = '';
   var _showLowStockOnly = false;
   var _statusFilter = InventoryArchiveStatus.all;
   InventoryCategory? _categoryFilter; // null = Tất cả
 
+  InventoryCatalogKey get _catalogKey => (
+    farmId: widget.farmId,
+    search: _searchQuery,
+    category: _categoryFilter,
+    lowStockOnly: _showLowStockOnly,
+    archiveStatus: _statusFilter,
+  );
+
+  void _changeFilters(VoidCallback change) {
+    setState(() {
+      change();
+      _loadingMore = false;
+      _loadMoreError = null;
+    });
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.extentAfter < 180 &&
+        _loadMoreError == null) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    final key = _catalogKey;
+    final provider = filteredInventoryListControllerProvider(key);
+    if (_loadingMore || ref.read(provider).value?.hasNextPage != true) return;
+    setState(() {
+      _loadingMore = true;
+      _loadMoreError = null;
+    });
+    try {
+      await ref.read(provider.notifier).loadMore();
+    } on Object catch (error) {
+      if (mounted && key == _catalogKey) setState(() => _loadMoreError = error);
+    } finally {
+      if (mounted && key == _catalogKey) setState(() => _loadingMore = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _scrollController.dispose();
     _searchController
       ..removeListener(_onSearchChanged)
       ..dispose();
@@ -59,14 +105,14 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
     if (query == _searchQuery) return;
     _searchDebounce = Timer(_searchDelay, () {
       if (!mounted) return;
-      setState(() => _searchQuery = query);
+      _changeFilters(() => _searchQuery = query);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final inventoryState = ref.watch(
-      inventoryListControllerProvider(widget.farmId),
+      filteredInventoryListControllerProvider(_catalogKey),
     );
     final suppliedName = widget.farmName?.trim();
     final farmName = suppliedName != null && suppliedName.isNotEmpty
@@ -79,57 +125,12 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 error: (_, _) => 'Không thể tải tên trang trại',
               );
     final page = inventoryState.value;
-    if (page == null) {
-      return InventoryPageFrame(
-        title: 'Kho vật tư',
-        subtitle: farmName,
-        trailing: _supplierButton(context),
-        onBack: context.pop,
-        child: Center(
-          child: inventoryState.hasError
-              ? _InventoryLoadError(
-                  message: _errorMessage(inventoryState.error),
-                  onRetry: () => ref
-                      .read(
-                        inventoryListControllerProvider(widget.farmId).notifier,
-                      )
-                      .refresh(),
-                )
-              : const CircularProgressIndicator(),
-        ),
-      );
-    }
     final readOnly =
-        page.readOnly || page.items.any((product) => product.readOnly);
-    final query = _searchQuery;
-    final sourceProducts = page.items
-        .where(
-          (product) =>
-              _statusFilter == InventoryArchiveStatus.all ||
-              product.isArchived ==
-                  (_statusFilter == InventoryArchiveStatus.archived),
-        )
-        .toList(growable: false);
-    final lowStockCount = sourceProducts
-        .where((product) => product.isLowStock)
-        .length;
-    final inventoryValue = sourceProducts.fold<double>(
-      0,
-      (total, product) => total + product.inventoryValue,
-    );
-    final products = sourceProducts
-        .where((product) {
-          final matchesSearch =
-              query.isEmpty ||
-              product.name.toLowerCase().contains(query) ||
-              product.category.label.toLowerCase().contains(query);
-          final matchesCategory =
-              _categoryFilter == null || product.category == _categoryFilter;
-          return matchesSearch &&
-              (!_showLowStockOnly || product.isLowStock) &&
-              matchesCategory;
-        })
-        .toList(growable: false);
+        page?.readOnly == true ||
+        page?.items.any((product) => product.readOnly) == true;
+    final lowStockCount = page?.summary.lowStockCount ?? 0;
+    final inventoryValue = page?.summary.inventoryValue ?? 0;
+    final products = page?.items ?? <InventoryProduct>[];
 
     return InventoryPageFrame(
       title: 'Kho vật tư',
@@ -148,9 +149,10 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
       ],
       child: RefreshIndicator(
         onRefresh: () => ref
-            .read(inventoryListControllerProvider(widget.farmId).notifier)
+            .read(filteredInventoryListControllerProvider(_catalogKey).notifier)
             .refresh(),
         child: ListView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: <Widget>[
@@ -159,7 +161,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
               children: <Widget>[
                 Expanded(
                   child: InventorySummaryCard(
-                    value: '${sourceProducts.length}',
+                    value: '${page?.summary.totalProducts ?? 0}',
                     label: 'Vật tư',
                   ),
                 ),
@@ -191,12 +193,13 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
               category: _categoryFilter,
               lowStockOnly: _showLowStockOnly,
               lowStockCount: lowStockCount,
-              onStatusChanged: (value) => setState(() => _statusFilter = value),
+              onStatusChanged: (value) =>
+                  _changeFilters(() => _statusFilter = value),
               onCategoryChanged: (value) =>
-                  setState(() => _categoryFilter = value),
+                  _changeFilters(() => _categoryFilter = value),
               onLowStockChanged: (value) =>
-                  setState(() => _showLowStockOnly = value),
-              onReset: () => setState(() {
+                  _changeFilters(() => _showLowStockOnly = value),
+              onReset: () => _changeFilters(() {
                 _statusFilter = InventoryArchiveStatus.all;
                 _categoryFilter = null;
                 _showLowStockOnly = false;
@@ -209,7 +212,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      '${products.length} vật tư',
+                      '${page?.totalResults ?? 0} vật tư',
                       style: const TextStyle(
                         color: AppColors.ink,
                         fontSize: 13,
@@ -221,7 +224,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                   InventorySoftButton(
                     label: 'Thêm vật tư',
                     asset: InventoryAssets.catalogAdd,
-                    onPressed: readOnly
+                    onPressed: readOnly || page == null
                         ? null
                         : () => context.push(
                             '/farms/${widget.farmId}/inventory/new',
@@ -231,12 +234,31 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
               ),
             ),
             const SizedBox(height: 12),
-            if (products.isEmpty)
+            if (page == null)
+              inventoryState.hasError
+                  ? _InventoryLoadError(
+                      message: _errorMessage(inventoryState.error),
+                      onRetry: () => ref
+                          .read(
+                            filteredInventoryListControllerProvider(
+                              _catalogKey,
+                            ).notifier,
+                          )
+                          .refresh(),
+                    )
+                  : const Center(child: CircularProgressIndicator())
+            else if (products.isEmpty)
               InventoryEmptyState(
-                title: page.items.isEmpty
+                title:
+                    _searchQuery.isEmpty &&
+                        _categoryFilter == null &&
+                        !_showLowStockOnly
                     ? 'Chưa có vật tư'
                     : 'Không tìm thấy vật tư',
-                message: page.items.isEmpty
+                message:
+                    _searchQuery.isEmpty &&
+                        _categoryFilter == null &&
+                        !_showLowStockOnly
                     ? 'Thêm vật tư để bắt đầu quản lý kho của trang trại.'
                     : 'Hãy thử tên hoặc bộ lọc khác.',
               )
@@ -253,6 +275,20 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                     ),
                   ),
                 ),
+              ),
+            if (page?.hasNextPage == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _loadingMore
+                    ? const Center(child: CircularProgressIndicator())
+                    : TextButton(
+                        onPressed: _loadMore,
+                        child: Text(
+                          _loadMoreError == null
+                              ? 'Tải thêm vật tư'
+                              : 'Không thể tải thêm. Nhấn để thử lại',
+                        ),
+                      ),
               ),
           ],
         ),

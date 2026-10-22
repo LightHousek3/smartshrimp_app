@@ -186,7 +186,7 @@ void main() {
               of: find.byWidgetPredicate(
                 (widget) =>
                     widget is InventoryField &&
-                    widget.label == 'Ngưỡng cảnh báo tồn kho tối thiểu',
+                    widget.label == 'Ngưỡng cảnh báo tồn kho tối thiểu *',
               ),
               matching: find.byType(EditableText),
             )
@@ -232,6 +232,30 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(label));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> fillRequiredLabelFacts(WidgetTester tester) async {
+    Future<void> select(String label, String choice) async {
+      final field = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) => w is InventoryField && w.label == label,
+        ),
+        matching: find.byType(DropdownButtonFormField<String>),
+      );
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
+      await tester.tap(field);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(choice).last);
+      await tester.pumpAndSettle();
+    }
+
+    await select('Loại sản phẩm *', 'Thức ăn thủy sản');
+    await enterField(tester, 'Mã số tiếp nhận', 'REG-1');
+    await enterField(tester, 'Thành phần / hoạt chất', 'Thành phần theo nhãn');
+    await enterField(tester, 'Hướng dẫn sử dụng', 'Hướng dẫn theo nhãn');
+    await select('Có chứa kháng sinh? *', 'Không có kháng sinh');
+    await enterField(tester, 'Thời gian ngừng', '0');
   }
 
   Future<void> capture(
@@ -302,6 +326,98 @@ void main() {
     });
   }
 
+  testWidgets('supplier requires name, phone and address before saving', (
+    tester,
+  ) async {
+    final suppliers = _SupplierRepository();
+    await openForm(
+      tester,
+      const InventorySupplierFormPage(farmId: 'farm-1'),
+      _InventoryRepository(product: _product(), history: _history()),
+      suppliers: suppliers,
+    );
+    await submitForm(tester, 'Lưu nhà cung cấp');
+    expect(suppliers.saved, isNull);
+    expect(find.text('Vui lòng nhập tên nhà cung cấp'), findsOneWidget);
+    expect(find.text('Vui lòng nhập số điện thoại'), findsOneWidget);
+    expect(find.text('Vui lòng nhập địa chỉ'), findsOneWidget);
+  });
+
+  testWidgets(
+    'supplier with transactions locks name and role while contact remains editable',
+    (tester) async {
+      final suppliers = _SupplierRepository();
+      suppliers.items = [
+        suppliers.items.single.copyWith(
+          metadataLocked: true,
+          receiptCount: 1,
+          canDelete: false,
+        ),
+      ];
+      await openForm(
+        tester,
+        const InventorySupplierFormPage(
+          farmId: 'farm-1',
+          supplierId: 'supplier-1',
+        ),
+        _InventoryRepository(product: _product(), history: _history()),
+        suppliers: suppliers,
+      );
+      final name = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) => w is InventoryField && w.label == 'Tên nhà cung cấp *',
+        ),
+        matching: find.byType(TextFormField),
+      );
+      expect(tester.widget<TextFormField>(name).enabled, false);
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>),
+            )
+            .onChanged,
+        isNull,
+      );
+      await enterField(tester, 'Số điện thoại', '0909876543');
+      await submitForm(tester, 'Lưu nhà cung cấp');
+      expect(suppliers.saved?.name, 'Nhà cung cấp B');
+      expect(suppliers.saved?.supplierType, 'MANUFACTURER');
+      expect(suppliers.saved?.phone, '0909876543');
+    },
+  );
+
+  testWidgets(
+    'product creation blocks missing label facts and places reception code below type',
+    (tester) async {
+      final repository = _InventoryRepository(
+        product: _product(),
+        history: _history(),
+      );
+      await openForm(
+        tester,
+        const InventoryProductFormPage.create(farmId: 'farm-1'),
+        repository,
+      );
+      await enterField(tester, 'Tên vật tư', 'Vật tư thiếu nhãn');
+      await tester.ensureVisible(find.text('Thức ăn'));
+      await tester.tap(find.text('Thức ăn'));
+      await tester.ensureVisible(find.text('kg'));
+      await tester.tap(find.text('kg'));
+      await enterField(tester, 'Ngưỡng cảnh báo', '0');
+      await submitForm(tester, 'Thêm vào kho');
+      expect(repository.createdProduct, isNull);
+      expect(find.text('Vui lòng chọn loại sản phẩm'), findsOneWidget);
+      expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsOneWidget);
+      expect(find.text('Vui lòng nhập thành phần / hoạt chất'), findsOneWidget);
+      expect(find.text('Vui lòng nhập hướng dẫn sử dụng'), findsOneWidget);
+      expect(find.text('Vui lòng xác nhận có chứa kháng sinh'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Mã số tiếp nhận *')).dy,
+        greaterThan(tester.getTopLeft(find.text('Loại sản phẩm *')).dy),
+      );
+    },
+  );
+
   testWidgets(
     'manufacturer selection excludes distributors and inactive entries and accepts both-role manufacturers',
     (tester) async {
@@ -362,6 +478,8 @@ void main() {
       await tester.ensureVisible(find.text('kg'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('kg'));
+      await enterField(tester, 'Ngưỡng cảnh báo', '0');
+      await fillRequiredLabelFacts(tester);
       await submitForm(tester, 'Thêm vào kho');
       expect(inventory.createdManufacturerId, 'maker-both');
       expect(tester.takeException(), isNull);
@@ -373,7 +491,7 @@ void main() {
     (tester) async {
       final inventory = _InventoryRepository(
         product: _product().copyWith(
-          compliance: const domain.InventoryCompliance(
+          compliance: _product().compliance!.copyWith(
             registrationNumber: 'REG-OLD',
             evidenceUrls: ['https://example.com/evidence.pdf'],
           ),
@@ -939,7 +1057,7 @@ void main() {
     await tester.tap(pause);
     await tester.pumpAndSettle();
     expect(find.text('Tạm ngưng vật tư?'), findsOneWidget);
-    await tester.tap(find.text('Hủy'));
+    await tester.tap(find.byKey(const Key('app_confirm_dialog_cancel')));
     await tester.pumpAndSettle();
     expect(find.text('Tạm ngưng vật tư?'), findsNothing);
   });
@@ -1304,10 +1422,11 @@ void main() {
         suppliers: suppliers,
       );
       await enterField(tester, 'Tên nhà cung cấp', 'Đại lý mới');
-      await enterField(tester, 'Điện thoại', 'invalid');
+      await enterField(tester, 'Số điện thoại', 'invalid');
       await submitForm(tester, 'Lưu nhà cung cấp');
       expect(suppliers.saved, isNull);
-      await enterField(tester, 'Điện thoại', '0909876543');
+      await enterField(tester, 'Số điện thoại', '0909876543');
+      await enterField(tester, 'Địa chỉ', 'Cần Thơ');
       await enterField(tester, 'Email', 'sales@example.com');
       await enterField(tester, 'Địa chỉ', 'Sóc Trăng');
       await submitForm(tester, 'Lưu nhà cung cấp');
@@ -1360,6 +1479,8 @@ void main() {
       await tester.tap(add);
       await tester.pumpAndSettle();
       await enterField(tester, 'Tên nhà cung cấp', 'Đại lý mới');
+      await enterField(tester, 'Số điện thoại', '0901234567');
+      await enterField(tester, 'Địa chỉ', 'Cần Thơ');
       await submitForm(tester, 'Lưu nhà cung cấp');
       expect(find.text('Đại lý mới'), findsOneWidget);
       // Let the success notice dismiss before interacting with the receipt CTA.
@@ -1368,6 +1489,17 @@ void main() {
       await enterField(tester, 'Mã lô', 'LOT-QUICK');
       await enterField(tester, 'Số lượng nhập', '10');
       await enterField(tester, 'Đơn giá', '1000');
+      final expiryField = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) => w is InventoryField && w.label == 'Hạn sử dụng *',
+        ),
+        matching: find.byType(TextFormField),
+      );
+      await tester.ensureVisible(expiryField);
+      await tester.tap(expiryField);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
       await submitForm(tester, 'Xác nhận nhập kho');
       expect(repository.stockInPayload?['supplierId'], 'created-supplier');
       expect(repository.stockInPayload?['supplierName'], 'Đại lý mới');
@@ -1399,29 +1531,38 @@ void main() {
   });
 
   group('Inventory UI', () {
-    testWidgets(
-      'upgraded used product permits initial manufacturer completion',
-      (tester) async {
-        await openForm(
-          tester,
-          const InventoryProductFormPage.edit(
-            farmId: 'farm-1',
-            productId: 'product-1',
-          ),
-          _InventoryRepository(
-            product: _product().copyWith(
-              manufacturerId: '',
-              manufacturer: {},
-              metadataLocked: true,
-            ),
-            history: _history(),
-          ),
-        );
-        expect(find.text('Bổ sung nhà sản xuất'), findsOneWidget);
-        expect(find.text('Lưu thay đổi'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('used product only permits threshold and description edits', (
+      tester,
+    ) async {
+      final repository = _InventoryRepository(
+        product: _product().copyWith(
+          manufacturerId: '',
+          manufacturer: {},
+          metadataLocked: true,
+        ),
+        history: _history(),
+      );
+      await openForm(
+        tester,
+        const InventoryProductFormPage.edit(
+          farmId: 'farm-1',
+          productId: 'product-1',
+        ),
+        repository,
+      );
+      expect(find.text('Bổ sung nhà sản xuất'), findsNothing);
+      expect(find.text('Mô tả (tùy chọn)'), findsOneWidget);
+      expect(find.text('Lưu thay đổi'), findsOneWidget);
+      expect(find.text('Tên vật tư *'), findsNothing);
+      expect(find.text('Loại sản phẩm *'), findsNothing);
+      await enterField(tester, 'Ngưỡng cảnh báo', '25');
+      await enterField(tester, 'Mô tả', 'Mô tả mới');
+      await submitForm(tester, 'Lưu thay đổi');
+      expect(repository.updateCalls, 1);
+      expect(repository.product.minAlertQuantity, 25);
+      expect(repository.product.description, 'Mô tả mới');
+      expect(tester.takeException(), isNull);
+    });
     testWidgets(
       'legacy product detail shows actual stock and disables all writes',
       (tester) async {
@@ -1443,6 +1584,7 @@ void main() {
         expect(find.bySemanticsLabel('Chỉnh sửa vật tư'), findsNothing);
         expect(find.text('Nhập kho'), findsNothing);
         expect(find.text('Xuất kho'), findsNothing);
+        await tester.scrollUntilVisible(find.text('Tạm ngưng vật tư'), 200);
         expect(
           tester
               .widget<OutlinedButton>(
@@ -1649,11 +1791,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 349));
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
+      await tester.pumpAndSettle();
       expect(find.text('Thức ăn CP 9004'), findsNothing);
       expect(find.text('Không tìm thấy vật tư'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), '');
       await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -1673,6 +1817,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 150));
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       expect(find.text('Không tìm thấy vật tư'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -1692,6 +1837,7 @@ void main() {
       await tester.tap(
         find.byKey(const ValueKey('inventory-low-stock-filter')),
       );
+      await tester.pump();
       await tester.pump();
       expect(find.text('Thức ăn CP 9004'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 250));
@@ -1893,6 +2039,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('ml').last);
         await tester.pumpAndSettle();
+        await fillRequiredLabelFacts(tester);
         await submitForm(tester, 'Thêm vào kho');
         expect(repository.createdProduct?['minAlertQuantity'], 1000);
         expect(
@@ -1921,6 +2068,7 @@ void main() {
       await tester.ensureVisible(find.text('kg'));
       await tester.tap(find.text('kg'));
       await enterField(tester, 'Ngưỡng cảnh báo', '100,5');
+      await fillRequiredLabelFacts(tester);
       await submitForm(tester, 'Thêm vào kho');
 
       expect(repository.createdProduct, <String, Object?>{
@@ -1951,7 +2099,7 @@ void main() {
         await enterField(tester, 'Đơn giá', '35000,25');
         final expiryField = find.descendant(
           of: find.byWidgetPredicate(
-            (w) => w is InventoryField && w.label == 'Hạn sử dụng',
+            (w) => w is InventoryField && w.label == 'Hạn sử dụng *',
           ),
           matching: find.byType(TextFormField),
         );
@@ -2082,6 +2230,14 @@ domain.InventoryProduct _product() {
     name: 'Thức ăn CP 9004',
     manufacturerId: 'supplier',
     manufacturer: {'id': 'supplier', 'name': 'Nhà cung cấp A'},
+    compliance: const domain.InventoryCompliance(
+      regulatoryType: 'feed',
+      registrationNumber: 'REG-1',
+      ingredientsText: 'Thành phần',
+      usageInstructions: 'Theo nhãn',
+      containsAntibiotic: false,
+      withdrawalDays: 0,
+    ),
     category: domain.InventoryProductCategory.feed,
     unit: domain.InventoryProductUnit.kg,
     minAlertQuantity: 100,
@@ -2283,19 +2439,29 @@ final class _InventoryRepository implements InventoryRepository {
     bool lowStockOnly = false,
     domain.InventoryArchiveStatus archiveStatus =
         domain.InventoryArchiveStatus.active,
-  }) async => domain.InventoryProductPage(
-    items: <domain.InventoryProduct>[product],
-    page: 1,
-    limit: limit,
-    totalResults: 1,
-    totalPages: 1,
-    hasNextPage: false,
-    summary: const domain.InventorySummary(
-      totalProducts: 1,
-      lowStockCount: 1,
-      inventoryValue: 2800000,
-    ),
-  );
+  }) async {
+    final matches =
+        (search == null ||
+            product.name.toLowerCase().contains(search.toLowerCase())) &&
+        (category == null || product.category == category) &&
+        (!lowStockOnly || product.isLowStock) &&
+        (archiveStatus == domain.InventoryArchiveStatus.all ||
+            product.isArchived ==
+                (archiveStatus == domain.InventoryArchiveStatus.archived));
+    return domain.InventoryProductPage(
+      items: matches ? <domain.InventoryProduct>[product] : [],
+      page: page,
+      limit: limit,
+      totalResults: matches ? 1 : 0,
+      totalPages: 1,
+      hasNextPage: false,
+      summary: const domain.InventorySummary(
+        totalProducts: 1,
+        lowStockCount: 1,
+        inventoryValue: 2800000,
+      ),
+    );
+  }
 
   @override
   Future<domain.InventoryProduct> getProduct({
@@ -2366,6 +2532,8 @@ final class _InventoryRepository implements InventoryRepository {
     updatedImageUrl = imageUrl;
     updatedImageUrls = imageUrls;
     this.product = product.copyWith(
+      minAlertQuantity: minAlertQuantity,
+      description: description,
       imageUrl: imageUrl,
       imageUrls: imageUrls ?? const [],
     );

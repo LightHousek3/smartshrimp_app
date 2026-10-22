@@ -42,6 +42,20 @@ final inventoryListControllerProvider = AsyncNotifierProvider.autoDispose
       InventoryListController.new,
     );
 
+typedef InventoryCatalogKey = ({
+  String farmId,
+  String search,
+  InventoryProductCategory? category,
+  bool lowStockOnly,
+  InventoryArchiveStatus archiveStatus,
+});
+
+final filteredInventoryListControllerProvider = AsyncNotifierProvider
+    .autoDispose
+    .family<InventoryListController, InventoryProductPage, InventoryCatalogKey>(
+      (key) => InventoryListController(key.farmId, filters: key),
+    );
+
 final inventoryDetailControllerProvider = AsyncNotifierProvider.autoDispose
     .family<InventoryDetailController, InventoryProduct, InventoryProductKey>(
       InventoryDetailController.new,
@@ -87,54 +101,79 @@ abstract base class _OwnerInventoryController<T> extends AsyncNotifier<T> {
   }
 }
 
-/// Collect catalog pages for local combined filters and ignore stale refreshes.
+/// Fetch ten products per request and let the API apply combined filters.
 final class InventoryListController
     extends _OwnerInventoryController<InventoryProductPage> {
-  InventoryListController(this.farmId);
+  InventoryListController(this.farmId, {this.filters});
 
-  static const _pageSize = 100;
+  static const _pageSize = 10;
   final String farmId;
+  final InventoryCatalogKey? filters;
   int _refreshGeneration = 0;
+  bool _refreshing = false;
+  int? _loadingMoreGeneration;
 
   @override
   Future<InventoryProductPage> build() {
     requireOwner();
-    return _loadAll();
+    _refreshGeneration++;
+    _refreshing = false;
+    _loadingMoreGeneration = null;
+    return _loadPage();
   }
 
   Future<void> refresh() async {
     final generation = ++_refreshGeneration;
-    final result = await AsyncValue.guard(_loadAll);
-    if (ref.mounted && generation == _refreshGeneration) state = result;
+    _refreshing = true;
+    _loadingMoreGeneration = null;
+    final result = await AsyncValue.guard(_loadPage);
+    if (ref.mounted && generation == _refreshGeneration) {
+      _refreshing = false;
+      state = result;
+    }
   }
 
-  Future<InventoryProductPage> _loadAll() => runAuthenticated(() async {
-    final repository = ref.read(inventoryRepositoryProvider);
-    final products = <InventoryProduct>[];
-    late InventoryProductPage firstPage;
-    var pageNumber = 1;
-
-    while (true) {
-      final page = await repository.getProducts(
-        farmId: farmId,
-        page: pageNumber,
-        limit: _pageSize,
-        archiveStatus: InventoryArchiveStatus.all,
+  Future<InventoryProductPage> _loadPage([int pageNumber = 1]) =>
+      runAuthenticated(
+        () => ref
+            .read(inventoryRepositoryProvider)
+            .getProducts(
+              farmId: farmId,
+              page: pageNumber,
+              limit: _pageSize,
+              search: filters?.search,
+              category: filters?.category,
+              lowStockOnly: filters?.lowStockOnly ?? false,
+              archiveStatus:
+                  filters?.archiveStatus ?? InventoryArchiveStatus.all,
+            ),
       );
-      if (pageNumber == 1) firstPage = page;
-      products.addAll(page.items);
-      if (!page.hasNextPage) break;
-      pageNumber++;
-    }
 
-    return firstPage.copyWith(
-      items: products,
-      page: 1,
-      totalResults: products.length,
-      totalPages: products.isEmpty ? 0 : 1,
-      hasNextPage: false,
-    );
-  });
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null ||
+        !current.hasNextPage ||
+        _refreshing ||
+        _loadingMoreGeneration != null) {
+      return;
+    }
+    final generation = _refreshGeneration;
+    _loadingMoreGeneration = generation;
+    try {
+      final page = await _loadPage(current.page + 1);
+      if (!ref.mounted || generation != _refreshGeneration) return;
+      if (page.page != current.page + 1) {
+        throw const InvalidResponseException();
+      }
+      final unique = {
+        for (final product in current.items) product.id: product,
+        for (final product in page.items) product.id: product,
+      };
+      state = AsyncData(page.copyWith(items: unique.values.toList()));
+    } finally {
+      if (_loadingMoreGeneration == generation) _loadingMoreGeneration = null;
+    }
+  }
 }
 
 /// Load one farm/product pair and prevent older refreshes replacing newer data.
@@ -468,6 +507,7 @@ final class InventoryMutationController
       if (!ref.mounted) return result;
       state = const AsyncData<void>(null);
       ref.invalidate(inventoryListControllerProvider(farmId));
+      ref.invalidate(filteredInventoryListControllerProvider);
       ref.invalidate(inventoryHistoryControllerProvider(farmId));
       ref.invalidate(filteredInventoryHistoryControllerProvider);
       if (productId != null) {

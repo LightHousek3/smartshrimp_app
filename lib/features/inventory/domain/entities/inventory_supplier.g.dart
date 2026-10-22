@@ -20,6 +20,7 @@ _InventorySupplier _$InventorySupplierFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String? ?? 'ACTIVE',
       supplierType: json['supplierType'] as String? ?? 'MANUFACTURER',
       canDelete: json['canDelete'] as bool? ?? false,
+      metadataLocked: json['metadataLocked'] as bool? ?? false,
       manufacturedProductCount: (json['manufacturedProductCount'] as num?)
           ?.toInt(),
       receiptCount: (json['receiptCount'] as num?)?.toInt(),
@@ -47,6 +48,7 @@ Map<String, dynamic> _$InventorySupplierToJson(_InventorySupplier instance) =>
       'status': instance.status,
       'supplierType': instance.supplierType,
       'canDelete': instance.canDelete,
+      'metadataLocked': instance.metadataLocked,
       'manufacturedProductCount': instance.manufacturedProductCount,
       'receiptCount': instance.receiptCount,
       'manufacturedProducts': instance.manufacturedProducts,

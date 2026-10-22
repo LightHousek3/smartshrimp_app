@@ -109,7 +109,7 @@ void main() {
   });
 
   test(
-    'loads every product page and includes archived items for filtering',
+    'loads ten products initially and fetches the next page on demand',
     () async {
       repository.pages[1] = inventoryTestProductPage(hasNextPage: true);
       repository.pages[2] = inventoryTestProductPage(
@@ -127,14 +127,51 @@ void main() {
       final result = await container.read(
         inventoryListControllerProvider('farm-1').future,
       );
+      expect(repository.requestedPages, <int>[1]);
+      expect(repository.productRequests.single['limit'], 10);
+      expect(result.items, hasLength(1));
+      expect(result.hasNextPage, isTrue);
+      await container
+          .read(inventoryListControllerProvider('farm-1').notifier)
+          .loadMore();
+      final loaded = container
+          .read(inventoryListControllerProvider('farm-1'))
+          .requireValue;
       expect(repository.requestedPages, <int>[1, 2]);
       expect(
         repository.archiveStatuses,
         everyElement(InventoryArchiveStatus.all),
       );
-      expect(result.items, hasLength(2));
-      expect(result.items.last.isArchived, isTrue);
-      expect(result.hasNextPage, isFalse);
+      expect(loaded.items, hasLength(2));
+      expect(loaded.items.last.isArchived, isTrue);
+      expect(loaded.hasNextPage, isFalse);
+    },
+  );
+
+  test(
+    'catalog sends combined search and filters to the API on every page',
+    () async {
+      final provider = filteredInventoryListControllerProvider((
+        farmId: 'farm-1',
+        search: 'thuốc',
+        category: InventoryProductCategory.medicine,
+        lowStockOnly: true,
+        archiveStatus: InventoryArchiveStatus.active,
+      ));
+      repository.pages[1] = inventoryTestProductPage(hasNextPage: true);
+      repository.pages[2] = inventoryTestProductPage(page: 2);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      await container.read(provider.future);
+      await container.read(provider.notifier).loadMore();
+      expect(repository.productRequests, hasLength(2));
+      for (final request in repository.productRequests) {
+        expect(request['limit'], 10);
+        expect(request['search'], 'thuốc');
+        expect(request['category'], InventoryProductCategory.medicine);
+        expect(request['lowStockOnly'], true);
+        expect(request['archiveStatus'], InventoryArchiveStatus.active);
+      }
     },
   );
 
@@ -309,6 +346,7 @@ final class _AuthRepository implements AuthRepository {
 final class _InventoryRepository implements InventoryRepository {
   final pages = <int, InventoryProductPage>{1: inventoryTestProductPage()};
   final requestedPages = <int>[];
+  final productRequests = <Map<String, Object?>>[];
   final archiveStatuses = <InventoryArchiveStatus>[];
   InventoryProduct product = inventoryTestProduct;
   InventoryHistoryPage history = inventoryTestHistoryPage;
@@ -331,6 +369,14 @@ final class _InventoryRepository implements InventoryRepository {
     InventoryArchiveStatus archiveStatus = InventoryArchiveStatus.active,
   }) async {
     requestedPages.add(page);
+    productRequests.add({
+      'page': page,
+      'limit': limit,
+      'search': search,
+      'category': category,
+      'lowStockOnly': lowStockOnly,
+      'archiveStatus': archiveStatus,
+    });
     archiveStatuses.add(archiveStatus);
     return pages[page]!;
   }

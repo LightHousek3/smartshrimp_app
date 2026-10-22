@@ -170,51 +170,65 @@ class _InventorySupplierFormPageState
                     'name',
                     'Tên nhà cung cấp *',
                     255,
+                    enabled: _existing?.metadataLocked != true,
                     validator: (value) => value == null || value.trim().isEmpty
                         ? 'Vui lòng nhập tên nhà cung cấp'
                         : null,
                   ),
-                  DropdownButtonFormField<String>(
-                    initialValue: _supplierType == 'UNKNOWN'
-                        ? null
-                        : _supplierType,
-                    decoration: const InputDecoration(
-                      labelText: 'Vai trò cung ứng',
+                  InventoryField(
+                    label: 'Vai trò cung ứng *',
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _supplierType == 'UNKNOWN'
+                          ? null
+                          : _supplierType,
+                      isExpanded: true,
+                      style: inventoryInputTextStyle,
+                      decoration: inventoryInputDecoration(),
+                      validator: (value) => value == null
+                          ? 'Vui lòng xác nhận vai trò cung ứng'
+                          : null,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'MANUFACTURER',
+                          child: Text('Nhà sản xuất'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'DISTRIBUTOR',
+                          child: Text('Nhà phân phối'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BOTH',
+                          child: Text('Sản xuất và phân phối'),
+                        ),
+                      ],
+                      onChanged: _existing?.metadataLocked == true
+                          ? null
+                          : (type) => setState(() => _supplierType = type!),
                     ),
-                    validator: (value) => value == null
-                        ? 'Vui lòng xác nhận vai trò cung ứng'
-                        : null,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'MANUFACTURER',
-                        child: Text('Nhà sản xuất'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'DISTRIBUTOR',
-                        child: Text('Nhà phân phối'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'BOTH',
-                        child: Text('Sản xuất và phân phối'),
-                      ),
-                    ],
-                    onChanged: (type) => setState(() => _supplierType = type!),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
+                  if (_existing?.metadataLocked == true) ...[
+                    const Text(
+                      'Nhà cung cấp đã có đơn hoặc giao dịch nên không thể đổi tên và vai trò.',
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _field('contactName', 'Người liên hệ', 255),
                   _field(
                     'phone',
-                    'Điện thoại',
+                    'Số điện thoại *',
                     20,
                     keyboardType: TextInputType.phone,
-                    validator: (value) =>
-                        value != null &&
-                            value.trim().isNotEmpty &&
-                            !RegExp(
-                              r'^\+?[0-9 ()\-.]{6,20}$',
-                            ).hasMatch(value.trim())
-                        ? 'Số điện thoại không hợp lệ'
-                        : null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Vui lòng nhập số điện thoại';
+                      }
+                      return !RegExp(
+                            r'^\+?[0-9 ()\-.]{6,20}$',
+                          ).hasMatch(value.trim())
+                          ? 'Số điện thoại không hợp lệ'
+                          : null;
+                    },
                   ),
                   _field(
                     'email',
@@ -230,7 +244,15 @@ class _InventorySupplierFormPageState
                         ? 'Email không hợp lệ'
                         : null,
                   ),
-                  _field('address', 'Địa chỉ', 1000, lines: 2),
+                  _field(
+                    'address',
+                    'Địa chỉ *',
+                    1000,
+                    lines: 2,
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Vui lòng nhập địa chỉ'
+                        : null,
+                  ),
                   _field('note', 'Ghi chú', 2000, lines: 3),
                   if (widget.supplierId != null)
                     InventoryField(
@@ -307,6 +329,7 @@ class _InventorySupplierFormPageState
     String label,
     int limit, {
     int lines = 1,
+    bool enabled = true,
     TextInputType? keyboardType,
     FormFieldValidator<String>? validator,
   }) => Padding(
@@ -314,6 +337,7 @@ class _InventorySupplierFormPageState
     child: InventoryField(
       label: label,
       child: TextFormField(
+        enabled: enabled,
         controller: _fields[key],
         maxLength: limit,
         maxLines: lines,

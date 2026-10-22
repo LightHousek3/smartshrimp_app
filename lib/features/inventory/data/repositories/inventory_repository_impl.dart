@@ -122,10 +122,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
               imageUrls: imageUrls,
             ),
           'minAlertQuantity': minAlertQuantity,
-          if (product.metadataLocked &&
-              product.manufacturerId.isEmpty &&
-              manufacturerId.isNotEmpty)
-            'manufacturerId': manufacturerId,
+          if (product.metadataLocked) 'description': _nullableText(description),
           'expectedUpdatedAt': product.updatedAt.toUtc().toIso8601String(),
         });
   }

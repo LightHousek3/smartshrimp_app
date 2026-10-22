@@ -39,12 +39,15 @@ final class SupplierRepositoryImpl implements SupplierRepository {
   }) => _api.save(farmId, existing?.id, {
     'name': InventoryRules.normalizeText(name),
     'contactName': _text(contactName),
-    'phone': _text(phone),
+    if (existing == null || _text(phone) != existing.phone)
+      'phone': _text(phone),
     'email': _text(email)?.toLowerCase(),
-    'address': _text(address),
+    if (existing == null || _text(address) != existing.address)
+      'address': _text(address),
     'note': _text(note),
     if (existing != null) 'status': isActive ? 'ACTIVE' : 'INACTIVE',
-    'supplierType': supplierType,
+    if (existing == null || supplierType != existing.supplierType)
+      'supplierType': supplierType,
     if (existing != null)
       'expectedUpdatedAt': existing.updatedAt.toUtc().toIso8601String(),
   });

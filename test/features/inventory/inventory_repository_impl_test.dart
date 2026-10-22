@@ -127,6 +127,30 @@ void main() {
   );
 
   test(
+    'locked product sends only threshold, description and version token',
+    () async {
+      final locked = inventoryTestProduct.copyWith(metadataLocked: true);
+      await repository.updateProduct(
+        farmId: 'farm-1',
+        product: locked,
+        name: 'Changed name',
+        category: InventoryProductCategory.medicine,
+        manufacturerId: 'different',
+        unit: InventoryProductUnit.kg,
+        minAlertQuantity: 0,
+        description: '  New note  ',
+        compliance: {'regulatoryType': 'medicine'},
+        imageUrls: ['https://example.com/new.png'],
+      );
+      expect(remote.lastData, {
+        'minAlertQuantity': 0.0,
+        'description': 'New note',
+        'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
+      });
+    },
+  );
+
+  test(
     'sends ordered photo URLs and an empty list to remove all photos',
     () async {
       for (final photos in [

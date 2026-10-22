@@ -14,7 +14,6 @@ import 'package:smartshrimp_app/features/inventory/presentation/view_models/inve
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_compliance_editor.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
-import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_picker.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 typedef _MaterialPhoto = ({String? url, Uint8List? bytes, String? fileName});
@@ -102,9 +101,7 @@ class _InventoryProductFormPageState
       _images.add(_emptyPhoto);
     }
     _nameController.text = product.name;
-    _thresholdController.text = product.minAlertQuantity == 0
-        ? ''
-        : _numberText(product.minAlertQuantity);
+    _thresholdController.text = _numberText(product.minAlertQuantity);
     _descriptionController.text = product.description ?? '';
     _conversionQuantityController.text = product.conversionQuantity == null
         ? ''
@@ -184,7 +181,8 @@ class _InventoryProductFormPageState
   Future<void> _submit() async {
     if (_saving || _picking) return;
     if (_formKey.currentState?.validate() != true) return;
-    if (_manufacturerId == null || _manufacturerId!.isEmpty) {
+    if (_product?.metadataLocked != true &&
+        (_manufacturerId == null || _manufacturerId!.isEmpty)) {
       AppNoticeService.danger(
         context,
         'Vui lòng chọn nhà sản xuất đang hoạt động.',
@@ -258,7 +256,7 @@ class _InventoryProductFormPageState
           product: _product!,
           name: _nameController.text,
           category: category,
-          manufacturerId: _manufacturerId!,
+          manufacturerId: _manufacturerId ?? '',
           compliance: _complianceChanged ? _compliance.toDraftJson() : null,
           unit: unit,
           conversionQuantity: conversionQuantity,
@@ -358,40 +356,25 @@ class _InventoryProductFormPageState
             padding: const EdgeInsets.all(16),
             children: [
               const Text(
-                'Vật tư đã được sử dụng. Hồ sơ gốc được giữ nguyên; bạn vẫn có thể đổi ngưỡng cảnh báo.',
+                'Vật tư đã có đơn hoặc giao dịch. Chỉ được sửa ngưỡng cảnh báo và mô tả.',
               ),
               const SizedBox(height: 16),
-              if (_product!.manufacturerId.isEmpty) ...[
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.factory_outlined),
-                  label: Text(
-                    _manufacturerName.isEmpty
-                        ? 'Bổ sung nhà sản xuất'
-                        : _manufacturerName,
-                  ),
-                  onPressed: _saving
-                      ? null
-                      : () async {
-                          final supplier =
-                              await showModalBottomSheet<InventorySupplier>(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (_) => InventorySupplierPicker(
-                                  farmId: widget.farmId,
-                                  manufacturerOnly: true,
-                                ),
-                              );
-                          if (supplier != null && mounted) {
-                            setState(() {
-                              _manufacturerId = supplier.id;
-                              _manufacturerName = supplier.name;
-                            });
-                          }
-                        },
-                ),
-                const SizedBox(height: 16),
-              ],
               _buildThresholdField(),
+              const SizedBox(height: 16),
+              InventoryField(
+                label: 'Mô tả (tùy chọn)',
+                child: TextFormField(
+                  controller: _descriptionController,
+                  enabled: !_saving,
+                  maxLength: InventoryRules.maxDescriptionLength,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: inventoryInputTextStyle,
+                  decoration: inventoryInputDecoration(
+                    hintText: 'Ghi chú thêm về vật tư…',
+                  ).copyWith(counterText: ''),
+                ),
+              ),
               const SizedBox(height: 16),
               InventoryGradientButton(
                 label: 'Lưu thay đổi',
@@ -597,7 +580,7 @@ class _InventoryProductFormPageState
   }
 
   Widget _buildThresholdField() => InventoryField(
-    label: 'Ngưỡng cảnh báo tồn kho tối thiểu',
+    label: 'Ngưỡng cảnh báo tồn kho tối thiểu *',
     labelSize: 12,
     spacing: 6,
     child: Row(
@@ -610,9 +593,9 @@ class _InventoryProductFormPageState
             style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: inventoryInputDecoration(hintText: '0'),
-            validator: (value) => value == null || value.trim().isEmpty
-                ? null
-                : InventoryRules.quantityError(value, allowZero: true),
+            enabled: !_saving,
+            validator: (value) =>
+                InventoryRules.quantityError(value, allowZero: true),
           ),
         ),
         const SizedBox(width: 10),

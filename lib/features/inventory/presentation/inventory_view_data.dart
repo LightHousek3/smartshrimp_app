@@ -17,7 +17,7 @@ extension InventoryTransactionSeasonPresentation on InventoryTransactionSeason {
 extension InventoryCategoryPresentation on InventoryProductCategory {
   String get label => switch (this) {
     InventoryProductCategory.feed => 'Thức ăn',
-    InventoryProductCategory.medicine => 'Thuốc / chế phẩm',
+    InventoryProductCategory.medicine => 'Thuốc',
     InventoryProductCategory.mineral => 'Khoáng chất',
     InventoryProductCategory.chemical => 'Hóa chất',
     InventoryProductCategory.other => 'Khác',
