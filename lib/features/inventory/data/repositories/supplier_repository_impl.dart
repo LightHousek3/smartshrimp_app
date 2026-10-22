@@ -3,6 +3,8 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_sup
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/domain/repositories/supplier_repository.dart';
 
+/// Collect the owner directory across pages and normalize supplier form values.
+/// Existing records carry their version token when saved from another farm.
 final class SupplierRepositoryImpl implements SupplierRepository {
   SupplierRepositoryImpl(this._api);
   final SupplierApiService _api;
@@ -33,14 +35,19 @@ final class SupplierRepositoryImpl implements SupplierRepository {
     String? address,
     String? note,
     bool isActive = true,
+    String supplierType = 'MANUFACTURER',
   }) => _api.save(farmId, existing?.id, {
     'name': InventoryRules.normalizeText(name),
     'contactName': _text(contactName),
-    'phone': _text(phone),
+    if (existing == null || _text(phone) != existing.phone)
+      'phone': _text(phone),
     'email': _text(email)?.toLowerCase(),
-    'address': _text(address),
+    if (existing == null || _text(address) != existing.address)
+      'address': _text(address),
     'note': _text(note),
-    'isActive': isActive,
+    if (existing != null) 'status': isActive ? 'ACTIVE' : 'INACTIVE',
+    if (existing == null || supplierType != existing.supplierType)
+      'supplierType': supplierType,
     if (existing != null)
       'expectedUpdatedAt': existing.updatedAt.toUtc().toIso8601String(),
   });

@@ -42,7 +42,7 @@ void main() {
       expect(remote.lastData, {
         'transactionType': 'STOCK_OUT',
         'inventoryBalanceId': 'lot-1',
-        'quantity': 10.0,
+        'quantity': '10',
         'reason': 'Xuất sử dụng',
       });
     },
@@ -56,6 +56,7 @@ void main() {
       await repository.getHistory(
         farmId: 'farm-1',
         cursor: 'cursor-1',
+        search: '  CP  ',
         productId: 'product-1',
         transactionType: InventoryTransactionType.stockOut,
         seasonId: 'season-1',
@@ -63,7 +64,8 @@ void main() {
         createdTo: end,
       );
       expect(remote.lastData, <String, dynamic>{
-        'limit': 100,
+        'limit': 10,
+        'search': 'CP',
         'cursor': 'cursor-1',
         'productId': 'product-1',
         'transactionType': 'STOCK_OUT',
@@ -78,7 +80,7 @@ void main() {
     'omits unused history filters instead of filtering out unassigned movements',
     () async {
       await repository.getHistory(farmId: 'farm-1');
-      expect(remote.lastData, <String, dynamic>{'limit': 100});
+      expect(remote.lastData, <String, dynamic>{'limit': 10});
     },
   );
 
@@ -112,12 +114,37 @@ void main() {
       expect(remote.lastData, <String, dynamic>{
         'name': 'Thức ăn CP 9004',
         'category': 'FEED',
+        'manufacturerId': 'supplier',
         'unit': 'KG',
         'conversionQuantity': null,
         'conversionUnit': null,
         'minAlertQuantity': 100.0,
         'description': null,
         'imageUrl': null,
+        'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
+      });
+    },
+  );
+
+  test(
+    'locked product sends only threshold, description and version token',
+    () async {
+      final locked = inventoryTestProduct.copyWith(metadataLocked: true);
+      await repository.updateProduct(
+        farmId: 'farm-1',
+        product: locked,
+        name: 'Changed name',
+        category: InventoryProductCategory.medicine,
+        manufacturerId: 'different',
+        unit: InventoryProductUnit.kg,
+        minAlertQuantity: 0,
+        description: '  New note  ',
+        compliance: {'regulatoryType': 'medicine'},
+        imageUrls: ['https://example.com/new.png'],
+      );
+      expect(remote.lastData, {
+        'minAlertQuantity': 0.0,
+        'description': 'New note',
         'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
       });
     },
@@ -149,7 +176,7 @@ void main() {
   );
 
   test(
-    'sends supplier ID without a mutable supplier name on stock-in',
+    'sends selected seller identity; the server records its authoritative snapshot',
     () async {
       await repository.recordStockIn(
         farmId: 'farm-1',
@@ -162,7 +189,7 @@ void main() {
         supplierId: 'supplier-1',
       );
       expect(remote.lastData!['supplierId'], 'supplier-1');
-      expect(remote.lastData!.containsKey('supplierName'), isFalse);
+      expect(remote.lastData!['supplierName'], 'Old display name');
     },
   );
 
@@ -203,7 +230,7 @@ void main() {
       expect(remote.lastData, <String, dynamic>{
         'transactionType': 'ADJUSTMENT_OUT',
         'inventoryBalanceId': 'lot-1',
-        'quantity': 6.5,
+        'quantity': '6.5',
         'reason': 'Kiểm kê thực tế',
       });
 

@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Edit draft ledger filters through callbacks without applying them early.
 class InventoryHistoryFilterPanel extends StatelessWidget {
   const InventoryHistoryFilterPanel({
     required this.filters,
@@ -160,9 +161,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                       allLabel: 'Tất cả vật tư',
                       options: <String, String>{
                         for (final product in products)
-                          product.id: product.isDeleted
-                              ? '${product.name} (đã xóa)'
-                              : product.name,
+                          product.id: product.name,
                       },
                       onChanged: (value) =>
                           onChanged(filters.copyWith(productId: value)),

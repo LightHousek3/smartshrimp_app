@@ -8,6 +8,56 @@ import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/inventory/data/services/inventory_api_service.dart';
 
 void main() {
+  test(
+    'catalog accepts unmapped V2 products through the authenticated API envelope',
+    () async {
+      final service = InventoryApiService(
+        ApiClient(
+          _dioWithHandler((request, handler) {
+            handler.resolve(
+              _success(
+                request,
+                data: [
+                  {
+                    ..._productJson(),
+                    'schemaVersion': 2,
+                    'manufacturerId': null,
+                    'manufacturer': null,
+                    'requiresManufacturer': true,
+                    'readOnly': false,
+                    'compliance': {
+                      'regulatoryType': 'unclassified',
+                      'complianceStatus': 'draft',
+                    },
+                  },
+                ],
+                meta: {
+                  'page': 1,
+                  'limit': 100,
+                  'totalResults': 1,
+                  'totalPages': 1,
+                  'hasNextPage': false,
+                  'summary': {
+                    'totalProducts': 1,
+                    'lowStockCount': 1,
+                    'inventoryValue': 2800000,
+                  },
+                },
+              ),
+            );
+          }),
+          _SessionStore(),
+        ),
+      );
+      final page = await service.getProducts('farm-1', {
+        'page': 1,
+        'limit': 100,
+      });
+      expect(page.items.single.manufacturerId, isEmpty);
+      expect(page.items.single.readOnly, isFalse);
+      expect(page.items.single.compliance?.complianceStatus, 'draft');
+    },
+  );
   test('archiving uses its distinct action endpoint', () async {
     late RequestOptions captured;
     final service = InventoryApiService(
@@ -199,6 +249,8 @@ Map<String, dynamic> _productJson() => <String, dynamic>{
   'id': 'product-1',
   'farmId': 'farm-1',
   'name': 'Thức ăn CP 9004',
+  'manufacturerId': 'supplier',
+  'status': 'ACTIVE',
   'category': 'FEED',
   'unit': 'KG',
   'conversionQuantity': null,

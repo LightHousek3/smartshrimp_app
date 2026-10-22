@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InventoryHistoryFilters {
 
- DateTime? get fromDate; DateTime? get toDate; InventoryTransactionType? get transactionType; String? get productId; String? get seasonId;
+ String get search; DateTime? get fromDate; DateTime? get toDate; InventoryTransactionType? get transactionType; String? get productId; String? get seasonId;
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $InventoryHistoryFiltersCopyWith<InventoryHistoryFilters> get copyWith => _$Inve
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryFilters&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,fromDate,toDate,transactionType,productId,seasonId);
+int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId);
 
 @override
 String toString() {
-  return 'InventoryHistoryFilters(fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
+  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $InventoryHistoryFiltersCopyWith<$Res>  {
   factory $InventoryHistoryFiltersCopyWith(InventoryHistoryFilters value, $Res Function(InventoryHistoryFilters) _then) = _$InventoryHistoryFiltersCopyWithImpl;
 @useResult
 $Res call({
- DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
+ String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
 });
 
 
@@ -62,9 +62,10 @@ class _$InventoryHistoryFiltersCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
   return _then(_self.copyWith(
-fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
+search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
+as String,fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,toDate: freezed == toDate ? _self.toDate : toDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,transactionType: freezed == transactionType ? _self.transactionType : transactionType // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionType?,productId: freezed == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters() when $default != null:
-return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters():
-return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters() when $default != null:
-return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
   return null;
 
 }
@@ -210,9 +211,10 @@ return $default(_that.fromDate,_that.toDate,_that.transactionType,_that.productI
 
 
 class _InventoryHistoryFilters extends InventoryHistoryFilters {
-  const _InventoryHistoryFilters({this.fromDate, this.toDate, this.transactionType, this.productId, this.seasonId}): super._();
+  const _InventoryHistoryFilters({this.search = '', this.fromDate, this.toDate, this.transactionType, this.productId, this.seasonId}): super._();
   
 
+@override@JsonKey() final  String search;
 @override final  DateTime? fromDate;
 @override final  DateTime? toDate;
 @override final  InventoryTransactionType? transactionType;
@@ -229,16 +231,16 @@ _$InventoryHistoryFiltersCopyWith<_InventoryHistoryFilters> get copyWith => __$I
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryFilters&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,fromDate,toDate,transactionType,productId,seasonId);
+int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId);
 
 @override
 String toString() {
-  return 'InventoryHistoryFilters(fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
+  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
 }
 
 
@@ -249,7 +251,7 @@ abstract mixin class _$InventoryHistoryFiltersCopyWith<$Res> implements $Invento
   factory _$InventoryHistoryFiltersCopyWith(_InventoryHistoryFilters value, $Res Function(_InventoryHistoryFilters) _then) = __$InventoryHistoryFiltersCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
+ String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
 });
 
 
@@ -266,9 +268,10 @@ class __$InventoryHistoryFiltersCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
   return _then(_InventoryHistoryFilters(
-fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
+search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
+as String,fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,toDate: freezed == toDate ? _self.toDate : toDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,transactionType: freezed == transactionType ? _self.transactionType : transactionType // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionType?,productId: freezed == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -284,7 +287,7 @@ as String?,
 /// @nodoc
 mixin _$InventoryLot {
 
- String get id; String get productId; String get lotNumber; DateTime get receivedAt; double get quantity; double? get receivedQuantity; double get unitPrice; String get supplierName; String? get supplierId; double get inventoryValue; DateTime get createdAt; DateTime get updatedAt;
+ String get id; String get productId; String get lotNumber; DateTime get receivedAt; double get quantity; String? get quantityExact; DateTime? get expiryDate; double? get receivedQuantity; double get unitPrice; String get supplierName; String? get supplierId; double get inventoryValue; DateTime get createdAt; DateTime get updatedAt;
 /// Create a copy of InventoryLot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +300,16 @@ $InventoryLotCopyWith<InventoryLot> get copyWith => _$InventoryLotCopyWithImpl<I
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryLot&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.lotNumber, lotNumber) || other.lotNumber == lotNumber)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.receivedQuantity, receivedQuantity) || other.receivedQuantity == receivedQuantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.supplierName, supplierName) || other.supplierName == supplierName)&&(identical(other.supplierId, supplierId) || other.supplierId == supplierId)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryLot&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.lotNumber, lotNumber) || other.lotNumber == lotNumber)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.receivedQuantity, receivedQuantity) || other.receivedQuantity == receivedQuantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.supplierName, supplierName) || other.supplierName == supplierName)&&(identical(other.supplierId, supplierId) || other.supplierId == supplierId)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,lotNumber,receivedAt,quantity,receivedQuantity,unitPrice,supplierName,supplierId,inventoryValue,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,lotNumber,receivedAt,quantity,quantityExact,expiryDate,receivedQuantity,unitPrice,supplierName,supplierId,inventoryValue,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'InventoryLot(id: $id, productId: $productId, lotNumber: $lotNumber, receivedAt: $receivedAt, quantity: $quantity, receivedQuantity: $receivedQuantity, unitPrice: $unitPrice, supplierName: $supplierName, supplierId: $supplierId, inventoryValue: $inventoryValue, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'InventoryLot(id: $id, productId: $productId, lotNumber: $lotNumber, receivedAt: $receivedAt, quantity: $quantity, quantityExact: $quantityExact, expiryDate: $expiryDate, receivedQuantity: $receivedQuantity, unitPrice: $unitPrice, supplierName: $supplierName, supplierId: $supplierId, inventoryValue: $inventoryValue, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -317,7 +320,7 @@ abstract mixin class $InventoryLotCopyWith<$Res>  {
   factory $InventoryLotCopyWith(InventoryLot value, $Res Function(InventoryLot) _then) = _$InventoryLotCopyWithImpl;
 @useResult
 $Res call({
- String id, String productId, String lotNumber, DateTime receivedAt, double quantity, double? receivedQuantity, double unitPrice, String supplierName, String? supplierId, double inventoryValue, DateTime createdAt, DateTime updatedAt
+ String id, String productId, String lotNumber, DateTime receivedAt, double quantity, String? quantityExact, DateTime? expiryDate, double? receivedQuantity, double unitPrice, String supplierName, String? supplierId, double inventoryValue, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -334,14 +337,16 @@ class _$InventoryLotCopyWithImpl<$Res>
 
 /// Create a copy of InventoryLot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? lotNumber = null,Object? receivedAt = null,Object? quantity = null,Object? receivedQuantity = freezed,Object? unitPrice = null,Object? supplierName = null,Object? supplierId = freezed,Object? inventoryValue = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? lotNumber = null,Object? receivedAt = null,Object? quantity = null,Object? quantityExact = freezed,Object? expiryDate = freezed,Object? receivedQuantity = freezed,Object? unitPrice = null,Object? supplierName = null,Object? supplierId = freezed,Object? inventoryValue = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,lotNumber: null == lotNumber ? _self.lotNumber : lotNumber // ignore: cast_nullable_to_non_nullable
 as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as double,receivedQuantity: freezed == receivedQuantity ? _self.receivedQuantity : receivedQuantity // ignore: cast_nullable_to_non_nullable
+as double,quantityExact: freezed == quantityExact ? _self.quantityExact : quantityExact // ignore: cast_nullable_to_non_nullable
+as String?,expiryDate: freezed == expiryDate ? _self.expiryDate : expiryDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,receivedQuantity: freezed == receivedQuantity ? _self.receivedQuantity : receivedQuantity // ignore: cast_nullable_to_non_nullable
 as double?,unitPrice: null == unitPrice ? _self.unitPrice : unitPrice // ignore: cast_nullable_to_non_nullable
 as double,supplierName: null == supplierName ? _self.supplierName : supplierName // ignore: cast_nullable_to_non_nullable
 as String,supplierId: freezed == supplierId ? _self.supplierId : supplierId // ignore: cast_nullable_to_non_nullable
@@ -433,10 +438,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  String? quantityExact,  DateTime? expiryDate,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryLot() when $default != null:
-return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.quantityExact,_that.expiryDate,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -454,10 +459,10 @@ return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  String? quantityExact,  DateTime? expiryDate,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryLot():
-return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.quantityExact,_that.expiryDate,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -474,10 +479,10 @@ return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String lotNumber,  DateTime receivedAt,  double quantity,  String? quantityExact,  DateTime? expiryDate,  double? receivedQuantity,  double unitPrice,  String supplierName,  String? supplierId,  double inventoryValue,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryLot() when $default != null:
-return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.quantity,_that.quantityExact,_that.expiryDate,_that.receivedQuantity,_that.unitPrice,_that.supplierName,_that.supplierId,_that.inventoryValue,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -489,7 +494,7 @@ return $default(_that.id,_that.productId,_that.lotNumber,_that.receivedAt,_that.
 @JsonSerializable()
 
 class _InventoryLot extends InventoryLot {
-  const _InventoryLot({required this.id, required this.productId, required this.lotNumber, required this.receivedAt, required this.quantity, this.receivedQuantity, required this.unitPrice, required this.supplierName, this.supplierId, required this.inventoryValue, required this.createdAt, required this.updatedAt}): super._();
+  const _InventoryLot({required this.id, required this.productId, required this.lotNumber, required this.receivedAt, required this.quantity, this.quantityExact, this.expiryDate, this.receivedQuantity, required this.unitPrice, required this.supplierName, this.supplierId, required this.inventoryValue, required this.createdAt, required this.updatedAt}): super._();
   factory _InventoryLot.fromJson(Map<String, dynamic> json) => _$InventoryLotFromJson(json);
 
 @override final  String id;
@@ -497,6 +502,8 @@ class _InventoryLot extends InventoryLot {
 @override final  String lotNumber;
 @override final  DateTime receivedAt;
 @override final  double quantity;
+@override final  String? quantityExact;
+@override final  DateTime? expiryDate;
 @override final  double? receivedQuantity;
 @override final  double unitPrice;
 @override final  String supplierName;
@@ -518,16 +525,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryLot&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.lotNumber, lotNumber) || other.lotNumber == lotNumber)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.receivedQuantity, receivedQuantity) || other.receivedQuantity == receivedQuantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.supplierName, supplierName) || other.supplierName == supplierName)&&(identical(other.supplierId, supplierId) || other.supplierId == supplierId)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryLot&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.lotNumber, lotNumber) || other.lotNumber == lotNumber)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.expiryDate, expiryDate) || other.expiryDate == expiryDate)&&(identical(other.receivedQuantity, receivedQuantity) || other.receivedQuantity == receivedQuantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.supplierName, supplierName) || other.supplierName == supplierName)&&(identical(other.supplierId, supplierId) || other.supplierId == supplierId)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,lotNumber,receivedAt,quantity,receivedQuantity,unitPrice,supplierName,supplierId,inventoryValue,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,lotNumber,receivedAt,quantity,quantityExact,expiryDate,receivedQuantity,unitPrice,supplierName,supplierId,inventoryValue,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'InventoryLot(id: $id, productId: $productId, lotNumber: $lotNumber, receivedAt: $receivedAt, quantity: $quantity, receivedQuantity: $receivedQuantity, unitPrice: $unitPrice, supplierName: $supplierName, supplierId: $supplierId, inventoryValue: $inventoryValue, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'InventoryLot(id: $id, productId: $productId, lotNumber: $lotNumber, receivedAt: $receivedAt, quantity: $quantity, quantityExact: $quantityExact, expiryDate: $expiryDate, receivedQuantity: $receivedQuantity, unitPrice: $unitPrice, supplierName: $supplierName, supplierId: $supplierId, inventoryValue: $inventoryValue, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -538,7 +545,7 @@ abstract mixin class _$InventoryLotCopyWith<$Res> implements $InventoryLotCopyWi
   factory _$InventoryLotCopyWith(_InventoryLot value, $Res Function(_InventoryLot) _then) = __$InventoryLotCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String productId, String lotNumber, DateTime receivedAt, double quantity, double? receivedQuantity, double unitPrice, String supplierName, String? supplierId, double inventoryValue, DateTime createdAt, DateTime updatedAt
+ String id, String productId, String lotNumber, DateTime receivedAt, double quantity, String? quantityExact, DateTime? expiryDate, double? receivedQuantity, double unitPrice, String supplierName, String? supplierId, double inventoryValue, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -555,14 +562,16 @@ class __$InventoryLotCopyWithImpl<$Res>
 
 /// Create a copy of InventoryLot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? lotNumber = null,Object? receivedAt = null,Object? quantity = null,Object? receivedQuantity = freezed,Object? unitPrice = null,Object? supplierName = null,Object? supplierId = freezed,Object? inventoryValue = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? lotNumber = null,Object? receivedAt = null,Object? quantity = null,Object? quantityExact = freezed,Object? expiryDate = freezed,Object? receivedQuantity = freezed,Object? unitPrice = null,Object? supplierName = null,Object? supplierId = freezed,Object? inventoryValue = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_InventoryLot(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,lotNumber: null == lotNumber ? _self.lotNumber : lotNumber // ignore: cast_nullable_to_non_nullable
 as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as double,receivedQuantity: freezed == receivedQuantity ? _self.receivedQuantity : receivedQuantity // ignore: cast_nullable_to_non_nullable
+as double,quantityExact: freezed == quantityExact ? _self.quantityExact : quantityExact // ignore: cast_nullable_to_non_nullable
+as String?,expiryDate: freezed == expiryDate ? _self.expiryDate : expiryDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,receivedQuantity: freezed == receivedQuantity ? _self.receivedQuantity : receivedQuantity // ignore: cast_nullable_to_non_nullable
 as double?,unitPrice: null == unitPrice ? _self.unitPrice : unitPrice // ignore: cast_nullable_to_non_nullable
 as double,supplierName: null == supplierName ? _self.supplierName : supplierName // ignore: cast_nullable_to_non_nullable
 as String,supplierId: freezed == supplierId ? _self.supplierId : supplierId // ignore: cast_nullable_to_non_nullable
@@ -580,7 +589,8 @@ as DateTime,
 /// @nodoc
 mixin _$InventoryProduct {
 
- String get id; String get farmId; String get name;@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory get category;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unit; double? get conversionQuantity;@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? get conversionUnit; double get minAlertQuantity; String? get description; String? get imageUrl; List<String> get imageUrls; DateTime? get archivedAt; bool get isArchived; bool get isDeleted; DateTime? get deletedAt; DateTime get createdAt; DateTime get updatedAt; double get currentStock; double get inventoryValue; int get activeLotCount; bool get isLowStock; List<InventoryLot> get lots; int? get plannedUseCount; bool? get canArchive;
+ String get id; String get farmId; String get name; bool get readOnly; String get manufacturerId; Map<String, dynamic> get manufacturer; InventoryCompliance? get compliance; bool get metadataLocked; bool get canDelete; String get status;@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory get category;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unit; double? get conversionQuantity;@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? get conversionUnit;// In conversionUnit for PACK/BOTTLE; otherwise in unit.
+ double get minAlertQuantity; String? get description; String? get imageUrl; List<String> get imageUrls; DateTime get createdAt; DateTime get updatedAt; double get currentStock; double get inventoryValue; int get activeLotCount; bool get isLowStock; List<InventoryLot> get lots; int? get plannedUseCount; bool? get canArchive;
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -593,16 +603,16 @@ $InventoryProductCopyWith<InventoryProduct> get copyWith => _$InventoryProductCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other.lots, lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other.manufacturer, manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other.lots, lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,farmId,name,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(imageUrls),archivedAt,isArchived,isDeleted,deletedAt,createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(lots),plannedUseCount,canArchive]);
+int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(manufacturer),compliance,metadataLocked,canDelete,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(imageUrls),createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(lots),plannedUseCount,canArchive]);
 
 @override
 String toString() {
-  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, archivedAt: $archivedAt, isArchived: $isArchived, isDeleted: $isDeleted, deletedAt: $deletedAt, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
+  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
 }
 
 
@@ -613,11 +623,11 @@ abstract mixin class $InventoryProductCopyWith<$Res>  {
   factory $InventoryProductCopyWith(InventoryProduct value, $Res Function(InventoryProduct) _then) = _$InventoryProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String farmId, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime? archivedAt, bool isArchived, bool isDeleted, DateTime? deletedAt, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
+ String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
 });
 
 
-
+$InventoryComplianceCopyWith<$Res>? get compliance;
 
 }
 /// @nodoc
@@ -630,11 +640,18 @@ class _$InventoryProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? archivedAt = freezed,Object? isArchived = null,Object? isDeleted = null,Object? deletedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,readOnly: null == readOnly ? _self.readOnly : readOnly // ignore: cast_nullable_to_non_nullable
+as bool,manufacturerId: null == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
+as String,manufacturer: null == manufacturer ? _self.manufacturer : manufacturer // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,compliance: freezed == compliance ? _self.compliance : compliance // ignore: cast_nullable_to_non_nullable
+as InventoryCompliance?,metadataLocked: null == metadataLocked ? _self.metadataLocked : metadataLocked // ignore: cast_nullable_to_non_nullable
+as bool,canDelete: null == canDelete ? _self.canDelete : canDelete // ignore: cast_nullable_to_non_nullable
+as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as InventoryProductCategory,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as InventoryProductUnit,conversionQuantity: freezed == conversionQuantity ? _self.conversionQuantity : conversionQuantity // ignore: cast_nullable_to_non_nullable
@@ -643,11 +660,7 @@ as InventoryConversionUnit?,minAlertQuantity: null == minAlertQuantity ? _self.m
 as double,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
 as String?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
-as List<String>,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
-as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
-as bool,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as List<String>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,currentStock: null == currentStock ? _self.currentStock : currentStock // ignore: cast_nullable_to_non_nullable
 as double,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
@@ -659,7 +672,19 @@ as int?,canArchive: freezed == canArchive ? _self.canArchive : canArchive // ign
 as bool?,
   ));
 }
+/// Create a copy of InventoryProduct
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$InventoryComplianceCopyWith<$Res>? get compliance {
+    if (_self.compliance == null) {
+    return null;
+  }
 
+  return $InventoryComplianceCopyWith<$Res>(_self.compliance!, (value) {
+    return _then(_self.copyWith(compliance: value));
+  });
+}
 }
 
 
@@ -741,10 +766,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String farmId,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime? archivedAt,  bool isArchived,  bool isDeleted,  DateTime? deletedAt,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryProduct() when $default != null:
-return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.archivedAt,_that.isArchived,_that.isDeleted,_that.deletedAt,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   return orElse();
 
 }
@@ -762,10 +787,10 @@ return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String farmId,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime? archivedAt,  bool isArchived,  bool isDeleted,  DateTime? deletedAt,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProduct():
-return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.archivedAt,_that.isArchived,_that.isDeleted,_that.deletedAt,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -782,10 +807,10 @@ return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String farmId,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime? archivedAt,  bool isArchived,  bool isDeleted,  DateTime? deletedAt,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProduct() when $default != null:
-return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.archivedAt,_that.isArchived,_that.isDeleted,_that.deletedAt,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   return null;
 
 }
@@ -797,16 +822,30 @@ return $default(_that.id,_that.farmId,_that.name,_that.category,_that.unit,_that
 @JsonSerializable()
 
 class _InventoryProduct extends InventoryProduct {
-  const _InventoryProduct({required this.id, required this.farmId, required this.name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit, this.conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) this.conversionUnit, required this.minAlertQuantity, this.description, this.imageUrl, final  List<String> imageUrls = const <String>[], this.archivedAt, required this.isArchived, required this.isDeleted, this.deletedAt, required this.createdAt, required this.updatedAt, required this.currentStock, required this.inventoryValue, required this.activeLotCount, required this.isLowStock, final  List<InventoryLot> lots = const <InventoryLot>[], this.plannedUseCount, this.canArchive}): _imageUrls = imageUrls,_lots = lots,super._();
+  const _InventoryProduct({required this.id, required this.farmId, required this.name, this.readOnly = false, this.manufacturerId = '', final  Map<String, dynamic> manufacturer = const <String, dynamic>{}, this.compliance, this.metadataLocked = false, this.canDelete = false, this.status = 'ACTIVE', @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit, this.conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) this.conversionUnit, required this.minAlertQuantity, this.description, this.imageUrl, final  List<String> imageUrls = const <String>[], required this.createdAt, required this.updatedAt, required this.currentStock, required this.inventoryValue, required this.activeLotCount, required this.isLowStock, final  List<InventoryLot> lots = const <InventoryLot>[], this.plannedUseCount, this.canArchive}): _manufacturer = manufacturer,_imageUrls = imageUrls,_lots = lots,super._();
   factory _InventoryProduct.fromJson(Map<String, dynamic> json) => _$InventoryProductFromJson(json);
 
 @override final  String id;
 @override final  String farmId;
 @override final  String name;
+@override@JsonKey() final  bool readOnly;
+@override@JsonKey() final  String manufacturerId;
+ final  Map<String, dynamic> _manufacturer;
+@override@JsonKey() Map<String, dynamic> get manufacturer {
+  if (_manufacturer is EqualUnmodifiableMapView) return _manufacturer;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_manufacturer);
+}
+
+@override final  InventoryCompliance? compliance;
+@override@JsonKey() final  bool metadataLocked;
+@override@JsonKey() final  bool canDelete;
+@override@JsonKey() final  String status;
 @override@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) final  InventoryProductCategory category;
 @override@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) final  InventoryProductUnit unit;
 @override final  double? conversionQuantity;
 @override@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) final  InventoryConversionUnit? conversionUnit;
+// In conversionUnit for PACK/BOTTLE; otherwise in unit.
 @override final  double minAlertQuantity;
 @override final  String? description;
 @override final  String? imageUrl;
@@ -817,10 +856,6 @@ class _InventoryProduct extends InventoryProduct {
   return EqualUnmodifiableListView(_imageUrls);
 }
 
-@override final  DateTime? archivedAt;
-@override final  bool isArchived;
-@override final  bool isDeleted;
-@override final  DateTime? deletedAt;
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
 @override final  double currentStock;
@@ -850,16 +885,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other._lots, _lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other._manufacturer, _manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other._lots, _lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,farmId,name,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(_imageUrls),archivedAt,isArchived,isDeleted,deletedAt,createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(_lots),plannedUseCount,canArchive]);
+int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(_manufacturer),compliance,metadataLocked,canDelete,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(_imageUrls),createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(_lots),plannedUseCount,canArchive]);
 
 @override
 String toString() {
-  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, archivedAt: $archivedAt, isArchived: $isArchived, isDeleted: $isDeleted, deletedAt: $deletedAt, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
+  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
 }
 
 
@@ -870,11 +905,11 @@ abstract mixin class _$InventoryProductCopyWith<$Res> implements $InventoryProdu
   factory _$InventoryProductCopyWith(_InventoryProduct value, $Res Function(_InventoryProduct) _then) = __$InventoryProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String farmId, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime? archivedAt, bool isArchived, bool isDeleted, DateTime? deletedAt, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
+ String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
 });
 
 
-
+@override $InventoryComplianceCopyWith<$Res>? get compliance;
 
 }
 /// @nodoc
@@ -887,11 +922,18 @@ class __$InventoryProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? archivedAt = freezed,Object? isArchived = null,Object? isDeleted = null,Object? deletedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
   return _then(_InventoryProduct(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,readOnly: null == readOnly ? _self.readOnly : readOnly // ignore: cast_nullable_to_non_nullable
+as bool,manufacturerId: null == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
+as String,manufacturer: null == manufacturer ? _self._manufacturer : manufacturer // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,compliance: freezed == compliance ? _self.compliance : compliance // ignore: cast_nullable_to_non_nullable
+as InventoryCompliance?,metadataLocked: null == metadataLocked ? _self.metadataLocked : metadataLocked // ignore: cast_nullable_to_non_nullable
+as bool,canDelete: null == canDelete ? _self.canDelete : canDelete // ignore: cast_nullable_to_non_nullable
+as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as InventoryProductCategory,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as InventoryProductUnit,conversionQuantity: freezed == conversionQuantity ? _self.conversionQuantity : conversionQuantity // ignore: cast_nullable_to_non_nullable
@@ -900,11 +942,7 @@ as InventoryConversionUnit?,minAlertQuantity: null == minAlertQuantity ? _self.m
 as double,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
 as String?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
-as List<String>,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
-as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
-as bool,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as List<String>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,currentStock: null == currentStock ? _self.currentStock : currentStock // ignore: cast_nullable_to_non_nullable
 as double,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
@@ -917,7 +955,19 @@ as bool?,
   ));
 }
 
+/// Create a copy of InventoryProduct
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$InventoryComplianceCopyWith<$Res>? get compliance {
+    if (_self.compliance == null) {
+    return null;
+  }
 
+  return $InventoryComplianceCopyWith<$Res>(_self.compliance!, (value) {
+    return _then(_self.copyWith(compliance: value));
+  });
+}
 }
 
 
@@ -1192,7 +1242,7 @@ as double,
 /// @nodoc
 mixin _$InventoryProductPage {
 
- List<InventoryProduct> get items; int get page; int get limit; int get totalResults; int get totalPages; bool get hasNextPage; InventorySummary get summary;
+ bool get readOnly; List<InventoryProduct> get items; int get page; int get limit; int get totalResults; int get totalPages; bool get hasNextPage; InventorySummary get summary;
 /// Create a copy of InventoryProductPage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1203,16 +1253,16 @@ $InventoryProductPageCopyWith<InventoryProductPage> get copyWith => _$InventoryP
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProductPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.page, page) || other.page == page)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.summary, summary) || other.summary == summary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProductPage&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.page, page) || other.page == page)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.summary, summary) || other.summary == summary));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),page,limit,totalResults,totalPages,hasNextPage,summary);
+int get hashCode => Object.hash(runtimeType,readOnly,const DeepCollectionEquality().hash(items),page,limit,totalResults,totalPages,hasNextPage,summary);
 
 @override
 String toString() {
-  return 'InventoryProductPage(items: $items, page: $page, limit: $limit, totalResults: $totalResults, totalPages: $totalPages, hasNextPage: $hasNextPage, summary: $summary)';
+  return 'InventoryProductPage(readOnly: $readOnly, items: $items, page: $page, limit: $limit, totalResults: $totalResults, totalPages: $totalPages, hasNextPage: $hasNextPage, summary: $summary)';
 }
 
 
@@ -1223,7 +1273,7 @@ abstract mixin class $InventoryProductPageCopyWith<$Res>  {
   factory $InventoryProductPageCopyWith(InventoryProductPage value, $Res Function(InventoryProductPage) _then) = _$InventoryProductPageCopyWithImpl;
 @useResult
 $Res call({
- List<InventoryProduct> items, int page, int limit, int totalResults, int totalPages, bool hasNextPage, InventorySummary summary
+ bool readOnly, List<InventoryProduct> items, int page, int limit, int totalResults, int totalPages, bool hasNextPage, InventorySummary summary
 });
 
 
@@ -1240,9 +1290,10 @@ class _$InventoryProductPageCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProductPage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? page = null,Object? limit = null,Object? totalResults = null,Object? totalPages = null,Object? hasNextPage = null,Object? summary = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? readOnly = null,Object? items = null,Object? page = null,Object? limit = null,Object? totalResults = null,Object? totalPages = null,Object? hasNextPage = null,Object? summary = null,}) {
   return _then(_self.copyWith(
-items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
+readOnly: null == readOnly ? _self.readOnly : readOnly // ignore: cast_nullable_to_non_nullable
+as bool,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<InventoryProduct>,page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
 as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
 as int,totalResults: null == totalResults ? _self.totalResults : totalResults // ignore: cast_nullable_to_non_nullable
@@ -1343,10 +1394,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool readOnly,  List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryProductPage() when $default != null:
-return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
+return $default(_that.readOnly,_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
   return orElse();
 
 }
@@ -1364,10 +1415,10 @@ return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.tota
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool readOnly,  List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProductPage():
-return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
+return $default(_that.readOnly,_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1384,10 +1435,10 @@ return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.tota
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool readOnly,  List<InventoryProduct> items,  int page,  int limit,  int totalResults,  int totalPages,  bool hasNextPage,  InventorySummary summary)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProductPage() when $default != null:
-return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
+return $default(_that.readOnly,_that.items,_that.page,_that.limit,_that.totalResults,_that.totalPages,_that.hasNextPage,_that.summary);case _:
   return null;
 
 }
@@ -1399,9 +1450,10 @@ return $default(_that.items,_that.page,_that.limit,_that.totalResults,_that.tota
 
 
 class _InventoryProductPage implements InventoryProductPage {
-  const _InventoryProductPage({required final  List<InventoryProduct> items, required this.page, required this.limit, required this.totalResults, required this.totalPages, required this.hasNextPage, required this.summary}): _items = items;
+  const _InventoryProductPage({this.readOnly = false, required final  List<InventoryProduct> items, required this.page, required this.limit, required this.totalResults, required this.totalPages, required this.hasNextPage, required this.summary}): _items = items;
   
 
+@override@JsonKey() final  bool readOnly;
  final  List<InventoryProduct> _items;
 @override List<InventoryProduct> get items {
   if (_items is EqualUnmodifiableListView) return _items;
@@ -1426,16 +1478,16 @@ _$InventoryProductPageCopyWith<_InventoryProductPage> get copyWith => __$Invento
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProductPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.page, page) || other.page == page)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.summary, summary) || other.summary == summary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProductPage&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.page, page) || other.page == page)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.summary, summary) || other.summary == summary));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),page,limit,totalResults,totalPages,hasNextPage,summary);
+int get hashCode => Object.hash(runtimeType,readOnly,const DeepCollectionEquality().hash(_items),page,limit,totalResults,totalPages,hasNextPage,summary);
 
 @override
 String toString() {
-  return 'InventoryProductPage(items: $items, page: $page, limit: $limit, totalResults: $totalResults, totalPages: $totalPages, hasNextPage: $hasNextPage, summary: $summary)';
+  return 'InventoryProductPage(readOnly: $readOnly, items: $items, page: $page, limit: $limit, totalResults: $totalResults, totalPages: $totalPages, hasNextPage: $hasNextPage, summary: $summary)';
 }
 
 
@@ -1446,7 +1498,7 @@ abstract mixin class _$InventoryProductPageCopyWith<$Res> implements $InventoryP
   factory _$InventoryProductPageCopyWith(_InventoryProductPage value, $Res Function(_InventoryProductPage) _then) = __$InventoryProductPageCopyWithImpl;
 @override @useResult
 $Res call({
- List<InventoryProduct> items, int page, int limit, int totalResults, int totalPages, bool hasNextPage, InventorySummary summary
+ bool readOnly, List<InventoryProduct> items, int page, int limit, int totalResults, int totalPages, bool hasNextPage, InventorySummary summary
 });
 
 
@@ -1463,9 +1515,10 @@ class __$InventoryProductPageCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProductPage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? page = null,Object? limit = null,Object? totalResults = null,Object? totalPages = null,Object? hasNextPage = null,Object? summary = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? readOnly = null,Object? items = null,Object? page = null,Object? limit = null,Object? totalResults = null,Object? totalPages = null,Object? hasNextPage = null,Object? summary = null,}) {
   return _then(_InventoryProductPage(
-items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
+readOnly: null == readOnly ? _self.readOnly : readOnly // ignore: cast_nullable_to_non_nullable
+as bool,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<InventoryProduct>,page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
 as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
 as int,totalResults: null == totalResults ? _self.totalResults : totalResults // ignore: cast_nullable_to_non_nullable
@@ -1492,7 +1545,7 @@ $InventorySummaryCopyWith<$Res> get summary {
 /// @nodoc
 mixin _$InventoryTransactionProduct {
 
- String get id; String get name;@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory get category;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unit; bool get isDeleted;
+ String get id; String get name;@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory get category;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unit;
 /// Create a copy of InventoryTransactionProduct
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1505,16 +1558,16 @@ $InventoryTransactionProductCopyWith<InventoryTransactionProduct> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryTransactionProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryTransactionProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,category,unit,isDeleted);
+int get hashCode => Object.hash(runtimeType,id,name,category,unit);
 
 @override
 String toString() {
-  return 'InventoryTransactionProduct(id: $id, name: $name, category: $category, unit: $unit, isDeleted: $isDeleted)';
+  return 'InventoryTransactionProduct(id: $id, name: $name, category: $category, unit: $unit)';
 }
 
 
@@ -1525,7 +1578,7 @@ abstract mixin class $InventoryTransactionProductCopyWith<$Res>  {
   factory $InventoryTransactionProductCopyWith(InventoryTransactionProduct value, $Res Function(InventoryTransactionProduct) _then) = _$InventoryTransactionProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, bool isDeleted
+ String id, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit
 });
 
 
@@ -1542,14 +1595,13 @@ class _$InventoryTransactionProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryTransactionProduct
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? category = null,Object? unit = null,Object? isDeleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? category = null,Object? unit = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as InventoryProductCategory,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
-as InventoryProductUnit,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
-as bool,
+as InventoryProductUnit,
   ));
 }
 
@@ -1634,10 +1686,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  bool isDeleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryTransactionProduct() when $default != null:
-return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.category,_that.unit);case _:
   return orElse();
 
 }
@@ -1655,10 +1707,10 @@ return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  bool isDeleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryTransactionProduct():
-return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.category,_that.unit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1675,10 +1727,10 @@ return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  bool isDeleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryTransactionProduct() when $default != null:
-return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.category,_that.unit);case _:
   return null;
 
 }
@@ -1690,14 +1742,13 @@ return $default(_that.id,_that.name,_that.category,_that.unit,_that.isDeleted);c
 @JsonSerializable()
 
 class _InventoryTransactionProduct implements InventoryTransactionProduct {
-  const _InventoryTransactionProduct({required this.id, required this.name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit, required this.isDeleted});
+  const _InventoryTransactionProduct({required this.id, required this.name, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit});
   factory _InventoryTransactionProduct.fromJson(Map<String, dynamic> json) => _$InventoryTransactionProductFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) final  InventoryProductCategory category;
 @override@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) final  InventoryProductUnit unit;
-@override final  bool isDeleted;
 
 /// Create a copy of InventoryTransactionProduct
 /// with the given fields replaced by the non-null parameter values.
@@ -1712,16 +1763,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryTransactionProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryTransactionProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,category,unit,isDeleted);
+int get hashCode => Object.hash(runtimeType,id,name,category,unit);
 
 @override
 String toString() {
-  return 'InventoryTransactionProduct(id: $id, name: $name, category: $category, unit: $unit, isDeleted: $isDeleted)';
+  return 'InventoryTransactionProduct(id: $id, name: $name, category: $category, unit: $unit)';
 }
 
 
@@ -1732,7 +1783,7 @@ abstract mixin class _$InventoryTransactionProductCopyWith<$Res> implements $Inv
   factory _$InventoryTransactionProductCopyWith(_InventoryTransactionProduct value, $Res Function(_InventoryTransactionProduct) _then) = __$InventoryTransactionProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, bool isDeleted
+ String id, String name,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit
 });
 
 
@@ -1749,14 +1800,13 @@ class __$InventoryTransactionProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryTransactionProduct
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? category = null,Object? unit = null,Object? isDeleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? category = null,Object? unit = null,}) {
   return _then(_InventoryTransactionProduct(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as InventoryProductCategory,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
-as InventoryProductUnit,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
-as bool,
+as InventoryProductUnit,
   ));
 }
 
@@ -2962,7 +3012,7 @@ as double,
 /// @nodoc
 mixin _$InventoryHistoryPage {
 
- List<InventoryTransaction> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; InventoryHistorySummary get summary;
+ List<InventoryTransaction> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; InventoryHistorySummary get summary; List<InventoryTransactionProduct> get filterProducts; List<InventoryTransactionSeason> get filterSeasons;
 /// Create a copy of InventoryHistoryPage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2973,16 +3023,16 @@ $InventoryHistoryPageCopyWith<InventoryHistoryPage> get copyWith => _$InventoryH
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.summary, summary) || other.summary == summary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.summary, summary) || other.summary == summary)&&const DeepCollectionEquality().equals(other.filterProducts, filterProducts)&&const DeepCollectionEquality().equals(other.filterSeasons, filterSeasons));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,summary);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,summary,const DeepCollectionEquality().hash(filterProducts),const DeepCollectionEquality().hash(filterSeasons));
 
 @override
 String toString() {
-  return 'InventoryHistoryPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, summary: $summary)';
+  return 'InventoryHistoryPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, summary: $summary, filterProducts: $filterProducts, filterSeasons: $filterSeasons)';
 }
 
 
@@ -2993,7 +3043,7 @@ abstract mixin class $InventoryHistoryPageCopyWith<$Res>  {
   factory $InventoryHistoryPageCopyWith(InventoryHistoryPage value, $Res Function(InventoryHistoryPage) _then) = _$InventoryHistoryPageCopyWithImpl;
 @useResult
 $Res call({
- List<InventoryTransaction> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, InventoryHistorySummary summary
+ List<InventoryTransaction> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, InventoryHistorySummary summary, List<InventoryTransactionProduct> filterProducts, List<InventoryTransactionSeason> filterSeasons
 });
 
 
@@ -3010,7 +3060,7 @@ class _$InventoryHistoryPageCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryPage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? summary = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? summary = null,Object? filterProducts = null,Object? filterSeasons = null,}) {
   return _then(_self.copyWith(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<InventoryTransaction>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -3018,7 +3068,9 @@ as int,totalResults: null == totalResults ? _self.totalResults : totalResults //
 as int,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ignore: cast_nullable_to_non_nullable
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
-as InventoryHistorySummary,
+as InventoryHistorySummary,filterProducts: null == filterProducts ? _self.filterProducts : filterProducts // ignore: cast_nullable_to_non_nullable
+as List<InventoryTransactionProduct>,filterSeasons: null == filterSeasons ? _self.filterSeasons : filterSeasons // ignore: cast_nullable_to_non_nullable
+as List<InventoryTransactionSeason>,
   ));
 }
 /// Create a copy of InventoryHistoryPage
@@ -3112,10 +3164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary,  List<InventoryTransactionProduct> filterProducts,  List<InventoryTransactionSeason> filterSeasons)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryHistoryPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary,_that.filterProducts,_that.filterSeasons);case _:
   return orElse();
 
 }
@@ -3133,10 +3185,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary,  List<InventoryTransactionProduct> filterProducts,  List<InventoryTransactionSeason> filterSeasons)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryPage():
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary,_that.filterProducts,_that.filterSeasons);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3153,10 +3205,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<InventoryTransaction> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  InventoryHistorySummary summary,  List<InventoryTransactionProduct> filterProducts,  List<InventoryTransactionSeason> filterSeasons)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.summary,_that.filterProducts,_that.filterSeasons);case _:
   return null;
 
 }
@@ -3168,7 +3220,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 
 class _InventoryHistoryPage implements InventoryHistoryPage {
-  const _InventoryHistoryPage({required final  List<InventoryTransaction> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.summary}): _items = items;
+  const _InventoryHistoryPage({required final  List<InventoryTransaction> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.summary, final  List<InventoryTransactionProduct> filterProducts = const <InventoryTransactionProduct>[], final  List<InventoryTransactionSeason> filterSeasons = const <InventoryTransactionSeason>[]}): _items = items,_filterProducts = filterProducts,_filterSeasons = filterSeasons;
   
 
  final  List<InventoryTransaction> _items;
@@ -3183,6 +3235,20 @@ class _InventoryHistoryPage implements InventoryHistoryPage {
 @override final  bool hasNextPage;
 @override final  String? nextCursor;
 @override final  InventoryHistorySummary summary;
+ final  List<InventoryTransactionProduct> _filterProducts;
+@override@JsonKey() List<InventoryTransactionProduct> get filterProducts {
+  if (_filterProducts is EqualUnmodifiableListView) return _filterProducts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_filterProducts);
+}
+
+ final  List<InventoryTransactionSeason> _filterSeasons;
+@override@JsonKey() List<InventoryTransactionSeason> get filterSeasons {
+  if (_filterSeasons is EqualUnmodifiableListView) return _filterSeasons;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_filterSeasons);
+}
+
 
 /// Create a copy of InventoryHistoryPage
 /// with the given fields replaced by the non-null parameter values.
@@ -3194,16 +3260,16 @@ _$InventoryHistoryPageCopyWith<_InventoryHistoryPage> get copyWith => __$Invento
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.summary, summary) || other.summary == summary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.summary, summary) || other.summary == summary)&&const DeepCollectionEquality().equals(other._filterProducts, _filterProducts)&&const DeepCollectionEquality().equals(other._filterSeasons, _filterSeasons));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,summary);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,summary,const DeepCollectionEquality().hash(_filterProducts),const DeepCollectionEquality().hash(_filterSeasons));
 
 @override
 String toString() {
-  return 'InventoryHistoryPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, summary: $summary)';
+  return 'InventoryHistoryPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, summary: $summary, filterProducts: $filterProducts, filterSeasons: $filterSeasons)';
 }
 
 
@@ -3214,7 +3280,7 @@ abstract mixin class _$InventoryHistoryPageCopyWith<$Res> implements $InventoryH
   factory _$InventoryHistoryPageCopyWith(_InventoryHistoryPage value, $Res Function(_InventoryHistoryPage) _then) = __$InventoryHistoryPageCopyWithImpl;
 @override @useResult
 $Res call({
- List<InventoryTransaction> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, InventoryHistorySummary summary
+ List<InventoryTransaction> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, InventoryHistorySummary summary, List<InventoryTransactionProduct> filterProducts, List<InventoryTransactionSeason> filterSeasons
 });
 
 
@@ -3231,7 +3297,7 @@ class __$InventoryHistoryPageCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryPage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? summary = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? summary = null,Object? filterProducts = null,Object? filterSeasons = null,}) {
   return _then(_InventoryHistoryPage(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<InventoryTransaction>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -3239,7 +3305,9 @@ as int,totalResults: null == totalResults ? _self.totalResults : totalResults //
 as int,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ignore: cast_nullable_to_non_nullable
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
-as InventoryHistorySummary,
+as InventoryHistorySummary,filterProducts: null == filterProducts ? _self._filterProducts : filterProducts // ignore: cast_nullable_to_non_nullable
+as List<InventoryTransactionProduct>,filterSeasons: null == filterSeasons ? _self._filterSeasons : filterSeasons // ignore: cast_nullable_to_non_nullable
+as List<InventoryTransactionSeason>,
   ));
 }
 

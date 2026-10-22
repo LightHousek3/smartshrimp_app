@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'dart:async';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_catalog_filters.dart';
@@ -15,6 +16,8 @@ import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_d
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Show the selected farm catalog with combined filters and stock summaries.
+/// Resolve farm context by route ID, including direct links without extras.
 class InventoryPage extends ConsumerStatefulWidget {
   const InventoryPage({required this.farmId, this.farmName, super.key});
 
@@ -29,21 +32,67 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
   static const _searchDelay = Duration(milliseconds: 350);
 
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _loadingMore = false;
+  Object? _loadMoreError;
   Timer? _searchDebounce;
   var _searchQuery = '';
   var _showLowStockOnly = false;
   var _statusFilter = InventoryArchiveStatus.all;
   InventoryCategory? _categoryFilter; // null = Tất cả
 
+  InventoryCatalogKey get _catalogKey => (
+    farmId: widget.farmId,
+    search: _searchQuery,
+    category: _categoryFilter,
+    lowStockOnly: _showLowStockOnly,
+    archiveStatus: _statusFilter,
+  );
+
+  void _changeFilters(VoidCallback change) {
+    setState(() {
+      change();
+      _loadingMore = false;
+      _loadMoreError = null;
+    });
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.extentAfter < 180 &&
+        _loadMoreError == null) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    final key = _catalogKey;
+    final provider = filteredInventoryListControllerProvider(key);
+    if (_loadingMore || ref.read(provider).value?.hasNextPage != true) return;
+    setState(() {
+      _loadingMore = true;
+      _loadMoreError = null;
+    });
+    try {
+      await ref.read(provider.notifier).loadMore();
+    } on Object catch (error) {
+      if (mounted && key == _catalogKey) setState(() => _loadMoreError = error);
+    } finally {
+      if (mounted && key == _catalogKey) setState(() => _loadingMore = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _scrollController.dispose();
     _searchController
       ..removeListener(_onSearchChanged)
       ..dispose();
@@ -56,67 +105,36 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
     if (query == _searchQuery) return;
     _searchDebounce = Timer(_searchDelay, () {
       if (!mounted) return;
-      setState(() => _searchQuery = query);
+      _changeFilters(() => _searchQuery = query);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final inventoryState = ref.watch(
-      inventoryListControllerProvider(widget.farmId),
+      filteredInventoryListControllerProvider(_catalogKey),
     );
+    final suppliedName = widget.farmName?.trim();
+    final farmName = suppliedName != null && suppliedName.isNotEmpty
+        ? suppliedName
+        : ref
+              .watch(farmDetailControllerProvider(widget.farmId))
+              .when(
+                data: (farm) => farm.name,
+                loading: () => 'Đang tải tên trang trại…',
+                error: (_, _) => 'Không thể tải tên trang trại',
+              );
     final page = inventoryState.value;
-    if (page == null) {
-      return InventoryPageFrame(
-        title: 'Kho vật tư',
-        trailing: _supplierButton(context),
-        onBack: context.pop,
-        child: Center(
-          child: inventoryState.hasError
-              ? _InventoryLoadError(
-                  message: _errorMessage(inventoryState.error),
-                  onRetry: () => ref
-                      .read(
-                        inventoryListControllerProvider(widget.farmId).notifier,
-                      )
-                      .refresh(),
-                )
-              : const CircularProgressIndicator(),
-        ),
-      );
-    }
-    final query = _searchQuery;
-    final sourceProducts = page.items
-        .where(
-          (product) =>
-              _statusFilter == InventoryArchiveStatus.all ||
-              product.isArchived ==
-                  (_statusFilter == InventoryArchiveStatus.archived),
-        )
-        .toList(growable: false);
-    final lowStockCount = sourceProducts
-        .where((product) => product.isLowStock)
-        .length;
-    final inventoryValue = sourceProducts.fold<double>(
-      0,
-      (total, product) => total + product.inventoryValue,
-    );
-    final products = sourceProducts
-        .where((product) {
-          final matchesSearch =
-              query.isEmpty ||
-              product.name.toLowerCase().contains(query) ||
-              product.category.label.toLowerCase().contains(query);
-          final matchesCategory =
-              _categoryFilter == null || product.category == _categoryFilter;
-          return matchesSearch &&
-              (!_showLowStockOnly || product.isLowStock) &&
-              matchesCategory;
-        })
-        .toList(growable: false);
+    final readOnly =
+        page?.readOnly == true ||
+        page?.items.any((product) => product.readOnly) == true;
+    final lowStockCount = page?.summary.lowStockCount ?? 0;
+    final inventoryValue = page?.summary.inventoryValue ?? 0;
+    final products = page?.items ?? <InventoryProduct>[];
 
     return InventoryPageFrame(
       title: 'Kho vật tư',
+      subtitle: farmName,
       trailing: _supplierButton(context),
       onBack: context.pop,
       stackChildren: <Widget>[
@@ -131,25 +149,25 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
       ],
       child: RefreshIndicator(
         onRefresh: () => ref
-            .read(inventoryListControllerProvider(widget.farmId).notifier)
+            .read(filteredInventoryListControllerProvider(_catalogKey).notifier)
             .refresh(),
         child: ListView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: <Widget>[
-            _FarmContext(farmId: widget.farmId, farmName: widget.farmName),
-            const SizedBox(height: 12),
+            if (readOnly) const InventoryReadOnlyNotice(),
             Row(
               children: <Widget>[
                 Expanded(
-                  child: _InventoryStat(
-                    value: '${sourceProducts.length}',
+                  child: InventorySummaryCard(
+                    value: '${page?.summary.totalProducts ?? 0}',
                     label: 'Vật tư',
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _InventoryStat(
+                  child: InventorySummaryCard(
                     value: '$lowStockCount',
                     label: 'Sắp hết',
                     alert: lowStockCount > 0,
@@ -157,26 +175,31 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _InventoryStat(
-                    value: formatInventoryMoney(inventoryValue),
+                  child: InventorySummaryCard(
+                    value: formatInventoryCompactMoney(inventoryValue),
                     label: 'Giá trị tồn',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _InventorySearch(controller: _searchController),
+            InventoryDirectorySearch(
+              hint: 'Tìm tên vật tư…',
+              controller: _searchController,
+            ),
             const SizedBox(height: 10),
             InventoryCatalogFilters(
               status: _statusFilter,
               category: _categoryFilter,
               lowStockOnly: _showLowStockOnly,
-              onStatusChanged: (value) => setState(() => _statusFilter = value),
+              lowStockCount: lowStockCount,
+              onStatusChanged: (value) =>
+                  _changeFilters(() => _statusFilter = value),
               onCategoryChanged: (value) =>
-                  setState(() => _categoryFilter = value),
+                  _changeFilters(() => _categoryFilter = value),
               onLowStockChanged: (value) =>
-                  setState(() => _showLowStockOnly = value),
-              onReset: () => setState(() {
+                  _changeFilters(() => _showLowStockOnly = value),
+              onReset: () => _changeFilters(() {
                 _statusFilter = InventoryArchiveStatus.all;
                 _categoryFilter = null;
                 _showLowStockOnly = false;
@@ -189,29 +212,53 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      '${products.length} sản phẩm',
-                      style: AppTypography.display(
+                      '${page?.totalResults ?? 0} vật tư',
+                      style: const TextStyle(
                         color: AppColors.ink,
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         height: 1.5,
                       ),
                     ),
                   ),
-                  _AddProductButton(
-                    onPressed: () =>
-                        context.push('/farms/${widget.farmId}/inventory/new'),
+                  InventorySoftButton(
+                    label: 'Thêm vật tư',
+                    asset: InventoryAssets.catalogAdd,
+                    onPressed: readOnly || page == null
+                        ? null
+                        : () => context.push(
+                            '/farms/${widget.farmId}/inventory/new',
+                          ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            if (products.isEmpty)
+            if (page == null)
+              inventoryState.hasError
+                  ? _InventoryLoadError(
+                      message: _errorMessage(inventoryState.error),
+                      onRetry: () => ref
+                          .read(
+                            filteredInventoryListControllerProvider(
+                              _catalogKey,
+                            ).notifier,
+                          )
+                          .refresh(),
+                    )
+                  : const Center(child: CircularProgressIndicator())
+            else if (products.isEmpty)
               InventoryEmptyState(
-                title: page.items.isEmpty
+                title:
+                    _searchQuery.isEmpty &&
+                        _categoryFilter == null &&
+                        !_showLowStockOnly
                     ? 'Chưa có vật tư'
                     : 'Không tìm thấy vật tư',
-                message: page.items.isEmpty
+                message:
+                    _searchQuery.isEmpty &&
+                        _categoryFilter == null &&
+                        !_showLowStockOnly
                     ? 'Thêm vật tư để bắt đầu quản lý kho của trang trại.'
                     : 'Hãy thử tên hoặc bộ lọc khác.',
               )
@@ -228,6 +275,20 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                     ),
                   ),
                 ),
+              ),
+            if (page?.hasNextPage == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _loadingMore
+                    ? const Center(child: CircularProgressIndicator())
+                    : TextButton(
+                        onPressed: _loadMore,
+                        child: Text(
+                          _loadMoreError == null
+                              ? 'Tải thêm vật tư'
+                              : 'Không thể tải thêm. Nhấn để thử lại',
+                        ),
+                      ),
               ),
           ],
         ),
@@ -249,246 +310,42 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon: const Icon(Icons.storefront_outlined, size: 20),
+          icon: const InventorySvgIcon(
+            InventoryAssets.catalogSupplier,
+            size: 17,
+          ),
         )
       : TextButton.icon(
           onPressed: () =>
               context.push('/farms/${widget.farmId}/inventory/suppliers'),
           style: TextButton.styleFrom(
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.ocean,
             backgroundColor: Colors.white,
+            side: const BorderSide(color: AppColors.ocean),
             minimumSize: const Size(0, 40),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon: const Icon(Icons.storefront_outlined, size: 18),
+          icon: const InventorySvgIcon(
+            InventoryAssets.catalogSupplier,
+            size: 17,
+          ),
           label: const Text(
             'Nhà cung cấp',
-            style: TextStyle(fontSize: 12, color: Colors.black),
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 11,
+              color: AppColors.ocean,
+            ),
           ),
         );
 }
 
 // ---------------------------------------------------------------------------
-// Current farm context
-// ---------------------------------------------------------------------------
-
-class _FarmContext extends ConsumerWidget {
-  const _FarmContext({required this.farmId, required this.farmName});
-
-  final String farmId;
-  final String? farmName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final suppliedName = farmName?.trim();
-    // Route extras are optional (for example on a direct link or app restore).
-    // Resolve missing names by this farm's ID, never from a global selection.
-    final nameState = suppliedName != null && suppliedName.isNotEmpty
-        ? AsyncData(suppliedName)
-        : ref
-              .watch(farmDetailControllerProvider(farmId))
-              .whenData((farm) => farm.name);
-    return Semantics(
-      label: 'Trang trại hiện tại',
-      child: Container(
-        height: 41,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: <Widget>[
-              const InventorySvgIcon(InventoryAssets.building, size: 15),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Text(
-                  nameState.when(
-                    data: (name) => name,
-                    loading: () => 'Đang tải tên trang trại...',
-                    error: (error, _) => error is AppException
-                        ? error.message
-                        : 'Không thể tải tên trang trại.',
-                  ),
-                  style: AppTypography.display(
-                    color: AppColors.ink,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (nameState.hasError)
-                IconButton(
-                  tooltip: 'Tải lại tên trang trại',
-                  onPressed: () =>
-                      ref.invalidate(farmDetailControllerProvider(farmId)),
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Stat Card
-// ---------------------------------------------------------------------------
-
-class _InventoryStat extends StatelessWidget {
-  const _InventoryStat({
-    required this.value,
-    required this.label,
-    this.alert = false,
-  });
-
-  final String value;
-  final String label;
-  final bool alert;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 61,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-    decoration: BoxDecoration(
-      color: const Color(0xCCFFFFFF),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.line),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            style: AppTypography.display(
-              color: alert ? AppColors.error : AppColors.ink,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              height: 1.5,
-            ),
-          ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          label.toUpperCase(),
-          maxLines: 1,
-          style: const TextStyle(
-            color: AppColors.inkMuted,
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            letterSpacing: .22,
-            height: 1.2,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Search Bar
-// ---------------------------------------------------------------------------
-
-class _InventorySearch extends StatelessWidget {
-  const _InventorySearch({required this.controller});
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 52,
-    child: TextField(
-      controller: controller,
-      style: inventoryInputTextStyle,
-      textAlignVertical: TextAlignVertical.center,
-      textInputAction: TextInputAction.search,
-      decoration:
-          inventoryInputDecoration(
-            hintText: 'Tìm theo tên vật tư…',
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-          ).copyWith(
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 48,
-              minHeight: 48,
-            ),
-            prefixIcon: const SizedBox.square(
-              dimension: 48,
-              child: Center(
-                child: InventorySvgIcon(InventoryAssets.search, size: 18),
-              ),
-            ),
-          ),
-    ),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Add Product Button
-// ---------------------------------------------------------------------------
-
-class _AddProductButton extends StatelessWidget {
-  const _AddProductButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: 'Thêm vật tư mới',
-    child: Material(
-      color: const Color(0xFFEAF4FF),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: const SizedBox(
-          height: 36,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: <Widget>[
-                InventorySvgIcon(InventoryAssets.add, size: 13),
-                SizedBox(width: 4),
-                Text(
-                  'Thêm vật tư',
-                  style: TextStyle(
-                    color: Color(0xFF0C4E8F),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Product Card
 // ---------------------------------------------------------------------------
-
-String _categoryIconAsset(InventoryCategory cat) => switch (cat) {
-  InventoryCategory.medicine => InventoryAssets.medicine,
-  _ => InventoryAssets.inventoryBox,
-};
 
 class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product, required this.onTap});
@@ -516,31 +373,13 @@ class _ProductCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: <Widget>[
-              // Product photos take the place of the category icon when present.
-              if (product.effectiveImageUrls.isNotEmpty)
-                InventoryProductImage(
-                  url: product.effectiveImageUrls.first,
-                  size: 48,
-                )
-              else
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: product.category.background,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: InventorySvgIcon(
-                      _categoryIconAsset(product.category),
-                      size: 18,
-                      colorFilter: ColorFilter.mode(
-                        product.category.foreground,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                ),
+              InventoryProductImage(
+                url: product.effectiveImageUrls.firstOrNull,
+                size: product.effectiveImageUrls.isEmpty ? 40 : 48,
+                category: product.category,
+                isArchived: product.isArchived,
+                isLowStock: product.isLowStock,
+              ),
               const SizedBox(width: 12),
               // Info
               Expanded(
@@ -551,9 +390,10 @@ class _ProductCard extends StatelessWidget {
                       product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.display(
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
                         color: AppColors.ink,
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         height: 1.5,
                       ),
@@ -565,13 +405,27 @@ class _ProductCard extends StatelessWidget {
                       children: <Widget>[
                         InventoryCategoryBadge(category: product.category),
                         if (product.isLowStock) const LowStockBadge(),
-                        Text(
-                          product.isArchived ? 'Tạm ngưng' : 'Đang sử dụng',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.inkMuted,
+                        if (product.isArchived)
+                          const InventoryLabelBadge(label: 'Ngừng sử dụng'),
+                        if (product.compliance?.complianceStatus != 'reviewed')
+                          InventoryLabelBadge(
+                            label: product.readOnly
+                                ? 'Chưa đối chiếu hồ sơ'
+                                : product.compliance?.complianceStatus ==
+                                      'blocked'
+                                ? 'Hồ sơ bị chặn'
+                                : 'Hồ sơ nháp',
+                            foreground:
+                                product.compliance?.complianceStatus ==
+                                    'blocked'
+                                ? AppColors.error
+                                : const Color(0xFFD97706),
+                            background:
+                                product.compliance?.complianceStatus ==
+                                    'blocked'
+                                ? const Color(0xFFFBE6EA)
+                                : const Color(0xFFFFF1DC),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -604,7 +458,7 @@ class _ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      '${product.activeLotCount} lô còn hàng · Giá trị tồn ${formatInventoryMoney(product.inventoryValue)}',
+                      '${product.activeLotCount} lô còn hàng · Giá trị tồn ${formatInventoryCompactMoney(product.inventoryValue)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -617,7 +471,7 @@ class _ProductCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const InventorySvgIcon(InventoryAssets.chevronRight, size: 16),
+              const InventorySvgIcon(InventoryAssets.catalogChevron, size: 16),
             ],
           ),
         ),
@@ -650,7 +504,7 @@ class _HistoryButton extends StatelessWidget {
         child: const SizedBox.square(
           dimension: 52,
           child: Center(
-            child: InventorySvgIcon(InventoryAssets.history, size: 21),
+            child: InventorySvgIcon(InventoryAssets.catalogHistory, size: 21),
           ),
         ),
       ),

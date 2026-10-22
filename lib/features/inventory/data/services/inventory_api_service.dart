@@ -1,6 +1,7 @@
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
+/// Define farm-scoped inventory requests independently of the HTTP transport.
 abstract interface class InventoryRemoteDataSource {
   Future<InventoryProductPage> getProducts(
     String farmId,
@@ -22,6 +23,15 @@ abstract interface class InventoryRemoteDataSource {
 
   Future<InventoryProduct> archiveProduct(String farmId, String productId);
 
+  Future<void> deleteProduct(String farmId, String productId);
+
+  Future<InventoryLot> updateLotExpiry(
+    String farmId,
+    String productId,
+    String balanceId,
+    Map<String, dynamic> data,
+  );
+
   Future<InventoryProduct> restoreProduct(String farmId, String productId);
 
   Future<InventoryStockResult> recordStockTransaction(
@@ -37,6 +47,8 @@ abstract interface class InventoryRemoteDataSource {
   );
 }
 
+/// Use authenticated ApiClient requests and parse inventory data into entities.
+/// ApiClient retains responsibility for envelopes, refresh and network errors.
 final class InventoryApiService implements InventoryRemoteDataSource {
   InventoryApiService(this._client);
 
@@ -104,6 +116,29 @@ final class InventoryApiService implements InventoryRemoteDataSource {
       authenticated: true,
     );
     return InventoryProduct.parse(response.requireMapData());
+  }
+
+  @override
+  Future<void> deleteProduct(String farmId, String productId) async {
+    await _client.delete(
+      '${_basePath(farmId)}/products/${Uri.encodeComponent(productId)}',
+      authenticated: true,
+    );
+  }
+
+  @override
+  Future<InventoryLot> updateLotExpiry(
+    String farmId,
+    String productId,
+    String balanceId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _client.patch(
+      '${_basePath(farmId)}/products/${Uri.encodeComponent(productId)}/lots/${Uri.encodeComponent(balanceId)}',
+      data: data,
+      authenticated: true,
+    );
+    return InventoryLot.parse(response.requireMapData());
   }
 
   @override

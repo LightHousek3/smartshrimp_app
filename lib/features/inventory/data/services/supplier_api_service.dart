@@ -2,6 +2,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
 
+/// Access the owner supplier directory through an authorized destination farm.
+/// The backend scopes supplier identity by owner rather than originating farm.
 final class SupplierApiService {
   SupplierApiService(this._client);
   final ApiClient _client;
