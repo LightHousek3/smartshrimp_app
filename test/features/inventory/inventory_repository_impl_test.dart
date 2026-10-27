@@ -49,6 +49,61 @@ void main() {
   );
 
   test(
+    'uploaded label photos become compliance evidence for server readiness',
+    () async {
+      final photos = ['https://example.com/label.jpg'];
+      await repository.createProduct(
+        farmId: 'farm-1',
+        name: 'Feed',
+        manufacturerId: 'maker',
+        category: InventoryProductCategory.feed,
+        unit: InventoryProductUnit.kg,
+        minAlertQuantity: 0,
+        imageUrls: photos,
+        compliance: {'regulatoryType': 'feed', 'evidenceUrls': <String>[]},
+      );
+      expect(remote.lastData!['compliance'], {
+        'regulatoryType': 'feed',
+        'evidenceUrls': photos,
+      });
+      expect(remote.lastData!.containsKey('complianceStatus'), isFalse);
+    },
+  );
+
+  test('editing label facts preserves explicit supporting evidence', () async {
+    final evidence = ['https://example.com/label.pdf'];
+    await repository.updateProduct(
+      farmId: 'farm-1',
+      product: inventoryTestProduct,
+      name: 'Feed',
+      category: InventoryProductCategory.feed,
+      unit: InventoryProductUnit.kg,
+      minAlertQuantity: 0,
+      imageUrls: ['https://example.com/photo.jpg'],
+      compliance: {'regulatoryType': 'feed', 'evidenceUrls': evidence},
+    );
+    expect((remote.lastData!['compliance'] as Map)['evidenceUrls'], evidence);
+  });
+
+  test('saving without photos does not invent evidence or approval', () async {
+    await repository.createProduct(
+      farmId: 'farm-1',
+      name: 'Feed',
+      manufacturerId: 'maker',
+      category: InventoryProductCategory.feed,
+      unit: InventoryProductUnit.kg,
+      minAlertQuantity: 0,
+      imageUrls: [],
+      compliance: {'regulatoryType': 'feed', 'evidenceUrls': <String>[]},
+    );
+    expect((remote.lastData!['compliance'] as Map)['evidenceUrls'], isEmpty);
+    expect(
+      (remote.lastData!['compliance'] as Map).containsKey('checkedBy'),
+      isFalse,
+    );
+  });
+
+  test(
     'sends combined history filters and converts local bounds to UTC',
     () async {
       final start = DateTime(2026, 10, 1);
@@ -275,6 +330,15 @@ final class _InventoryRemote implements InventoryRemoteDataSource {
   final keys = <String>[];
   Map<String, dynamic>? lastData;
   AppException? error;
+
+  @override
+  Future<InventoryProduct> createProduct(
+    String farmId,
+    Map<String, dynamic> data,
+  ) async {
+    lastData = data;
+    return inventoryTestProduct;
+  }
 
   @override
   Future<InventoryHistoryPage> getHistory(

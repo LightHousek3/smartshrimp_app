@@ -251,8 +251,9 @@ class _InventoryProductFormPageState
           .where(_hasPhoto)
           .map((image) => image.url!)
           .toList(growable: false);
+      final InventoryProduct savedProduct;
       if (_isEdit) {
-        await notifier.updateProduct(
+        savedProduct = await notifier.updateProduct(
           product: _product!,
           name: _nameController.text,
           category: category,
@@ -269,7 +270,7 @@ class _InventoryProductFormPageState
           imageUrls: imageUrls,
         );
       } else {
-        await notifier.create(
+        savedProduct = await notifier.create(
           name: _nameController.text,
           category: category,
           manufacturerId: _manufacturerId!,
@@ -288,7 +289,11 @@ class _InventoryProductFormPageState
       if (!mounted) return;
       AppNoticeService.success(
         context,
-        _isEdit ? 'Đã lưu thay đổi vật tư.' : 'Đã thêm vật tư vào kho.',
+        switch (savedProduct.compliance?.complianceStatus) {
+          'reviewed' => 'Đã lưu vật tư. Hồ sơ đủ thông tin để sử dụng.',
+          'blocked' => 'Đã lưu vật tư. Hồ sơ vẫn đang bị chặn sử dụng.',
+          _ => 'Đã lưu bản nháp. Bổ sung đủ thông tin bắt buộc để sử dụng.',
+        },
       );
       context.pop();
     } on FormatException catch (error) {

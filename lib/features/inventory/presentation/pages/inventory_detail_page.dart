@@ -447,9 +447,9 @@ class _DetailContent extends StatelessWidget {
               _ProductInfoRow(
                 label: 'Hồ sơ',
                 value: switch (product.compliance?.complianceStatus) {
-                  'reviewed' => 'Đã đối chiếu',
+                  'reviewed' => 'Đủ thông tin',
                   'blocked' => 'Đang chặn sử dụng',
-                  _ => product.readOnly ? 'Chưa được đối chiếu' : 'Bản nháp',
+                  _ => product.readOnly ? 'Chưa đủ thông tin' : 'Bản nháp',
                 },
               ),
               if (product.compliance?.registrationNumber != null)

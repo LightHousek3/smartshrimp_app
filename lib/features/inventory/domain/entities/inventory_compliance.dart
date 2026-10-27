@@ -4,7 +4,7 @@ part 'inventory_compliance.freezed.dart';
 part 'inventory_compliance.g.dart';
 
 /// Keep label evidence separate from the product's business lifecycle.
-/// Owners edit drafts; review identity and safety conclusions come from the server.
+/// The server derives readiness and audit fields from Owner-supplied facts.
 @freezed
 abstract class InventoryCompliance with _$InventoryCompliance {
   const InventoryCompliance._();
