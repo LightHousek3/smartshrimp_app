@@ -284,20 +284,29 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required String? description,
     required String? imageUrl,
     required List<String>? imageUrls,
-  }) => <String, dynamic>{
-    'name': InventoryRules.normalizeText(name),
-    'category': _categoryValue(category),
-    'manufacturerId': manufacturerId,
-    'compliance': ?compliance,
-    'unit': _unitValue(unit),
-    'conversionQuantity': conversionQuantity,
-    'conversionUnit': conversionUnit == null
-        ? null
-        : _conversionUnitValue(conversionUnit),
-    'minAlertQuantity': minAlertQuantity,
-    'description': _nullableText(description),
-    if (imageUrls != null) 'imageUrls': imageUrls else 'imageUrl': imageUrl,
-  };
+  }) {
+    final photos = imageUrls ?? (imageUrl == null ? <String>[] : [imageUrl]);
+    return <String, dynamic>{
+      'name': InventoryRules.normalizeText(name),
+      'category': _categoryValue(category),
+      'manufacturerId': manufacturerId,
+      if (compliance != null)
+        'compliance': {
+          ...compliance,
+          if ((compliance['evidenceUrls'] as List?)?.isNotEmpty != true &&
+              photos.isNotEmpty)
+            'evidenceUrls': photos,
+        },
+      'unit': _unitValue(unit),
+      'conversionQuantity': conversionQuantity,
+      'conversionUnit': conversionUnit == null
+          ? null
+          : _conversionUnitValue(conversionUnit),
+      'minAlertQuantity': minAlertQuantity,
+      'description': _nullableText(description),
+      if (imageUrls != null) 'imageUrls': imageUrls else 'imageUrl': imageUrl,
+    };
+  }
 
   static String? _nullableText(String? value) {
     final normalized = InventoryRules.normalizeText(value ?? '');

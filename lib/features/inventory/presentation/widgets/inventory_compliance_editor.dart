@@ -3,7 +3,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_compliance.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
-/// Keep label photos and editable facts together; new facts remain a draft.
+/// Keep optional photos and label facts together for completeness checks.
 class InventoryComplianceEditor extends StatelessWidget {
   const InventoryComplianceEditor({
     required this.value,
@@ -67,7 +67,7 @@ class InventoryComplianceEditor extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Chụp rõ mặt nhãn, thành phần và hướng dẫn. Nhập thông tin theo nhãn để đối chiếu.',
+                    'Nhập đủ thông tin theo nhãn để vật tư có thể sử dụng. Ảnh nhãn là tùy chọn.',
                     style: TextStyle(
                       color: AppColors.inkMuted,
                       fontSize: 12,
@@ -240,7 +240,7 @@ class InventoryComplianceEditor extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Text(
-            'Hồ sơ mới hoặc nội dung thay đổi được lưu ở trạng thái nháp để đối chiếu. OCR không tự duyệt hồ sơ và không gỡ trạng thái bị chặn.',
+            'Đủ thông tin bắt buộc, hồ sơ được tự xác nhận khi lưu; không cần ảnh. Chủ trại chịu trách nhiệm thông tin đã khai báo. Hồ sơ bị chặn không tự được mở lại.',
             style: TextStyle(
               fontSize: 12,
               height: 1.625,
