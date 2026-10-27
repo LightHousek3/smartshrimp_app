@@ -7,6 +7,8 @@ import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:uuid/uuid.dart';
 
+/// Normalize inventory payloads and retain movement keys for safe retries.
+/// A retry after an uncertain response must reuse the original idempotency key.
 final class InventoryRepositoryImpl implements InventoryRepository {
   InventoryRepositoryImpl(this._remoteDataSource, {Uuid uuid = const Uuid()})
     : _uuid = uuid;
@@ -47,6 +49,8 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required String farmId,
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -65,6 +69,8 @@ final class InventoryRepositoryImpl implements InventoryRepository {
       _productData(
         name: name,
         category: category,
+        manufacturerId: manufacturerId,
+        compliance: compliance,
         unit: unit,
         conversionQuantity: conversionQuantity,
         conversionUnit: conversionUnit,
@@ -82,6 +88,8 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required InventoryProduct product,
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -97,17 +105,24 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     );
     return _remoteDataSource
         .updateProduct(farmId, product.id, <String, dynamic>{
-          ..._productData(
-            name: name,
-            category: category,
-            unit: unit,
-            conversionQuantity: conversionQuantity,
-            conversionUnit: conversionUnit,
-            minAlertQuantity: minAlertQuantity,
-            description: description,
-            imageUrl: imageUrl,
-            imageUrls: imageUrls,
-          ),
+          if (!product.metadataLocked)
+            ..._productData(
+              name: name,
+              category: category,
+              manufacturerId: manufacturerId.isEmpty
+                  ? product.manufacturerId
+                  : manufacturerId,
+              compliance: compliance,
+              unit: unit,
+              conversionQuantity: conversionQuantity,
+              conversionUnit: conversionUnit,
+              minAlertQuantity: minAlertQuantity,
+              description: description,
+              imageUrl: imageUrl,
+              imageUrls: imageUrls,
+            ),
+          'minAlertQuantity': minAlertQuantity,
+          if (product.metadataLocked) 'description': _nullableText(description),
           'expectedUpdatedAt': product.updatedAt.toUtc().toIso8601String(),
         });
   }
@@ -119,23 +134,37 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   }) => _remoteDataSource.archiveProduct(farmId, productId);
 
   @override
+  Future<InventoryStockResult> recordStockOut({
+    required String farmId,
+    required String productId,
+    required String inventoryBalanceId,
+    required double quantity,
+    String? quantityExact,
+    String? reason,
+  }) => _recordStockTransaction(farmId, productId, <String, dynamic>{
+    'transactionType': 'STOCK_OUT',
+    'inventoryBalanceId': inventoryBalanceId,
+    'quantity':
+        quantityExact ??
+        InventoryRules.normalizedQuantity(quantity.toStringAsFixed(9)),
+    'reason': _nullableText(reason),
+  });
+
+  @override
   Future<void> deleteProduct({
     required String farmId,
     required String productId,
   }) => _remoteDataSource.deleteProduct(farmId, productId);
 
   @override
-  Future<InventoryStockResult> recordStockOut({
+  Future<InventoryLot> updateLotExpiry({
     required String farmId,
     required String productId,
-    required String inventoryBalanceId,
-    required double quantity,
-    String? reason,
-  }) => _recordStockTransaction(farmId, productId, <String, dynamic>{
-    'transactionType': 'STOCK_OUT',
-    'inventoryBalanceId': inventoryBalanceId,
-    'quantity': quantity,
-    'reason': _nullableText(reason),
+    required InventoryLot lot,
+    required DateTime expiryDate,
+  }) => _remoteDataSource.updateLotExpiry(farmId, productId, lot.id, {
+    'expiryDate': InventoryRules.dateText(expiryDate),
+    'expectedUpdatedAt': lot.updatedAt.toUtc().toIso8601String(),
   });
 
   @override
@@ -150,7 +179,9 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required String productId,
     required String lotNumber,
     required DateTime receivedAt,
+    DateTime? expiryDate,
     required double quantity,
+    String? quantityExact,
     required double unitPrice,
     required String supplierName,
     String? supplierId,
@@ -159,11 +190,15 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     'transactionType': 'STOCK_IN',
     'lotNumber': InventoryRules.normalizeText(lotNumber),
     'receivedAt': receivedAt.toUtc().toIso8601String(),
-    'quantity': quantity,
+    'expiryDate': expiryDate == null
+        ? null
+        : InventoryRules.dateText(expiryDate),
+    'quantity':
+        quantityExact ??
+        InventoryRules.normalizedQuantity(quantity.toStringAsFixed(9)),
     'unitPrice': unitPrice,
-    if (supplierId != null)
-      'supplierId': supplierId
-    else
+    'supplierId': ?supplierId,
+    if (supplierName.trim().isNotEmpty)
       'supplierName': InventoryRules.normalizeText(supplierName),
     'reason': _nullableText(reason),
   });
@@ -175,11 +210,14 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required String inventoryBalanceId,
     required bool increase,
     required double quantity,
+    String? quantityExact,
     required String reason,
   }) => _recordStockTransaction(farmId, productId, <String, dynamic>{
     'transactionType': increase ? 'ADJUSTMENT_IN' : 'ADJUSTMENT_OUT',
     'inventoryBalanceId': inventoryBalanceId,
-    'quantity': quantity,
+    'quantity':
+        quantityExact ??
+        InventoryRules.normalizedQuantity(quantity.toStringAsFixed(9)),
     'reason': InventoryRules.normalizeText(reason),
   });
 
@@ -213,8 +251,9 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<InventoryHistoryPage> getHistory({
     required String farmId,
+    String? search,
     String? cursor,
-    int limit = 100,
+    int limit = 10,
     String? productId,
     InventoryTransactionType? transactionType,
     String? seasonId,
@@ -223,6 +262,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   }) => _remoteDataSource.getHistory(farmId, <String, dynamic>{
     'limit': limit,
     'cursor': ?cursor,
+    if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
     'productId': ?productId,
     'seasonId': ?seasonId,
     if (transactionType != null)
@@ -235,6 +275,8 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   static Map<String, dynamic> _productData({
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     required double? conversionQuantity,
     required InventoryConversionUnit? conversionUnit,
@@ -242,18 +284,29 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required String? description,
     required String? imageUrl,
     required List<String>? imageUrls,
-  }) => <String, dynamic>{
-    'name': InventoryRules.normalizeText(name),
-    'category': _categoryValue(category),
-    'unit': _unitValue(unit),
-    'conversionQuantity': conversionQuantity,
-    'conversionUnit': conversionUnit == null
-        ? null
-        : _conversionUnitValue(conversionUnit),
-    'minAlertQuantity': minAlertQuantity,
-    'description': _nullableText(description),
-    if (imageUrls != null) 'imageUrls': imageUrls else 'imageUrl': imageUrl,
-  };
+  }) {
+    final photos = imageUrls ?? (imageUrl == null ? <String>[] : [imageUrl]);
+    return <String, dynamic>{
+      'name': InventoryRules.normalizeText(name),
+      'category': _categoryValue(category),
+      'manufacturerId': manufacturerId,
+      if (compliance != null)
+        'compliance': {
+          ...compliance,
+          if ((compliance['evidenceUrls'] as List?)?.isNotEmpty != true &&
+              photos.isNotEmpty)
+            'evidenceUrls': photos,
+        },
+      'unit': _unitValue(unit),
+      'conversionQuantity': conversionQuantity,
+      'conversionUnit': conversionUnit == null
+          ? null
+          : _conversionUnitValue(conversionUnit),
+      'minAlertQuantity': minAlertQuantity,
+      'description': _nullableText(description),
+      if (imageUrls != null) 'imageUrls': imageUrls else 'imageUrl': imageUrl,
+    };
+  }
 
   static String? _nullableText(String? value) {
     final normalized = InventoryRules.normalizeText(value ?? '');

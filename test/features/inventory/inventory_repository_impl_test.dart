@@ -42,11 +42,66 @@ void main() {
       expect(remote.lastData, {
         'transactionType': 'STOCK_OUT',
         'inventoryBalanceId': 'lot-1',
-        'quantity': 10.0,
+        'quantity': '10',
         'reason': 'Xuất sử dụng',
       });
     },
   );
+
+  test(
+    'uploaded label photos become compliance evidence for server readiness',
+    () async {
+      final photos = ['https://example.com/label.jpg'];
+      await repository.createProduct(
+        farmId: 'farm-1',
+        name: 'Feed',
+        manufacturerId: 'maker',
+        category: InventoryProductCategory.feed,
+        unit: InventoryProductUnit.kg,
+        minAlertQuantity: 0,
+        imageUrls: photos,
+        compliance: {'regulatoryType': 'feed', 'evidenceUrls': <String>[]},
+      );
+      expect(remote.lastData!['compliance'], {
+        'regulatoryType': 'feed',
+        'evidenceUrls': photos,
+      });
+      expect(remote.lastData!.containsKey('complianceStatus'), isFalse);
+    },
+  );
+
+  test('editing label facts preserves explicit supporting evidence', () async {
+    final evidence = ['https://example.com/label.pdf'];
+    await repository.updateProduct(
+      farmId: 'farm-1',
+      product: inventoryTestProduct,
+      name: 'Feed',
+      category: InventoryProductCategory.feed,
+      unit: InventoryProductUnit.kg,
+      minAlertQuantity: 0,
+      imageUrls: ['https://example.com/photo.jpg'],
+      compliance: {'regulatoryType': 'feed', 'evidenceUrls': evidence},
+    );
+    expect((remote.lastData!['compliance'] as Map)['evidenceUrls'], evidence);
+  });
+
+  test('saving without photos does not invent evidence or approval', () async {
+    await repository.createProduct(
+      farmId: 'farm-1',
+      name: 'Feed',
+      manufacturerId: 'maker',
+      category: InventoryProductCategory.feed,
+      unit: InventoryProductUnit.kg,
+      minAlertQuantity: 0,
+      imageUrls: [],
+      compliance: {'regulatoryType': 'feed', 'evidenceUrls': <String>[]},
+    );
+    expect((remote.lastData!['compliance'] as Map)['evidenceUrls'], isEmpty);
+    expect(
+      (remote.lastData!['compliance'] as Map).containsKey('checkedBy'),
+      isFalse,
+    );
+  });
 
   test(
     'sends combined history filters and converts local bounds to UTC',
@@ -56,6 +111,7 @@ void main() {
       await repository.getHistory(
         farmId: 'farm-1',
         cursor: 'cursor-1',
+        search: '  CP  ',
         productId: 'product-1',
         transactionType: InventoryTransactionType.stockOut,
         seasonId: 'season-1',
@@ -63,7 +119,8 @@ void main() {
         createdTo: end,
       );
       expect(remote.lastData, <String, dynamic>{
-        'limit': 100,
+        'limit': 10,
+        'search': 'CP',
         'cursor': 'cursor-1',
         'productId': 'product-1',
         'transactionType': 'STOCK_OUT',
@@ -78,7 +135,7 @@ void main() {
     'omits unused history filters instead of filtering out unassigned movements',
     () async {
       await repository.getHistory(farmId: 'farm-1');
-      expect(remote.lastData, <String, dynamic>{'limit': 100});
+      expect(remote.lastData, <String, dynamic>{'limit': 10});
     },
   );
 
@@ -112,12 +169,37 @@ void main() {
       expect(remote.lastData, <String, dynamic>{
         'name': 'Thức ăn CP 9004',
         'category': 'FEED',
+        'manufacturerId': 'supplier',
         'unit': 'KG',
         'conversionQuantity': null,
         'conversionUnit': null,
         'minAlertQuantity': 100.0,
         'description': null,
         'imageUrl': null,
+        'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
+      });
+    },
+  );
+
+  test(
+    'locked product sends only threshold, description and version token',
+    () async {
+      final locked = inventoryTestProduct.copyWith(metadataLocked: true);
+      await repository.updateProduct(
+        farmId: 'farm-1',
+        product: locked,
+        name: 'Changed name',
+        category: InventoryProductCategory.medicine,
+        manufacturerId: 'different',
+        unit: InventoryProductUnit.kg,
+        minAlertQuantity: 0,
+        description: '  New note  ',
+        compliance: {'regulatoryType': 'medicine'},
+        imageUrls: ['https://example.com/new.png'],
+      );
+      expect(remote.lastData, {
+        'minAlertQuantity': 0.0,
+        'description': 'New note',
         'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
       });
     },
@@ -149,7 +231,7 @@ void main() {
   );
 
   test(
-    'sends supplier ID without a mutable supplier name on stock-in',
+    'sends selected seller identity; the server records its authoritative snapshot',
     () async {
       await repository.recordStockIn(
         farmId: 'farm-1',
@@ -162,7 +244,7 @@ void main() {
         supplierId: 'supplier-1',
       );
       expect(remote.lastData!['supplierId'], 'supplier-1');
-      expect(remote.lastData!.containsKey('supplierName'), isFalse);
+      expect(remote.lastData!['supplierName'], 'Old display name');
     },
   );
 
@@ -203,7 +285,7 @@ void main() {
       expect(remote.lastData, <String, dynamic>{
         'transactionType': 'ADJUSTMENT_OUT',
         'inventoryBalanceId': 'lot-1',
-        'quantity': 6.5,
+        'quantity': '6.5',
         'reason': 'Kiểm kê thực tế',
       });
 
@@ -248,6 +330,15 @@ final class _InventoryRemote implements InventoryRemoteDataSource {
   final keys = <String>[];
   Map<String, dynamic>? lastData;
   AppException? error;
+
+  @override
+  Future<InventoryProduct> createProduct(
+    String farmId,
+    Map<String, dynamic> data,
+  ) async {
+    lastData = data;
+    return inventoryTestProduct;
+  }
 
   @override
   Future<InventoryHistoryPage> getHistory(

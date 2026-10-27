@@ -2,10 +2,12 @@ import 'dart:typed_data';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
+/// Keep client validation aligned with inventory API limits and SQL precision.
 abstract final class InventoryRules {
-  static const maxProductImages = 2;
+  static const maxProductImages = 3;
   static const maxImageBytes = 5 * 1024 * 1024;
 
+  /// Check size and file signatures instead of trusting names or MIME metadata.
   static void validateImage(Uint8List bytes) {
     if (bytes.isEmpty || bytes.length > maxImageBytes) {
       throw const ApiException(
@@ -30,13 +32,50 @@ abstract final class InventoryRules {
   }
 
   static const maxNameLength = 255;
-  static const maxDescriptionLength = 5000;
+  static const maxDescriptionLength = 500;
   static const maxLotLength = 100;
   static const maxSupplierLength = 255;
-  static const maxReasonLength = 2000;
+  static const maxReasonLength = 255;
   static const maxQuantity = 99999999999.999;
   static const maxUnitPrice = 999999999999.99;
   static const maxConversionQuantity = 9999999999.9999;
+
+  /// Preserve decimal text all the way to the API instead of rounding through double.
+  static String normalizedQuantity(String text) {
+    final normalized = text.trim().replaceAll(',', '.');
+    if (!RegExp(r'^\d+(?:\.\d+)?$').hasMatch(normalized)) {
+      throw const FormatException('Số lượng không hợp lệ');
+    }
+    final parts = normalized.split('.');
+    final fraction = parts.length == 1
+        ? ''
+        : parts[1].replaceFirst(RegExp(r'0+$'), '');
+    if (BigInt.parse(parts[0]) > BigInt.from(99999999999) ||
+        fraction.length > 9) {
+      throw const FormatException('Số lượng vượt giới hạn');
+    }
+    final integer = BigInt.parse(parts[0]).toString();
+    return fraction.isEmpty ? integer : '$integer.$fraction';
+  }
+
+  static String dateText(DateTime date) => [
+    date.year.toString().padLeft(4, '0'),
+    date.month.toString().padLeft(2, '0'),
+    date.day.toString().padLeft(2, '0'),
+  ].join('-');
+
+  static String? expiryDateError(DateTime? date) {
+    if (date == null) return 'Vui lòng chọn hạn sử dụng';
+    final today = DateTime.now().toUtc().add(const Duration(hours: 7));
+    return dateText(date).compareTo(dateText(today)) < 0
+        ? 'Hạn sử dụng không được trong quá khứ'
+        : null;
+  }
+
+  static DateTime get today {
+    final now = DateTime.now().toUtc().add(const Duration(hours: 7));
+    return DateTime(now.year, now.month, now.day);
+  }
 
   static String normalizeText(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -44,6 +83,7 @@ abstract final class InventoryRules {
   static bool isPackaged(InventoryProductUnit unit) =>
       unit == InventoryProductUnit.pack || unit == InventoryProductUnit.bottle;
 
+  /// Accept decimal commas or dots without interpreting grouping or exponents.
   static double? parseNumber(String? value) {
     final text = value?.trim() ?? '';
     if (!RegExp(r'^\d+(?:[.,]\d+)?$').hasMatch(text)) return null;
@@ -51,14 +91,22 @@ abstract final class InventoryRules {
     return number != null && number.isFinite ? number : null;
   }
 
-  static String? quantityError(String? value, {bool allowZero = false}) =>
-      _numberError(
-        value,
-        label: allowZero ? 'Ngưỡng cảnh báo' : 'Số lượng',
-        maximum: maxQuantity,
-        precision: 3,
-        allowZero: allowZero,
-      );
+  static String? quantityError(String? value, {bool allowZero = false}) {
+    if (!allowZero) {
+      try {
+        normalizedQuantity(value ?? '');
+      } on FormatException {
+        return 'Số lượng phải nằm trong giới hạn và tối đa 9 chữ số thập phân';
+      }
+    }
+    return _numberError(
+      value,
+      label: allowZero ? 'Ngưỡng cảnh báo' : 'Số lượng',
+      maximum: allowZero ? maxQuantity : 100000000000,
+      precision: allowZero ? 3 : 9,
+      allowZero: allowZero,
+    );
+  }
 
   static String? unitPriceError(String? value) => _numberError(
     value,
@@ -97,6 +145,7 @@ abstract final class InventoryRules {
     return null;
   }
 
+  /// Require a valid conversion pair for packages and reject it for other units.
   static void validateConversion({
     required InventoryProductUnit unit,
     required double? conversionQuantity,

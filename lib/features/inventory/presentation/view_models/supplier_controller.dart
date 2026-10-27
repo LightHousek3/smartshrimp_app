@@ -39,6 +39,8 @@ final supplierDetailProvider = FutureProvider.autoDispose
       }
     });
 
+/// Manage the shared supplier directory and serialize mutations in this view.
+/// Invalidate other farm directory providers after shared records change.
 final class SupplierListController
     extends AsyncNotifier<List<InventorySupplier>> {
   SupplierListController(this.farmId);
@@ -84,6 +86,8 @@ final class SupplierListController
     String? email,
     String? address,
     String? note,
+    bool isActive = true,
+    String supplierType = 'MANUFACTURER',
   }) => _mutate(() async {
     final result = await ref
         .read(supplierRepositoryProvider)
@@ -96,8 +100,11 @@ final class SupplierListController
           email: email,
           address: address,
           note: note,
+          isActive: isActive,
+          supplierType: supplierType,
         );
     if (ref.mounted) {
+      ref.invalidate(supplierListControllerProvider);
       final current = state.value;
       if (current != null) {
         final updated = [
@@ -122,6 +129,7 @@ final class SupplierListController
         .read(supplierRepositoryProvider)
         .deleteSupplier(farmId, supplierId);
     if (ref.mounted) {
+      ref.invalidate(supplierListControllerProvider);
       final current = state.value;
       if (current != null) {
         state = AsyncData(current.where((s) => s.id != supplierId).toList());
@@ -132,6 +140,7 @@ final class SupplierListController
     }
   });
 
+  /// Keep in-flight writes alive across navigation and reject duplicate submits.
   Future<T> _mutate<T>(Future<T> Function() work) async {
     _requireOwner();
     if (_mutating) throw const ApiException('Thao tác trước đang được xử lý.');

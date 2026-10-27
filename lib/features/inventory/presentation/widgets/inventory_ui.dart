@@ -15,6 +15,37 @@ const inventoryInputTextStyle = TextStyle(
 
 abstract final class InventoryAssets {
   static const _root = 'assets/icons/inventory';
+  static const formManufacturer = '$_root/form_manufacturer.svg';
+  static const formDropdown = '$_root/form_dropdown.svg';
+  static const formCompliance = '$_root/form_compliance.svg';
+  static const formImage = '$_root/form_image.svg';
+  static const formOcr = '$_root/form_ocr.svg';
+  static const formSubmit = '$_root/form_submit.svg';
+  static const formBack = '$_root/form_back.svg';
+  static const formDelete = '$_root/form_delete.svg';
+  static const supplierTruck = '$_root/supplier_truck.svg';
+  static const supplierInactive = '$_root/supplier_inactive.svg';
+  static const supplierEdit = '$_root/supplier_edit.svg';
+  static const supplierDetailTruck = '$_root/supplier_detail_truck.svg';
+  static const supplierPhone = '$_root/supplier_phone.svg';
+  static const supplierEmail = '$_root/supplier_email.svg';
+  static const supplierChevron = '$_root/supplier_chevron.svg';
+  static const supplierPause = '$_root/supplier_pause.svg';
+  static const supplierInfo = '$_root/supplier_info.svg';
+  static const catalogBack = '$_root/catalog_back.svg';
+  static const catalogSupplier = '$_root/catalog_supplier.svg';
+  static const catalogSearch = '$_root/catalog_search.svg';
+  static const catalogDropdown = '$_root/catalog_dropdown.svg';
+  static const catalogWarning = '$_root/catalog_warning.svg';
+  static const catalogAdd = '$_root/catalog_add.svg';
+  static const catalogChemical = '$_root/catalog_chemical.svg';
+  static const catalogChevron = '$_root/catalog_chevron.svg';
+  static const catalogMedicineLow = '$_root/catalog_medicine_low.svg';
+  static const catalogMineral = '$_root/catalog_mineral.svg';
+  static const catalogMedicine = '$_root/catalog_medicine.svg';
+  static const catalogFeed = '$_root/catalog_feed.svg';
+  static const catalogChemicalInactive = '$_root/catalog_chemical_inactive.svg';
+  static const catalogHistory = '$_root/catalog_history.svg';
   static const back = '$_root/back.svg';
   static const building = '$_root/building.svg';
   static const chevronDown = '$_root/chevron_down.svg';
@@ -34,12 +65,14 @@ abstract final class InventoryAssets {
   static const save = '$_root/save.svg';
 }
 
+/// Share inventory page chrome while retaining the common app header layout.
 class InventoryPageFrame extends StatelessWidget {
   const InventoryPageFrame({
     required this.title,
     required this.child,
     required this.onBack,
     this.headerHeight = 76,
+    this.backIconAsset = InventoryAssets.catalogBack,
     this.subtitle,
     this.trailing,
     this.stackChildren = const <Widget>[],
@@ -47,6 +80,7 @@ class InventoryPageFrame extends StatelessWidget {
   });
 
   final double headerHeight;
+  final String backIconAsset;
   final String title;
   final String? subtitle;
   final Widget child;
@@ -66,6 +100,12 @@ class InventoryPageFrame extends StatelessWidget {
               children: <Widget>[
                 PageHeaderBar(
                   title: title,
+                  titleStyle: AppTypography.display(
+                    color: AppColors.ink,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                   subtitle: subtitle,
                   onBack: onBack,
                   height: headerHeight,
@@ -80,7 +120,7 @@ class InventoryPageFrame extends StatelessWidget {
                         dimension: 36,
                         child: Center(
                           child: SvgPicture.asset(
-                            InventoryAssets.back,
+                            backIconAsset,
                             width: 20,
                             height: 20,
                             colorFilter: const ColorFilter.mode(
@@ -340,6 +380,8 @@ class InventoryGradientButton extends StatelessWidget {
       AppColors.tealLight,
       AppColors.oceanLight,
     ],
+    this.disabledGradientColors,
+    this.fitContent = false,
     super.key,
   });
 
@@ -350,13 +392,16 @@ class InventoryGradientButton extends StatelessWidget {
   final double height;
   final double radius;
   final List<Color> gradientColors;
+  final List<Color>? disabledGradientColors;
+  final bool fitContent;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
       gradient: LinearGradient(
         colors: onPressed == null
-            ? const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)]
+            ? disabledGradientColors ??
+                  const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)]
             : gradientColors,
       ),
       borderRadius: BorderRadius.circular(radius),
@@ -377,30 +422,38 @@ class InventoryGradientButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         child: SizedBox(
           height: height,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              InventorySvgIcon(
-                iconAsset,
-                size: 18,
-                colorFilter: iconColor == null
-                    ? null
-                    : ColorFilter.mode(iconColor!, BlendMode.srcIn),
-              ),
-              const SizedBox(width: 9),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+          child: fitContent
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: FittedBox(fit: BoxFit.scaleDown, child: _content),
+                )
+              : _content,
         ),
       ),
     ),
+  );
+
+  Widget get _content => Row(
+    mainAxisSize: MainAxisSize.min,
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      InventorySvgIcon(
+        iconAsset,
+        size: 18,
+        colorFilter: iconColor == null
+            ? null
+            : ColorFilter.mode(iconColor!, BlendMode.srcIn),
+      ),
+      const SizedBox(width: 9),
+      Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
   );
 }
 

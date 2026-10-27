@@ -1,4 +1,3 @@
-import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -198,13 +197,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'shrimp-health',
                         builder: (_, state) {
-                          final extra =
-                              state.extra as Map<String, dynamic>?;
+                          final extra = state.extra as Map<String, dynamic>?;
                           return ShrimpHealthListPage(
                             seasonId: state.pathParameters['seasonId']!,
                             pondName: extra?['pondName'] as String?,
                             seasonName: extra?['seasonName'] as String?,
-                            isSeasonActive: extra?['isSeasonActive'] as bool? ?? true,
+                            isSeasonActive:
+                                extra?['isSeasonActive'] as bool? ?? true,
                           );
                         },
                         routes: [
@@ -389,11 +388,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                   final extra =
                                       state.extra as Map<String, dynamic>?;
                                   return ShrimpHealthListPage(
-                            seasonId: state.pathParameters['seasonId']!,
-                            pondName: extra?['pondName'] as String?,
-                            seasonName: extra?['seasonName'] as String?,
-                            isSeasonActive: extra?['isSeasonActive'] as bool? ?? true,
-                          );
+                                    seasonId: state.pathParameters['seasonId']!,
+                                    pondName: extra?['pondName'] as String?,
+                                    seasonName: extra?['seasonName'] as String?,
+                                    isSeasonActive:
+                                        extra?['isSeasonActive'] as bool? ??
+                                        true,
+                                  );
                                 },
                                 routes: [
                                   GoRoute(
@@ -402,18 +403,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                       final extra =
                                           state.extra as Map<String, dynamic>?;
                                       return ShrimpHealthStatisticsPage(
-                                        seasonId: state.pathParameters['seasonId']!,
+                                        seasonId:
+                                            state.pathParameters['seasonId']!,
                                         pondName: extra?['pondName'] as String?,
-                                        seasonName: extra?['seasonName'] as String?,
+                                        seasonName:
+                                            extra?['seasonName'] as String?,
                                       );
                                     },
                                   ),
                                   GoRoute(
                                     path: ':logId',
-                                    builder: (_, state) => ShrimpHealthDetailPage(
-                                      seasonId: state.pathParameters['seasonId']!,
-                                      logId: state.pathParameters['logId']!,
-                                    ),
+                                    builder: (_, state) =>
+                                        ShrimpHealthDetailPage(
+                                          seasonId:
+                                              state.pathParameters['seasonId']!,
+                                          logId: state.pathParameters['logId']!,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -495,12 +500,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                 path: 'edit',
                                 builder: (_, state) =>
                                     InventoryProductFormPage.edit(
-                                      photoReplacement:
-                                          state.extra
-                                              is InventoryPhotoReplacement
-                                          ? state.extra
-                                                as InventoryPhotoReplacement
-                                          : null,
                                       farmId: state.pathParameters['farmId']!,
                                       productId:
                                           state.pathParameters['productId']!,
@@ -677,4 +676,3 @@ class _SplashPage extends StatelessWidget {
     );
   }
 }
-

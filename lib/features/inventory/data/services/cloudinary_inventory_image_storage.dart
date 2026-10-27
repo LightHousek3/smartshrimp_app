@@ -6,6 +6,8 @@ import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_image_storage.dart';
 
+/// Validate image bytes and adapt Cloudinary responses outside the BE envelope.
+/// Upload configuration comes from AppConfig; only HTTPS image URLs are accepted.
 final class CloudinaryInventoryImageStorage implements InventoryImageStorage {
   CloudinaryInventoryImageStorage(
     this._dio, {

@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'inventory_compliance.dart';
+export 'inventory_compliance.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 
 part 'inventory.freezed.dart';
@@ -62,13 +64,16 @@ enum InventoryTransactionType {
   unknown,
 }
 
+/// Keep archive filters compatible with the API pause/resume terminology.
 enum InventoryArchiveStatus { active, archived, all }
 
+/// Represent immutable history filters and their calendar-day API boundaries.
 @freezed
 abstract class InventoryHistoryFilters with _$InventoryHistoryFilters {
   const InventoryHistoryFilters._();
 
   const factory InventoryHistoryFilters({
+    @Default('') String search,
     DateTime? fromDate,
     DateTime? toDate,
     InventoryTransactionType? transactionType,
@@ -77,6 +82,7 @@ abstract class InventoryHistoryFilters with _$InventoryHistoryFilters {
   }) = _InventoryHistoryFilters;
 
   bool get isEmpty =>
+      search.trim().isEmpty &&
       fromDate == null &&
       toDate == null &&
       transactionType == null &&
@@ -118,6 +124,8 @@ abstract class InventoryLot with _$InventoryLot {
     required String lotNumber,
     required DateTime receivedAt,
     required double quantity,
+    String? quantityExact,
+    DateTime? expiryDate,
     double? receivedQuantity,
     required double unitPrice,
     required String supplierName,
@@ -147,20 +155,35 @@ abstract class InventoryLot with _$InventoryLot {
   }
 }
 
+/// Represent a parsed catalog item with stock, compliance and lifecycle state.
+/// The API computes stock summaries; the UI must not infer status from dates.
 @freezed
 abstract class InventoryProduct with _$InventoryProduct {
   const InventoryProduct._();
 
-  List<String> get effectiveImageUrls => imageUrls.isNotEmpty
-      ? imageUrls
-      : imageUrl == null
-      ? const []
-      : [imageUrl!];
+  bool get isArchived => status == 'INACTIVE';
+
+  List<String> get effectiveImageUrls {
+    final photos = imageUrls
+        .map((url) => url.trim())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    if (photos.isNotEmpty) return photos;
+    final cover = imageUrl?.trim();
+    return cover == null || cover.isEmpty ? const [] : [cover];
+  }
 
   const factory InventoryProduct({
     required String id,
     required String farmId,
     required String name,
+    @Default(false) bool readOnly,
+    @Default('') String manufacturerId,
+    @Default(<String, dynamic>{}) Map<String, dynamic> manufacturer,
+    InventoryCompliance? compliance,
+    @Default(false) bool metadataLocked,
+    @Default(false) bool canDelete,
+    @Default('ACTIVE') String status,
     @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)
     required InventoryProductCategory category,
     @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)
@@ -173,10 +196,6 @@ abstract class InventoryProduct with _$InventoryProduct {
     String? description,
     String? imageUrl,
     @Default(<String>[]) List<String> imageUrls,
-    DateTime? archivedAt,
-    required bool isArchived,
-    required bool isDeleted,
-    DateTime? deletedAt,
     required DateTime createdAt,
     required DateTime updatedAt,
     required double currentStock,
@@ -192,14 +211,21 @@ abstract class InventoryProduct with _$InventoryProduct {
       _$InventoryProductFromJson(json);
 
   static InventoryProduct parse(Map<String, dynamic> json) {
+    final legacyRead = json['schemaVersion'] == 1 && json['readOnly'] == true;
+    final pendingManufacturer =
+        json['schemaVersion'] == 2 &&
+        json['requiresManufacturer'] == true &&
+        json['manufacturerId'] == null;
     if (!_hasString(json, 'id') ||
         !_hasString(json, 'farmId') ||
         !_hasString(json, 'name') ||
         json['category'] is! String ||
         json['unit'] is! String ||
         json['minAlertQuantity'] is! num ||
-        json['isArchived'] is! bool ||
-        json['isDeleted'] is! bool ||
+        (!legacyRead &&
+            !pendingManufacturer &&
+            !_hasString(json, 'manufacturerId')) ||
+        !['ACTIVE', 'INACTIVE'].contains(json['status']) ||
         json['createdAt'] is! String ||
         json['updatedAt'] is! String ||
         json['currentStock'] is! num ||
@@ -246,6 +272,7 @@ abstract class InventorySummary with _$InventorySummary {
 @freezed
 abstract class InventoryProductPage with _$InventoryProductPage {
   const factory InventoryProductPage({
+    @Default(false) bool readOnly,
     required List<InventoryProduct> items,
     required int page,
     required int limit,
@@ -275,6 +302,7 @@ abstract class InventoryProductPage with _$InventoryProductPage {
         })
         .toList(growable: false);
     return InventoryProductPage(
+      readOnly: meta['readOnly'] == true,
       items: items,
       page: meta['page'] as int,
       limit: meta['limit'] as int,
@@ -295,7 +323,6 @@ abstract class InventoryTransactionProduct with _$InventoryTransactionProduct {
     required InventoryProductCategory category,
     @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)
     required InventoryProductUnit unit,
-    required bool isDeleted,
   }) = _InventoryTransactionProduct;
 
   factory InventoryTransactionProduct.fromJson(Map<String, dynamic> json) =>
@@ -404,6 +431,10 @@ abstract class InventoryHistoryPage with _$InventoryHistoryPage {
     required bool hasNextPage,
     String? nextCursor,
     required InventoryHistorySummary summary,
+    @Default(<InventoryTransactionProduct>[])
+    List<InventoryTransactionProduct> filterProducts,
+    @Default(<InventoryTransactionSeason>[])
+    List<InventoryTransactionSeason> filterSeasons,
   }) = _InventoryHistoryPage;
 
   static InventoryHistoryPage parse(Object? data, Map<String, dynamic>? meta) {
@@ -424,19 +455,47 @@ abstract class InventoryHistoryPage with _$InventoryHistoryPage {
           return InventoryTransaction.parse(item);
         })
         .toList(growable: false);
-    return InventoryHistoryPage(
-      items: items,
-      limit: meta['limit'] as int,
-      totalResults: meta['totalResults'] as int,
-      hasNextPage: meta['hasNextPage'] as bool,
-      nextCursor: meta['nextCursor'] as String?,
-      summary: InventoryHistorySummary.parse(
-        meta['summary']! as Map<String, dynamic>,
+    final options = meta['filterOptions'];
+    if (options != null &&
+        (options is! Map<String, dynamic> ||
+            options['products'] is! List<dynamic> ||
+            options['seasons'] is! List<dynamic>)) {
+      throw const InvalidResponseException();
+    }
+    return _parse(
+      () => InventoryHistoryPage(
+        items: items,
+        limit: meta['limit'] as int,
+        totalResults: meta['totalResults'] as int,
+        hasNextPage: meta['hasNextPage'] as bool,
+        nextCursor: meta['nextCursor'] as String?,
+        summary: InventoryHistorySummary.parse(
+          meta['summary']! as Map<String, dynamic>,
+        ),
+        filterProducts: options == null
+            ? const []
+            : (options['products'] as List<dynamic>)
+                  .map(
+                    (row) => InventoryTransactionProduct.fromJson(
+                      row as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList(),
+        filterSeasons: options == null
+            ? const []
+            : (options['seasons'] as List<dynamic>)
+                  .map(
+                    (row) => InventoryTransactionSeason.fromJson(
+                      row as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList(),
       ),
     );
   }
 }
 
+/// Return the committed movement and balance, including idempotent replay state.
 @freezed
 abstract class InventoryStockResult with _$InventoryStockResult {
   const factory InventoryStockResult({

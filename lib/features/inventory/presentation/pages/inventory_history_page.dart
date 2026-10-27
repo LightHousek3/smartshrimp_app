@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ import 'package:smartshrimp_app/features/inventory/presentation/view_models/inve
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_history_filters.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Keep draft history filters separate until the user applies them.
+/// Use unfiltered history for stable material and season choices.
 class InventoryHistoryPage extends ConsumerStatefulWidget {
   const InventoryHistoryPage({required this.farmId, super.key});
 
@@ -24,22 +27,99 @@ class InventoryHistoryPage extends ConsumerStatefulWidget {
 
 class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   Timer? _searchDebounce;
   var _searchQuery = '';
   var _filtersExpanded = true;
   var _draftFilters = const domain.InventoryHistoryFilters();
   var _appliedFilters = const domain.InventoryHistoryFilters();
   String? _filterError;
+  bool _loadingMore = false;
+  bool _refreshing = false;
+  String? _loadMoreError;
+  int _loadMoreGeneration = 0;
+
+  domain.InventoryHistoryFilters get _requestFilters =>
+      _appliedFilters.copyWith(search: _searchQuery);
+
+  InventoryHistoryController _controllerFor(
+    domain.InventoryHistoryFilters filters,
+  ) => filters.isEmpty
+      ? ref.read(inventoryHistoryControllerProvider(widget.farmId).notifier)
+      : ref.read(
+          filteredInventoryHistoryControllerProvider((
+            farmId: widget.farmId,
+            filters: filters,
+          )).notifier,
+        );
+
+  void _resetPagination() {
+    _loadMoreGeneration++;
+    _loadingMore = false;
+    _loadMoreError = null;
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  }
+
+  /// Match the notification list's prefetch distance without retrying failed pages in a loop.
+  void _handleScroll() {
+    if (!mounted ||
+        _loadingMore ||
+        _refreshing ||
+        _loadMoreError != null ||
+        !_scrollController.hasClients ||
+        _scrollController.position.extentAfter >= 280) {
+      return;
+    }
+    final filters = _requestFilters;
+    final history = filters.isEmpty
+        ? ref.read(inventoryHistoryControllerProvider(widget.farmId))
+        : ref.read(
+            filteredInventoryHistoryControllerProvider((
+              farmId: widget.farmId,
+              filters: filters,
+            )),
+          );
+    if (!history.isLoading &&
+        !history.hasError &&
+        (history.value?.hasNextPage ?? false)) {
+      unawaited(_loadMore());
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore) return;
+    final generation = ++_loadMoreGeneration;
+    final controller = _controllerFor(_requestFilters);
+    setState(() {
+      _loadingMore = true;
+      _loadMoreError = null;
+    });
+    try {
+      await controller.loadMore();
+    } catch (error) {
+      if (mounted && generation == _loadMoreGeneration) {
+        setState(() => _loadMoreError = _errorMessage(error));
+      }
+    } finally {
+      if (mounted && generation == _loadMoreGeneration) {
+        setState(() => _loadingMore = false);
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_refreshSearch);
+    _scrollController.addListener(_handleScroll);
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     _searchController
       ..removeListener(_refreshSearch)
       ..dispose();
@@ -51,7 +131,12 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
     final query = _searchController.text.trim().toLowerCase();
     if (query == _searchQuery) return;
     _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) setState(() => _searchQuery = query);
+      if (mounted) {
+        setState(() {
+          _searchQuery = query;
+          _resetPagination();
+        });
+      }
     });
   }
 
@@ -66,6 +151,7 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
     setState(() {
       _filterError = null;
       _appliedFilters = _draftFilters;
+      _resetPagination();
     });
   }
 
@@ -78,28 +164,37 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
       _appliedFilters = const domain.InventoryHistoryFilters();
       _filterError = null;
       _searchQuery = '';
+      _resetPagination();
     });
   }
 
   Future<void> _refreshHistory() async {
-    final refresh = ref
-        .read(inventoryHistoryControllerProvider(widget.farmId).notifier)
-        .refresh();
-    if (_appliedFilters.isEmpty) {
-      await refresh;
-      return;
+    setState(() {
+      _refreshing = true;
+      _resetPagination();
+    });
+    try {
+      final refresh = ref
+          .read(inventoryHistoryControllerProvider(widget.farmId).notifier)
+          .refresh();
+      if (_requestFilters.isEmpty) {
+        await refresh;
+        return;
+      }
+      await Future.wait(<Future<void>>[
+        refresh,
+        ref
+            .read(
+              filteredInventoryHistoryControllerProvider((
+                farmId: widget.farmId,
+                filters: _requestFilters,
+              )).notifier,
+            )
+            .refresh(),
+      ]);
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
     }
-    await Future.wait(<Future<void>>[
-      refresh,
-      ref
-          .read(
-            filteredInventoryHistoryControllerProvider((
-              farmId: widget.farmId,
-              filters: _appliedFilters,
-            )).notifier,
-          )
-          .refresh(),
-    ]);
   }
 
   @override
@@ -109,17 +204,40 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
     final allHistoryState = ref.watch(
       inventoryHistoryControllerProvider(widget.farmId),
     );
-    final historyState = _appliedFilters.isEmpty
+    final historyState = _requestFilters.isEmpty
         ? allHistoryState
         : ref.watch(
             filteredInventoryHistoryControllerProvider((
               farmId: widget.farmId,
-              filters: _appliedFilters,
+              filters: _requestFilters,
             )),
           );
     final history = historyState.value;
+    if (history?.hasNextPage == true &&
+        !historyState.isLoading &&
+        !historyState.hasError &&
+        !_loadingMore &&
+        !_refreshing &&
+        _loadMoreError == null) {
+      final generation = _loadMoreGeneration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && generation == _loadMoreGeneration) _handleScroll();
+      });
+    }
     final products = <String, domain.InventoryTransactionProduct>{};
     final seasons = <String, domain.InventoryTransactionSeason>{};
+    for (final product
+        in allHistoryState.value?.filterProducts ??
+            history?.filterProducts ??
+            <domain.InventoryTransactionProduct>[]) {
+      products[product.id] = product;
+    }
+    for (final season
+        in allHistoryState.value?.filterSeasons ??
+            history?.filterSeasons ??
+            <domain.InventoryTransactionSeason>[]) {
+      seasons[season.id] = season;
+    }
     for (final transaction
         in allHistoryState.value?.items ?? <domain.InventoryTransaction>[]) {
       products[transaction.product.id] = transaction.product;
@@ -137,6 +255,8 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
       child: RefreshIndicator(
         onRefresh: _refreshHistory,
         child: ListView(
+          key: const ValueKey('inventory-history-list'),
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
           children: <Widget>[
@@ -176,7 +296,9 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
               _HistoryContent(
                 history: history,
                 searchController: _searchController,
-                searchQuery: _searchQuery,
+                loadingMore: _loadingMore,
+                loadMoreError: _loadMoreError,
+                onLoadMore: _loadMore,
               ),
           ],
         ),
@@ -189,53 +311,25 @@ class _HistoryContent extends StatelessWidget {
   const _HistoryContent({
     required this.history,
     required this.searchController,
-    required this.searchQuery,
+    required this.loadingMore,
+    required this.loadMoreError,
+    required this.onLoadMore,
   });
 
   final domain.InventoryHistoryPage history;
   final TextEditingController searchController;
-  final String searchQuery;
+  final bool loadingMore;
+  final String? loadMoreError;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    final query = searchQuery;
-    final transactions = history.items
-        .where((transaction) {
-          if (query.isEmpty) return true;
-          return transaction.product.name.toLowerCase().contains(query) ||
-              transaction.inventoryBalance.lotNumber.toLowerCase().contains(
-                query,
-              ) ||
-              (transaction.inventoryBalance.supplierName.toLowerCase().contains(
-                query,
-              )) ||
-              (transaction.reason?.toLowerCase().contains(query) ?? false);
-        })
-        .toList(growable: false);
-    final displayedHistory = query.isEmpty
-        ? history
-        : history.copyWith(
-            totalResults: transactions.length,
-            summary: domain.InventoryHistorySummary(
-              totalInboundValue: transactions
-                  .where((item) => item.transactionType.isInbound)
-                  .fold(0, (total, item) => total + item.totalAmount),
-              totalOutboundValue: transactions
-                  .where(
-                    (item) =>
-                        item.transactionType ==
-                            domain.InventoryTransactionType.stockOut ||
-                        item.transactionType ==
-                            domain.InventoryTransactionType.adjustmentOut,
-                  )
-                  .fold(0, (total, item) => total + item.totalAmount),
-            ),
-          );
+    final transactions = history.items;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _Summary(history: displayedHistory),
+        _Summary(history: history),
         const SizedBox(height: 14),
         TextField(
           controller: searchController,
@@ -257,16 +351,10 @@ class _HistoryContent extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         if (transactions.isEmpty)
-          const InventorySurface(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 28),
-              child: Center(
-                child: Text(
-                  'Không có giao dịch phù hợp.',
-                  style: TextStyle(color: AppColors.inkMuted),
-                ),
-              ),
-            ),
+          const InventoryEmptyState(
+            title: 'Không có giao dịch phù hợp',
+            message: 'Hãy thử từ khóa hoặc bộ lọc truy vết khác.',
+            icon: Icons.receipt_long_outlined,
           )
         else
           ...transactions.map(
@@ -274,6 +362,33 @@ class _HistoryContent extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: _TransactionCard(transaction: transaction),
             ),
+          ),
+        if (loadMoreError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              loadMoreError!,
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        if (loadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(
+                  key: ValueKey('inventory-history-loading-more'),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          )
+        else if (loadMoreError != null && history.hasNextPage)
+          TextButton.icon(
+            onPressed: onLoadMore,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Thử tải thêm'),
           ),
       ],
     );

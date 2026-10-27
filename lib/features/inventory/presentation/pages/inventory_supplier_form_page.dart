@@ -7,6 +7,8 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_sup
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Create or edit supplier details and activity in the shared owner directory.
+/// Pass the existing record so updates include its version token.
 class InventorySupplierFormPage extends ConsumerStatefulWidget {
   const InventorySupplierFormPage({
     required this.farmId,
@@ -41,6 +43,8 @@ class _InventorySupplierFormPageState
   bool _saving = false;
   bool _conflict = false;
   bool _reloadLatest = false;
+  bool _isActive = true;
+  String _supplierType = 'MANUFACTURER';
 
   @override
   void dispose() {
@@ -64,6 +68,8 @@ class _InventorySupplierFormPageState
             email: _fields['email']!.text,
             address: _fields['address']!.text,
             note: _fields['note']!.text,
+            isActive: _isActive,
+            supplierType: _supplierType,
           );
       if (!mounted) return;
       AppNoticeService.success(
@@ -95,11 +101,7 @@ class _InventorySupplierFormPageState
     if (widget.supplierId != null) {
       final initial = widget.initialSupplier;
       InventorySupplier? supplier =
-          !_reloadLatest &&
-              initial?.id == widget.supplierId &&
-              initial?.farmId == widget.farmId
-          ? initial
-          : null;
+          !_reloadLatest && initial?.id == widget.supplierId ? initial : null;
       if (supplier == null) {
         final state = ref.watch(
           supplierDetailProvider((
@@ -137,6 +139,8 @@ class _InventorySupplierFormPageState
       }
       if (_existing == null) {
         _existing = supplier;
+        _isActive = supplier.isActive;
+        _supplierType = supplier.supplierType;
         final values = {
           'name': _existing!.name,
           'contactName': _existing!.contactName,
@@ -155,7 +159,7 @@ class _InventorySupplierFormPageState
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
-          const Text('Danh bạ nhà cung cấp dùng riêng cho trang trại này.'),
+          const Text('Nhà cung cấp dùng chung cho tất cả trang trại của bạn.'),
           const SizedBox(height: 12),
           AbsorbPointer(
             absorbing: _saving,
@@ -166,24 +170,65 @@ class _InventorySupplierFormPageState
                     'name',
                     'Tên nhà cung cấp *',
                     255,
+                    enabled: _existing?.metadataLocked != true,
                     validator: (value) => value == null || value.trim().isEmpty
                         ? 'Vui lòng nhập tên nhà cung cấp'
                         : null,
                   ),
+                  InventoryField(
+                    label: 'Vai trò cung ứng *',
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _supplierType == 'UNKNOWN'
+                          ? null
+                          : _supplierType,
+                      isExpanded: true,
+                      style: inventoryInputTextStyle,
+                      decoration: inventoryInputDecoration(),
+                      validator: (value) => value == null
+                          ? 'Vui lòng xác nhận vai trò cung ứng'
+                          : null,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'MANUFACTURER',
+                          child: Text('Nhà sản xuất'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'DISTRIBUTOR',
+                          child: Text('Nhà phân phối'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BOTH',
+                          child: Text('Sản xuất và phân phối'),
+                        ),
+                      ],
+                      onChanged: _existing?.metadataLocked == true
+                          ? null
+                          : (type) => setState(() => _supplierType = type!),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (_existing?.metadataLocked == true) ...[
+                    const Text(
+                      'Nhà cung cấp đã có đơn hoặc giao dịch nên không thể đổi tên và vai trò.',
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _field('contactName', 'Người liên hệ', 255),
                   _field(
                     'phone',
-                    'Điện thoại',
+                    'Số điện thoại *',
                     20,
                     keyboardType: TextInputType.phone,
-                    validator: (value) =>
-                        value != null &&
-                            value.trim().isNotEmpty &&
-                            !RegExp(
-                              r'^\+?[0-9 ()\-.]{6,20}$',
-                            ).hasMatch(value.trim())
-                        ? 'Số điện thoại không hợp lệ'
-                        : null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Vui lòng nhập số điện thoại';
+                      }
+                      return !RegExp(
+                            r'^\+?[0-9 ()\-.]{6,20}$',
+                          ).hasMatch(value.trim())
+                          ? 'Số điện thoại không hợp lệ'
+                          : null;
+                    },
                   ),
                   _field(
                     'email',
@@ -199,8 +244,38 @@ class _InventorySupplierFormPageState
                         ? 'Email không hợp lệ'
                         : null,
                   ),
-                  _field('address', 'Địa chỉ', 1000, lines: 2),
+                  _field(
+                    'address',
+                    'Địa chỉ *',
+                    1000,
+                    lines: 2,
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Vui lòng nhập địa chỉ'
+                        : null,
+                  ),
                   _field('note', 'Ghi chú', 2000, lines: 3),
+                  if (widget.supplierId != null)
+                    InventoryField(
+                      label: 'Trạng thái',
+                      child: DropdownButtonFormField<bool>(
+                        initialValue: _isActive,
+                        isExpanded: true,
+                        style: inventoryInputTextStyle,
+                        decoration: inventoryInputDecoration(),
+                        items: const [
+                          DropdownMenuItem(
+                            value: true,
+                            child: Text('Đang hoạt động'),
+                          ),
+                          DropdownMenuItem(
+                            value: false,
+                            child: Text('Tạm ngưng'),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _isActive = value ?? true),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -254,6 +329,7 @@ class _InventorySupplierFormPageState
     String label,
     int limit, {
     int lines = 1,
+    bool enabled = true,
     TextInputType? keyboardType,
     FormFieldValidator<String>? validator,
   }) => Padding(
@@ -261,6 +337,7 @@ class _InventorySupplierFormPageState
     child: InventoryField(
       label: label,
       child: TextFormField(
+        enabled: enabled,
         controller: _fields[key],
         maxLength: limit,
         maxLines: lines,

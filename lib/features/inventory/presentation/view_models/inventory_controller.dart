@@ -42,6 +42,20 @@ final inventoryListControllerProvider = AsyncNotifierProvider.autoDispose
       InventoryListController.new,
     );
 
+typedef InventoryCatalogKey = ({
+  String farmId,
+  String search,
+  InventoryProductCategory? category,
+  bool lowStockOnly,
+  InventoryArchiveStatus archiveStatus,
+});
+
+final filteredInventoryListControllerProvider = AsyncNotifierProvider
+    .autoDispose
+    .family<InventoryListController, InventoryProductPage, InventoryCatalogKey>(
+      (key) => InventoryListController(key.farmId, filters: key),
+    );
+
 final inventoryDetailControllerProvider = AsyncNotifierProvider.autoDispose
     .family<InventoryDetailController, InventoryProduct, InventoryProductKey>(
       InventoryDetailController.new,
@@ -65,6 +79,8 @@ final inventoryMutationControllerProvider = AsyncNotifierProvider.autoDispose
       InventoryMutationController.new,
     );
 
+/// Share the Owner UI gate and session-expiry handling across inventory flows.
+/// Backend ownership checks remain authoritative for every request.
 abstract base class _OwnerInventoryController<T> extends AsyncNotifier<T> {
   void requireOwner() {
     if (ref.watch(authControllerProvider).value?.role !=
@@ -85,55 +101,82 @@ abstract base class _OwnerInventoryController<T> extends AsyncNotifier<T> {
   }
 }
 
+/// Fetch ten products per request and let the API apply combined filters.
 final class InventoryListController
     extends _OwnerInventoryController<InventoryProductPage> {
-  InventoryListController(this.farmId);
+  InventoryListController(this.farmId, {this.filters});
 
-  static const _pageSize = 100;
+  static const _pageSize = 10;
   final String farmId;
+  final InventoryCatalogKey? filters;
   int _refreshGeneration = 0;
+  bool _refreshing = false;
+  int? _loadingMoreGeneration;
 
   @override
   Future<InventoryProductPage> build() {
     requireOwner();
-    return _loadAll();
+    _refreshGeneration++;
+    _refreshing = false;
+    _loadingMoreGeneration = null;
+    return _loadPage();
   }
 
   Future<void> refresh() async {
     final generation = ++_refreshGeneration;
-    final result = await AsyncValue.guard(_loadAll);
-    if (ref.mounted && generation == _refreshGeneration) state = result;
+    _refreshing = true;
+    _loadingMoreGeneration = null;
+    final result = await AsyncValue.guard(_loadPage);
+    if (ref.mounted && generation == _refreshGeneration) {
+      _refreshing = false;
+      state = result;
+    }
   }
 
-  Future<InventoryProductPage> _loadAll() => runAuthenticated(() async {
-    final repository = ref.read(inventoryRepositoryProvider);
-    final products = <InventoryProduct>[];
-    late InventoryProductPage firstPage;
-    var pageNumber = 1;
-
-    while (true) {
-      final page = await repository.getProducts(
-        farmId: farmId,
-        page: pageNumber,
-        limit: _pageSize,
-        archiveStatus: InventoryArchiveStatus.all,
+  Future<InventoryProductPage> _loadPage([int pageNumber = 1]) =>
+      runAuthenticated(
+        () => ref
+            .read(inventoryRepositoryProvider)
+            .getProducts(
+              farmId: farmId,
+              page: pageNumber,
+              limit: _pageSize,
+              search: filters?.search,
+              category: filters?.category,
+              lowStockOnly: filters?.lowStockOnly ?? false,
+              archiveStatus:
+                  filters?.archiveStatus ?? InventoryArchiveStatus.all,
+            ),
       );
-      if (pageNumber == 1) firstPage = page;
-      products.addAll(page.items);
-      if (!page.hasNextPage) break;
-      pageNumber++;
-    }
 
-    return firstPage.copyWith(
-      items: products,
-      page: 1,
-      totalResults: products.length,
-      totalPages: products.isEmpty ? 0 : 1,
-      hasNextPage: false,
-    );
-  });
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null ||
+        !current.hasNextPage ||
+        _refreshing ||
+        _loadingMoreGeneration != null) {
+      return;
+    }
+    final generation = _refreshGeneration;
+    _loadingMoreGeneration = generation;
+    try {
+      final page = await _loadPage(current.page + 1);
+      if (!ref.mounted || generation != _refreshGeneration) return;
+      if (page.page != current.page + 1) {
+        throw const InvalidResponseException();
+      }
+      final unique = {
+        for (final product in current.items) product.id: product,
+        for (final product in page.items) product.id: product,
+      };
+      state = AsyncData(page.copyWith(items: unique.values.toList()));
+    } finally {
+      if (_loadingMoreGeneration == generation) _loadingMoreGeneration = null;
+    }
+  }
 }
 
+/// Load one farm/product pair and prevent older refreshes replacing newer data.
 final class InventoryDetailController
     extends _OwnerInventoryController<InventoryProduct> {
   InventoryDetailController(this.key);
@@ -160,6 +203,7 @@ final class InventoryDetailController
   );
 }
 
+/// Fetch ten ledger records per request, preserving server totals and filter cursors.
 final class InventoryHistoryController
     extends _OwnerInventoryController<InventoryHistoryPage> {
   InventoryHistoryController(
@@ -167,63 +211,92 @@ final class InventoryHistoryController
     this.filters = const InventoryHistoryFilters(),
   });
 
-  static const _pageSize = 100;
+  static const _pageSize = 10;
   final String farmId;
   final InventoryHistoryFilters filters;
   int _refreshGeneration = 0;
+  bool _refreshing = false;
+  int? _loadingMoreGeneration;
+  final _loadedCursors = <String>{};
 
   @override
   Future<InventoryHistoryPage> build() {
     requireOwner();
-    return _loadAll();
+    _refreshGeneration++;
+    _refreshing = false;
+    _loadingMoreGeneration = null;
+    _loadedCursors.clear();
+    return _loadPage();
   }
 
   Future<void> refresh() async {
     final generation = ++_refreshGeneration;
-    final result = await AsyncValue.guard(_loadAll);
-    if (ref.mounted && generation == _refreshGeneration) state = result;
+    _refreshing = true;
+    _loadingMoreGeneration = null;
+    _loadedCursors.clear();
+    final result = await AsyncValue.guard(_loadPage);
+    if (ref.mounted && generation == _refreshGeneration) {
+      _refreshing = false;
+      state = result;
+    }
   }
 
-  Future<InventoryHistoryPage> _loadAll() => runAuthenticated(() async {
-    if (!filters.isValidDateRange) {
-      throw const ApiException('Ngày bắt đầu không được sau ngày kết thúc.');
-    }
-    final repository = ref.read(inventoryRepositoryProvider);
-    final transactions = <InventoryTransaction>[];
-    final seenCursors = <String>{};
-    late InventoryHistoryPage firstPage;
-    String? cursor;
-
-    while (true) {
+  Future<InventoryHistoryPage> _loadPage([String? cursor]) => runAuthenticated(
+    () async {
+      if (!filters.isValidDateRange) {
+        throw const ApiException('Ngày bắt đầu không được sau ngày kết thúc.');
+      }
+      final repository = ref.read(inventoryRepositoryProvider);
       final page = await repository.getHistory(
         farmId: farmId,
         cursor: cursor,
         limit: _pageSize,
+        search: filters.search,
         productId: filters.productId,
         transactionType: filters.transactionType,
         seasonId: filters.seasonId,
         createdFrom: filters.createdFrom,
         createdTo: filters.createdTo,
       );
-      if (transactions.isEmpty && cursor == null) firstPage = page;
-      transactions.addAll(page.items);
-      if (!page.hasNextPage) break;
-      final nextCursor = page.nextCursor;
-      if (nextCursor == null || !seenCursors.add(nextCursor)) {
+      if (page.hasNextPage &&
+          (page.nextCursor == null ||
+              page.nextCursor == cursor ||
+              _loadedCursors.contains(page.nextCursor))) {
         throw const InvalidResponseException();
       }
-      cursor = nextCursor;
-    }
+      return page;
+    },
+  );
 
-    return firstPage.copyWith(
-      items: transactions,
-      totalResults: transactions.length,
-      hasNextPage: false,
-      nextCursor: null,
-    );
-  });
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null ||
+        !current.hasNextPage ||
+        _refreshing ||
+        _loadingMoreGeneration != null) {
+      return;
+    }
+    final cursor = current.nextCursor;
+    if (cursor == null) throw const InvalidResponseException();
+    final generation = _refreshGeneration;
+    _loadingMoreGeneration = generation;
+    try {
+      final page = await _loadPage(cursor);
+      if (!ref.mounted || generation != _refreshGeneration) return;
+      _loadedCursors.add(cursor);
+      final unique = {
+        for (final row in current.items) row.id: row,
+        for (final row in page.items) row.id: row,
+      };
+      state = AsyncData(page.copyWith(items: unique.values.toList()));
+    } finally {
+      if (_loadingMoreGeneration == generation) _loadingMoreGeneration = null;
+    }
+  }
 }
 
+/// Coordinate inventory writes and invalidate dependent lists and details.
+/// Keep mutation failures available to the initiating page for error display.
 final class InventoryMutationController
     extends _OwnerInventoryController<void> {
   InventoryMutationController(this.farmId);
@@ -247,6 +320,8 @@ final class InventoryMutationController
   Future<InventoryProduct> create({
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -261,6 +336,8 @@ final class InventoryMutationController
           farmId: farmId,
           name: name,
           category: category,
+          manufacturerId: manufacturerId,
+          compliance: compliance,
           unit: unit,
           conversionQuantity: conversionQuantity,
           conversionUnit: conversionUnit,
@@ -275,6 +352,8 @@ final class InventoryMutationController
     required InventoryProduct product,
     required String name,
     required InventoryProductCategory category,
+    String manufacturerId = '',
+    Map<String, dynamic>? compliance,
     required InventoryProductUnit unit,
     double? conversionQuantity,
     InventoryConversionUnit? conversionUnit,
@@ -290,6 +369,8 @@ final class InventoryMutationController
           product: product,
           name: name,
           category: category,
+          manufacturerId: manufacturerId,
+          compliance: compliance,
           unit: unit,
           conversionQuantity: conversionQuantity,
           conversionUnit: conversionUnit,
@@ -308,17 +389,11 @@ final class InventoryMutationController
     productId: productId,
   );
 
-  Future<void> deleteProduct(String productId) => _mutate(
-    () => ref
-        .read(inventoryRepositoryProvider)
-        .deleteProduct(farmId: farmId, productId: productId),
-    productId: productId,
-  );
-
   Future<InventoryStockResult> stockOut({
     required String productId,
     required String inventoryBalanceId,
     required double quantity,
+    String? quantityExact,
     String? reason,
   }) => _mutate(
     () => ref
@@ -328,8 +403,32 @@ final class InventoryMutationController
           productId: productId,
           inventoryBalanceId: inventoryBalanceId,
           quantity: quantity,
+          quantityExact: quantityExact,
           reason: reason,
         ),
+    productId: productId,
+  );
+
+  Future<InventoryLot> updateLotExpiry(
+    String productId,
+    InventoryLot lot,
+    DateTime date,
+  ) => _mutate(
+    () => ref
+        .read(inventoryRepositoryProvider)
+        .updateLotExpiry(
+          farmId: farmId,
+          productId: productId,
+          lot: lot,
+          expiryDate: date,
+        ),
+    productId: productId,
+  );
+
+  Future<void> delete(String productId) => _mutate(
+    () => ref
+        .read(inventoryRepositoryProvider)
+        .deleteProduct(farmId: farmId, productId: productId),
     productId: productId,
   );
 
@@ -344,7 +443,9 @@ final class InventoryMutationController
     required String productId,
     required String lotNumber,
     required DateTime receivedAt,
+    DateTime? expiryDate,
     required double quantity,
+    String? quantityExact,
     required double unitPrice,
     required String supplierName,
     String? supplierId,
@@ -357,7 +458,9 @@ final class InventoryMutationController
           productId: productId,
           lotNumber: lotNumber,
           receivedAt: receivedAt,
+          expiryDate: expiryDate,
           quantity: quantity,
+          quantityExact: quantityExact,
           unitPrice: unitPrice,
           supplierName: supplierName,
           supplierId: supplierId,
@@ -371,6 +474,7 @@ final class InventoryMutationController
     required String inventoryBalanceId,
     required bool increase,
     required double quantity,
+    String? quantityExact,
     required String reason,
   }) => _mutate(
     () => ref
@@ -381,6 +485,7 @@ final class InventoryMutationController
           inventoryBalanceId: inventoryBalanceId,
           increase: increase,
           quantity: quantity,
+          quantityExact: quantityExact,
           reason: reason,
         ),
     productId: productId,
@@ -402,6 +507,7 @@ final class InventoryMutationController
       if (!ref.mounted) return result;
       state = const AsyncData<void>(null);
       ref.invalidate(inventoryListControllerProvider(farmId));
+      ref.invalidate(filteredInventoryListControllerProvider);
       ref.invalidate(inventoryHistoryControllerProvider(farmId));
       ref.invalidate(filteredInventoryHistoryControllerProvider);
       if (productId != null) {

@@ -10,7 +10,9 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_sup
 void main() {
   final supplier = <String, dynamic>{
     'id': 'supplier-1',
-    'farmId': 'farm-1',
+    'ownerId': 'owner-1',
+    'status': 'ACTIVE',
+    'supplierType': 'MANUFACTURER',
     'name': 'CP',
     'createdAt': '2026-10-01T00:00:00Z',
     'updatedAt': '2026-10-01T00:00:00Z',
@@ -50,10 +52,18 @@ void main() {
       expect((requests.last.data as Map)['name'], 'Đại lý CP');
       expect((requests.last.data as Map)['email'], 'sales@example.com');
       expect((requests.last.data as Map)['phone'], isNull);
+      expect((requests.last.data as Map).containsKey('status'), isFalse);
       await repo.getSupplier('farm-1', created.id);
       expect(requests.last.method, 'GET');
-      await repo.saveSupplier(farmId: 'farm-1', existing: created, name: 'New');
+      await repo.saveSupplier(
+        farmId: 'farm-2',
+        existing: created,
+        name: 'New',
+        isActive: false,
+      );
       expect(requests.last.method, 'PATCH');
+      expect(requests.last.path, '/owner/farms/farm-2/suppliers/supplier-1');
+      expect((requests.last.data as Map)['status'], 'INACTIVE');
       expect(
         (requests.last.data as Map)['expectedUpdatedAt'],
         '2026-10-01T00:00:00.000Z',
@@ -109,6 +119,14 @@ void main() {
     },
   );
   test('rejects malformed supplier records', () {
+    expect(
+      InventorySupplier.parse({...supplier, 'status': 'INACTIVE'}).isActive,
+      isFalse,
+    );
+    expect(
+      () => InventorySupplier.parse({...supplier, 'status': 'INVALID'}),
+      throwsA(isA<InvalidResponseException>()),
+    );
     expect(
       () => InventorySupplier.parse({...supplier, 'updatedAt': 'bad-date'}),
       throwsA(isA<InvalidResponseException>()),

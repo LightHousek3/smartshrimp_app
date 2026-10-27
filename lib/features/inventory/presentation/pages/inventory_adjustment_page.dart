@@ -10,6 +10,8 @@ import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_d
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Handle lot issues and manual corrections with quantity validation.
+/// Corrections require a reason; the server rechecks the available balance.
 class InventoryAdjustmentPage extends ConsumerStatefulWidget {
   const InventoryAdjustmentPage({
     required this.farmId,
@@ -65,6 +67,9 @@ class _InventoryAdjustmentPageState
           productId: widget.productId,
           inventoryBalanceId: widget.balanceId,
           quantity: quantity,
+          quantityExact: InventoryRules.normalizedQuantity(
+            _quantityController.text,
+          ),
           reason: _reasonController.text,
         );
       } else {
@@ -73,6 +78,9 @@ class _InventoryAdjustmentPageState
           inventoryBalanceId: widget.balanceId,
           increase: _increase,
           quantity: quantity,
+          quantityExact: InventoryRules.normalizedQuantity(
+            _quantityController.text,
+          ),
           reason: _reasonController.text,
         );
       }
@@ -123,7 +131,7 @@ class _InventoryAdjustmentPageState
               .refresh(),
         ),
         data: (product) {
-          if (product.isArchived) {
+          if (product.isArchived && !widget.isStockOut) {
             return Center(
               child: Text(
                 widget.isStockOut
@@ -223,7 +231,7 @@ class _InventoryAdjustmentPageState
                       const SizedBox(height: 16),
                       InventoryField(
                         label: widget.isStockOut
-                            ? 'Ghi chú (tùy chọn)'
+                            ? 'Lý do xuất kho *'
                             : 'Lý do điều chỉnh *',
                         child: TextFormField(
                           controller: _reasonController,
@@ -238,8 +246,7 @@ class _InventoryAdjustmentPageState
                                 : 'VD: Kiểm kê thực tế, hư hỏng hoặc nhập sai số lượng',
                           ).copyWith(counterText: ''),
                           validator: (value) =>
-                              !widget.isStockOut &&
-                                  (value == null || value.trim().isEmpty)
+                              (value == null || value.trim().isEmpty)
                               ? 'Vui lòng nhập lý do điều chỉnh'
                               : null,
                         ),

@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Edit draft ledger filters through callbacks without applying them early.
 class InventoryHistoryFilterPanel extends StatelessWidget {
   const InventoryHistoryFilterPanel({
     required this.filters,
@@ -37,7 +38,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: <Widget>[
       Material(
-        color: const Color(0xFFEAF4FF),
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.line),
@@ -160,9 +161,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                       allLabel: 'Tất cả vật tư',
                       options: <String, String>{
                         for (final product in products)
-                          product.id: product.isDeleted
-                              ? '${product.name} (đã xóa)'
-                              : product.name,
+                          product.id: product.name,
                       },
                       onChanged: (value) =>
                           onChanged(filters.copyWith(productId: value)),
@@ -202,7 +201,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                           foregroundColor: AppColors.inkSoft,
                           side: const BorderSide(color: AppColors.line),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                         ),
                         child: const Text('Đặt lại'),
@@ -213,6 +212,7 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                   Expanded(
                     child: InventoryGradientButton(
                       label: 'Xem kết quả',
+                      radius: 22,
                       iconAsset: InventoryAssets.search,
                       height: 44,
                       onPressed: loading ? null : onApply,

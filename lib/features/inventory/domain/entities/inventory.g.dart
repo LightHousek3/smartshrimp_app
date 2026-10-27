@@ -13,6 +13,10 @@ _InventoryLot _$InventoryLotFromJson(Map<String, dynamic> json) =>
       lotNumber: json['lotNumber'] as String,
       receivedAt: DateTime.parse(json['receivedAt'] as String),
       quantity: (json['quantity'] as num).toDouble(),
+      quantityExact: json['quantityExact'] as String?,
+      expiryDate: json['expiryDate'] == null
+          ? null
+          : DateTime.parse(json['expiryDate'] as String),
       receivedQuantity: (json['receivedQuantity'] as num?)?.toDouble(),
       unitPrice: (json['unitPrice'] as num).toDouble(),
       supplierName: json['supplierName'] as String,
@@ -29,6 +33,8 @@ Map<String, dynamic> _$InventoryLotToJson(_InventoryLot instance) =>
       'lotNumber': instance.lotNumber,
       'receivedAt': instance.receivedAt.toIso8601String(),
       'quantity': instance.quantity,
+      'quantityExact': instance.quantityExact,
+      'expiryDate': instance.expiryDate?.toIso8601String(),
       'receivedQuantity': instance.receivedQuantity,
       'unitPrice': instance.unitPrice,
       'supplierName': instance.supplierName,
@@ -43,6 +49,19 @@ _InventoryProduct _$InventoryProductFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       farmId: json['farmId'] as String,
       name: json['name'] as String,
+      readOnly: json['readOnly'] as bool? ?? false,
+      manufacturerId: json['manufacturerId'] as String? ?? '',
+      manufacturer:
+          json['manufacturer'] as Map<String, dynamic>? ??
+          const <String, dynamic>{},
+      compliance: json['compliance'] == null
+          ? null
+          : InventoryCompliance.fromJson(
+              json['compliance'] as Map<String, dynamic>,
+            ),
+      metadataLocked: json['metadataLocked'] as bool? ?? false,
+      canDelete: json['canDelete'] as bool? ?? false,
+      status: json['status'] as String? ?? 'ACTIVE',
       category: $enumDecode(
         _$InventoryProductCategoryEnumMap,
         json['category'],
@@ -67,14 +86,6 @@ _InventoryProduct _$InventoryProductFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const <String>[],
-      archivedAt: json['archivedAt'] == null
-          ? null
-          : DateTime.parse(json['archivedAt'] as String),
-      isArchived: json['isArchived'] as bool,
-      isDeleted: json['isDeleted'] as bool,
-      deletedAt: json['deletedAt'] == null
-          ? null
-          : DateTime.parse(json['deletedAt'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       currentStock: (json['currentStock'] as num).toDouble(),
@@ -96,6 +107,13 @@ Map<String, dynamic> _$InventoryProductToJson(
   'id': instance.id,
   'farmId': instance.farmId,
   'name': instance.name,
+  'readOnly': instance.readOnly,
+  'manufacturerId': instance.manufacturerId,
+  'manufacturer': instance.manufacturer,
+  'compliance': instance.compliance,
+  'metadataLocked': instance.metadataLocked,
+  'canDelete': instance.canDelete,
+  'status': instance.status,
   'category': _$InventoryProductCategoryEnumMap[instance.category]!,
   'unit': _$InventoryProductUnitEnumMap[instance.unit]!,
   'conversionQuantity': instance.conversionQuantity,
@@ -104,10 +122,6 @@ Map<String, dynamic> _$InventoryProductToJson(
   'description': instance.description,
   'imageUrl': instance.imageUrl,
   'imageUrls': instance.imageUrls,
-  'archivedAt': instance.archivedAt?.toIso8601String(),
-  'isArchived': instance.isArchived,
-  'isDeleted': instance.isDeleted,
-  'deletedAt': instance.deletedAt?.toIso8601String(),
   'createdAt': instance.createdAt.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
   'currentStock': instance.currentStock,
@@ -177,7 +191,6 @@ _InventoryTransactionProduct _$InventoryTransactionProductFromJson(
     json['unit'],
     unknownValue: InventoryProductUnit.unknown,
   ),
-  isDeleted: json['isDeleted'] as bool,
 );
 
 Map<String, dynamic> _$InventoryTransactionProductToJson(
@@ -187,7 +200,6 @@ Map<String, dynamic> _$InventoryTransactionProductToJson(
   'name': instance.name,
   'category': _$InventoryProductCategoryEnumMap[instance.category]!,
   'unit': _$InventoryProductUnitEnumMap[instance.unit]!,
-  'isDeleted': instance.isDeleted,
 };
 
 _InventoryTransactionSeason _$InventoryTransactionSeasonFromJson(

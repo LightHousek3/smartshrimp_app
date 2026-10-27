@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
+/// Return the selected lot to the caller before a stock-out is submitted.
 class InventoryStockOutLotPicker extends StatelessWidget {
   const InventoryStockOutLotPicker({
     required this.productName,
