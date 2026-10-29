@@ -11,10 +11,59 @@ abstract interface class TaskRemoteDataSource {
   Future<TaskItem> cancel(String id, String reason);
 }
 
-final class TaskApiService implements TaskRemoteDataSource {
+abstract interface class AssignedTaskRemoteDataSource {
+  Future<TaskPage> listAssigned(String group, int page);
+  Future<TaskItem> assignedDetail(String id);
+  Future<TaskItem> updateStatus(String id, TaskStatus status);
+}
+
+final class TaskApiService
+    implements TaskRemoteDataSource, AssignedTaskRemoteDataSource {
   TaskApiService(this._client);
   final ApiClient _client;
   static const _path = '/owner/tasks';
+
+  @override
+  Future<TaskPage> listAssigned(String group, int page) async {
+    final response = await _client.get(
+      '/me/tasks',
+      authenticated: true,
+      queryParameters: {'group': group, 'page': page, 'limit': 20},
+    );
+    if (response.meta == null) throw const InvalidResponseException();
+    return TaskPage.fromJson({
+      ...response.meta!,
+      'items': response.requireListData(),
+    });
+  }
+
+  TaskItem _assignedDetail(Map<String, dynamic> json) {
+    // A compact list omits identities; detail must contain every assignment fact.
+    for (final key in ['assigner', 'assignee', 'farm']) {
+      if (json[key] is! Map<String, dynamic>) {
+        throw const InvalidResponseException();
+      }
+    }
+    if (json['createdAt'] is! String || json['canOpenRelatedSeason'] is! bool) {
+      throw const InvalidResponseException();
+    }
+    return TaskItem.fromJson(json);
+  }
+
+  @override
+  Future<TaskItem> assignedDetail(String id) async => _assignedDetail(
+    (await _client.get('/me/tasks/$id', authenticated: true)).requireMapData(),
+  );
+
+  @override
+  Future<TaskItem> updateStatus(String id, TaskStatus status) async =>
+      _assignedDetail(
+        (await _client.patch(
+          '/me/tasks/$id/status',
+          authenticated: true,
+          data: {'status': taskStatusApiValue(status)},
+        )).requireMapData(),
+      );
 
   @override
   Future<TaskPage> list(TaskStatus status, int page) async {

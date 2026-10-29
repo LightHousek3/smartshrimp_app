@@ -25,8 +25,10 @@ _TaskItem _$TaskItemFromJson(Map<String, dynamic> json) => _TaskItem(
     json['status'],
     unknownValue: TaskStatus.unknown,
   ),
-  assignee: TaskChoice.fromJson(json['assignee'] as Map<String, dynamic>),
-  dueAt: DateTime.parse(json['dueAt'] as String),
+  assignee: json['assignee'] == null
+      ? null
+      : TaskChoice.fromJson(json['assignee'] as Map<String, dynamic>),
+  dueAt: json['dueAt'] == null ? null : DateTime.parse(json['dueAt'] as String),
   description: json['description'] as String?,
   farmId: json['farmId'] as String?,
   seasonId: json['seasonId'] as String?,
@@ -47,9 +49,16 @@ _TaskItem _$TaskItemFromJson(Map<String, dynamic> json) => _TaskItem(
   cancelledAt: json['cancelledAt'] == null
       ? null
       : DateTime.parse(json['cancelledAt'] as String),
-  cancelledBy: json['cancelledBy'] == null
+  assigner: json['assigner'] == null
       ? null
-      : TaskChoice.fromJson(json['cancelledBy'] as Map<String, dynamic>),
+      : TaskChoice.fromJson(json['assigner'] as Map<String, dynamic>),
+  createdAt: json['createdAt'] == null
+      ? null
+      : DateTime.parse(json['createdAt'] as String),
+  pond: json['pond'] == null
+      ? null
+      : TaskChoice.fromJson(json['pond'] as Map<String, dynamic>),
+  canOpenRelatedSeason: json['canOpenRelatedSeason'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$TaskItemToJson(_TaskItem instance) => <String, dynamic>{
@@ -58,7 +67,7 @@ Map<String, dynamic> _$TaskItemToJson(_TaskItem instance) => <String, dynamic>{
   'priority': _$TaskPriorityEnumMap[instance.priority]!,
   'status': _$TaskStatusEnumMap[instance.status]!,
   'assignee': instance.assignee,
-  'dueAt': instance.dueAt.toIso8601String(),
+  'dueAt': instance.dueAt?.toIso8601String(),
   'description': instance.description,
   'farmId': instance.farmId,
   'seasonId': instance.seasonId,
@@ -69,7 +78,10 @@ Map<String, dynamic> _$TaskItemToJson(_TaskItem instance) => <String, dynamic>{
   'completedAt': instance.completedAt?.toIso8601String(),
   'cancellationReason': instance.cancellationReason,
   'cancelledAt': instance.cancelledAt?.toIso8601String(),
-  'cancelledBy': instance.cancelledBy,
+  'assigner': instance.assigner,
+  'createdAt': instance.createdAt?.toIso8601String(),
+  'pond': instance.pond,
+  'canOpenRelatedSeason': instance.canOpenRelatedSeason,
 };
 
 const _$TaskPriorityEnumMap = {

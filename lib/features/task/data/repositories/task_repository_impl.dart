@@ -38,7 +38,8 @@ final class TaskRepositoryImpl implements TaskRepository {
         'Nhiệm vụ đã hoàn thành hoặc đã hủy, không thể thay đổi.',
       );
     }
-    if (original == null || !input.dueAt.isAtSameMomentAs(original.dueAt)) {
+    if (original?.dueAt == null ||
+        !input.dueAt.isAtSameMomentAs(original!.dueAt!)) {
       final deadlineError = TaskRules.deadlineError(input.dueAt, _now());
       if (deadlineError != null) throw ApiException(deadlineError);
     }
@@ -59,5 +60,32 @@ final class TaskRepositoryImpl implements TaskRepository {
     body.removeWhere((key, value) => value == previous[key]);
     if (body.isEmpty) return Future.value(original);
     return _remote.update(original.id, body);
+  }
+}
+
+final class AssignedTaskRepositoryImpl implements AssignedTaskRepository {
+  AssignedTaskRepositoryImpl(this._remote);
+  final AssignedTaskRemoteDataSource _remote;
+
+  @override
+  Future<TaskPage> list(TaskGroup group, {int page = 1}) =>
+      _remote.listAssigned(group == TaskGroup.todo ? 'TODO' : 'ENDED', page);
+
+  @override
+  Future<TaskItem> detail(String id) => _remote.assignedDetail(id);
+
+  @override
+  Future<TaskItem> advance(TaskItem task) {
+    final next = switch (task.status) {
+      TaskStatus.pending => TaskStatus.inProgress,
+      TaskStatus.inProgress => TaskStatus.completed,
+      _ => null,
+    };
+    if (next == null) {
+      throw const ApiException(
+        'Nhiệm vụ đã hoàn thành hoặc đã hủy, không thể thay đổi.',
+      );
+    }
+    return _remote.updateStatus(task.id, next);
   }
 }
