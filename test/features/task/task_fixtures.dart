@@ -20,7 +20,10 @@ final progressTask = TaskItem(
   season: taskSeason,
   assignedTo: taskTechnician.id,
   assignee: taskTechnician,
-  startedAt: DateTime.parse('2026-09-08T08:00:00+07:00'),
+  assigner: const TaskChoice(id: 'owner1', name: 'Nguyễn Văn Đạt'),
+  pond: const TaskChoice(id: 'pond1', name: 'Ao A3'),
+  createdAt: DateTime.parse('2026-09-08T06:25:00+07:00'),
+  startedAt: DateTime.parse('2026-09-08T06:40:00+07:00'),
 );
 final pendingTask = progressTask.copyWith(
   id: 'pending',
@@ -38,7 +41,8 @@ final completedTask = progressTask.copyWith(
   description: 'Hoàn tất và ghi nhận cữ ăn số 3 trong ngày.',
   status: TaskStatus.completed,
   priority: TaskPriority.normal,
-  dueAt: DateTime.parse('2026-09-07T15:30:00+07:00'),
+  dueAt: DateTime.parse('2026-09-08T15:30:00+07:00'),
+  completedAt: DateTime.parse('2026-09-08T15:00:00+07:00'),
 );
 final cancelledTask = progressTask.copyWith(
   id: 'cancelled',
@@ -51,7 +55,6 @@ final cancelledTask = progressTask.copyWith(
   assignee: taskSecondTechnician,
   assignedTo: taskSecondTechnician.id,
   cancellationReason: 'Không cần thực hiện',
-  cancelledBy: const TaskChoice(id: 'owner', name: 'Nguyễn Văn Đạt'),
   cancelledAt: DateTime.parse('2026-10-18T23:46:00+07:00'),
   dueAt: DateTime.parse('2026-09-15T08:00:00+07:00'),
 );
@@ -139,7 +142,6 @@ class TaskFixtureRepository implements TaskRepository {
     return tasks[id] = tasks[id]!.copyWith(
       status: TaskStatus.cancelled,
       cancellationReason: reason,
-      cancelledBy: cancelledTask.cancelledBy,
       cancelledAt: cancelledTask.cancelledAt,
     );
   }

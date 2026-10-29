@@ -1,7 +1,7 @@
 abstract final class TaskRules {
   static const titleLimit = 255;
   static const descriptionLimit = 500;
-  static const cancellationReasonLimit = 255;
+  static const cancellationReasonLimit = 500;
   static const deadlineLead = Duration(minutes: 10);
   static const deadlineMessage =
       'Hạn hoàn thành phải lớn hơn thời gian hiện tại 10 phút.';
@@ -20,7 +20,7 @@ abstract final class TaskRules {
       value == null || value.trim().isEmpty
       ? 'Vui lòng nhập lý do hủy.'
       : value.trim().runes.length > cancellationReasonLimit
-      ? 'Lý do hủy tối đa 255 ký tự.'
+      ? 'Lý do hủy tối đa 500 ký tự.'
       : null;
   static String? deadlineError(DateTime? value, DateTime now) => value == null
       ? 'Vui lòng chọn hạn hoàn thành.'

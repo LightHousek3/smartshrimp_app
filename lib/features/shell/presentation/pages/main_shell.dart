@@ -76,6 +76,7 @@ class MainShell extends ConsumerWidget {
         ref.watch(authControllerProvider).value?.role == AccountRole.farmOwner;
     final items = isOwner ? _ownerItems : _technicianItems;
     final location = GoRouterState.of(context).uri.path;
+    final taskScreen = !isOwner && location.startsWith('/tasks');
     final unreadNotifications = ref.watch(
       notificationListProvider((
         readStatus: NotificationReadStatus.unread,
@@ -107,16 +108,17 @@ class MainShell extends ConsumerWidget {
         child: SafeArea(
           top: false,
           child: SizedBox(
-            height: isOwner ? 66 : 64,
+            height: isOwner || taskScreen ? 66 : 64,
             child: Row(
               children: List<Widget>.generate(items.length, (index) {
                 final item = items[index];
                 final selected =
-                    location == item.path ||
-                    (item.path != '/' &&
-                        location.startsWith('${item.path}/')) ||
-                    (item.path == '/account' &&
-                        location.startsWith('/personnel'));
+                    (isOwner || !location.startsWith('/tasks/')) &&
+                    (location == item.path ||
+                        (item.path != '/' &&
+                            location.startsWith('${item.path}/')) ||
+                        (item.path == '/account' &&
+                            location.startsWith('/personnel')));
                 final isNotificationTab = item.path == '/notifications';
                 return Expanded(
                   child: Semantics(
@@ -146,15 +148,26 @@ class MainShell extends ConsumerWidget {
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: <Widget>[
-                                    if (isOwner || item.path == '/tasks')
+                                    if (isOwner ||
+                                        taskScreen ||
+                                        item.path == '/tasks')
                                       AppSvgIcon(
                                         switch (item.path) {
-                                          '/' => AppSvgIconName.home,
+                                          '/' =>
+                                            taskScreen
+                                                ? AppSvgIconName.homeCompact
+                                                : AppSvgIconName.home,
                                           '/farms' => AppSvgIconName.farm,
+                                          '/seasons' => AppSvgIconName.shrimp,
                                           '/tasks' => AppSvgIconName.tasks,
                                           '/notifications' =>
-                                            AppSvgIconName.notifications,
-                                          _ => AppSvgIconName.account,
+                                            taskScreen
+                                                ? AppSvgIconName.bellOutline
+                                                : AppSvgIconName.notifications,
+                                          _ =>
+                                            taskScreen
+                                                ? AppSvgIconName.person
+                                                : AppSvgIconName.account,
                                         },
                                         color: selected
                                             ? AppColors.ocean

@@ -138,7 +138,9 @@ String? notificationDestination(
         // Clinical case details are not implemented in the mobile router yet.
         return seasonDestination();
       case 'task':
-        return AppRoutes.tasks;
+        return owner || role == AccountRole.technician
+            ? '${AppRoutes.tasks}/$encodedId'
+            : null;
       case 'account':
         return owner ? '${AppRoutes.personnel}/$encodedId' : AppRoutes.account;
     }

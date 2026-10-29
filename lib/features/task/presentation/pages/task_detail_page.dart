@@ -1,314 +1,117 @@
-import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
-import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
+import 'package:smartshrimp_app/features/task/presentation/widgets/task_detail_view.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 
-class TaskDetailPage extends ConsumerStatefulWidget {
+class TaskDetailPage extends ConsumerWidget {
   const TaskDetailPage({required this.taskId, super.key});
   final String taskId;
-  @override
-  ConsumerState<TaskDetailPage> createState() => _TaskDetailPageState();
-}
 
-class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
-  Timer? _clock;
-  @override
-  void initState() {
-    super.initState();
-    _clock = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _clock?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final detail = ref.watch(taskDetailProvider(widget.taskId));
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            TaskHeader(
-              title: 'Chi tiết nhiệm vụ',
-              onBack: () =>
-                  context.canPop() ? context.pop() : context.go('/tasks'),
-              trailing: detail.value?.canEdit == true
-                  ? AppCircleButton(
-                      icon: Icons.edit_outlined,
-                      tooltip: 'Chỉnh sửa nhiệm vụ',
-                      size: 36,
-                      backgroundColor: taskGray,
-                      iconWidget: const Center(
-                        child: AppSvgIcon(
-                          AppSvgIconName.edit,
-                          size: 17,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                      onPressed: () async {
-                        final saved = await context.push<bool>(
-                          '/tasks/${widget.taskId}/edit',
-                        );
-                        if (context.mounted && saved == true) {
-                          AppNoticeService.success(
-                            context,
-                            'Cập nhật nhiệm vụ thành công.',
-                          );
-                        }
-                      },
-                    )
-                  : null,
-            ),
-            Expanded(
-              child: detail.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => TaskLoadError(
-                  e,
-                  () => ref.invalidate(taskDetailProvider(widget.taskId)),
-                ),
-                data: (task) => RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(taskDetailProvider(widget.taskId));
-                    await ref.read(taskDetailProvider(widget.taskId).future);
-                  },
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      TaskPanel(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              task.title,
-                              style: const TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 16,
-                                height: 1.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TaskBadges(task, detail: true, now: DateTime.now()),
-                            if (task.description?.isNotEmpty == true) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                task.description!,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.625,
-                                  color: AppColors.inkSoft,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TaskPanel(
-                        child: Column(
-                          children: [
-                            _DetailRow(
-                              'Giao cho',
-                              task.assignee.name,
-                              AppSvgIconName.account,
-                              taskBlue,
-                            ),
-                            const SizedBox(height: 10),
-                            _DetailRow(
-                              'Hạn hoàn thành',
-                              taskDate(task.dueAt),
-                              AppSvgIconName.clock,
-                              taskAmber,
-                              color: task.overdueAt(DateTime.now())
-                                  ? const Color(0xFFF00046)
-                                  : AppColors.ink,
-                            ),
-                            if (task.season != null) ...[
-                              const SizedBox(height: 10),
-                              _DetailRow(
-                                'Vụ nuôi liên quan',
-                                task.season!.name,
-                                AppSvgIconName.shrimp,
-                                taskBlue,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (task.canEdit)
-                        OutlinedButton(
-                          onPressed: () async {
-                            final cancelled = await showDialog<bool>(
-                              context: context,
-                              useRootNavigator: false,
-                              barrierDismissible: false,
-                              barrierColor: const Color(0x590F1C2E),
-                              builder: (_) => BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                                child: _CancelTaskDialog(task),
-                              ),
-                            );
-                            if (context.mounted && cancelled == true) {
-                              AppNoticeService.success(
-                                context,
-                                'Hủy nhiệm vụ thành công.',
-                              );
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppColors.inkSoft,
-                            minimumSize: const Size.fromHeight(47),
-                            side: const BorderSide(
-                              color: AppColors.line,
-                              width: 1.2,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AppSvgIcon(
-                                AppSvgIconName.close,
-                                size: 18,
-                                color: AppColors.inkSoft,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Hủy nhiệm vụ',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (task.status == TaskStatus.cancelled)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: taskRed,
-                            border: Border.all(color: const Color(0xFFFFC9D1)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Lý do hủy: ${task.cancellationReason ?? 'Không có thông tin'}',
-                                style: const TextStyle(
-                                  color: Color(0xFFF00046),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (task.cancelledBy != null ||
-                                  task.cancelledAt != null) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  [
-                                    if (task.cancelledBy != null)
-                                      task.cancelledBy!.name,
-                                    if (task.cancelledAt != null)
-                                      taskDate(task.cancelledAt),
-                                  ].join(' · '),
-                                  style: const TextStyle(
-                                    color: AppColors.error,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+  Future<void> _cancel(BuildContext context, TaskItem task) async {
+    final cancelled = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      barrierDismissible: false,
+      barrierColor: const Color(0x590F1C2E),
+      builder: (_) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+        child: _CancelTaskDialog(task),
       ),
     );
+    if (context.mounted && cancelled == true) {
+      AppNoticeService.success(context, 'Hủy nhiệm vụ thành công.');
+    }
   }
-}
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow(
-    this.label,
-    this.value,
-    this.asset,
-    this.background, {
-    this.color = AppColors.ink,
-  });
-  final String label, value;
-  final AppSvgIconName asset;
-  final Color background, color;
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Container(
-        width: 32,
-        height: 32,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-        child: AppSvgIcon(
-          asset,
-          size: 15,
-          color: background == taskAmber
-              ? const Color(0xFFD98314)
-              : AppColors.ocean,
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.inkMuted,
-                height: 1.5,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = taskDetailProvider(taskId);
+    final detail = ref.watch(provider);
+    final busy = ref.watch(taskMutationProvider).isLoading;
+    return TaskDetailView(
+      detail: detail,
+      onBack: () => context.canPop() ? context.pop() : context.go('/tasks'),
+      onRetry: () => ref.invalidate(provider),
+      onRefresh: () async {
+        ref.invalidate(provider);
+        await ref.read(provider.future);
+      },
+      trailing: detail.value?.canEdit == true
+          ? AppCircleButton(
+              icon: Icons.edit_outlined,
+              tooltip: 'Chỉnh sửa nhiệm vụ',
+              size: 36,
+              backgroundColor: taskGray,
+              iconWidget: const Center(
+                child: AppSvgIcon(
+                  AppSvgIconName.edit,
+                  size: 18,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+              onPressed: busy
+                  ? null
+                  : () async {
+                      final saved = await context.push<bool>(
+                        '/tasks/$taskId/edit',
+                      );
+                      if (context.mounted && saved == true) {
+                        AppNoticeService.success(
+                          context,
+                          'Cập nhật nhiệm vụ thành công.',
+                        );
+                      }
+                    },
+            )
+          : null,
+      actions: (task) => [
+        if (task.canEdit) ...[
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: busy ? null : () => _cancel(context, task),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.inkSoft,
+              side: const BorderSide(color: AppColors.line, width: .8),
+              minimumSize: const Size.fromHeight(47),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: color,
-                height: 1.5,
-              ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AppSvgIcon(
+                  AppSvgIconName.close,
+                  size: 18,
+                  color: AppColors.inkSoft,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Hủy nhiệm vụ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ],
-  );
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _CancelTaskDialog extends ConsumerStatefulWidget {
@@ -381,8 +184,8 @@ class _CancelTaskDialogState extends ConsumerState<_CancelTaskDialog> {
                         const SizedBox(height: 8),
                         Text(
                           widget.task.status == TaskStatus.inProgress
-                              ? 'KTV đã bắt đầu thực hiện. Hủy lúc này sẽ dừng công việc nhưng vẫn giữ thời điểm bắt đầu và lý do để đối soát.'
-                              : 'Nhiệm vụ chưa bắt đầu. Sau khi hủy, nhiệm vụ được giữ lại trong lịch sử để đối soát.',
+                              ? 'KTV đã bắt đầu thực hiện. Sau khi hủy, KTV không thể tiếp tục nhiệm vụ.'
+                              : 'Nhiệm vụ chưa bắt đầu. Sau khi hủy, nhiệm vụ không thể tiếp tục hoặc chỉnh sửa.',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.inkSoft,

@@ -52,8 +52,8 @@ abstract class TaskItem with _$TaskItem {
     @JsonKey(unknownEnumValue: TaskPriority.unknown)
     required TaskPriority priority,
     @JsonKey(unknownEnumValue: TaskStatus.unknown) required TaskStatus status,
-    required TaskChoice assignee,
-    required DateTime dueAt,
+    TaskChoice? assignee,
+    DateTime? dueAt,
     String? description,
     String? farmId,
     String? seasonId,
@@ -64,7 +64,10 @@ abstract class TaskItem with _$TaskItem {
     DateTime? completedAt,
     String? cancellationReason,
     DateTime? cancelledAt,
-    TaskChoice? cancelledBy,
+    TaskChoice? assigner,
+    DateTime? createdAt,
+    TaskChoice? pond,
+    @Default(false) bool canOpenRelatedSeason,
   }) = _TaskItem;
   factory TaskItem.fromJson(Map<String, dynamic> json) {
     for (final key in ['id', 'title', 'status', 'priority']) {
@@ -82,7 +85,17 @@ abstract class TaskItem with _$TaskItem {
   }
   bool get canEdit =>
       status == TaskStatus.pending || status == TaskStatus.inProgress;
-  bool overdueAt(DateTime now) => canEdit && dueAt.isBefore(now);
+  bool overdueAt(DateTime now) {
+    final deadline = dueAt;
+    if (deadline == null) return false;
+    final end = switch (status) {
+      TaskStatus.completed => completedAt,
+      TaskStatus.cancelled => cancelledAt,
+      TaskStatus.pending || TaskStatus.inProgress => now,
+      TaskStatus.unknown => null,
+    };
+    return end != null && end.isAfter(deadline);
+  }
 }
 
 @Freezed(fromJson: true, toJson: true)
