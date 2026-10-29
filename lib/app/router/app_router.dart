@@ -50,10 +50,11 @@ import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_suppliers_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_form_page.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
-import 'package:smartshrimp_app/features/shell/presentation/pages/empty_tab_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_list_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_detail_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_form_page.dart';
+import 'package:smartshrimp_app/features/task/presentation/pages/assigned_task_list_page.dart';
+import 'package:smartshrimp_app/features/task/presentation/pages/assigned_task_detail_page.dart';
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_list_page.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_detail_page.dart';
@@ -114,12 +115,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.home;
       }
       if ((location.startsWith(AppRoutes.farms) ||
-              location.startsWith('${AppRoutes.tasks}/') ||
               location.startsWith('/protocols') ||
               location.startsWith(AppRoutes.approvals) ||
               location.startsWith(AppRoutes.personnel)) &&
           account?.role != AccountRole.farmOwner) {
         return AppRoutes.home;
+      }
+      if (location == AppRoutes.tasks ||
+          location.startsWith('${AppRoutes.tasks}/')) {
+        final role = account?.role;
+        final ownerOnly =
+            location == '/tasks/create' || location.endsWith('/edit');
+        if (role != AccountRole.farmOwner &&
+            (role != AccountRole.technician || ownerOnly)) {
+          return AppRoutes.home;
+        }
       }
       return null;
     },
@@ -547,7 +557,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     ref.read(authControllerProvider).value?.role ==
                         AccountRole.farmOwner
                     ? const TaskListPage()
-                    : const EmptyTabPage(semanticLabel: 'Nhiệm vụ'),
+                    : const AssignedTaskListPage(),
                 routes: [
                   GoRoute(
                     path: 'create',
@@ -556,7 +566,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':taskId',
                     builder: (_, state) =>
-                        TaskDetailPage(taskId: state.pathParameters['taskId']!),
+                        ref.read(authControllerProvider).value?.role ==
+                            AccountRole.farmOwner
+                        ? TaskDetailPage(
+                            taskId: state.pathParameters['taskId']!,
+                          )
+                        : AssignedTaskDetailPage(
+                            taskId: state.pathParameters['taskId']!,
+                          ),
                     routes: [
                       GoRoute(
                         path: 'edit',

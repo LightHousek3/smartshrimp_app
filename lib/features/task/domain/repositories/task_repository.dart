@@ -7,3 +7,11 @@ abstract interface class TaskRepository {
   Future<TaskItem> save(TaskInput input, {TaskItem? original});
   Future<TaskItem> cancel(String id, String reason);
 }
+
+enum TaskGroup { todo, ended }
+
+abstract interface class AssignedTaskRepository {
+  Future<TaskPage> list(TaskGroup group, {int page = 1});
+  Future<TaskItem> detail(String id);
+  Future<TaskItem> advance(TaskItem task);
+}

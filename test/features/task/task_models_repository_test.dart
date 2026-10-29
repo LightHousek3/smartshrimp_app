@@ -87,9 +87,9 @@ void main() {
     final task = TaskItem.fromJson(jsonTask());
     expect(task.status, TaskStatus.pending);
     expect(task.priority, TaskPriority.normal);
-    expect(task.overdueAt(task.dueAt), isFalse);
+    expect(task.overdueAt(task.dueAt!), isFalse);
     expect(
-      task.overdueAt(task.dueAt.add(const Duration(microseconds: 1))),
+      task.overdueAt(task.dueAt!.add(const Duration(microseconds: 1))),
       isTrue,
     );
     expect(
@@ -98,8 +98,8 @@ void main() {
     );
     expect(task.copyWith(status: TaskStatus.cancelled).canEdit, isFalse);
     expect(
-      () => TaskItem.fromJson({...jsonTask(), 'dueAt': null}),
-      throwsA(isA<InvalidResponseException>()),
+      TaskItem.fromJson({...jsonTask(), 'dueAt': null}).overdueAt(taskNow),
+      isFalse,
     );
   });
   test('A: unknown server states cannot accidentally enable editing', () {
@@ -112,7 +112,21 @@ void main() {
     expect(task.priority, TaskPriority.unknown);
     expect(task.canEdit, isFalse);
   });
-  for (final key in ['id', 'title', 'priority', 'status', 'assignee']) {
+  test(
+    'N/B: cancellation parses its own milestone without using updatedAt',
+    () {
+      final task = TaskItem.fromJson({
+        ...jsonTask(),
+        'status': 'CANCELLED',
+        'cancelledAt': '2026-10-19T00:30:00Z',
+        'updatedAt': '2026-10-20T00:00:00Z',
+      });
+      expect(task.cancelledAt, DateTime.utc(2026, 10, 19, 0, 30));
+      expect(task.overdueAt(DateTime.utc(2026, 10, 21)), isFalse);
+      expect(task.toJson()['cancelledAt'], isNotNull);
+    },
+  );
+  for (final key in ['id', 'title', 'priority', 'status']) {
     test('A: missing required $key throws InvalidResponseException', () {
       final json = jsonTask()..remove(key);
       expect(
@@ -237,7 +251,7 @@ void main() {
     () async {
       final remote = CaptureTaskRemote();
       final repo = TaskRepositoryImpl(remote);
-      for (final reason in ['', '  ', 'a' * 256, '😀' * 256]) {
+      for (final reason in ['', '  ', 'a' * 501, '😀' * 501]) {
         expect(() => repo.cancel('task', reason), throwsA(isA<ApiException>()));
       }
       await repo.cancel('task', ' Lý do rõ ràng ');

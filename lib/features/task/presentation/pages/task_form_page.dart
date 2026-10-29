@@ -70,7 +70,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
     _title = TextEditingController(text: task?.title);
     _description = TextEditingController(text: task?.description);
     _priority = task?.priority ?? TaskPriority.normal;
-    _dueAt = task?.dueAt.toLocal();
+    _dueAt = task?.dueAt?.toLocal();
     _deadline = TextEditingController(
       text: _dueAt == null ? "" : taskDeadlineInput(_dueAt!),
     );
@@ -136,7 +136,8 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
     if (_deadlineServerError != null) return _deadlineServerError;
     if (_dueAt != null &&
         widget.original != null &&
-        _dueAt!.isAtSameMomentAs(widget.original!.dueAt)) {
+        widget.original!.dueAt != null &&
+        _dueAt!.isAtSameMomentAs(widget.original!.dueAt!)) {
       return null;
     }
     return TaskRules.deadlineError(_dueAt, DateTime.now());
@@ -156,7 +157,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
     }
     setState(() => _error = null);
     try {
-      final task = await ref
+      await ref
           .read(taskMutationProvider.notifier)
           .save(
             TaskInput(
@@ -174,7 +175,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       if (widget.original != null) {
         context.pop(true);
       } else {
-        context.replace('/tasks/${task.id}');
+        context.go('/tasks');
         AppNoticeService.success(
           context,
           'Nhiệm vụ đã được tạo và giao thành công.',
@@ -251,7 +252,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
         ? _assigneeId
         : null;
     final technicians = _locked
-        ? [widget.original!.assignee]
+        ? [?widget.original!.assignee]
         : _seasonId != null
         ? [if (season?.technician != null) season!.technician!]
         : options.technicians;

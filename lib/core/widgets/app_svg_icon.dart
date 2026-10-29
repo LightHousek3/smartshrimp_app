@@ -36,6 +36,15 @@ enum AppSvgIconName {
   logout,
   eye,
   shieldOutline,
+  sparkles,
+  pin,
+  person,
+  arrowBack,
+  calendarDays,
+  farmCompact,
+  homeCompact,
+  bellOutline,
+  chevronCompact,
 }
 
 class AppSvgIcon extends StatelessWidget {
@@ -49,17 +58,23 @@ class AppSvgIcon extends StatelessWidget {
   final double size;
   final Color color;
 
+  String get _assetName => switch (icon) {
+    AppSvgIconName.dropdownChevron => 'dropdown-chevron',
+    AppSvgIconName.shrimpFeed => 'shrimp-feed',
+    AppSvgIconName.chevronDown => 'chevron-down',
+    AppSvgIconName.shieldOutline => 'shield-outline',
+    AppSvgIconName.arrowBack => 'arrow-back',
+    AppSvgIconName.calendarDays => 'calendar-days',
+    AppSvgIconName.farmCompact => 'farm-compact',
+    AppSvgIconName.homeCompact => 'home-compact',
+    AppSvgIconName.bellOutline => 'bell-outline',
+    AppSvgIconName.chevronCompact => 'chevron-compact',
+    _ => icon.name,
+  };
+
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-    'assets/icons/common/${icon == AppSvgIconName.dropdownChevron
-        ? 'dropdown-chevron'
-        : icon == AppSvgIconName.shrimpFeed
-        ? 'shrimp-feed'
-        : icon == AppSvgIconName.chevronDown
-        ? 'chevron-down'
-        : icon == AppSvgIconName.shieldOutline
-        ? 'shield-outline'
-        : icon.name}.svg',
+    'assets/icons/common/$_assetName.svg',
     width: size,
     height: icon == AppSvgIconName.dropdownChevron ? size * .6 : size,
     fit: BoxFit.contain,

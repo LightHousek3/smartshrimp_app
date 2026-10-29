@@ -27,28 +27,38 @@ class TaskHeader extends StatelessWidget {
     required this.title,
     required this.onBack,
     this.trailing,
+    this.insetTop = false,
     super.key,
   });
   final String title;
   final VoidCallback onBack;
   final Widget? trailing;
+  final bool insetTop;
   @override
-  Widget build(BuildContext context) => PageHeaderBar(
-    title: title,
-    height: 76,
-    titleStyle: taskHeadingStyle(),
-    trailing: trailing,
-    backButton: AppCircleButton(
-      icon: Icons.arrow_back,
-      tooltip: 'Quay lại',
-      onPressed: onBack,
-      size: 36,
-      backgroundColor: Colors.transparent,
-      iconWidget: const Center(
-        child: AppSvgIcon(
-          AppSvgIconName.back,
-          size: 20,
-          color: AppColors.inkSoft,
+  Widget build(BuildContext context) => ColoredBox(
+    color: insetTop ? AppColors.backgroundTop : Colors.transparent,
+    child: Padding(
+      padding: insetTop
+          ? const EdgeInsets.only(top: 28, bottom: 12)
+          : EdgeInsets.zero,
+      child: PageHeaderBar(
+        title: title,
+        height: insetTop ? 36 : 76,
+        titleStyle: taskHeadingStyle(),
+        trailing: trailing,
+        backButton: AppCircleButton(
+          icon: Icons.arrow_back,
+          tooltip: 'Quay lại',
+          onPressed: onBack,
+          size: 36,
+          backgroundColor: Colors.transparent,
+          iconWidget: Center(
+            child: AppSvgIcon(
+              insetTop ? AppSvgIconName.arrowBack : AppSvgIconName.back,
+              size: 20,
+              color: AppColors.inkSoft,
+            ),
+          ),
         ),
       ),
     ),
@@ -58,11 +68,11 @@ class TaskHeader extends StatelessWidget {
 String taskError(Object error) => error is AppException
     ? error.message
     : 'Không thể tải nhiệm vụ. Vui lòng thử lại.';
-String taskDate(DateTime? value) {
-  if (value == null) return 'Chưa đặt hạn';
+String taskTimestamp(DateTime? value, {String empty = 'Chưa đặt hạn'}) {
+  if (value == null) return empty;
   final local = value.toLocal();
   String pad(int n) => n.toString().padLeft(2, '0');
-  return '${pad(local.hour)}:${pad(local.minute)} ${pad(local.day)}–${pad(local.month)}';
+  return '${pad(local.hour)}:${pad(local.minute)} ${pad(local.day)}/${pad(local.month)}/${local.year}';
 }
 
 String taskDeadlineInput(DateTime value) {
@@ -153,22 +163,37 @@ class TaskBadges extends StatelessWidget {
 }
 
 class TaskPanel extends StatelessWidget {
-  const TaskPanel({required this.child, super.key});
+  const TaskPanel({required this.child, this.elevated = false, super.key});
   final Widget child;
+  final bool elevated;
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0F000000),
-          blurRadius: 6,
-          offset: Offset(0, 2),
-        ),
-      ],
+      borderRadius: BorderRadius.circular(elevated ? 18 : 16),
+      border: elevated ? Border.all(color: AppColors.line, width: .8) : null,
+      boxShadow: elevated
+          ? const [
+              BoxShadow(
+                color: Color(0x590F1C2E),
+                blurRadius: 24,
+                offset: Offset(0, 16),
+              ),
+              BoxShadow(
+                color: Color(0x0A0F1C2E),
+                blurRadius: 2,
+                offset: Offset(0, 1),
+              ),
+            ]
+          : const [
+              BoxShadow(
+                color: Color(0x0F000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
     ),
     child: child,
   );
@@ -193,7 +218,8 @@ class TaskLoadError extends StatelessWidget {
 }
 
 class TaskEmpty extends StatelessWidget {
-  const TaskEmpty({super.key});
+  const TaskEmpty({this.canCreate = false, super.key});
+  final bool canCreate;
   @override
   Widget build(BuildContext context) => CustomPaint(
     painter: const _TaskDashedBorder(),
@@ -222,11 +248,13 @@ class TaskEmpty extends StatelessWidget {
             'Không có nhiệm vụ',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 6),
-          const Text(
-            "Nhấn '+' để tạo và giao nhiệm vụ mới.",
-            style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
-          ),
+          if (canCreate) ...[
+            const SizedBox(height: 6),
+            const Text(
+              "Nhấn '+' để tạo và giao nhiệm vụ mới.",
+              style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+            ),
+          ],
         ],
       ),
     ),

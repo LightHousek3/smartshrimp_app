@@ -57,7 +57,7 @@ void main() {
       final remote = CaptureTaskRemote();
       await TaskRepositoryImpl(remote, now: () => now).save(
         draft(
-          progressTask.dueAt,
+          progressTask.dueAt!,
         ).copyWith(title: progressTask.title, description: 'Theo dõi thêm'),
         original: progressTask,
       );
@@ -70,8 +70,8 @@ void main() {
       expect(TaskRules.titleError(character * 256), isNotNull);
       expect(TaskRules.descriptionError(character * 500), isNull);
       expect(TaskRules.descriptionError(character * 501), isNotNull);
-      expect(TaskRules.cancellationReasonError(character * 255), isNull);
-      expect(TaskRules.cancellationReasonError(character * 256), isNotNull);
+      expect(TaskRules.cancellationReasonError(character * 500), isNull);
+      expect(TaskRules.cancellationReasonError(character * 501), isNotNull);
     });
   }
   test('N/B: deadline input uses day/month/year and twelve-hour time', () {

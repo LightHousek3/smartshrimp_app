@@ -89,7 +89,7 @@ class DashboardAlertCard extends StatelessWidget {
     final (label, icon, color, background, border) = switch (alert.kind) {
       DashboardAlertKind.urgentTask => (
         'nhiệm vụ khẩn cấp',
-        AppSvgIconName.warning,
+        AppSvgIconName.tasks,
         const Color(0xFFD70040),
         const Color(0xFFFCE7EC),
         const Color(0xFFFFC7D3),
