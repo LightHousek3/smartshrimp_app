@@ -11,6 +11,7 @@ import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_decision.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_timeline.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_materials.dart';
 
 class ProtocolDetailPage extends ConsumerStatefulWidget {
   const ProtocolDetailPage({required this.protocolId, super.key});
@@ -104,6 +105,15 @@ class _DetailContent extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           _Header(detail),
+          if (detail.contentVersion == 2 && !detail.canReview) ...[
+            const SizedBox(height: 16),
+            ProtocolMaterials(detail: detail),
+          ],
+          if (detail.scheduleMessage case final message?)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(message),
+            ),
           const SizedBox(height: 16),
           ProtocolSurface(
             color: const Color(0xFFEAF4FF),

@@ -129,6 +129,55 @@ void main() {
       '/owner/protocols/p/schedules/s/inventory-transactions',
     );
   });
+  test(
+    'V2: authenticated catalog lookup and review preserve selection/version; rejection carries no selections',
+    () async {
+      data = [materialOptionJson()];
+      final options = await service.materialOptions(
+        'p',
+        'item-1',
+        search: ' Feed ',
+      );
+      expect(options.single.material!.productCompliance!.evidenceUrls, [
+        'https://example.test/catalog',
+      ]);
+      expect(requests.last.path, '/owner/protocols/p/material-options');
+      expect(requests.last.queryParameters, {
+        'itemId': 'item-1',
+        'search': 'Feed',
+      });
+      expect(requests.last.headers['Authorization'], 'Bearer access');
+      data = {'id': 'p'};
+      final stamp = DateTime.parse('2026-10-30T00:00:00Z');
+      await service.review(
+        'p',
+        updatedAt: stamp,
+        approve: true,
+        contentVersion: 2,
+        materialSelections: {'item-1': 'catalog-1'},
+      );
+      expect(requests.last.data, {
+        'decision': 'APPROVE',
+        'updatedAt': stamp.toIso8601String(),
+        'contentVersion': 2,
+        'materialSelections': [
+          {'itemId': 'item-1', 'productId': 'catalog-1'},
+        ],
+      });
+      await service.review(
+        'p',
+        updatedAt: stamp,
+        approve: false,
+        reason: ' Cần sửa ',
+        contentVersion: 2,
+        materialSelections: {'item-1': 'catalog-1'},
+      );
+      expect(
+        (requests.last.data as Map).containsKey('materialSelections'),
+        false,
+      );
+    },
+  );
   test('A: malformed detail maps to InvalidResponseException', () async {
     data = {'id': 'p'};
     await expectLater(
