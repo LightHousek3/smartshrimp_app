@@ -241,7 +241,9 @@ String _alertContext(DashboardAlert alert) {
 void _showAlert(BuildContext context, DashboardAlert alert, String label) {
   final preview = alert.preview;
   if (alert.kind == DashboardAlertKind.urgentTask) {
-    context.push('/tasks/${Uri.encodeComponent(preview.id)}');
+    context.push(
+      alert.count > 1 ? '/tasks' : '/tasks/${Uri.encodeComponent(preview.id)}',
+    );
     return;
   }
   if (alert.kind == DashboardAlertKind.pendingProduction ||

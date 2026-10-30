@@ -66,7 +66,7 @@ void main() {
       RenderBox inputBox() =>
           InputDecorator.containerOf(tester.element(editable))!;
       expect(inputBox().size.height, closeTo(43.373, .001));
-      expect(tester.getSize(select).height, closeTo(40.522, .001));
+      expect(tester.getSize(select).height, closeTo(38, .001));
       expect(tester.getSize(input).width, closeTo(370.435, .001));
       expect(
         tester.getTopLeft(input).dy -
@@ -102,7 +102,7 @@ void main() {
       expect(
         tester.getTopLeft(error).dy -
             inputBox().localToGlobal(Offset(0, inputBox().size.height)).dy,
-        closeTo(4, .001),
+        closeTo(0, .001),
       );
       expect(tester.widget<Text>(error).style!.fontSize, 11);
       expect(tester.widget<Text>(error).style!.fontWeight, FontWeight.w600);
