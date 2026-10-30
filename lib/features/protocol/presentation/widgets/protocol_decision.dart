@@ -6,6 +6,7 @@ import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/view_models/protocol_controller.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_materials.dart';
 
 enum _DecisionMode { initial, approve, reject }
 
@@ -20,6 +21,16 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   _DecisionMode _mode = _DecisionMode.initial;
   final _reason = TextEditingController();
   final _form = GlobalKey<FormState>();
+  Map<String, String> _materialSelections = {};
+  @override
+  void didUpdateWidget(covariant ProtocolDecision oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.detail.updatedAt != widget.detail.updatedAt) {
+      _materialSelections = {};
+      _mode = _DecisionMode.initial;
+    }
+  }
+
   @override
   void dispose() {
     _reason.dispose();
@@ -36,6 +47,16 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.detail.contentVersion == 2) ...[
+            ProtocolMaterials(
+              key: ValueKey(widget.detail.updatedAt),
+              detail: widget.detail,
+              busy: busy,
+              onSelectionsChanged: (value) =>
+                  setState(() => _materialSelections = value),
+            ),
+            const SizedBox(height: 16),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -157,7 +178,14 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                             color: Colors.white,
                           ),
                           isLoading: busy,
-                          onPressed: () => _submit(true),
+                          onPressed:
+                              widget.detail.materialReviews.any(
+                                (m) =>
+                                    m.requiresResolution &&
+                                    !_materialSelections.containsKey(m.itemId),
+                              )
+                              ? null
+                              : () => _submit(true),
                         ),
                       ),
                     ],
@@ -263,7 +291,12 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   Future<void> _submit(bool approve) async {
     await ref
         .read(protocolReviewProvider(widget.detail.card.id).notifier)
-        .submit(widget.detail, approve: approve, reason: _reason.text);
+        .submit(
+          widget.detail,
+          approve: approve,
+          reason: _reason.text,
+          materialSelections: _materialSelections,
+        );
   }
 }
 

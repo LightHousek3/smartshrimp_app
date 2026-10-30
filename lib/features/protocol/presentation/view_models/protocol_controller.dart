@@ -16,6 +16,17 @@ typedef ProtocolListScope = ({
 });
 typedef ProtocolDayScope = ({String id, int day});
 typedef ProtocolInventoryScope = ({String id, String scheduleId});
+typedef ProtocolMaterialScope = ({String id, String itemId, String search});
+final protocolMaterialOptionsProvider = FutureProvider.autoDispose
+    .family<List<ProtocolMaterialOption>, ProtocolMaterialScope>((ref, scope) {
+      _watchOwner(ref);
+      return _session(
+        ref,
+        () => ref
+            .watch(protocolRepositoryProvider)
+            .materialOptions(scope.id, scope.itemId, search: scope.search),
+      );
+    }, retry: (count, error) => null);
 
 final protocolClockProvider = Provider<DateTime Function()>(
   (ref) => DateTime.now,
@@ -144,8 +155,23 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
     ProtocolDetail detail, {
     required bool approve,
     String? reason,
+    Map<String, String> materialSelections = const {},
   }) async {
     if (state.isLoading || !detail.canReview) return false;
+    if (approve &&
+        detail.contentVersion == 2 &&
+        detail.materialReviews.any(
+          (m) =>
+              m.requiresResolution && !materialSelections.containsKey(m.itemId),
+        )) {
+      state = AsyncError(
+        const ApiException(
+          'Hãy chọn vật tư catalog đủ điều kiện cho các đề xuất cần xử lý trước khi duyệt.',
+        ),
+        StackTrace.current,
+      );
+      return false;
+    }
     if (!approve &&
         (reason == null ||
             reason.trim().isEmpty ||
@@ -167,6 +193,8 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
               updatedAt: detail.updatedAt,
               approve: approve,
               reason: reason,
+              contentVersion: detail.contentVersion,
+              materialSelections: materialSelections,
             ),
       );
       return approve;

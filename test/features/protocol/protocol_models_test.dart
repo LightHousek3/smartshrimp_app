@@ -5,6 +5,58 @@ import 'protocol_fixtures.dart';
 
 void main() {
   test(
+    'V2: preserves proposal/manufacturer/evidence and numeric strings with independent anchors',
+    () {
+      final detail = ProtocolDetail.parse({
+        ...detailJson(),
+        'contentVersion': 2,
+        'materialReviews': [materialReviewJson()],
+      });
+      final material = detail.materialReviews.single;
+      expect(detail.contentVersion, 2);
+      expect(material.proposed!.description, 'Mô tả gốc');
+      expect(material.proposed!.manufacturer!.name, 'Nhà sản xuất đề xuất');
+      expect(material.proposed!.productCompliance!.evidenceUrls, [
+        'https://example.test/original',
+      ]);
+      expect(material.doseValue, '0.7000');
+      expect(material.dailyDoseIncrement, '0.0500');
+      expect(material.firstDay, 10);
+      expect(material.doseAnchorDay, 1);
+      final option = ProtocolMaterialOption.parse(materialOptionJson());
+      expect(option.material!.productCompliance!.withdrawalDays, '0.000');
+      expect(option.material!.productCompliance!.complianceStatus, 'reviewed');
+      expect(ProtocolDetail.parse(detailJson()).contentVersion, 1);
+    },
+  );
+  test(
+    'V2: missing evidence payload, malformed dose and invalid anchors fail safely',
+    () {
+      for (final materials in [
+        <Object>[],
+        [materialReviewJson(), materialReviewJson()],
+        [
+          {...materialReviewJson(), 'doseValue': 'NaN'},
+        ],
+        [
+          {...materialReviewJson(), 'recurrenceAnchorDay': 11},
+        ],
+        [
+          {...materialReviewJson(), 'dailyDoseIncrement': '-1'},
+        ],
+      ]) {
+        expect(
+          () => ProtocolDetail.parse({
+            ...detailJson(),
+            'contentVersion': 2,
+            'materialReviews': materials,
+          }),
+          throwsA(isA<InvalidResponseException>()),
+        );
+      }
+    },
+  );
+  test(
     'N: parses production and treatment, nullable anchors and status history',
     () {
       expect(

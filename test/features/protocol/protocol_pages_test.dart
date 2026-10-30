@@ -323,7 +323,7 @@ void main() {
       expect(header.top, 24);
       expect(header.height, 76);
       final before = tester.getRect(find.text('Điều trị (15)'));
-      await tester.drag(find.byType(ListView), const Offset(0, -450));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -450));
       await tester.pumpAndSettle();
       expect(tester.getRect(find.text('Điều trị (15)')), before);
       expect(

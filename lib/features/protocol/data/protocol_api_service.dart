@@ -61,11 +61,30 @@ final class ProtocolApiService implements ProtocolRepository {
   }
 
   @override
+  Future<List<ProtocolMaterialOption>> materialOptions(
+    String id,
+    String itemId, {
+    String search = '',
+  }) async {
+    final response = await _client.get(
+      '/owner/protocols/$id/material-options',
+      authenticated: true,
+      queryParameters: {'itemId': itemId, 'search': search.trim()},
+    );
+    return response.requireListData().map((row) {
+      if (row is! Map<String, dynamic>) throw const InvalidResponseException();
+      return ProtocolMaterialOption.parse(row);
+    }).toList();
+  }
+
+  @override
   Future<void> review(
     String id, {
     required DateTime updatedAt,
     required bool approve,
     String? reason,
+    int contentVersion = 1,
+    Map<String, String> materialSelections = const {},
   }) async {
     await _client.post(
       '/owner/protocols/$id/review',
@@ -74,6 +93,11 @@ final class ProtocolApiService implements ProtocolRepository {
         'decision': approve ? 'APPROVE' : 'REJECT',
         'updatedAt': updatedAt.toUtc().toIso8601String(),
         if (!approve) 'reason': reason?.trim(),
+        if (contentVersion == 2) 'contentVersion': 2,
+        if (approve && contentVersion == 2)
+          'materialSelections': materialSelections.entries
+              .map((entry) => {'itemId': entry.key, 'productId': entry.value})
+              .toList(),
       },
     );
   }
