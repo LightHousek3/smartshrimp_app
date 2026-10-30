@@ -11,6 +11,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart';
+import 'package:smartshrimp_app/features/home/presentation/widgets/owner_overview_cards.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_detail_page.dart';
@@ -148,6 +150,47 @@ Future<void> scrollTo(WidgetTester tester, String label) async {
 
 void main() {
   _ProtocolTestBinding();
+  for (final (kind, type) in [
+    (DashboardAlertKind.pendingProduction, 'PRODUCTION'),
+    (DashboardAlertKind.pendingTreatment, 'TREATMENT'),
+  ]) {
+    testWidgets(
+      'N: dashboard pending $type alert opens its protocol detail and returns home',
+      (tester) async {
+        final repository = ProtocolFixtureRepository(type: type);
+        final container = await open(
+          tester,
+          shell: true,
+          route: '/',
+          repository: repository,
+        );
+        final alert = overviewFixture.alerts.firstWhere(
+          (item) => item.kind == kind,
+        );
+        final card = find.byWidgetPredicate(
+          (widget) => widget is DashboardAlertCard && widget.alert == alert,
+        );
+        await tester.ensureVisible(card);
+        await tester.tap(card);
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<ProtocolDetailPage>(find.byType(ProtocolDetailPage))
+              .protocolId,
+          alert.preview.id,
+        );
+        expect(repository.detailCalls, 1);
+        expect(
+          find.text(cardJson(type: type)['title'] as String),
+          findsOneWidget,
+        );
+        container.read(appRouterProvider).pop();
+        await tester.pumpAndSettle();
+        expect(card, findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets('N: rejection reason precedes status history in the audit card', (
     tester,
   ) async {

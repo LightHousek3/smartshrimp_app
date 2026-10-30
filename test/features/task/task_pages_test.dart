@@ -18,6 +18,7 @@ import 'package:smartshrimp_app/features/home/presentation/widgets/owner_overvie
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_detail_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_detail_view.dart';
+import 'package:smartshrimp_app/features/task/presentation/widgets/task_list_view.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
@@ -50,10 +51,37 @@ class _LongTaskOptionsRepository extends TaskFixtureRepository {
       );
 }
 
+class _UrgentAlertDashboardRepository extends DashboardFixtureRepository {
+  _UrgentAlertDashboardRepository(this.count, {required this.withSeason});
+  final int count;
+  final bool withSeason;
+
+  @override
+  Future<OwnerDashboard> getOverview() async {
+    final alert = overviewFixture.alerts.firstWhere(
+      (alert) => alert.kind == DashboardAlertKind.urgentTask,
+    );
+    return overviewFixture.copyWith(
+      alerts: [
+        alert.copyWith(
+          count: count,
+          preview: alert.preview.copyWith(
+            seasonId: withSeason ? alert.preview.seasonId : null,
+            seasonName: withSeason ? alert.preview.seasonName : null,
+            pondId: withSeason ? alert.preview.pondId : null,
+            pondName: withSeason ? alert.preview.pondName : null,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 Future<ProviderContainer> openTasks(
   WidgetTester tester,
   TaskFixtureRepository repo, {
   String path = '/tasks',
+  DashboardFixtureRepository? dashboard,
 }) async {
   await loadAppFonts();
   tester.view.physicalSize = const Size(402, 874);
@@ -63,7 +91,7 @@ Future<ProviderContainer> openTasks(
     overrides: [
       authRepositoryProvider.overrideWithValue(DashboardFixtureAuth()),
       ownerDashboardRepositoryProvider.overrideWithValue(
-        DashboardFixtureRepository(),
+        dashboard ?? DashboardFixtureRepository(),
       ),
       notificationRepositoryProvider.overrideWithValue(
         DashboardFixtureNotifications(),
@@ -160,6 +188,43 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final count in [2, 3]) {
+    for (final withSeason in [false, true]) {
+      testWidgets(
+        'N/B: urgent group ($count, season: $withSeason) opens pending tab after another tab was selected',
+        (tester) async {
+          final container = await openTasks(
+            tester,
+            TaskFixtureRepository(),
+            dashboard: _UrgentAlertDashboardRepository(
+              count,
+              withSeason: withSeason,
+            ),
+          );
+          await tester.tap(find.text('Đang làm (1)'));
+          await tester.pumpAndSettle();
+          expect(find.text(progressTask.title), findsOneWidget);
+
+          container.read(appRouterProvider).go('/');
+          await tester.pumpAndSettle();
+          final card = find.byType(DashboardAlertCard);
+          await tester.ensureVisible(card);
+          await tester.tap(card);
+          await tester.pumpAndSettle();
+
+          expect(container.read(appRouterProvider).state.uri.path, '/tasks');
+          final list = tester.widget<TaskListView>(find.byType(TaskListView));
+          expect(list.selectedTab, 0);
+          expect(list.tabs.first, 'Chờ làm (1)');
+          expect(find.text(pendingTask.title), findsOneWidget);
+          expect(find.text(progressTask.title), findsNothing);
+          expect(find.byType(TaskDetailPage), findsNothing);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
 
   for (final directLink in [false, true]) {
     testWidgets('N: task back returns to list (direct link: $directLink)', (
@@ -427,8 +492,7 @@ void main() {
     final spinner = find.byType(CircularProgressIndicator);
     final list = find.byKey(const ValueKey(1));
     expect(spinner, findsOneWidget);
-    expect(tester.getTopLeft(spinner).dy - tester.getTopLeft(list).dy, 40);
-    expect(tester.getCenter(spinner).dx, tester.getCenter(list).dx);
+    expect(tester.getCenter(spinner), tester.getCenter(list));
     for (final status in TaskStatus.values.where(
       (status) => status != TaskStatus.unknown,
     )) {
