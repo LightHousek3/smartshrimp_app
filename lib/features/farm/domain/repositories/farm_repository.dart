@@ -7,6 +7,7 @@ abstract interface class FarmRepository {
 
   Future<Farm> createFarm({
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -16,6 +17,7 @@ abstract interface class FarmRepository {
   Future<Farm> updateFarm({
     required String farmId,
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,

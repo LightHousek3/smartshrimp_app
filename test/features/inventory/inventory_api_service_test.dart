@@ -259,8 +259,6 @@ Map<String, dynamic> _productJson() => <String, dynamic>{
   'description': 'Thức ăn cho tôm',
   'archivedAt': null,
   'isArchived': false,
-  'isDeleted': false,
-  'deletedAt': null,
   'createdAt': '2026-10-01T00:00:00.000Z',
   'updatedAt': '2026-10-01T00:00:00.000Z',
   'currentStock': 80,

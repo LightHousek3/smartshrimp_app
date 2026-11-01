@@ -1,6 +1,6 @@
 abstract final class FarmRules {
   static const nameMaxLength = 255;
-  static const addressMaxLength = 1000;
+  static const addressMaxLength = 500;
   static const maxAreaHectares = 99999999.99;
 
   static String normalizeText(String value) =>

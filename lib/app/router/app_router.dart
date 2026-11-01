@@ -296,6 +296,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => FarmListPage(
                   showCreateSuccess:
                       state.uri.queryParameters['created'] == '1',
+                  showInactive:
+                      state.uri.queryParameters['status'] == 'inactive',
                 ),
                 routes: <RouteBase>[
                   GoRoute(

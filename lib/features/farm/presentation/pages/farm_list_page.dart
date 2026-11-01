@@ -14,10 +14,17 @@ import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
 
+enum _FarmStatusFilter { all, active, inactive }
+
 class FarmListPage extends ConsumerStatefulWidget {
-  const FarmListPage({this.showCreateSuccess = false, super.key});
+  const FarmListPage({
+    this.showCreateSuccess = false,
+    this.showInactive = false,
+    super.key,
+  });
 
   final bool showCreateSuccess;
+  final bool showInactive;
 
   @override
   ConsumerState<FarmListPage> createState() => _FarmListPageState();
@@ -28,11 +35,20 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
   final _scrollController = ScrollController();
   Timer? _debounce;
   bool _successShown = false;
+  late _FarmStatusFilter _statusFilter;
 
   @override
   void initState() {
     super.initState();
+    _statusFilter = widget.showInactive
+        ? _FarmStatusFilter.inactive
+        : _FarmStatusFilter.active;
     _scrollController.addListener(_handleScroll);
+    if (widget.showInactive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyFilters();
+      });
+    }
     if (widget.showCreateSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showCreateSuccess());
     }
@@ -43,6 +59,14 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
     super.didUpdateWidget(oldWidget);
     if (widget.showCreateSuccess && !oldWidget.showCreateSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showCreateSuccess());
+    }
+    if (widget.showInactive != oldWidget.showInactive) {
+      _statusFilter = widget.showInactive
+          ? _FarmStatusFilter.inactive
+          : _FarmStatusFilter.active;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyFilters();
+      });
     }
   }
 
@@ -66,9 +90,28 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
     setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
-      ref.read(farmListControllerProvider.notifier).load(search: value);
+      _applyFilters(search: value);
     });
   }
+
+  void _applyFilters({String? search}) {
+    ref
+        .read(farmListControllerProvider.notifier)
+        .load(
+          search: search ?? _searchController.text,
+          status: switch (_statusFilter) {
+            _FarmStatusFilter.all => null,
+            _FarmStatusFilter.active => FarmStatus.active,
+            _FarmStatusFilter.inactive => FarmStatus.inactive,
+          },
+        );
+  }
+
+  String get _statusFilterLabel => switch (_statusFilter) {
+    _FarmStatusFilter.all => 'Tất cả',
+    _FarmStatusFilter.active => 'Đang hoạt động',
+    _FarmStatusFilter.inactive => 'Ngừng hoạt động',
+  };
 
   void _showCreateSuccess() {
     if (!mounted || _successShown) return;
@@ -78,7 +121,7 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
       'Trang trại mới đã sẵn sàng để quản lý.',
       title: 'Tạo trang trại thành công',
     );
-    context.replace('/farms');
+    context.replace(widget.showInactive ? '/farms?status=inactive' : '/farms');
   }
 
   @override
@@ -94,16 +137,17 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
-              const StickyPageHeader(
+              StickyPageHeader(
                 title: 'Trang trại',
                 subtitle: 'Quản lý trại, ao và vụ nuôi',
                 showBack: false,
                 height: 80,
                 titleSize: 22,
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                sliver: SliverToBoxAdapter(child: _buildSearch()),
+                bottomHeight: 52,
+                bottom: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildSearch(),
+                ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               ...farms.when(
@@ -149,12 +193,18 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'Tìm tên trang trại...',
-                prefixIcon: const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: AppColors.inkMuted,
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: AppSvgIcon(
+                    AppSvgIconName.pin,
+                    size: 15,
+                    color: AppColors.inkMuted,
+                  ),
                 ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 38),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 38,
+                  minHeight: 40,
+                ),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
                     : IconButton(
@@ -187,6 +237,59 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           ),
         ),
         const SizedBox(width: 8),
+        SizedBox(
+          width: 128,
+          height: 40,
+          child: PopupMenuButton<_FarmStatusFilter>(
+            tooltip: 'Lọc trạng thái trang trại',
+            initialValue: _statusFilter,
+            onSelected: (value) {
+              setState(() => _statusFilter = value);
+              _applyFilters();
+            },
+            itemBuilder: (_) => const <PopupMenuEntry<_FarmStatusFilter>>[
+              PopupMenuItem<_FarmStatusFilter>(
+                value: _FarmStatusFilter.active,
+                child: Text('Đang hoạt động'),
+              ),
+              PopupMenuItem<_FarmStatusFilter>(
+                value: _FarmStatusFilter.inactive,
+                child: Text('Ngừng hoạt động'),
+              ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: AppColors.line),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      _statusFilterLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkSoft,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const AppSvgIcon(
+                    AppSvgIconName.dropdownChevron,
+                    size: 11,
+                    color: AppColors.inkSoft,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         AppCircleButton(
           icon: Icons.add_rounded,
           tooltip: 'Tạo trang trại',
@@ -207,7 +310,9 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           sliver: SliverToBoxAdapter(
             child: _FarmEmptyState(
-              searching: _searchController.text.trim().isNotEmpty,
+              searching: ref
+                  .read(farmListControllerProvider.notifier)
+                  .hasAnyFarm,
             ),
           ),
         ),
@@ -309,6 +414,7 @@ class _FarmCard extends StatelessWidget {
                       spacing: 6,
                       runSpacing: 6,
                       children: <Widget>[
+                        FarmStatusBadge(status: farm.status),
                         _FarmBadge(
                           '${farm.pondCount} ao',
                           background: const Color(0xFFEAF4FF),
@@ -318,14 +424,7 @@ class _FarmCard extends StatelessWidget {
                           '${farm.activeSeasonCount} vụ nuôi',
                           background: const Color(0xFFE2F6F3),
                           foreground: const Color(0xFF0F9B8E),
-                          showDot: true,
                         ),
-                        if (farm.totalAreaHectares != null)
-                          _FarmBadge(
-                            '${formatCompactNumber(farm.totalAreaHectares)} ha',
-                            background: const Color(0xFFEEF1F6),
-                            foreground: const Color(0xFF64748B),
-                          ),
                       ],
                     ),
                   ],
@@ -349,12 +448,10 @@ class _FarmBadge extends StatelessWidget {
     this.label, {
     required this.background,
     required this.foreground,
-    this.showDot = false,
   });
   final String label;
   final Color background;
   final Color foreground;
-  final bool showDot;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -366,17 +463,6 @@ class _FarmBadge extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        if (showDot) ...<Widget>[
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: foreground,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-        ],
         Text(
           label,
           style: TextStyle(
@@ -436,7 +522,7 @@ class _FarmEmptyState extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             searching
-                ? 'Hãy thử một từ khóa khác.'
+                ? 'Thử đổi từ khóa hoặc bộ lọc.'
                 : 'Nhấn nút + để tạo trang trại đầu tiên.',
             textAlign: TextAlign.center,
             style: const TextStyle(

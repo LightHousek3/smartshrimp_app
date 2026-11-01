@@ -32,11 +32,8 @@ enum PondSeasonStatus {
 
 @freezed
 abstract class PondFarm with _$PondFarm {
-  const factory PondFarm({
-    required String id,
-    required String name,
-    DateTime? deletedAt,
-  }) = _PondFarm;
+  const factory PondFarm({required String id, required String name}) =
+      _PondFarm;
 
   factory PondFarm.fromJson(Map<String, dynamic> json) =>
       _$PondFarmFromJson(json);
@@ -69,7 +66,6 @@ abstract class Pond with _$Pond {
     double? volumeM3,
     @JsonKey(unknownEnumValue: PondType.unknown) required PondType type,
     @JsonKey(unknownEnumValue: PondStatus.unknown) required PondStatus status,
-    DateTime? deletedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
     PondFarm? farm,
@@ -86,7 +82,6 @@ abstract class Pond with _$Pond {
     }
   }
 
-  bool get isDeleted => deletedAt != null;
   bool get hasOpenSeason => currentSeason != null;
 }
 
