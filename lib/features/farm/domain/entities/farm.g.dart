@@ -85,21 +85,26 @@ _Farm _$FarmFromJson(Map<String, dynamic> json) => _Farm(
   id: json['id'] as String,
   ownerId: json['ownerId'] as String,
   name: json['name'] as String,
+  status:
+      $enumDecodeNullable(
+        _$FarmStatusEnumMap,
+        json['status'],
+        unknownValue: FarmStatus.unknown,
+      ) ??
+      FarmStatus.active,
   address: json['address'] as String?,
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
   totalAreaHectares: (json['totalAreaHectares'] as num?)?.toDouble(),
   pondCount: (json['pondCount'] as num?)?.toInt() ?? 0,
   activeSeasonCount: (json['activeSeasonCount'] as num?)?.toInt() ?? 0,
-  canDelete: json['canDelete'] as bool? ?? true,
+  canDelete: json['canDelete'] as bool? ?? false,
+  templateCount: (json['templateCount'] as num?)?.toInt() ?? 0,
   ponds:
       (json['ponds'] as List<dynamic>?)
           ?.map((e) => FarmPond.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <FarmPond>[],
-  deletedAt: json['deletedAt'] == null
-      ? null
-      : DateTime.parse(json['deletedAt'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -112,6 +117,7 @@ Map<String, dynamic> _$FarmToJson(_Farm instance) => <String, dynamic>{
   'id': instance.id,
   'ownerId': instance.ownerId,
   'name': instance.name,
+  'status': _$FarmStatusEnumMap[instance.status]!,
   'address': instance.address,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
@@ -119,8 +125,14 @@ Map<String, dynamic> _$FarmToJson(_Farm instance) => <String, dynamic>{
   'pondCount': instance.pondCount,
   'activeSeasonCount': instance.activeSeasonCount,
   'canDelete': instance.canDelete,
+  'templateCount': instance.templateCount,
   'ponds': instance.ponds,
-  'deletedAt': instance.deletedAt?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),
+};
+
+const _$FarmStatusEnumMap = {
+  FarmStatus.active: 'ACTIVE',
+  FarmStatus.inactive: 'INACTIVE',
+  FarmStatus.unknown: 'unknown',
 };

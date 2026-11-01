@@ -134,17 +134,13 @@ class _FarmDetailContent extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (farm.address?.trim().isNotEmpty == true ||
-                    (farm.latitude != null &&
-                        farm.longitude != null)) ...<Widget>[
-                  const SizedBox(height: 16),
-                  _FarmLocationCard(
-                    farm: farm,
-                    onOpenMap: farm.latitude == null || farm.longitude == null
-                        ? null
-                        : () => _openMap(context),
-                  ),
-                ],
+                const SizedBox(height: 16),
+                _FarmLocationCard(
+                  farm: farm,
+                  onOpenMap: farm.latitude == null || farm.longitude == null
+                      ? null
+                      : () => _openMap(context),
+                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -171,12 +167,14 @@ class _FarmDetailContent extends ConsumerWidget {
                   onOpen: (pond) =>
                       context.push('/farms/${farm.id}/ponds/${pond.id}'),
                 ),
-                const SizedBox(height: 16),
-                DestructiveActionButton(
-                  label: 'Xóa trang trại',
-                  loading: mutation.isLoading,
-                  onPressed: () => _deleteFarm(context, ref),
-                ),
+                if (farm.canDelete) ...<Widget>[
+                  const SizedBox(height: 16),
+                  DestructiveActionButton(
+                    label: 'Xóa trang trại',
+                    loading: mutation.isLoading,
+                    onPressed: () => _deleteFarm(context, ref),
+                  ),
+                ],
               ],
             ),
           ),
@@ -198,17 +196,14 @@ class _FarmDetailContent extends ConsumerWidget {
   }
 
   Future<void> _deleteFarm(BuildContext context, WidgetRef ref) async {
+    if (!farm.canDelete) return;
     final confirmed = await showAppConfirmDialog(
       context,
       entityLabel: 'trang trại',
       entityName: farm.name,
-      retentionMessage:
-          'Trang trại sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn ao hoặc dữ liệu liên quan.',
-      blockers: farm.canDelete
-          ? const <String>[]
-          : <String>[
-              '${farm.activeSeasonCount} vụ nuôi đang ở trạng thái chuẩn bị hoặc đang nuôi.',
-            ],
+      retentionMessage: farm.templateCount == 0
+          ? 'Trang trại sẽ bị xóa vĩnh viễn.'
+          : 'Trang trại sẽ bị xóa vĩnh viễn. ${farm.templateCount} phác đồ mẫu sẽ chuyển sang ngừng sử dụng và Chuyên gia được thông báo.',
     );
     if (!confirmed || !context.mounted) return;
     try {
@@ -315,15 +310,23 @@ class _FarmLocationCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'Vị trí trang trại',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.display(
-            color: AppColors.ink,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Trang trại',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(
+                  color: AppColors.ink,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FarmStatusBadge(status: farm.status),
+          ],
         ),
         if (farm.address?.trim().isNotEmpty == true) ...<Widget>[
           const SizedBox(height: 12),

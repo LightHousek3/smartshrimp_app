@@ -70,7 +70,6 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
   Pond get pond => widget.pond;
   PondSeasonScope get _scope => (farmId: pond.farmId, pondId: pond.id);
   bool get _canCreateSeason =>
-      !pond.isDeleted &&
       !pond.hasOpenSeason &&
       pond.type == PondType.aquaculture &&
       pond.status == PondStatus.available;

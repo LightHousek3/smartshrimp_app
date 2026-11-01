@@ -161,7 +161,7 @@ void main() {
     expect(repository.createCalls, 0);
   });
 
-  testWidgets('farm list no longer exposes archive status filters', (
+  testWidgets('farm detail hides delete when related data exists', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -180,7 +180,7 @@ void main() {
 
     await tester.tap(find.text('Trang trại'));
     await tester.pumpAndSettle();
-    expect(find.text('Đang hoạt động'), findsNothing);
+    expect(find.text('Đang hoạt động'), findsWidgets);
     expect(find.text('Đã lưu trữ'), findsNothing);
 
     await tester.tap(find.text('Trại Cà Mau'));
@@ -190,15 +190,91 @@ void main() {
       const Offset(0, -700),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Xóa trang trại'));
-    await tester.pumpAndSettle();
-    expect(find.text('Chưa thể xóa trang trại'), findsOneWidget);
-    expect(
-      find.text('3 vụ nuôi đang ở trạng thái chuẩn bị hoặc đang nuôi.'),
-      findsOneWidget,
-    );
-    expect(find.text('Xác nhận xóa'), findsNothing);
+    expect(find.text('Xóa trang trại'), findsNothing);
     expect(find.text('Lưu trữ trang trại'), findsNothing);
+  });
+
+  testWidgets(
+    'farm detail allows deletion with templates and explains deactivation',
+    (tester) async {
+      final repository = _FakeFarmRepository(
+        farm: _farm.copyWith(
+          pondCount: 0,
+          activeSeasonCount: 0,
+          canDelete: true,
+          templateCount: 2,
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ownerDashboardRepositoryProvider.overrideWithValue(
+              DashboardFixtureRepository(),
+            ),
+            authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
+            farmRepositoryProvider.overrideWithValue(repository),
+          ],
+          child: const SmartShrimpApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trang trại'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trại Cà Mau'));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byType(CustomScrollView).last,
+        const Offset(0, -700),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Xóa trang trại'));
+      await tester.pumpAndSettle();
+      expect(find.text('Xác nhận xóa'), findsOneWidget);
+      expect(
+        find.textContaining('2 phác đồ mẫu sẽ chuyển sang ngừng sử dụng'),
+        findsOneWidget,
+      );
+      expect(repository.deleteCalls, 0);
+      await tester.tap(find.text('Xác nhận xóa'));
+      await tester.pumpAndSettle();
+      expect(repository.deleteCalls, 1);
+    },
+  );
+
+  testWidgets('inactive Farm route selects the local status filter', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = _FakeFarmRepository(
+      farm: _farm.copyWith(status: FarmStatus.inactive),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ownerDashboardRepositoryProvider.overrideWithValue(
+            DashboardFixtureRepository(),
+          ),
+          authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
+          farmRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const SmartShrimpApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(SmartShrimpApp)),
+    ).read(appRouterProvider);
+    router.go('/farms?status=inactive');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trại Cà Mau'), findsOneWidget);
+    expect(find.text('Ngừng hoạt động'), findsWidgets);
+    expect(repository.getCalls, 1);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('farm detail pond section matches compact searchable layout', (
@@ -396,14 +472,19 @@ final class _FakeFarmRepository implements FarmRepository {
 
   final Farm farm;
   int createCalls = 0;
+  int deleteCalls = 0;
   int getCalls = 0;
 
   @override
-  Future<Farm> deleteFarm(String farmId) async => farm;
+  Future<Farm> deleteFarm(String farmId) async {
+    deleteCalls++;
+    return farm;
+  }
 
   @override
   Future<Farm> createFarm({
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -426,6 +507,7 @@ final class _FakeFarmRepository implements FarmRepository {
   Future<Farm> updateFarm({
     required String farmId,
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,

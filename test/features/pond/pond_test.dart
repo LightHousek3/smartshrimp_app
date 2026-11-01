@@ -28,7 +28,6 @@ void main() {
     expect(pond.currentSeason?.name, 'Vụ nuôi 09/2026');
     expect(pond.farm?.name, 'Trại Cà Mau');
     expect(pond.hasOpenSeason, isTrue);
-    expect(pond.isDeleted, isFalse);
   });
 
   test('uses safe enum fallbacks and rejects malformed required fields', () {

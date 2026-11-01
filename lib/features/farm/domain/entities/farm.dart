@@ -22,6 +22,14 @@ enum PondStatus {
   unknown,
 }
 
+enum FarmStatus {
+  @JsonValue('ACTIVE')
+  active,
+  @JsonValue('INACTIVE')
+  inactive,
+  unknown,
+}
+
 enum FarmSeasonStatus {
   @JsonValue('PLANNING')
   planning,
@@ -63,21 +71,22 @@ abstract class FarmPond with _$FarmPond {
 
 @freezed
 abstract class Farm with _$Farm {
-  const Farm._();
-
   const factory Farm({
     required String id,
     required String ownerId,
     required String name,
+    @Default(FarmStatus.active)
+    @JsonKey(unknownEnumValue: FarmStatus.unknown)
+    FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
     double? totalAreaHectares,
     @Default(0) int pondCount,
     @Default(0) int activeSeasonCount,
-    @Default(true) bool canDelete,
+    @Default(false) bool canDelete,
+    @Default(0) int templateCount,
     @Default(<FarmPond>[]) List<FarmPond> ponds,
-    DateTime? deletedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _Farm;
@@ -91,8 +100,6 @@ abstract class Farm with _$Farm {
       Error.throwWithStackTrace(const InvalidResponseException(), stackTrace);
     }
   }
-
-  bool get isDeleted => deletedAt != null;
 }
 
 @freezed
