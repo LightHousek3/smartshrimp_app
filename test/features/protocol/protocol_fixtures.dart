@@ -94,18 +94,33 @@ Map<String, dynamic> dayRowJson({
 };
 
 class ProtocolFixtureRepository implements ProtocolRepository {
+  @override
+  Future<List<ProtocolMaterialOption>> materialOptions(
+    String id,
+    String itemId, {
+    String search = '',
+  }) async {
+    materialOptionsCalls++;
+    return [ProtocolMaterialOption.parse(materialOptionJson())];
+  }
+
   ProtocolFixtureRepository({
     this.type = 'PRODUCTION',
     this.status = 'PENDING_APPROVAL',
     this.empty = false,
     this.itemCount = 1,
     this.anchorDate,
+    this.v2 = false,
   });
   final String type;
   String status;
   final bool empty;
   final int itemCount;
   final String? anchorDate;
+  final bool v2;
+  int materialOptionsCalls = 0;
+  Map<String, String> selectedMaterials = {};
+  int reviewedContentVersion = 1;
   int listCalls = 0;
   int detailCalls = 0;
   int reviewCalls = 0;
@@ -159,6 +174,8 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     return ProtocolDetail.parse({
       ...detailJson(type: type, status: status),
       'id': id,
+      if (v2) 'contentVersion': 2,
+      if (v2) 'materialReviews': [materialReviewJson()],
       if (anchorDate != null) 'anchorDate': anchorDate,
       if (status == 'REJECTED') 'rejectionReason': rejectionReason,
     });
@@ -199,8 +216,12 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     required DateTime updatedAt,
     required bool approve,
     String? reason,
+    int contentVersion = 1,
+    Map<String, String> materialSelections = const {},
   }) async {
     reviewCalls++;
+    selectedMaterials = materialSelections;
+    reviewedContentVersion = contentVersion;
     approved = approve;
     rejectionReason = reason;
     version = updatedAt;
@@ -209,3 +230,62 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     status = approve ? 'APPROVED' : 'REJECTED';
   }
 }
+
+Map<String, dynamic> materialReviewJson() => {
+  'itemId': 'item-1',
+  'name': 'Feed đề xuất',
+  'productId': null,
+  'operationType': 'FEEDING',
+  'doseBasis': 'FIXED_QUANTITY',
+  'doseValue': '0.7000',
+  'doseUnit': 'KG',
+  'dailyDoseIncrement': '0.0500',
+  'firstDay': 10,
+  'lastDay': 29,
+  'repeatIntervalDays': 1,
+  'recurrenceAnchorDay': 1,
+  'doseAnchorDay': 1,
+  'mealNumber': 1,
+  'plannedTime': '06:00:12.123',
+  'requiresResolution': true,
+  'resolutionMessage': 'Cần chọn catalog đủ điều kiện.',
+  'proposed': {
+    'name': 'Feed đề xuất',
+    'category': 'feed',
+    'unit': 'kg',
+    'description': 'Mô tả gốc',
+    'manufacturer': {'name': 'Nhà sản xuất đề xuất'},
+    'productCompliance': {
+      'evidenceUrls': ['https://example.test/original'],
+      'containsAntibiotic': false,
+    },
+  },
+  'catalog': null,
+};
+
+Map<String, dynamic> materialOptionJson() => {
+  'id': 'catalog-1',
+  'name': 'Catalog Feed',
+  'unit': 'KG',
+  'manufacturerName': 'Nhà sản xuất catalog',
+  'material': {
+    'name': 'Catalog Feed',
+    'category': 'FEED',
+    'unit': 'KG',
+    'manufacturerId': 'maker',
+    'manufacturer': {'name': 'Nhà sản xuất catalog'},
+    'compliance': {
+      'regulatoryType': 'feed',
+      'registrationNumber': '01-123456',
+      'ingredientsText': 'Protein',
+      'usageInstructions': 'Theo nhãn',
+      'containsAntibiotic': false,
+      'withdrawalDays': '0.000',
+      'complianceStatus': 'reviewed',
+      'evidenceUrls': ['https://example.test/catalog'],
+      'checkedBy': 'owner',
+      'checkedAt': '2026-10-30T00:00:00Z',
+      'reviewNote': 'Đã đối chiếu hồ sơ',
+    },
+  },
+};

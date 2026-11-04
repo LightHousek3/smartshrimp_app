@@ -119,6 +119,118 @@ abstract class ProtocolDayMarker with _$ProtocolDayMarker {
 }
 
 @freezed
+abstract class ProtocolMaterialProfile with _$ProtocolMaterialProfile {
+  @JsonSerializable(checked: true)
+  const factory ProtocolMaterialProfile({
+    String? regulatoryType,
+    String? registrationNumber,
+    String? ingredientsText,
+    bool? containsAntibiotic,
+    String? usageInstructions,
+    @JsonKey(fromJson: _optionalDecimalString) String? withdrawalDays,
+    @Default([]) List<String> evidenceUrls,
+    String? complianceStatus,
+    String? checkedBy,
+    DateTime? checkedAt,
+    String? reviewNote,
+  }) = _ProtocolMaterialProfile;
+  factory ProtocolMaterialProfile.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolMaterialProfileFromJson(json);
+}
+
+@freezed
+abstract class ProtocolManufacturer with _$ProtocolManufacturer {
+  @JsonSerializable(checked: true)
+  const factory ProtocolManufacturer({
+    required String name,
+    String? id,
+    String? address,
+    String? phone,
+  }) = _ProtocolManufacturer;
+  factory ProtocolManufacturer.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolManufacturerFromJson(json);
+}
+
+@freezed
+abstract class ProtocolMaterialSnapshot with _$ProtocolMaterialSnapshot {
+  @JsonSerializable(checked: true)
+  const factory ProtocolMaterialSnapshot({
+    required String name,
+    required String category,
+    required String unit,
+    String? description,
+    String? recommendationReason,
+    String? manufacturerId,
+    ProtocolManufacturer? manufacturer,
+    ProtocolMaterialProfile? productCompliance,
+    String? conversionUnit,
+    @JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity,
+  }) = _ProtocolMaterialSnapshot;
+  factory ProtocolMaterialSnapshot.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolMaterialSnapshotFromJson(json);
+}
+
+String? _optionalDecimalString(Object? value) => value?.toString();
+ProtocolMaterialSnapshot? _materialFromJson(Object? value) {
+  if (value == null) return null;
+  if (value is! Map<String, dynamic>) throw const InvalidResponseException();
+  return ProtocolMaterialSnapshot.fromJson({
+    ...value,
+    'productCompliance': value['productCompliance'] ?? value['compliance'],
+  });
+}
+
+@freezed
+abstract class ProtocolMaterialReview with _$ProtocolMaterialReview {
+  @JsonSerializable(checked: true)
+  const factory ProtocolMaterialReview({
+    required String itemId,
+    required String name,
+    String? productId,
+    required String operationType,
+    required String doseBasis,
+    required String doseValue,
+    required String doseUnit,
+    required String dailyDoseIncrement,
+    required int firstDay,
+    required int lastDay,
+    required int repeatIntervalDays,
+    required int recurrenceAnchorDay,
+    required int doseAnchorDay,
+    int? mealNumber,
+    String? plannedTime,
+    String? recommendedManufacturerId,
+    required bool requiresResolution,
+    String? resolutionMessage,
+    @JsonKey(fromJson: _materialFromJson) ProtocolMaterialSnapshot? proposed,
+    @JsonKey(fromJson: _materialFromJson) ProtocolMaterialSnapshot? catalog,
+  }) = _ProtocolMaterialReview;
+  factory ProtocolMaterialReview.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolMaterialReviewFromJson(json);
+}
+
+@freezed
+abstract class ProtocolMaterialOption with _$ProtocolMaterialOption {
+  @JsonSerializable(checked: true)
+  const factory ProtocolMaterialOption({
+    required String id,
+    required String name,
+    required String unit,
+    required String manufacturerName,
+    @JsonKey(fromJson: _materialFromJson)
+    required ProtocolMaterialSnapshot? material,
+  }) = _ProtocolMaterialOption;
+  factory ProtocolMaterialOption.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolMaterialOptionFromJson(json);
+  static ProtocolMaterialOption parse(Map<String, dynamic> json) => _parse(() {
+    final value = ProtocolMaterialOption.fromJson(json);
+    _strings([value.id, value.name, value.unit, value.manufacturerName]);
+    if (value.material == null) throw const InvalidResponseException();
+    return value;
+  });
+}
+
+@freezed
 abstract class ProtocolDetail with _$ProtocolDetail {
   @JsonSerializable(checked: true)
   const factory ProtocolDetail({
@@ -133,6 +245,10 @@ abstract class ProtocolDetail with _$ProtocolDetail {
     required List<ProtocolDayMarker> dayMarkers,
     required List<ProtocolHistory> history,
     required bool canReview,
+    @Default(1) int contentVersion,
+    int? sourceTemplateVersionNo,
+    String? scheduleMessage,
+    @Default([]) List<ProtocolMaterialReview> materialReviews,
   }) = _ProtocolDetail;
   factory ProtocolDetail.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDetailFromJson(json);
@@ -140,6 +256,41 @@ abstract class ProtocolDetail with _$ProtocolDetail {
   static ProtocolDetail parse(Map<String, dynamic> json) => _parse(() {
     final card = ProtocolCardData.parse(json);
     final value = ProtocolDetail.fromJson({...json, 'card': json});
+    if (value.contentVersion == 2) {
+      if (value.materialReviews.isEmpty ||
+          value.materialReviews.length > 1000 ||
+          value.materialReviews.map((m) => m.itemId).toSet().length !=
+              value.materialReviews.length) {
+        throw const InvalidResponseException();
+      }
+      for (final material in value.materialReviews) {
+        _strings([
+          material.itemId,
+          material.name,
+          material.operationType,
+          material.doseBasis,
+          material.doseUnit,
+        ]);
+        final dose = double.tryParse(material.doseValue);
+        final increment = double.tryParse(material.dailyDoseIncrement);
+        if (dose == null ||
+            !dose.isFinite ||
+            dose <= 0 ||
+            increment == null ||
+            !increment.isFinite ||
+            increment < 0 ||
+            material.firstDay < 1 ||
+            material.lastDay < material.firstDay ||
+            material.repeatIntervalDays < 1 ||
+            material.repeatIntervalDays > 30 ||
+            material.recurrenceAnchorDay < 1 ||
+            material.recurrenceAnchorDay > material.firstDay ||
+            material.doseAnchorDay < 1 ||
+            material.doseAnchorDay > material.firstDay) {
+          throw const InvalidResponseException();
+        }
+      }
+    }
     if (value.durationDays < 0 ||
         value.dayMarkers.any(
           (m) =>
@@ -164,6 +315,7 @@ abstract class ProtocolDetail with _$ProtocolDetail {
       card: card,
       canReview:
           value.canReview &&
+          [1, 2].contains(value.contentVersion) &&
           card.status == ProtocolStatus.pendingApproval &&
           card.protocolType != ProtocolType.unknown,
     );
