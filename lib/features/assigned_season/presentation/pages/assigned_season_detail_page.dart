@@ -96,6 +96,13 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                               },
                               child: const Text('Nhật ký đo nước'),
                             ),
+                          if (season.status != AssignedSeasonStatus.active)
+                            TextButton(
+                              onPressed: () => context.push(
+                                '/seasons/${season.id}/ai-diagnoses',
+                              ),
+                              child: const Text('Lịch sử nhận diện AI'),
+                            ),
                           const SizedBox(height: 22),
                           _LatestWaterMeasurement(
                             seasonId: season.id,
@@ -326,7 +333,8 @@ class _PondCard extends StatelessWidget {
                     'farmName': season.farmName,
                     'seasonName': season.name,
                     'pondName': season.pondName,
-                    'isSeasonActive': season.status == AssignedSeasonStatus.active,
+                    'isSeasonActive':
+                        season.status == AssignedSeasonStatus.active,
                   },
                 ),
               ),
@@ -454,6 +462,7 @@ class _FeatureActions extends ConsumerWidget {
           );
         },
         2 => () => context.push('/seasons/$seasonId/operations'),
+        3 => () => context.push('/seasons/$seasonId/ai-diagnoses'),
         4 => () => context.push('/seasons/$seasonId/rag'),
         _ => null,
       },
@@ -1259,4 +1268,3 @@ String _pondStatusLabel(String value) => switch (value) {
   'INACTIVE' => 'Ngừng dùng',
   _ => 'Không rõ',
 };
-
