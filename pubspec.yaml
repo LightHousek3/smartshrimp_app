@@ -26,6 +26,7 @@ dependencies:
   flutter_svg: ^2.3.0
   flutter_markdown_plus: ^1.0.12
   url_launcher: ^6.3.3
+  unorm_dart: ^0.3.2
 
 dev_dependencies:
   flutter_test:
@@ -71,5 +72,6 @@ flutter:
     - assets/icons/water-log/
     - assets/icons/rag/
     - assets/icons/common/
+    - assets/icons/auth/
     - assets/icons/inventory/
     - assets/fonts/google_fonts/

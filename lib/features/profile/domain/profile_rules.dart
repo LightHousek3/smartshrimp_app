@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 enum PasswordStrength { tooShort, medium, fairlyStrong, strong }
 
@@ -17,7 +18,10 @@ abstract final class ProfileRules {
   );
 
   static String normalizeFullName(String value) {
-    return value.trim().replaceAll(RegExp(r'\s+'), ' ');
+    return unorm
+        .nfc(value)
+        .trim()
+        .replaceAll(RegExp(r'\s+', unicode: true), ' ');
   }
 
   static String? validateFullName(String? value) {
