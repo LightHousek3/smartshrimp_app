@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/features/auth/presentation/pages/auth_info_page.dart';
+import 'package:smartshrimp_app/features/auth/presentation/pages/verification_page.dart';
+import 'package:smartshrimp_app/features/auth/domain/verification_purpose.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -95,6 +96,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           location == AppRoutes.activateAccount ||
           location == AppRoutes.forgotPassword;
 
+      // Recovery flows are public and independent of the current session.
+      // Keeping their URI while restoring avoids losing a cold-start email link.
+      if (location == AppRoutes.activateAccount ||
+          location == AppRoutes.forgotPassword) {
+        return null;
+      }
+      if (location == AppRoutes.login &&
+          VerificationPurpose.values.any(
+            (purpose) => purpose.name == state.extra,
+          )) {
+        return null;
+      }
+
       if (authState.isLoading) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
@@ -135,21 +149,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: <RouteBase>[
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const _SplashPage()),
-      GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginPage()),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (_, state) => LoginPage(
+          key: state.pageKey,
+          initialEmail: state.uri.queryParameters['email'] ?? '',
+          completedPurpose: VerificationPurpose.values
+              .where((purpose) => purpose.name == state.extra)
+              .firstOrNull,
+        ),
+      ),
       GoRoute(
         path: AppRoutes.activateAccount,
-        builder: (_, _) => const AuthInfoPage(
-          title: 'Kích hoạt tài khoản',
-          message:
-              'Luồng kích hoạt tài khoản sẽ được hoàn thiện ở hạng mục xác thực tiếp theo.',
+        builder: (_, state) => VerificationPage(
+          key: ValueKey(state.uri.toString()),
+          purpose: VerificationPurpose.activation,
+          initialEmail: state.uri.queryParameters['email'] ?? '',
         ),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
-        builder: (_, _) => const AuthInfoPage(
-          title: 'Quên mật khẩu',
-          message:
-              'Luồng đặt lại mật khẩu sẽ được hoàn thiện ở hạng mục xác thực tiếp theo.',
+        builder: (_, state) => VerificationPage(
+          key: ValueKey(state.uri.toString()),
+          purpose: VerificationPurpose.passwordReset,
+          initialEmail: state.uri.queryParameters['email'] ?? '',
         ),
       ),
       StatefulShellRoute.indexedStack(

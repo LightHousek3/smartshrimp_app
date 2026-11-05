@@ -3,15 +3,91 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:smartshrimp_app/features/auth/domain/verification_purpose.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 
 void main() {
+  testWidgets('login validates required credentials without asterisk labels', (
+    tester,
+  ) async {
+    final repository = _LoginAuthRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        child: const MaterialApp(home: LoginPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Mật khẩu'), findsOneWidget);
+    expect(find.text('Email *'), findsNothing);
+    expect(find.text('Mật khẩu *'), findsNothing);
+    await tester.tap(find.text('Đăng nhập').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Vui lòng nhập email.'), findsOneWidget);
+    expect(find.text('Vui lòng nhập mật khẩu.'), findsOneWidget);
+    expect(repository.email, isNull);
+    expect(repository.password, isNull);
+  });
+
+  testWidgets('login after completion clears the notice and opens home', (
+    tester,
+  ) async {
+    final repository = _LoginAuthRepository();
+    final router = GoRouter(
+      initialLocation: '/login',
+      routes: [
+        GoRoute(
+          path: '/login',
+          builder: (_, _) => const LoginPage(
+            initialEmail: 'owner@example.com',
+            completedPurpose: VerificationPurpose.activation,
+          ),
+        ),
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: Text('Home')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AppFormMessageBanner), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('login_password_field')),
+      'secret',
+    );
+    await tester.ensureVisible(find.text('Đăng nhập').last);
+    await tester.tap(find.text('Đăng nhập').last);
+    await tester.pump();
+    expect(find.byType(AppFormMessageBanner), findsNothing);
+    repository.loginCompleter.complete(
+      const AuthAccount(
+        id: 'owner',
+        email: 'owner@example.com',
+        role: AccountRole.farmOwner,
+        status: AccountStatus.active,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.byType(LoginPage), findsNothing);
+  });
+
   testWidgets('shows button loading and keeps credentials after login error', (
     tester,
   ) async {
@@ -56,14 +132,14 @@ void main() {
     expect(find.text('Email hoặc mật khẩu không đúng.'), findsOneWidget);
     expect(
       tester
-          .widget<TextFormField>(find.byKey(const Key('login_email_field')))
+          .widget<AppTextField>(find.byKey(const Key('login_email_field')))
           .controller!
           .text,
       'owner@example.com',
     );
     expect(
       tester
-          .widget<TextFormField>(find.byKey(const Key('login_password_field')))
+          .widget<AppTextField>(find.byKey(const Key('login_password_field')))
           .controller!
           .text,
       'wrong-password',
