@@ -13,6 +13,7 @@ class GradientButton extends StatelessWidget {
     this.leading,
     this.borderRadius,
     this.gradientColors,
+    this.disabledGradientColors,
     this.height,
     this.boxShadow,
     super.key,
@@ -26,6 +27,7 @@ class GradientButton extends StatelessWidget {
   final Widget? leading;
   final double? borderRadius;
   final List<Color>? gradientColors;
+  final List<Color>? disabledGradientColors;
   final double? height;
   final List<BoxShadow>? boxShadow;
 
@@ -43,7 +45,8 @@ class GradientButton extends StatelessWidget {
                       AppColors.tealLight,
                       AppColors.oceanLight,
                     ]
-              : const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)],
+              : disabledGradientColors ??
+                    const <Color>[Color(0xFFBAC6D1), Color(0xFFBAC6D1)],
         ),
         borderRadius: BorderRadius.circular(radius),
         boxShadow: enabled

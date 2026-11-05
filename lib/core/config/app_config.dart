@@ -43,4 +43,11 @@ abstract final class AppConfig {
 
   static const connectTimeout = Duration(seconds: 15);
   static const receiveTimeout = Duration(seconds: 20);
+  // Five Cloudinary uploads and the AI call have separate server-side timeouts.
+  static const aiDiagnosisTimeout = Duration(
+    seconds: int.fromEnvironment(
+      'AI_DIAGNOSIS_TIMEOUT_SECONDS',
+      defaultValue: 300,
+    ),
+  );
 }

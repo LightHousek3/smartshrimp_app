@@ -42,12 +42,14 @@ final class ApiClient {
     Object? data,
     required bool authenticated,
     Duration? receiveTimeout,
+    Duration? sendTimeout,
     Map<String, Object>? headers,
   }) {
     return _request(
       path: path,
       method: 'POST',
       receiveTimeout: receiveTimeout,
+      sendTimeout: sendTimeout,
       data: data,
       authenticated: authenticated,
       headers: headers,
@@ -106,6 +108,7 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
+    Duration? sendTimeout,
     Map<String, Object>? headers,
   }) async {
     String? accessToken;
@@ -125,6 +128,7 @@ final class ApiClient {
         data: data,
         accessToken: accessToken,
         receiveTimeout: receiveTimeout,
+        sendTimeout: sendTimeout,
         headers: headers,
       );
     } on DioException catch (error) {
@@ -148,6 +152,7 @@ final class ApiClient {
         data: data,
         accessToken: refreshedAccessToken,
         receiveTimeout: receiveTimeout,
+        sendTimeout: sendTimeout,
         headers: headers,
       );
     } on DioException catch (error) {
@@ -167,6 +172,7 @@ final class ApiClient {
     Map<String, dynamic>? queryParameters,
     Object? data,
     Duration? receiveTimeout,
+    Duration? sendTimeout,
     Map<String, Object>? headers,
   }) async {
     final mergedHeaders = <String, Object>{
@@ -176,10 +182,13 @@ final class ApiClient {
     final response = await _dio.request<Map<String, dynamic>>(
       path,
       queryParameters: queryParameters,
-      data: data,
+      // Multipart streams are single-use. A 401 retry needs a fresh stream,
+      // while timeouts and other failures are still never retried here.
+      data: data is FormData ? data.clone() : data,
       options: Options(
         method: method,
         receiveTimeout: receiveTimeout,
+        sendTimeout: sendTimeout,
         headers: mergedHeaders.isEmpty ? null : mergedHeaders,
       ),
     );

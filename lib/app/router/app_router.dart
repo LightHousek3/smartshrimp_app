@@ -17,6 +17,8 @@ import 'package:smartshrimp_app/features/farm/presentation/pages/farm_list_page.
 import 'package:smartshrimp_app/features/home/presentation/pages/home_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversations_page.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/presentation/pages/ai_diagnosis_page.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/presentation/pages/ai_diagnosis_detail_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_list_page.dart';
@@ -123,7 +125,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
       final account = authState.value;
-      if (location.contains('/rag') &&
+      if ((location.contains('/rag') || location.contains('/ai-diagnoses')) &&
           (account?.role != AccountRole.technician ||
               account?.status != AccountStatus.active)) {
         return AppRoutes.home;
@@ -201,6 +203,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       seasonId: state.pathParameters['seasonId']!,
                     ),
                     routes: [
+                      GoRoute(
+                        path: 'ai-diagnoses',
+                        builder: (_, state) => AiDiagnosisPage(
+                          seasonId: state.pathParameters['seasonId']!,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: ':diagnosisId',
+                            builder: (_, state) => AiDiagnosisDetailPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              diagnosisId: state.pathParameters['diagnosisId']!,
+                            ),
+                          ),
+                        ],
+                      ),
                       GoRoute(
                         path: 'water-logs',
                         builder: (_, state) {
