@@ -77,7 +77,6 @@ const _$PondTypeEnumMap = {
 const _$PondStatusEnumMap = {
   PondStatus.available: 'AVAILABLE',
   PondStatus.maintenance: 'MAINTENANCE',
-  PondStatus.inactive: 'INACTIVE',
   PondStatus.unknown: 'unknown',
 };
 

@@ -4,6 +4,46 @@ import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
 
 void main() {
+  test(
+    'autofill capacity uses backend rounding and validates the rounded result',
+    () {
+      expect(PondRules.calculateVolume(1000, 1.5), 1500);
+      expect(PondRules.calculateVolume(1.23, 1.23), 1.51);
+      expect(PondRules.validateVolumeCapacity(1.51, 1.23, 1.23), isNull);
+      expect(PondRules.validateVolumeCapacity(1.52, 1.23, 1.23), isNotNull);
+      expect(PondRules.calculateVolume(null, 1.5), isNull);
+      expect(PondRules.calculateVolume(0, 1.5), isNull);
+      expect(PondRules.calculateVolume(double.infinity, 1.5), isNull);
+      expect(
+        PondRules.calculateVolume(PondRules.maxAreaM2, PondRules.maxDepthM),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'round-trips both readiness states and treats removed INACTIVE as unknown',
+    () {
+      for (final entry in <String, PondStatus>{
+        'AVAILABLE': PondStatus.available,
+        'MAINTENANCE': PondStatus.maintenance,
+        'INACTIVE': PondStatus.unknown,
+      }.entries) {
+        final pond = Pond.parse(<String, dynamic>{
+          'id': 'pond-1',
+          'farmId': 'farm-1',
+          'name': 'Pond',
+          'type': 'AQUACULTURE',
+          'status': entry.key,
+        });
+        expect(pond.status, entry.value);
+        if (entry.value != PondStatus.unknown) {
+          expect(pond.toJson()['status'], entry.key);
+        }
+      }
+    },
+  );
+
   test('parses pond detail with farm and open season state', () {
     final pond = Pond.parse(<String, dynamic>{
       'id': 'pond-1',

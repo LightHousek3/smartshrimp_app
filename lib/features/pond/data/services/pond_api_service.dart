@@ -2,6 +2,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 
+/// HTTP boundary for pond responses; accepts already mapped query/body values.
 abstract interface class PondRemoteDataSource {
   Future<PondPage> getPonds(String farmId, Map<String, dynamic> query);
   Future<Pond> getPond(String farmId, String pondId);
@@ -14,6 +15,7 @@ abstract interface class PondRemoteDataSource {
   Future<Pond> deletePond(String farmId, String pondId);
 }
 
+/// ApiClient owns authentication and envelopes; this adapter validates pond data.
 final class PondApiService implements PondRemoteDataSource {
   PondApiService(this._client);
   final ApiClient _client;
@@ -38,6 +40,7 @@ final class PondApiService implements PondRemoteDataSource {
           })
           .toList(growable: false);
       final meta = response.meta;
+      // Pagination must be complete and correctly typed before load-more can use it.
       if (meta == null ||
           meta['page'] is! int ||
           meta['limit'] is! int ||
@@ -96,6 +99,7 @@ final class PondApiService implements PondRemoteDataSource {
 
   @override
   Future<Pond> deletePond(String farmId, String pondId) async {
+    // DELETE returns the deleted pond snapshot in a 200 envelope, not an empty 204.
     final response = await _client.delete(
       '${_path(farmId)}/$pondId',
       authenticated: true,

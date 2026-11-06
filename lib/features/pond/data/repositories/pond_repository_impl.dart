@@ -3,6 +3,7 @@ import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
 import 'package:smartshrimp_app/features/pond/domain/repositories/pond_repository.dart';
 
+/// Normalize form values and map domain enums to the backend's uppercase contract.
 final class PondRepositoryImpl implements PondRepository {
   PondRepositoryImpl(this._remote);
   final PondRemoteDataSource _remote;
@@ -46,17 +47,17 @@ final class PondRepositoryImpl implements PondRepository {
     required String farmId,
     required String pondId,
     required String name,
-    required double areaM2,
-    required double depthM,
     double? volumeM3,
     required PondType type,
     required PondStatus status,
-  }) => _remote.updatePond(
-    farmId,
-    pondId,
-    _writeData(name, areaM2, depthM, volumeM3, type, status),
-  );
+  }) => _remote.updatePond(farmId, pondId, <String, dynamic>{
+    'name': PondRules.normalizeName(name),
+    'volumeM3': ?volumeM3,
+    'type': _typeValue(type),
+    'status': _statusValue(status),
+  });
 
+  // Creation defaults omitted volume to capacity; PATCH omissions preserve stored volume.
   static Map<String, dynamic> _writeData(
     String name,
     double areaM2,
@@ -73,6 +74,7 @@ final class PondRepositoryImpl implements PondRepository {
     'status': _statusValue(status),
   };
 
+  // Unknown is a read fallback only; never send it as a valid enum to the backend.
   static String _typeValue(PondType type) => switch (type) {
     PondType.aquaculture => 'AQUACULTURE',
     PondType.waterTreatment => 'WATER_TREATMENT',
@@ -82,7 +84,6 @@ final class PondRepositoryImpl implements PondRepository {
   static String _statusValue(PondStatus status) => switch (status) {
     PondStatus.available => 'AVAILABLE',
     PondStatus.maintenance => 'MAINTENANCE',
-    PondStatus.inactive => 'INACTIVE',
     PondStatus.unknown => throw ArgumentError.value(status, 'status'),
   };
 

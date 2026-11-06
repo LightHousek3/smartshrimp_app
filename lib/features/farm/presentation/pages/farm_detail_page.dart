@@ -161,6 +161,7 @@ class _FarmDetailContent extends ConsumerWidget {
                       context.push('/farms/${farm.id}/inventory', extra: farm),
                 ),
                 const SizedBox(height: 16),
+                // Farm detail supplies all embedded ponds; this section is not paginated.
                 _PondSection(
                   ponds: farm.ponds,
                   onAdd: () => context.push('/farms/${farm.id}/ponds/create'),
@@ -469,6 +470,7 @@ class _PondSectionState extends State<_PondSection> {
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
+    // Search and filters operate on the loaded farm snapshot, without API requests.
     final ponds = widget.ponds.where((pond) {
       final matchesName =
           query.isEmpty || pond.name.toLowerCase().contains(query);
@@ -563,7 +565,6 @@ class _PondSectionState extends State<_PondSection> {
                 values: const <PondStatus>[
                   PondStatus.available,
                   PondStatus.maintenance,
-                  PondStatus.inactive,
                 ],
                 text: _pondStatusLabel,
                 onChanged: (value) => setState(() => _status = value),
@@ -668,7 +669,6 @@ class _PondFilter<T> extends StatelessWidget {
 String _pondStatusLabel(PondStatus status) => switch (status) {
   PondStatus.available => 'Sẵn sàng',
   PondStatus.maintenance => 'Đang bảo trì',
-  PondStatus.inactive => 'Ngừng hoạt động',
   PondStatus.unknown => 'Không xác định',
 };
 
@@ -695,11 +695,6 @@ class _PondCard extends StatelessWidget {
         'Đang bảo trì',
         const Color(0xFFFBF0DC),
         const Color(0xFFD98314),
-      ),
-      PondStatus.inactive => (
-        'Ngừng hoạt động',
-        const Color(0xFFF0F1F4),
-        AppColors.inkMuted,
       ),
       PondStatus.unknown => (
         'Không xác định',

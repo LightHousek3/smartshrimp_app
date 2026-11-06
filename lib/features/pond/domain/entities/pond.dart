@@ -12,13 +12,13 @@ enum PondType {
   unknown,
 }
 
+/// Operational readiness; an open season is represented by [Pond.currentSeason].
 enum PondStatus {
   @JsonValue('AVAILABLE')
   available,
   @JsonValue('MAINTENANCE')
   maintenance,
-  @JsonValue('INACTIVE')
-  inactive,
+  // Preserve safe parsing when the server returns a future status.
   unknown,
 }
 
