@@ -12,6 +12,7 @@ import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
 import 'package:smartshrimp_app/features/pond/presentation/widgets/pond_ui.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 
+/// Use navigation data when available; direct edit links first load the pond.
 class PondEditPage extends ConsumerWidget {
   const PondEditPage({
     required this.farmId,
@@ -69,6 +70,7 @@ class PondEditPage extends ConsumerWidget {
   }
 }
 
+/// Shared create/edit form with local autofill and server-authoritative validation.
 class PondFormPage extends ConsumerStatefulWidget {
   const PondFormPage({required this.farmId, this.initialPond, super.key});
   final String farmId;
@@ -93,9 +95,40 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
   late final TextEditingController _area;
   late final TextEditingController _depth;
   late final TextEditingController _volume;
+  final _volumeFocus = FocusNode();
+  late bool _autoVolume;
   late PondType _type;
   late PondStatus _status;
   String? _volumeError;
+
+  bool get _editing => widget.initialPond != null;
+  bool get _canEditVolume => !_editing || _calculatedVolume != null;
+
+  // This is a UI snapshot: the backend rechecks occupancy if it changes meanwhile.
+  bool get _hasOpenSeason => widget.initialPond?.hasOpenSeason == true;
+
+  double? get _calculatedVolume => PondRules.calculateVolume(
+    PondRules.parseNumber(_area.text),
+    PondRules.parseNumber(_depth.text),
+  );
+
+  // Compare normalized values so formatting changes cannot trigger an empty update.
+  bool get _hasChanges {
+    final pond = widget.initialPond;
+    if (pond == null) return true;
+    final volume = _volume.text.trim().isEmpty
+        ? pond.volumeM3
+        : PondRules.parseNumber(_volume.text);
+    return PondRules.normalizeName(_name.text) !=
+            PondRules.normalizeName(pond.name) ||
+        volume != pond.volumeM3 ||
+        _type != pond.type ||
+        _status != pond.status;
+  }
+
+  // Allow an existing maintenance value, but never enter it with an open season.
+  bool get _canEnterMaintenance =>
+      !_hasOpenSeason || widget.initialPond?.status == PondStatus.maintenance;
 
   @override
   void initState() {
@@ -107,10 +140,53 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     _volume = TextEditingController(text: pond?.volumeM3?.toString() ?? '');
     _type = pond?.type ?? PondType.aquaculture;
     _status = pond?.status ?? PondStatus.available;
+    // Existing usable volume is intentional; never replace it on opening edit.
+    _autoVolume = !_editing;
+    if (_autoVolume) _fillVolume();
+    _volumeFocus.addListener(_onVolumeFocusChanged);
+  }
+
+  /// Fill only from supported dimensions; invalid dimensions clear an automatic value.
+  void _fillVolume() {
+    final text = _calculatedVolume?.toStringAsFixed(2) ?? '';
+    if (_volume.text == text) return;
+    _volume.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  void _onNumberChanged(TextEditingController controller) {
+    setState(() {
+      _volumeError = null;
+      if (identical(controller, _volume)) {
+        // Manual input takes precedence over later changes to dimensions.
+        _autoVolume = false;
+      } else if (_autoVolume) {
+        _fillVolume();
+      }
+    });
+  }
+
+  // Wait for blur so clearing/retyping a manual value is not interrupted by autofill.
+  void _onVolumeFocusChanged() {
+    if (!_editing && !_volumeFocus.hasFocus && _volume.text.trim().isEmpty) {
+      _useAutoVolume();
+    }
+  }
+
+  /// Clearing volume opts back into following dimension changes.
+  void _useAutoVolume() {
+    setState(() {
+      _autoVolume = true;
+      _volumeError = null;
+      _fillVolume();
+    });
   }
 
   @override
   void dispose() {
+    _volumeFocus.dispose();
     _name.dispose();
     _area.dispose();
     _depth.dispose();
@@ -160,33 +236,27 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                   maxLengthEnforcement: MaxLengthEnforcement.none,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: PondRules.validateName,
+                  onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
                     hintText: 'VD: Ao A1, Ao Lắng...',
                     counterText: '',
                   ),
                 ),
                 const SizedBox(height: 15),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: _numberField(
-                        _area,
-                        'Diện tích (m²)',
-                        '1200',
-                        PondRules.validateArea,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _numberField(
-                        _depth,
-                        'Độ sâu (m)',
-                        '1.5',
-                        PondRules.validateDepth,
-                      ),
-                    ),
-                  ],
+                _numberField(
+                  _area,
+                  'Diện tích (m²)',
+                  '1200',
+                  PondRules.validateArea,
+                  readOnly: editing,
+                ),
+                const SizedBox(height: 15),
+                _numberField(
+                  _depth,
+                  'Độ sâu (m)',
+                  '1.5',
+                  PondRules.validateDepth,
+                  readOnly: editing,
                 ),
                 if (_volumeError != null) ...<Widget>[
                   const SizedBox(height: 7),
@@ -203,10 +273,19 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                 _numberField(
                   _volume,
                   'Thể tích (m³) - tùy chọn',
-                  'Để trống để hệ thống tự tính',
+                  editing
+                      ? 'Để trống để giữ thể tích hiện tại'
+                      : 'Để trống để hệ thống tự tính',
                   PondRules.validateVolume,
                   required: false,
+                  readOnly: !_canEditVolume,
                 ),
+                if (editing && !_canEditVolume) ...<Widget>[
+                  const SizedBox(height: 7),
+                  const Text(
+                    'Chưa đủ thông tin diện tích và độ sâu để cập nhật thể tích.',
+                  ),
+                ],
                 const SizedBox(height: 15),
                 _label('Loại ao'),
                 const SizedBox(height: 8),
@@ -216,7 +295,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                       child: _ChoiceButton(
                         label: 'Ao nuôi',
                         selected: _type == PondType.aquaculture,
-                        onTap: loading
+                        onTap: loading || _hasOpenSeason
                             ? null
                             : () =>
                                   setState(() => _type = PondType.aquaculture),
@@ -227,7 +306,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                       child: _ChoiceButton(
                         label: 'Ao xử lý nước',
                         selected: _type == PondType.waterTreatment,
-                        onTap: loading
+                        onTap: loading || _hasOpenSeason
                             ? null
                             : () => setState(
                                 () => _type = PondType.waterTreatment,
@@ -246,10 +325,12 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                       const <PondStatus>[
                         PondStatus.available,
                         PondStatus.maintenance,
-                        PondStatus.inactive,
                       ].map((value) {
                         return DropdownMenuItem(
                           value: value,
+                          enabled:
+                              value != PondStatus.maintenance ||
+                              _canEnterMaintenance,
                           child: Text(pondStatusLabel(value)),
                         );
                       }).toList(),
@@ -260,7 +341,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                 if (widget.initialPond?.hasOpenSeason == true) ...<Widget>[
                   const SizedBox(height: 13),
                   const Text(
-                    'Ao có vụ nuôi mở: không thể đổi loại ao, ngừng hoạt động hoặc thay đổi diện tích/độ sâu.',
+                    'Ao có vụ nuôi mở: không thể đổi loại ao hoặc chuyển sang bảo trì.',
                     style: TextStyle(color: Color(0xFF9A5B00), fontSize: 12),
                   ),
                 ],
@@ -274,7 +355,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    onPressed: loading ? null : _submit,
+                    onPressed: loading || !_hasChanges ? null : _submit,
                     child: loading
                         ? const SizedBox.square(
                             dimension: 19,
@@ -300,6 +381,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     String hint,
     String? Function(String?) validator, {
     bool required = true,
+    bool readOnly = false,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
@@ -307,13 +389,13 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
       const SizedBox(height: 7),
       TextFormField(
         controller: controller,
+        readOnly: readOnly,
+        focusNode: identical(controller, _volume) ? _volumeFocus : null,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: <TextInputFormatter>[_decimalInputFormatter],
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        onChanged: (_) {
-          if (_volumeError != null) setState(() => _volumeError = null);
-        },
-        validator: validator,
+        onChanged: (_) => _onNumberChanged(controller),
+        validator: readOnly ? null : validator,
         decoration: InputDecoration(hintText: hint),
       ),
     ],
@@ -338,37 +420,55 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
   );
 
   Future<void> _submit() async {
+    // A submit tap may arrive before the volume field loses focus.
+    if (!_editing && _volume.text.trim().isEmpty) _useAutoVolume();
+    // Also guard the handler, not just the disabled save button.
+    if (!_hasChanges) return;
     if (!_formKey.currentState!.validate()) return;
-    final areaM2 = PondRules.parseNumber(_area.text)!;
-    final depthM = PondRules.parseNumber(_depth.text)!;
-    final volumeM3 = PondRules.parseNumber(_volume.text);
-    final volumeError = PondRules.validateCalculatedVolume(areaM2, depthM);
-    if (volumeError != null) {
-      setState(() => _volumeError = volumeError);
-      return;
-    }
-    final capacityError = PondRules.validateVolumeCapacity(
-      volumeM3,
-      areaM2,
-      depthM,
-    );
-    if (capacityError != null) {
-      setState(() => _volumeError = capacityError);
-      return;
+    final areaM2 = PondRules.parseNumber(_area.text);
+    final depthM = PondRules.parseNumber(_depth.text);
+    final volumeM3 = _canEditVolume
+        ? PondRules.parseNumber(_volume.text)
+        : null;
+    if ((!_editing || volumeM3 != null) && areaM2 != null && depthM != null) {
+      final volumeError = PondRules.validateCalculatedVolume(areaM2, depthM);
+      if (volumeError != null) {
+        setState(() => _volumeError = volumeError);
+        return;
+      }
+      final capacityError = PondRules.validateVolumeCapacity(
+        volumeM3,
+        areaM2,
+        depthM,
+      );
+      if (capacityError != null) {
+        setState(() => _volumeError = capacityError);
+        return;
+      }
     }
     if (_volumeError != null) setState(() => _volumeError = null);
+    // Validate locally for immediate feedback; backend checks capacity/ownership again.
     try {
-      final pond = await ref
-          .read(pondMutationControllerProvider(widget.farmId).notifier)
-          .save(
-            pondId: widget.initialPond?.id,
-            name: _name.text,
-            areaM2: areaM2,
-            depthM: depthM,
-            volumeM3: volumeM3,
-            type: _type,
-            status: _status,
-          );
+      final controller = ref.read(
+        pondMutationControllerProvider(widget.farmId).notifier,
+      );
+      final initialPond = widget.initialPond;
+      final pond = initialPond == null
+          ? await controller.createPond(
+              name: _name.text,
+              areaM2: areaM2!,
+              depthM: depthM!,
+              volumeM3: volumeM3,
+              type: _type,
+              status: _status,
+            )
+          : await controller.updatePond(
+              pondId: initialPond.id,
+              name: _name.text,
+              volumeM3: volumeM3,
+              type: _type,
+              status: _status,
+            );
       if (!mounted) return;
       AppNoticeService.success(
         context,

@@ -9,6 +9,5 @@ String pondTypeLabel(PondType type) => switch (type) {
 String pondStatusLabel(PondStatus status) => switch (status) {
   PondStatus.available => 'Sẵn sàng',
   PondStatus.maintenance => 'Bảo trì',
-  PondStatus.inactive => 'Ngừng hoạt động',
   PondStatus.unknown => 'Không xác định',
 };

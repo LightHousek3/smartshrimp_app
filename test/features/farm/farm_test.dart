@@ -4,6 +4,34 @@ import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/domain/farm_rules.dart';
 
 void main() {
+  test(
+    'farm pond readiness matches the pond API while farm INACTIVE stays valid',
+    () {
+      for (final entry in <String, PondStatus>{
+        'AVAILABLE': PondStatus.available,
+        'MAINTENANCE': PondStatus.maintenance,
+        'INACTIVE': PondStatus.unknown,
+      }.entries) {
+        final farm = Farm.parse(<String, dynamic>{
+          'id': 'farm-1',
+          'ownerId': 'owner-1',
+          'name': 'Farm',
+          'status': 'INACTIVE',
+          'ponds': <Object?>[
+            <String, dynamic>{
+              'id': 'pond-1',
+              'name': 'Pond',
+              'type': 'AQUACULTURE',
+              'status': entry.key,
+            },
+          ],
+        });
+        expect(farm.status, FarmStatus.inactive);
+        expect(farm.ponds.single.status, entry.value);
+      }
+    },
+  );
+
   test('parses the complete farm detail projection safely', () {
     final farm = Farm.parse(<String, dynamic>{
       'id': 'farm-1',

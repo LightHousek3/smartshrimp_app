@@ -17,6 +17,7 @@ import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_seas
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
 
+/// Owner pond details with separately loaded season history and mutation actions.
 class PondDetailPage extends ConsumerWidget {
   const PondDetailPage({required this.farmId, required this.pondId, super.key});
 
@@ -69,6 +70,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
 
   Pond get pond => widget.pond;
   PondSeasonScope get _scope => (farmId: pond.farmId, pondId: pond.id);
+  // The season API additionally checks farm activity and rechecks these conditions.
   bool get _canCreateSeason =>
       !pond.hasOpenSeason &&
       pond.type == PondType.aquaculture &&
@@ -386,6 +388,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     setState(() => _filter = value);
   }
 
+  // History pages have already been loaded by the provider; these tools filter locally.
   List<AquacultureSeason> _filterSeasons(List<AquacultureSeason> seasons) {
     final query = _searchController.text.trim().toLowerCase();
     return seasons
@@ -409,6 +412,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     await ref.read(pondSeasonHistoryProvider(_scope).future);
   }
 
+  /// Block known open seasons locally; the server also rejects historical references.
   Future<void> _delete() async {
     final confirmed = await showAppConfirmDialog(
       context,
