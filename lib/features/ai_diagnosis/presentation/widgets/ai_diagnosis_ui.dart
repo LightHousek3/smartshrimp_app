@@ -31,6 +31,13 @@ class AiIcon extends StatelessWidget {
 }
 
 abstract final class AiDiagnosisText {
+  static const unrecognized = 'Chưa thể nhận diện';
+  static const unrecognizedDetail =
+      'Chưa thể nhận diện bệnh thuộc các nhóm của mô hình';
+  static String resultLabel(
+    AiDiseaseLabel? value,
+    AiRecognitionStatus? status,
+  ) => status == AiRecognitionStatus.unrecognized ? unrecognized : label(value);
   static String label(AiDiseaseLabel? label) => switch (label) {
     AiDiseaseLabel.healthy => 'Khỏe mạnh',
     AiDiseaseLabel.bg => 'Mang đen',
@@ -39,7 +46,8 @@ abstract final class AiDiagnosisText {
     _ => 'Chưa xác định',
   };
   static String percent(double value) {
-    final number = value * 100;
+    // Truncate display precision so confidence below a cutoff does not appear to reach it.
+    final number = (value * 10000).floor() / 100;
     return '${number.toStringAsFixed(number == number.roundToDouble() ? 0 : 2).replaceAll('.', ',')}%';
   }
 

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AiDiagnosisSummary {
 
- String get id; DateTime get createdAt;@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus get runStatus; int get imageCount;@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? get predictedLabel; double? get confidence;
+ String get id; DateTime get createdAt;@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus get runStatus; int get imageCount;@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? get recognitionStatus;@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? get predictedLabel; double? get confidence;
 /// Create a copy of AiDiagnosisSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AiDiagnosisSummaryCopyWith<AiDiagnosisSummary> get copyWith => _$AiDiagnosisSum
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AiDiagnosisSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.imageCount, imageCount) || other.imageCount == imageCount)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AiDiagnosisSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.imageCount, imageCount) || other.imageCount == imageCount)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,createdAt,runStatus,imageCount,predictedLabel,confidence);
+int get hashCode => Object.hash(runtimeType,id,createdAt,runStatus,imageCount,recognitionStatus,predictedLabel,confidence);
 
 @override
 String toString() {
-  return 'AiDiagnosisSummary(id: $id, createdAt: $createdAt, runStatus: $runStatus, imageCount: $imageCount, predictedLabel: $predictedLabel, confidence: $confidence)';
+  return 'AiDiagnosisSummary(id: $id, createdAt: $createdAt, runStatus: $runStatus, imageCount: $imageCount, recognitionStatus: $recognitionStatus, predictedLabel: $predictedLabel, confidence: $confidence)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AiDiagnosisSummaryCopyWith<$Res>  {
   factory $AiDiagnosisSummaryCopyWith(AiDiagnosisSummary value, $Res Function(AiDiagnosisSummary) _then) = _$AiDiagnosisSummaryCopyWithImpl;
 @useResult
 $Res call({
- String id, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, int imageCount,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence
+ String id, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, int imageCount,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence
 });
 
 
@@ -65,13 +65,14 @@ class _$AiDiagnosisSummaryCopyWithImpl<$Res>
 
 /// Create a copy of AiDiagnosisSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? createdAt = null,Object? runStatus = null,Object? imageCount = null,Object? predictedLabel = freezed,Object? confidence = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? createdAt = null,Object? runStatus = null,Object? imageCount = null,Object? recognitionStatus = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,runStatus: null == runStatus ? _self.runStatus : runStatus // ignore: cast_nullable_to_non_nullable
 as AiRunStatus,imageCount: null == imageCount ? _self.imageCount : imageCount // ignore: cast_nullable_to_non_nullable
-as int,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as int,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
 as AiDiseaseLabel?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AiDiagnosisSummary() when $default != null:
-return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.predictedLabel,_that.confidence);case _:
+return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.recognitionStatus,_that.predictedLabel,_that.confidence);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)  $default,) {final _that = this;
 switch (_that) {
 case _AiDiagnosisSummary():
-return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.predictedLabel,_that.confidence);case _:
+return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.recognitionStatus,_that.predictedLabel,_that.confidence);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  int imageCount, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence)?  $default,) {final _that = this;
 switch (_that) {
 case _AiDiagnosisSummary() when $default != null:
-return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.predictedLabel,_that.confidence);case _:
+return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.recognitionStatus,_that.predictedLabel,_that.confidence);case _:
   return null;
 
 }
@@ -213,14 +214,15 @@ return $default(_that.id,_that.createdAt,_that.runStatus,_that.imageCount,_that.
 /// @nodoc
 @JsonSerializable()
 
-class _AiDiagnosisSummary implements AiDiagnosisSummary {
-  const _AiDiagnosisSummary({required this.id, required this.createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown) required this.runStatus, required this.imageCount, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) this.predictedLabel, this.confidence});
+class _AiDiagnosisSummary extends AiDiagnosisSummary {
+  const _AiDiagnosisSummary({required this.id, required this.createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown) required this.runStatus, required this.imageCount, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) this.recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) this.predictedLabel, this.confidence}): super._();
   factory _AiDiagnosisSummary.fromJson(Map<String, dynamic> json) => _$AiDiagnosisSummaryFromJson(json);
 
 @override final  String id;
 @override final  DateTime createdAt;
 @override@JsonKey(unknownEnumValue: AiRunStatus.unknown) final  AiRunStatus runStatus;
 @override final  int imageCount;
+@override@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) final  AiRecognitionStatus? recognitionStatus;
 @override@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) final  AiDiseaseLabel? predictedLabel;
 @override final  double? confidence;
 
@@ -237,16 +239,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AiDiagnosisSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.imageCount, imageCount) || other.imageCount == imageCount)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AiDiagnosisSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.imageCount, imageCount) || other.imageCount == imageCount)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,createdAt,runStatus,imageCount,predictedLabel,confidence);
+int get hashCode => Object.hash(runtimeType,id,createdAt,runStatus,imageCount,recognitionStatus,predictedLabel,confidence);
 
 @override
 String toString() {
-  return 'AiDiagnosisSummary(id: $id, createdAt: $createdAt, runStatus: $runStatus, imageCount: $imageCount, predictedLabel: $predictedLabel, confidence: $confidence)';
+  return 'AiDiagnosisSummary(id: $id, createdAt: $createdAt, runStatus: $runStatus, imageCount: $imageCount, recognitionStatus: $recognitionStatus, predictedLabel: $predictedLabel, confidence: $confidence)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class _$AiDiagnosisSummaryCopyWith<$Res> implements $AiDiagnosisS
   factory _$AiDiagnosisSummaryCopyWith(_AiDiagnosisSummary value, $Res Function(_AiDiagnosisSummary) _then) = __$AiDiagnosisSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- String id, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, int imageCount,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence
+ String id, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, int imageCount,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence
 });
 
 
@@ -274,13 +276,14 @@ class __$AiDiagnosisSummaryCopyWithImpl<$Res>
 
 /// Create a copy of AiDiagnosisSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? createdAt = null,Object? runStatus = null,Object? imageCount = null,Object? predictedLabel = freezed,Object? confidence = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? createdAt = null,Object? runStatus = null,Object? imageCount = null,Object? recognitionStatus = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,}) {
   return _then(_AiDiagnosisSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,runStatus: null == runStatus ? _self.runStatus : runStatus // ignore: cast_nullable_to_non_nullable
 as AiRunStatus,imageCount: null == imageCount ? _self.imageCount : imageCount // ignore: cast_nullable_to_non_nullable
-as int,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as int,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
 as AiDiseaseLabel?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -825,7 +828,7 @@ as String?,
 /// @nodoc
 mixin _$AiDiagnosisDetail {
 
- String get id; String get seasonId; DateTime get createdAt;@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus get runStatus; List<String> get imageUrls; DateTime? get imageUrlsExpireAt; String? get modelVersion; int? get processingTimeMs;@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? get predictedLabel; double? get confidence; List<AiPrediction> get predictions; String? get recommendation; AiDiagnosisError? get error;
+ String get id; String get seasonId; DateTime get createdAt;@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus get runStatus; List<String> get imageUrls; DateTime? get imageUrlsExpireAt; String? get modelVersion; int? get processingTimeMs;@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? get recognitionStatus;@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? get predictedLabel; double? get confidence; List<AiPrediction> get predictions; String? get recommendation; AiDiagnosisError? get error;
 /// Create a copy of AiDiagnosisDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -838,16 +841,16 @@ $AiDiagnosisDetailCopyWith<AiDiagnosisDetail> get copyWith => _$AiDiagnosisDetai
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AiDiagnosisDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.predictions, predictions)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AiDiagnosisDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other.predictions, predictions)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.error, error) || other.error == error));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,seasonId,createdAt,runStatus,const DeepCollectionEquality().hash(imageUrls),imageUrlsExpireAt,modelVersion,processingTimeMs,predictedLabel,confidence,const DeepCollectionEquality().hash(predictions),recommendation,error);
+int get hashCode => Object.hash(runtimeType,id,seasonId,createdAt,runStatus,const DeepCollectionEquality().hash(imageUrls),imageUrlsExpireAt,modelVersion,processingTimeMs,recognitionStatus,predictedLabel,confidence,const DeepCollectionEquality().hash(predictions),recommendation,error);
 
 @override
 String toString() {
-  return 'AiDiagnosisDetail(id: $id, seasonId: $seasonId, createdAt: $createdAt, runStatus: $runStatus, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt, modelVersion: $modelVersion, processingTimeMs: $processingTimeMs, predictedLabel: $predictedLabel, confidence: $confidence, predictions: $predictions, recommendation: $recommendation, error: $error)';
+  return 'AiDiagnosisDetail(id: $id, seasonId: $seasonId, createdAt: $createdAt, runStatus: $runStatus, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt, modelVersion: $modelVersion, processingTimeMs: $processingTimeMs, recognitionStatus: $recognitionStatus, predictedLabel: $predictedLabel, confidence: $confidence, predictions: $predictions, recommendation: $recommendation, error: $error)';
 }
 
 
@@ -858,7 +861,7 @@ abstract mixin class $AiDiagnosisDetailCopyWith<$Res>  {
   factory $AiDiagnosisDetailCopyWith(AiDiagnosisDetail value, $Res Function(AiDiagnosisDetail) _then) = _$AiDiagnosisDetailCopyWithImpl;
 @useResult
 $Res call({
- String id, String seasonId, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, List<String> imageUrls, DateTime? imageUrlsExpireAt, String? modelVersion, int? processingTimeMs,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence, List<AiPrediction> predictions, String? recommendation, AiDiagnosisError? error
+ String id, String seasonId, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, List<String> imageUrls, DateTime? imageUrlsExpireAt, String? modelVersion, int? processingTimeMs,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence, List<AiPrediction> predictions, String? recommendation, AiDiagnosisError? error
 });
 
 
@@ -875,7 +878,7 @@ class _$AiDiagnosisDetailCopyWithImpl<$Res>
 
 /// Create a copy of AiDiagnosisDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? createdAt = null,Object? runStatus = null,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,Object? modelVersion = freezed,Object? processingTimeMs = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,Object? predictions = null,Object? recommendation = freezed,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? createdAt = null,Object? runStatus = null,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,Object? modelVersion = freezed,Object? processingTimeMs = freezed,Object? recognitionStatus = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,Object? predictions = null,Object? recommendation = freezed,Object? error = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -885,7 +888,8 @@ as AiRunStatus,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ign
 as List<String>,imageUrlsExpireAt: freezed == imageUrlsExpireAt ? _self.imageUrlsExpireAt : imageUrlsExpireAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,modelVersion: freezed == modelVersion ? _self.modelVersion : modelVersion // ignore: cast_nullable_to_non_nullable
 as String?,processingTimeMs: freezed == processingTimeMs ? _self.processingTimeMs : processingTimeMs // ignore: cast_nullable_to_non_nullable
-as int?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as int?,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
 as AiDiseaseLabel?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,predictions: null == predictions ? _self.predictions : predictions // ignore: cast_nullable_to_non_nullable
 as List<AiPrediction>,recommendation: freezed == recommendation ? _self.recommendation : recommendation // ignore: cast_nullable_to_non_nullable
@@ -987,10 +991,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AiDiagnosisDetail() when $default != null:
-return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
+return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.recognitionStatus,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
   return orElse();
 
 }
@@ -1008,10 +1012,10 @@ return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.im
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)  $default,) {final _that = this;
 switch (_that) {
 case _AiDiagnosisDetail():
-return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
+return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.recognitionStatus,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1028,10 +1032,10 @@ return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.im
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  DateTime createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown)  AiRunStatus runStatus,  List<String> imageUrls,  DateTime? imageUrlsExpireAt,  String? modelVersion,  int? processingTimeMs, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)  AiDiseaseLabel? predictedLabel,  double? confidence,  List<AiPrediction> predictions,  String? recommendation,  AiDiagnosisError? error)?  $default,) {final _that = this;
 switch (_that) {
 case _AiDiagnosisDetail() when $default != null:
-return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
+return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.imageUrls,_that.imageUrlsExpireAt,_that.modelVersion,_that.processingTimeMs,_that.recognitionStatus,_that.predictedLabel,_that.confidence,_that.predictions,_that.recommendation,_that.error);case _:
   return null;
 
 }
@@ -1043,7 +1047,7 @@ return $default(_that.id,_that.seasonId,_that.createdAt,_that.runStatus,_that.im
 @JsonSerializable()
 
 class _AiDiagnosisDetail extends AiDiagnosisDetail {
-  const _AiDiagnosisDetail({required this.id, required this.seasonId, required this.createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown) required this.runStatus, required final  List<String> imageUrls, this.imageUrlsExpireAt, this.modelVersion, this.processingTimeMs, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) this.predictedLabel, this.confidence, final  List<AiPrediction> predictions = const [], this.recommendation, this.error}): _imageUrls = imageUrls,_predictions = predictions,super._();
+  const _AiDiagnosisDetail({required this.id, required this.seasonId, required this.createdAt, @JsonKey(unknownEnumValue: AiRunStatus.unknown) required this.runStatus, required final  List<String> imageUrls, this.imageUrlsExpireAt, this.modelVersion, this.processingTimeMs, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) this.recognitionStatus, @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) this.predictedLabel, this.confidence, final  List<AiPrediction> predictions = const [], this.recommendation, this.error}): _imageUrls = imageUrls,_predictions = predictions,super._();
   factory _AiDiagnosisDetail.fromJson(Map<String, dynamic> json) => _$AiDiagnosisDetailFromJson(json);
 
 @override final  String id;
@@ -1060,6 +1064,7 @@ class _AiDiagnosisDetail extends AiDiagnosisDetail {
 @override final  DateTime? imageUrlsExpireAt;
 @override final  String? modelVersion;
 @override final  int? processingTimeMs;
+@override@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) final  AiRecognitionStatus? recognitionStatus;
 @override@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) final  AiDiseaseLabel? predictedLabel;
 @override final  double? confidence;
  final  List<AiPrediction> _predictions;
@@ -1085,16 +1090,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AiDiagnosisDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other._predictions, _predictions)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AiDiagnosisDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&const DeepCollectionEquality().equals(other._predictions, _predictions)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.error, error) || other.error == error));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,seasonId,createdAt,runStatus,const DeepCollectionEquality().hash(_imageUrls),imageUrlsExpireAt,modelVersion,processingTimeMs,predictedLabel,confidence,const DeepCollectionEquality().hash(_predictions),recommendation,error);
+int get hashCode => Object.hash(runtimeType,id,seasonId,createdAt,runStatus,const DeepCollectionEquality().hash(_imageUrls),imageUrlsExpireAt,modelVersion,processingTimeMs,recognitionStatus,predictedLabel,confidence,const DeepCollectionEquality().hash(_predictions),recommendation,error);
 
 @override
 String toString() {
-  return 'AiDiagnosisDetail(id: $id, seasonId: $seasonId, createdAt: $createdAt, runStatus: $runStatus, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt, modelVersion: $modelVersion, processingTimeMs: $processingTimeMs, predictedLabel: $predictedLabel, confidence: $confidence, predictions: $predictions, recommendation: $recommendation, error: $error)';
+  return 'AiDiagnosisDetail(id: $id, seasonId: $seasonId, createdAt: $createdAt, runStatus: $runStatus, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt, modelVersion: $modelVersion, processingTimeMs: $processingTimeMs, recognitionStatus: $recognitionStatus, predictedLabel: $predictedLabel, confidence: $confidence, predictions: $predictions, recommendation: $recommendation, error: $error)';
 }
 
 
@@ -1105,7 +1110,7 @@ abstract mixin class _$AiDiagnosisDetailCopyWith<$Res> implements $AiDiagnosisDe
   factory _$AiDiagnosisDetailCopyWith(_AiDiagnosisDetail value, $Res Function(_AiDiagnosisDetail) _then) = __$AiDiagnosisDetailCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String seasonId, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, List<String> imageUrls, DateTime? imageUrlsExpireAt, String? modelVersion, int? processingTimeMs,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence, List<AiPrediction> predictions, String? recommendation, AiDiagnosisError? error
+ String id, String seasonId, DateTime createdAt,@JsonKey(unknownEnumValue: AiRunStatus.unknown) AiRunStatus runStatus, List<String> imageUrls, DateTime? imageUrlsExpireAt, String? modelVersion, int? processingTimeMs,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(unknownEnumValue: AiDiseaseLabel.unknown) AiDiseaseLabel? predictedLabel, double? confidence, List<AiPrediction> predictions, String? recommendation, AiDiagnosisError? error
 });
 
 
@@ -1122,7 +1127,7 @@ class __$AiDiagnosisDetailCopyWithImpl<$Res>
 
 /// Create a copy of AiDiagnosisDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? createdAt = null,Object? runStatus = null,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,Object? modelVersion = freezed,Object? processingTimeMs = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,Object? predictions = null,Object? recommendation = freezed,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? createdAt = null,Object? runStatus = null,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,Object? modelVersion = freezed,Object? processingTimeMs = freezed,Object? recognitionStatus = freezed,Object? predictedLabel = freezed,Object? confidence = freezed,Object? predictions = null,Object? recommendation = freezed,Object? error = freezed,}) {
   return _then(_AiDiagnosisDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -1132,7 +1137,8 @@ as AiRunStatus,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ig
 as List<String>,imageUrlsExpireAt: freezed == imageUrlsExpireAt ? _self.imageUrlsExpireAt : imageUrlsExpireAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,modelVersion: freezed == modelVersion ? _self.modelVersion : modelVersion // ignore: cast_nullable_to_non_nullable
 as String?,processingTimeMs: freezed == processingTimeMs ? _self.processingTimeMs : processingTimeMs // ignore: cast_nullable_to_non_nullable
-as int?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as int?,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
 as AiDiseaseLabel?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,predictions: null == predictions ? _self._predictions : predictions // ignore: cast_nullable_to_non_nullable
 as List<AiPrediction>,recommendation: freezed == recommendation ? _self.recommendation : recommendation // ignore: cast_nullable_to_non_nullable

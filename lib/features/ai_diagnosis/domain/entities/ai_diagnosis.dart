@@ -24,6 +24,14 @@ enum AiDiseaseLabel {
   unknown,
 }
 
+enum AiRecognitionStatus {
+  @JsonValue('RECOGNIZED')
+  recognized,
+  @JsonValue('UNRECOGNIZED')
+  unrecognized,
+  unknown,
+}
+
 /// Keep parser failures inside the app's shared invalid-response contract.
 T _checked<T>(T Function() parse) {
   try {
@@ -42,12 +50,15 @@ bool _probability(double? value) =>
 
 @freezed
 abstract class AiDiagnosisSummary with _$AiDiagnosisSummary {
+  const AiDiagnosisSummary._();
   const factory AiDiagnosisSummary({
     required String id,
     required DateTime createdAt,
     @JsonKey(unknownEnumValue: AiRunStatus.unknown)
     required AiRunStatus runStatus,
     required int imageCount,
+    @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)
+    AiRecognitionStatus? recognitionStatus,
     @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)
     AiDiseaseLabel? predictedLabel,
     double? confidence,
@@ -55,6 +66,8 @@ abstract class AiDiagnosisSummary with _$AiDiagnosisSummary {
 
   factory AiDiagnosisSummary.fromJson(Map<String, dynamic> json) =>
       _$AiDiagnosisSummaryFromJson(json);
+
+  bool get isRecognized => recognitionStatus == AiRecognitionStatus.recognized;
 
   static AiDiagnosisSummary parse(Object? raw) => _checked(() {
     _require(raw is Map<String, dynamic>);
@@ -70,12 +83,22 @@ abstract class AiDiagnosisSummary with _$AiDiagnosisSummary {
     );
     if (value.runStatus == AiRunStatus.success) {
       _require(
-        value.predictedLabel != null &&
-            value.predictedLabel != AiDiseaseLabel.unknown &&
+        value.recognitionStatus != null &&
+            value.recognitionStatus != AiRecognitionStatus.unknown &&
             _probability(value.confidence),
       );
+      _require(
+        value.isRecognized
+            ? value.predictedLabel != null &&
+                  value.predictedLabel != AiDiseaseLabel.unknown
+            : value.predictedLabel == null,
+      );
     } else {
-      _require(value.predictedLabel == null && value.confidence == null);
+      _require(
+        value.recognitionStatus == null &&
+            value.predictedLabel == null &&
+            value.confidence == null,
+      );
     }
     return value;
   });
@@ -113,6 +136,8 @@ abstract class AiDiagnosisDetail with _$AiDiagnosisDetail {
     DateTime? imageUrlsExpireAt,
     String? modelVersion,
     int? processingTimeMs,
+    @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)
+    AiRecognitionStatus? recognitionStatus,
     @JsonKey(unknownEnumValue: AiDiseaseLabel.unknown)
     AiDiseaseLabel? predictedLabel,
     double? confidence,
@@ -122,6 +147,8 @@ abstract class AiDiagnosisDetail with _$AiDiagnosisDetail {
   }) = _AiDiagnosisDetail;
   factory AiDiagnosisDetail.fromJson(Map<String, dynamic> json) =>
       _$AiDiagnosisDetailFromJson(json);
+
+  bool get isRecognized => recognitionStatus == AiRecognitionStatus.recognized;
 
   bool imageUrlsExpiredAt(DateTime now) =>
       imageUrlsExpireAt != null &&
@@ -152,9 +179,15 @@ abstract class AiDiagnosisDetail with _$AiDiagnosisDetail {
     );
     if (value.runStatus == AiRunStatus.success) {
       _require(
-        value.predictedLabel != null &&
-            value.predictedLabel != AiDiseaseLabel.unknown &&
+        value.recognitionStatus != null &&
+            value.recognitionStatus != AiRecognitionStatus.unknown &&
             _probability(value.confidence),
+      );
+      _require(
+        value.isRecognized
+            ? value.predictedLabel != null &&
+                  value.predictedLabel != AiDiseaseLabel.unknown
+            : value.predictedLabel == null,
       );
       _require(value.error == null && value.predictions.length == 4);
       _require(value.predictions.map((p) => p.label).toSet().length == 4);
@@ -169,7 +202,9 @@ abstract class AiDiagnosisDetail with _$AiDiagnosisDetail {
         (sum, p) => sum + p.probability,
       );
       _require((total - 1).abs() <= 0.000001);
-      _require(value.predictions.first.label == value.predictedLabel);
+      if (value.isRecognized) {
+        _require(value.predictions.first.label == value.predictedLabel);
+      }
       // SQL stores confidence with five decimals; prediction probabilities retain source precision.
       _require(
         (value.predictions.first.probability - value.confidence!).abs() <=
@@ -184,7 +219,8 @@ abstract class AiDiagnosisDetail with _$AiDiagnosisDetail {
     } else {
       _require(value.error != null && value.error!.message.trim().isNotEmpty);
       _require(
-        value.predictedLabel == null &&
+        value.recognitionStatus == null &&
+            value.predictedLabel == null &&
             value.confidence == null &&
             value.predictions.isEmpty,
       );
