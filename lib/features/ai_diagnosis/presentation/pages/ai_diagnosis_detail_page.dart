@@ -229,6 +229,8 @@ class _ResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final success = detail.runStatus == AiRunStatus.success;
+    final recognized = success && detail.isRecognized;
+    const uncertainColor = Color(0xFFB36B00);
     return AiCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -247,7 +249,9 @@ class _ResultCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         success
-                            ? AiDiagnosisText.label(detail.predictedLabel)
+                            ? recognized
+                                  ? AiDiagnosisText.label(detail.predictedLabel)
+                                  : AiDiagnosisText.unrecognizedDetail
                             : 'Nhận diện không thành công',
                         style: const TextStyle(
                           color: AppColors.ink,
@@ -264,17 +268,25 @@ class _ResultCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: success
+                        color: recognized
                             ? const Color(0xFFE2F6F3)
+                            : success
+                            ? const Color(0xFFFCF0DA)
                             : const Color(0xFFFBE6EA),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Text(
-                        success ? '● Thành công' : '● Lỗi',
+                        recognized
+                            ? '● Thành công'
+                            : success
+                            ? '● Chưa đủ tin cậy'
+                            : '● Lỗi',
                         style: TextStyle(
                           fontSize: 11,
-                          color: success
+                          color: recognized
                               ? AiDiagnosisStyle.teal
+                              : success
+                              ? uncertainColor
                               : AppColors.error,
                           fontWeight: FontWeight.w600,
                         ),
@@ -300,7 +312,9 @@ class _ResultCard extends StatelessWidget {
                         style: AppTypography.mono(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AiDiagnosisStyle.purple,
+                          color: recognized
+                              ? AiDiagnosisStyle.purple
+                              : uncertainColor,
                         ),
                       ),
                     ],
@@ -311,7 +325,9 @@ class _ResultCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: detail.confidence,
                       minHeight: 8,
-                      color: AiDiagnosisStyle.purple,
+                      color: recognized
+                          ? AiDiagnosisStyle.purple
+                          : uncertainColor,
                       backgroundColor: const Color(0xFFF1F5F9),
                     ),
                   ),

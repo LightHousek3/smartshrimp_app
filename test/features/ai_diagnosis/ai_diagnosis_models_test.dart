@@ -22,14 +22,19 @@ void main() {
     'B: accepts SQL confidence rounding while retaining prediction precision',
     () {
       final json = diagnosisJson();
-      (json['predictions'] as List)[0]['probability'] = 0.780004;
-      (json['predictions'] as List)[1]['probability'] = 0.119996;
-      expect(AiDiagnosisDetail.parse(json).confidence, 0.78);
+      (json['predictions'] as List)[0]['probability'] = 0.900004;
+      (json['predictions'] as List)[1]['probability'] = 0.049996;
+      expect(AiDiagnosisDetail.parse(json).confidence, 0.9);
     },
   );
   for (final entry in <String, void Function(Map<String, dynamic>)>{
     'unknown label': (j) => j['predictedLabel'] = 'White Feces Syndrome',
     'unknown status': (j) => j['runStatus'] = 'PENDING',
+    'missing recognition status': (j) => j.remove('recognitionStatus'),
+    'unknown recognition status': (j) => j['recognitionStatus'] = 'OTHER',
+    'recognized without label': (j) => j['predictedLabel'] = null,
+    'unrecognized with disease label': (j) =>
+        j['recognitionStatus'] = 'UNRECOGNIZED',
     'missing identity': (j) => j.remove('id'),
     'empty images': (j) => j['imageUrls'] = [],
     'insecure URL': (j) => j['imageUrls'] = ['http://images.test/a'],
@@ -57,6 +62,25 @@ void main() {
       );
     });
   }
+  test(
+    'N: unrecognized results preserve four probabilities without a public disease label',
+    () {
+      final detail = AiDiagnosisDetail.parse(
+        diagnosisJson(confidence: 0.79, recognized: false),
+      );
+      expect(detail.runStatus, AiRunStatus.success);
+      expect(detail.recognitionStatus, AiRecognitionStatus.unrecognized);
+      expect(detail.isRecognized, isFalse);
+      expect(detail.predictedLabel, isNull);
+      expect(detail.predictions.length, 4);
+      expect(detail.confidence, 0.79);
+      final summary = AiDiagnosisSummary.parse(
+        summaryJson(confidence: 0.79, recognized: false),
+      );
+      expect(summary.predictedLabel, isNull);
+      expect(summary.isRecognized, isFalse);
+    },
+  );
   test('B: signed image expiry includes a five-second safety margin', () {
     final d = AiDiagnosisDetail.parse(diagnosisJson());
     expect(

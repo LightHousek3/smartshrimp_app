@@ -33,8 +33,18 @@ class FailedHistory extends DiagnosisFixtureRepository {
 }
 
 class ClassificationFixtureRepository extends DiagnosisFixtureRepository {
-  ClassificationFixtureRepository(String label) {
-    result = AiDiagnosisDetail.parse(diagnosisJson(predictedLabel: label));
+  ClassificationFixtureRepository(
+    String label, {
+    double confidence = 0.9,
+    bool recognized = true,
+  }) {
+    result = AiDiagnosisDetail.parse(
+      diagnosisJson(
+        predictedLabel: label,
+        confidence: confidence,
+        recognized: recognized,
+      ),
+    );
   }
 
   @override
@@ -42,7 +52,10 @@ class ClassificationFixtureRepository extends DiagnosisFixtureRepository {
       (await super.list(seasonId, cursor: cursor)).copyWith(
         items: [
           AiDiagnosisSummary.parse({
-            ...summaryJson(),
+            ...summaryJson(
+              confidence: result.confidence!,
+              recognized: result.isRecognized,
+            ),
             'predictedLabel': result.toJson()['predictedLabel'],
           }),
         ],
@@ -298,7 +311,7 @@ void main() {
         repository: ClassificationFixtureRepository(entry.key),
       );
       expect(find.text(entry.value), findsOneWidget);
-      expect(find.text('78%'), findsOneWidget);
+      expect(find.text('90%'), findsOneWidget);
       final status = find.text('● Thành công');
       final header = find
           .ancestor(of: status, matching: find.byType(Row))
@@ -314,6 +327,111 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  for (final label in [
+    'Khỏe mạnh',
+    'Mang đen',
+    'Đốm trắng',
+    'Đốm trắng và mang đen',
+  ]) {
+    testWidgets('N: low-confidence $label is unrecognized in history', (
+      tester,
+    ) async {
+      await mount(
+        tester,
+        repository: ClassificationFixtureRepository(
+          label,
+          confidence: 0.79,
+          recognized: false,
+        ),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Chưa thể nhận diện'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Chưa thể nhận diện'), findsOneWidget);
+      expect(find.text(label), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+    testWidgets('N: low-confidence $label is unrecognized in detail', (
+      tester,
+    ) async {
+      await mount(
+        tester,
+        detail: true,
+        width: 320,
+        textScale: 1.5,
+        repository: ClassificationFixtureRepository(
+          label,
+          confidence: 0.79,
+          recognized: false,
+        ),
+      );
+      expect(
+        find.text('Chưa thể nhận diện bệnh thuộc các nhóm của mô hình'),
+        findsOneWidget,
+      );
+      expect(find.text('Chưa thể nhận diện'), findsNothing);
+      expect(find.text('● Chưa đủ tin cậy'), findsOneWidget);
+      expect(find.text('● Thành công'), findsNothing);
+      expect(find.text('● Lỗi'), findsNothing);
+      expect(find.text(label), findsNothing);
+      expect(find.text('79%'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Khuyến nghị từ AI'), 200);
+      expect(
+        find.text(
+          'Vui lòng cung cấp lại ảnh tôm rõ nét, đủ sáng và thấy rõ vùng nghi bệnh để hỗ trợ nhận diện, hoặc liên hệ Chuyên gia để kiểm tra.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .getTopLeft(find.textContaining('Vui lòng cung cấp lại ảnh tôm'))
+            .dy,
+        greaterThan(tester.getTopLeft(find.text('Khuyến nghị từ AI')).dy),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets(
+    'B: exactly 80% remains recognized and lower values are not rounded up',
+    (tester) async {
+      await mount(
+        tester,
+        detail: true,
+        repository: ClassificationFixtureRepository(
+          'Khỏe mạnh',
+          confidence: 0.8,
+        ),
+      );
+      expect(find.text('Khỏe mạnh'), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
+      expect(find.text('● Thành công'), findsOneWidget);
+      expect(
+        find.textContaining('Vui lòng cung cấp lại ảnh tôm'),
+        findsNothing,
+      );
+    },
+  );
+  testWidgets('B: confidence just below 80% is displayed below the cutoff', (
+    tester,
+  ) async {
+    await mount(
+      tester,
+      detail: true,
+      repository: ClassificationFixtureRepository(
+        'Khỏe mạnh',
+        confidence: 0.799999,
+        recognized: false,
+      ),
+    );
+    expect(
+      find.text('Chưa thể nhận diện bệnh thuộc các nhóm của mô hình'),
+      findsOneWidget,
+    );
+    expect(find.text('79,99%'), findsOneWidget);
+    expect(find.text('80%'), findsNothing);
+  });
   testWidgets(
     'B: five selected images cannot be edited or resubmitted while processing',
     (tester) async {
@@ -356,7 +474,7 @@ void main() {
       isNull,
     );
     expect(find.text('Đốm trắng'), findsOneWidget);
-    expect(find.text('78%'), findsOneWidget);
+    expect(find.text('90%'), findsOneWidget);
     expect(find.textContaining('https://'), findsNothing);
     await capture(tester, 'empty');
     expect(tester.takeException(), isNull);
@@ -439,7 +557,7 @@ void main() {
     (tester) async {
       await mount(tester, detail: true);
       expect(find.text('Đốm trắng'), findsOneWidget);
-      expect(find.text('78%'), findsOneWidget);
+      expect(find.text('90%'), findsOneWidget);
       expect(find.text('1,406 s'), findsOneWidget);
       await capture(tester, 'detail');
       await tester.scrollUntilVisible(

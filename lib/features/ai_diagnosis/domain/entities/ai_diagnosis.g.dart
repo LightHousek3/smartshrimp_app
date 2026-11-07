@@ -16,6 +16,11 @@ _AiDiagnosisSummary _$AiDiagnosisSummaryFromJson(Map<String, dynamic> json) =>
         unknownValue: AiRunStatus.unknown,
       ),
       imageCount: (json['imageCount'] as num).toInt(),
+      recognitionStatus: $enumDecodeNullable(
+        _$AiRecognitionStatusEnumMap,
+        json['recognitionStatus'],
+        unknownValue: AiRecognitionStatus.unknown,
+      ),
       predictedLabel: $enumDecodeNullable(
         _$AiDiseaseLabelEnumMap,
         json['predictedLabel'],
@@ -24,20 +29,28 @@ _AiDiagnosisSummary _$AiDiagnosisSummaryFromJson(Map<String, dynamic> json) =>
       confidence: (json['confidence'] as num?)?.toDouble(),
     );
 
-Map<String, dynamic> _$AiDiagnosisSummaryToJson(_AiDiagnosisSummary instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'runStatus': _$AiRunStatusEnumMap[instance.runStatus]!,
-      'imageCount': instance.imageCount,
-      'predictedLabel': _$AiDiseaseLabelEnumMap[instance.predictedLabel],
-      'confidence': instance.confidence,
-    };
+Map<String, dynamic> _$AiDiagnosisSummaryToJson(
+  _AiDiagnosisSummary instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'runStatus': _$AiRunStatusEnumMap[instance.runStatus]!,
+  'imageCount': instance.imageCount,
+  'recognitionStatus': _$AiRecognitionStatusEnumMap[instance.recognitionStatus],
+  'predictedLabel': _$AiDiseaseLabelEnumMap[instance.predictedLabel],
+  'confidence': instance.confidence,
+};
 
 const _$AiRunStatusEnumMap = {
   AiRunStatus.success: 'SUCCESS',
   AiRunStatus.error: 'ERROR',
   AiRunStatus.unknown: 'unknown',
+};
+
+const _$AiRecognitionStatusEnumMap = {
+  AiRecognitionStatus.recognized: 'RECOGNIZED',
+  AiRecognitionStatus.unrecognized: 'UNRECOGNIZED',
+  AiRecognitionStatus.unknown: 'unknown',
 };
 
 const _$AiDiseaseLabelEnumMap = {
@@ -91,6 +104,11 @@ _AiDiagnosisDetail _$AiDiagnosisDetailFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['imageUrlsExpireAt'] as String),
       modelVersion: json['modelVersion'] as String?,
       processingTimeMs: (json['processingTimeMs'] as num?)?.toInt(),
+      recognitionStatus: $enumDecodeNullable(
+        _$AiRecognitionStatusEnumMap,
+        json['recognitionStatus'],
+        unknownValue: AiRecognitionStatus.unknown,
+      ),
       predictedLabel: $enumDecodeNullable(
         _$AiDiseaseLabelEnumMap,
         json['predictedLabel'],
@@ -108,22 +126,24 @@ _AiDiagnosisDetail _$AiDiagnosisDetailFromJson(Map<String, dynamic> json) =>
           : AiDiagnosisError.fromJson(json['error'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$AiDiagnosisDetailToJson(_AiDiagnosisDetail instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'seasonId': instance.seasonId,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'runStatus': _$AiRunStatusEnumMap[instance.runStatus]!,
-      'imageUrls': instance.imageUrls,
-      'imageUrlsExpireAt': instance.imageUrlsExpireAt?.toIso8601String(),
-      'modelVersion': instance.modelVersion,
-      'processingTimeMs': instance.processingTimeMs,
-      'predictedLabel': _$AiDiseaseLabelEnumMap[instance.predictedLabel],
-      'confidence': instance.confidence,
-      'predictions': instance.predictions,
-      'recommendation': instance.recommendation,
-      'error': instance.error,
-    };
+Map<String, dynamic> _$AiDiagnosisDetailToJson(
+  _AiDiagnosisDetail instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'seasonId': instance.seasonId,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'runStatus': _$AiRunStatusEnumMap[instance.runStatus]!,
+  'imageUrls': instance.imageUrls,
+  'imageUrlsExpireAt': instance.imageUrlsExpireAt?.toIso8601String(),
+  'modelVersion': instance.modelVersion,
+  'processingTimeMs': instance.processingTimeMs,
+  'recognitionStatus': _$AiRecognitionStatusEnumMap[instance.recognitionStatus],
+  'predictedLabel': _$AiDiseaseLabelEnumMap[instance.predictedLabel],
+  'confidence': instance.confidence,
+  'predictions': instance.predictions,
+  'recommendation': instance.recommendation,
+  'error': instance.error,
+};
 
 _AiDiagnosisPagination _$AiDiagnosisPaginationFromJson(
   Map<String, dynamic> json,

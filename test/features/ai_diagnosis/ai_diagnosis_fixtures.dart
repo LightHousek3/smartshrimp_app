@@ -13,6 +13,8 @@ Map<String, dynamic> diagnosisJson({
   bool error = false,
   String id = 'diagnosis',
   String predictedLabel = 'Đốm trắng',
+  double confidence = 0.9,
+  bool recognized = true,
 }) => {
   'id': id,
   'seasonId': 'season',
@@ -30,10 +32,11 @@ Map<String, dynamic> diagnosisJson({
       'message': 'Dịch vụ nhận diện chưa sẵn sàng.',
     }
   else ...{
-    'predictedLabel': predictedLabel,
-    'confidence': 0.78,
+    'recognitionStatus': recognized ? 'RECOGNIZED' : 'UNRECOGNIZED',
+    'predictedLabel': recognized ? predictedLabel : null,
+    'confidence': confidence,
     'predictions': [
-      {'label': predictedLabel, 'probability': 0.78},
+      {'label': predictedLabel, 'probability': confidence},
       for (final (index, label) in [
         'Khỏe mạnh',
         'Mang đen',
@@ -42,23 +45,30 @@ Map<String, dynamic> diagnosisJson({
       ].where((label) => label != predictedLabel).indexed)
         {
           'label': label,
-          'probability': [0.12, 0.07, 0.03][index],
+          'probability': (1 - confidence) * [0.5, 0.3, 0.2][index],
         },
     ],
-    'recommendation':
-        'Ghi nhận dấu hiệu bất thường và liên hệ Chuyên gia để kiểm tra.',
+    'recommendation': recognized
+        ? 'Ghi nhận dấu hiệu bất thường và liên hệ Chuyên gia để kiểm tra.'
+        : 'Vui lòng cung cấp lại ảnh tôm rõ nét, đủ sáng và thấy rõ vùng nghi bệnh để hỗ trợ nhận diện, hoặc liên hệ Chuyên gia để kiểm tra.',
   },
 };
 
 Map<String, dynamic> summaryJson({
   String id = 'diagnosis',
   bool error = false,
+  double confidence = 0.9,
+  bool recognized = true,
 }) => {
   'id': id,
   'createdAt': '2026-11-05T02:05:00Z',
   'runStatus': error ? 'ERROR' : 'SUCCESS',
   'imageCount': 1,
-  if (!error) ...{'predictedLabel': 'Đốm trắng', 'confidence': 0.78},
+  if (!error) ...{
+    'recognitionStatus': recognized ? 'RECOGNIZED' : 'UNRECOGNIZED',
+    'predictedLabel': recognized ? 'Đốm trắng' : null,
+    'confidence': confidence,
+  },
 };
 
 AiDiagnosisPage diagnosisPage({bool more = false, String id = 'diagnosis'}) =>

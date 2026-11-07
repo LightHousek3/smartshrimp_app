@@ -489,7 +489,10 @@ class _HistoryCard extends StatelessWidget {
               Text(
                 item.runStatus == AiRunStatus.error
                     ? 'Nhận diện không thành công'
-                    : AiDiagnosisText.label(item.predictedLabel),
+                    : AiDiagnosisText.resultLabel(
+                        item.predictedLabel,
+                        item.recognitionStatus,
+                      ),
                 style: const TextStyle(
                   color: AppColors.ink,
                   fontSize: 13,
