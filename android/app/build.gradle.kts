@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.smartshrimp_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // webview_flutter uses the platform WebView and supports Android SDK 24+.
+        // MapLibre and the existing plugins require at most Android SDK 24.
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

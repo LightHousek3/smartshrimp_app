@@ -1,0 +1,7 @@
+{
+  "API_BASE_URL": "https://api.example.com/api/v1",
+  "GOONG_MAPTILES_KEY": "your-maptiles-key",
+  "CLOUDINARY_CLOUD_NAME": "your-cloud-name",
+  "CLOUDINARY_UPLOAD_PRESET": "your-upload-preset",
+  "AI_DIAGNOSIS_TIMEOUT_SECONDS": 300
+}
