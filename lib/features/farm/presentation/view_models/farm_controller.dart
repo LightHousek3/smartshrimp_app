@@ -1,6 +1,4 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/config/app_config.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -16,23 +14,8 @@ final farmRemoteDataSourceProvider = Provider<FarmRemoteDataSource>((ref) {
   return FarmApiService(ref.watch(apiClientProvider));
 });
 
-final farmGeocodingDioProvider = Provider<Dio>((ref) {
-  return Dio(
-    BaseOptions(
-      baseUrl: AppConfig.osmNominatimBaseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: const <String, Object>{
-        'Accept': 'application/json',
-        'Accept-Language': 'vi',
-        'User-Agent': AppConfig.osmUserAgent,
-      },
-    ),
-  );
-});
-
 final farmGeocodingServiceProvider = Provider<FarmGeocodingService>((ref) {
-  return NominatimFarmGeocodingService(ref.watch(farmGeocodingDioProvider));
+  return GoongFarmGeocodingService(ref.watch(apiClientProvider));
 });
 
 final deviceLocationServiceProvider = Provider<DeviceLocationService>((ref) {
