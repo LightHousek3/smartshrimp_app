@@ -271,7 +271,13 @@ class _SeasonDetailContent extends ConsumerWidget {
           label: 'Đo nước',
           background: const Color(0xFFEAF4FF),
           foreground: const Color(0xFF1378D1),
-          onTap: () => _comingSoon(context, 'Nhật ký đo nước'),
+          onTap: () => context.push(
+            '/farms/$farmId/ponds/$pondId/seasons/${season.id}/water-logs',
+            extra: <String, String>{
+              'pondName': season.pond.name,
+              'seasonName': season.name,
+            },
+          ),
         ),
       ),
       const SizedBox(width: 8),

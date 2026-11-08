@@ -52,6 +52,7 @@ void main() {
     });
     expect(stats.series.single.values['ph']!.count, 2);
     expect(stats.series.single.values['ph']!.avg, 8.5);
+    expect(stats.parameters['ph']!.exceedCount, isNull);
   });
 
   test('list and statistics serialize local dates as UTC instants', () async {
@@ -72,7 +73,9 @@ void main() {
                 'data': isStatistics
                     ? {
                         'seasonId': 'season',
-                        'from': request.queryParameters['from'],
+                        'from':
+                            request.queryParameters['from'] ??
+                            request.queryParameters['to'],
                         'to': request.queryParameters['to'],
                         'granularity': 'day',
                         'summary': {
@@ -101,6 +104,12 @@ void main() {
       expect(request.queryParameters['to'], to.toUtc().toIso8601String());
       expect((request.queryParameters['from'] as String).endsWith('Z'), isTrue);
     }
+    await api.getStatistics('season', to: to, granularity: 'day');
+    expect(requests.last.method, 'GET');
+    expect(requests.last.path, '/me/seasons/season/water-logs/statistics');
+    expect(requests.last.queryParameters.containsKey('from'), isFalse);
+    expect(requests.last.queryParameters['to'], to.toUtc().toIso8601String());
+    expect(requests.last.queryParameters['granularity'], 'day');
   });
 
   test(
@@ -236,7 +245,7 @@ final class _Repository implements WaterLogRepository {
   @override
   Future<WaterLogStatistics> getStatistics({
     required String seasonId,
-    required DateTime from,
+    DateTime? from,
     required DateTime to,
     required String granularity,
   }) => throw UnimplementedError();

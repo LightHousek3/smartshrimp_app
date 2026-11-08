@@ -60,7 +60,7 @@ final waterLogCanWriteProvider = Provider.autoDispose.family<bool, String>((
       AssignedSeasonStatus.active;
 });
 
-typedef WaterLogStatsQuery = ({String seasonId, int days, String granularity});
+typedef WaterLogStatsQuery = ({String seasonId, int? days, String granularity});
 
 final waterLogStatisticsProvider = FutureProvider.autoDispose
     .family<WaterLogStatistics, WaterLogStatsQuery>((ref, query) async {
@@ -70,15 +70,19 @@ final waterLogStatisticsProvider = FutureProvider.autoDispose
       try {
         return await repository.getStatistics(
           seasonId: query.seasonId,
-          from: to.subtract(Duration(days: query.days)),
+          from: query.days == null
+              ? null
+              : to.subtract(Duration(days: query.days!)),
           to: to,
-          granularity: query.granularity,
+          granularity: query.days == null ? 'day' : query.granularity,
         );
       } on SessionExpiredException {
-        await ref.read(authControllerProvider.notifier).expireSession();
+        if (ref.mounted) {
+          await ref.read(authControllerProvider.notifier).expireSession();
+        }
         rethrow;
       }
-    });
+    }, retry: waterLogReadRetry);
 
 final waterLogRevisionProvider = NotifierProvider.autoDispose
     .family<WaterLogRevision, int, String>(WaterLogRevision.new);

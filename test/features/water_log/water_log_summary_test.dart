@@ -116,14 +116,32 @@ void main() {
             body: SingleChildScrollView(
               child: WaterThresholdSummary(
                 metadata: WaterLogMetadata.legacy(ShrimpType.whiteleg),
-                logs: [
-                  _log('ph', 7),
-                  _log('ph', 9),
-                  _log('ph', 7.5),
-                  _log('ph', 8.5),
-                  _log('ph', null),
-                  _log('ph', 9, voided: true),
-                ],
+                statistics: WaterLogStatistics.parse({
+                  'seasonId': 'season',
+                  'from': '2026-01-01',
+                  'to': '2026-01-02',
+                  'granularity': 'day',
+                  'summary': {
+                    'totalRecords': 6,
+                    'validRecords': 5,
+                    'voidedRecords': 1,
+                    'parameters': {
+                      'ph': {
+                        'count': 4,
+                        'avg': 8,
+                        'min': 7,
+                        'max': 9,
+                        'exceedCount': 2,
+                        'belowMinCount': 1,
+                        'aboveMaxCount': 1,
+                        'belowMinRate': .25,
+                        'aboveMaxRate': .25,
+                        'exceedanceRate': .5,
+                      },
+                    },
+                  },
+                  'series': [],
+                }),
               ),
             ),
           ),

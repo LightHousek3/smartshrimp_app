@@ -228,7 +228,7 @@ void main() {
         overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
       );
       addTearDown(container.dispose);
-      const query = (seasonId: 'season', days: 30, granularity: 'day');
+      const query = (seasonId: 'season', days: null, granularity: 'day');
       const other = (seasonId: 'other', days: 30, granularity: 'day');
       final listSub = container.listen(
         waterLogListProvider('season'),
@@ -333,14 +333,14 @@ class _Repository implements WaterLogRepository {
   @override
   Future<WaterLogStatistics> getStatistics({
     required String seasonId,
-    required DateTime from,
+    DateTime? from,
     required DateTime to,
     required String granularity,
   }) async {
     statsReads.update(seasonId, (count) => count + 1, ifAbsent: () => 1);
     return WaterLogStatistics.parse({
       'seasonId': seasonId,
-      'from': from.toIso8601String(),
+      'from': (from ?? to).toIso8601String(),
       'to': to.toIso8601String(),
       'granularity': granularity,
       'summary': {

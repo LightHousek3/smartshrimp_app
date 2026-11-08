@@ -4,18 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
-import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_summary.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
 
 String _number(double? value) => formatWaterValue(value).replaceAll('.', ',');
 
 class WaterThresholdSummary extends StatelessWidget {
   const WaterThresholdSummary({
-    required this.logs,
+    required this.statistics,
     required this.metadata,
     super.key,
   });
-  final List<WaterLog> logs;
+  final WaterLogStatistics statistics;
   final WaterLogMetadata metadata;
 
   @override
@@ -33,20 +32,22 @@ class WaterThresholdSummary extends StatelessWidget {
           metric: metadata.metrics.firstWhere(
             (metric) => metric.field == param.field,
           ),
-          counts: summarizeWaterMetric(
-            logs,
-            metadata.metrics.firstWhere(
-              (metric) => metric.field == param.field,
-            ),
-          ),
+          stat: statistics.parameters[param.field],
         ),
     ];
-    final measured = rows.fold(0, (sum, row) => sum + row.counts.measured);
-    final outside = rows.fold(
+    final measured = statistics.parameters.values.fold(
       0,
-      (sum, row) => sum + row.counts.above + row.counts.below,
+      (sum, stat) => sum + stat.count,
     );
-    final validLogs = logs.where((log) => !log.isVoided).length;
+    final hasCounts = statistics.parameters.values.every(
+      (stat) => stat.count == 0 || stat.exceedCount != null,
+    );
+    final outside = hasCounts
+        ? statistics.parameters.values
+              .fold(0, (sum, stat) => sum + (stat.exceedCount ?? 0))
+              .toString()
+        : '—';
+    final validLogs = statistics.validRecords;
     return Container(
       key: const Key('water_average_summary'),
       clipBehavior: Clip.antiAlias,
@@ -135,7 +136,7 @@ class WaterThresholdSummary extends StatelessWidget {
                               ),
                               param: rows[row * 2 + column].param,
                               metric: rows[row * 2 + column].metric,
-                              counts: rows[row * 2 + column].counts,
+                              stat: rows[row * 2 + column].stat,
                             ),
                           ),
                         ],
@@ -156,12 +157,12 @@ class _MetricCard extends StatelessWidget {
   const _MetricCard({
     required this.param,
     required this.metric,
-    required this.counts,
+    required this.stat,
     super.key,
   });
   final WaterLogParam param;
   final WaterMetricMetadata metric;
-  final WaterMetricSummary counts;
+  final WaterLogParamStat? stat;
 
   String get unit => param.unit;
   String get threshold {
@@ -209,7 +210,7 @@ class _MetricCard extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
-            _number(counts.average),
+            _number(stat?.avg),
             key: Key('water_average_${param.field}'),
             style: GoogleFonts.plusJakartaSans(
               color: AppColors.ink,
@@ -250,9 +251,9 @@ class _MetricCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
               child: Text(
-                counts.measured == 0
+                stat == null || stat!.count == 0 || stat!.exceedCount == null
                     ? '—'
-                    : '${counts.within}/${counts.measured}',
+                    : '${stat!.count - stat!.exceedCount!}/${stat!.count}',
                 style: const TextStyle(
                   color: Color(0xFF00A496),
                   fontSize: 10,
@@ -270,8 +271,9 @@ class _MetricCard extends StatelessWidget {
             Expanded(
               child: _RateTile(
                 label: 'Thấp hơn',
-                count: counts.below,
-                measured: counts.measured,
+                count: stat?.belowMinCount,
+                rate: stat?.belowMinRate,
+                measured: stat?.count ?? 0,
                 high: false,
               ),
             ),
@@ -279,8 +281,9 @@ class _MetricCard extends StatelessWidget {
             Expanded(
               child: _RateTile(
                 label: 'Cao hơn',
-                count: counts.above,
-                measured: counts.measured,
+                count: stat?.aboveMaxCount,
+                rate: stat?.aboveMaxRate,
+                measured: stat?.count ?? 0,
                 high: true,
               ),
             ),
@@ -295,29 +298,33 @@ class _RateTile extends StatelessWidget {
   const _RateTile({
     required this.label,
     required this.count,
+    required this.rate,
     required this.measured,
     required this.high,
   });
   final String label;
-  final int count, measured;
+  final int? count;
+  final double? rate;
+  final int measured;
   final bool high;
-  String get rate {
-    if (measured == 0) return '—';
-    final value = count * 100 / measured;
-    final percentage = value > 0 && value < .1
+  bool get hasData => measured > 0 && count != null && rate != null;
+  String get value {
+    if (!hasData) return '—';
+    final percent = rate! * 100;
+    final label = percent > 0 && percent < .1
         ? '<0,1'
-        : value
+        : percent
               .toStringAsFixed(1)
               .replaceFirst(RegExp(r'\.0$'), '')
               .replaceAll('.', ',');
-    return '$count · $percentage%';
+    return '$count · $label%';
   }
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
-      color: count == 0
+      color: !hasData || count == 0
           ? const Color(0xFFEEF1F6)
           : high
           ? const Color(0xFFFBE6EA)
@@ -340,9 +347,9 @@ class _RateTile extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
-            rate,
+            value,
             style: TextStyle(
-              color: count == 0
+              color: !hasData || count == 0
                   ? AppColors.inkMuted
                   : high
                   ? AppColors.error

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
@@ -13,50 +12,35 @@ import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
-import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_trend_provider.dart';
-
-WaterLog _log(int day, double oxygen, {bool voided = false}) => WaterLog(
-  id: 'log-$day',
-  seasonId: 'season',
-  recordedAt: DateTime(2026, 9, day, 6),
-  createdAt: DateTime(2026, 9, day, 6),
-  isVoided: voided,
-  exceededParameters: oxygen < 4 ? ['dissolvedOxygenMgL'] : [],
-  dissolvedOxygenMgL: oxygen,
-  temperatureC: 28.5,
-  salinityPpt: 15.3,
-  nh3MgL: .012,
-  no2MgL: .08,
-  alkalinityMgLCaCO3: 142,
-  ph: 8,
-  h2sMgL: .00001,
-);
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_trend_chart.dart';
+import 'water_statistics_fixtures.dart';
 
 class _Repository implements WaterLogRepository {
-  final requests =
-      <
-        ({
-          DateTime? from,
-          DateTime? to,
-          String? cursor,
-          int limit,
-          bool includeVoided,
-        })
-      >[];
-  List<WaterLog> logs = [
-    for (var i = 0; i < 12; i++)
-      _log(
-        i + 7,
-        [4.6, 3.9, 4.25, 4.5, 4.7, 4.4, 4.15, 3.85, 4.35, 4.8, 5.0, 5.2][i],
-      ),
-  ];
-  bool paginated = false;
-  bool badCursor = false;
-  AppException? error;
-  Completer<WaterLogPage>? pending;
+  final requests = <({DateTime? from, DateTime to, String granularity})>[];
+  int listCalls = 0, metadataCalls = 0;
+  WaterLogStatistics data = sampleStatistics();
+  AppException? error, metadataError;
+  Completer<WaterLogStatistics>? pending;
   @override
-  Future<WaterLogMetadata> getMetadata({required String seasonId}) async =>
-      WaterLogMetadata.legacy(ShrimpType.whiteleg);
+  Future<WaterLogMetadata> getMetadata({required String seasonId}) async {
+    metadataCalls++;
+    if (metadataError != null) throw metadataError!;
+    return WaterLogMetadata.legacy(ShrimpType.whiteleg);
+  }
+
+  @override
+  Future<WaterLogStatistics> getStatistics({
+    required String seasonId,
+    DateTime? from,
+    required DateTime to,
+    required String granularity,
+  }) async {
+    requests.add((from: from, to: to, granularity: granularity));
+    if (error != null) throw error!;
+    if (pending != null) return pending!.future;
+    return data;
+  }
+
   @override
   Future<WaterLogPage> getWaterLogs({
     required String seasonId,
@@ -68,43 +52,12 @@ class _Repository implements WaterLogRepository {
     int limit = 20,
     String? cursor,
   }) async {
-    requests.add((
-      from: from,
-      to: to,
-      cursor: cursor,
-      limit: limit,
-      includeVoided: includeVoided,
-    ));
-    if (error != null) throw error!;
-    if (pending != null) return pending!.future;
-    if (paginated) {
-      return WaterLogPage(
-        items: cursor == null
-            ? [_log(9, 5), _log(10, 9, voided: true)]
-            : [_log(9, 5), _log(7, 3.9)],
-        totalResults: 3,
-        hasNextPage: cursor == null || badCursor,
-        nextCursor: 'next',
-      );
-    }
-    return WaterLogPage(
-      items: logs.reversed.toList(),
-      totalResults: logs.length,
-      hasNextPage: false,
-    );
+    listCalls++;
+    return const WaterLogPage(items: [], totalResults: 0, hasNextPage: false);
   }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-Future<ProviderContainer> _container(_Repository repository) async {
-  final container = ProviderContainer(
-    retry: (_, _) => null,
-    overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
-  );
-  addTearDown(container.dispose);
-  return container;
 }
 
 Future<void> _open(
@@ -115,17 +68,10 @@ Future<void> _open(
   bool settle = true,
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
-  tester.view.physicalSize = Size(width, 874);
+  tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
-  tester.view.padding = const FakeViewPadding(top: 24);
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  addTearDown(tester.view.resetPadding);
-  Widget stats(String? pond, String? season) => WaterLogStatisticsPage(
-    seasonId: 'season',
-    pondName: pond,
-    seasonName: season,
-  );
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -136,13 +82,21 @@ Future<void> _open(
                 pondName: 'Ao A3',
                 seasonName: 'Vụ Đông Xuân 2025',
               )
-            : stats('Ao A3', 'Vụ Đông Xuân 2025'),
+            : const WaterLogStatisticsPage(
+                seasonId: 'season',
+                pondName: 'Ao A3',
+                seasonName: 'Vụ Đông Xuân 2025',
+              ),
       ),
       GoRoute(
         path: '/seasons/season/water-logs/statistics',
         builder: (_, state) {
           final extra = state.extra as Map<String, String>;
-          return stats(extra['pondName'], extra['seasonName']);
+          return WaterLogStatisticsPage(
+            seasonId: 'season',
+            pondName: extra['pondName'],
+            seasonName: extra['seasonName'],
+          );
         },
       ),
     ],
@@ -154,145 +108,193 @@ Future<void> _open(
         waterLogRepositoryProvider.overrideWithValue(repository),
         waterLogCanWriteProvider('season').overrideWithValue(false),
       ],
-      child: RepaintBoundary(
-        key: const Key('preview'),
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          routerConfig: router,
-        ),
-      ),
+      child: MaterialApp.router(routerConfig: router),
     ),
   );
-  await tester.pump();
-  await tester.runAsync(() => GoogleFonts.pendingFonts());
   if (settle) await tester.pumpAndSettle();
 }
 
 void main() {
-  test(
-    'all fetches every page, deduplicates, sorts and excludes voided rows',
-    () async {
-      final repository = _Repository()..paginated = true;
-      final container = await _container(repository);
-      final result = await container.read(
-        waterLogTrendProvider((seasonId: 'season', days: null)).future,
-      );
-      expect(result.logs.map((log) => log.id), ['log-7', 'log-9']);
-      expect(repository.requests.map((r) => r.cursor), [null, 'next']);
-      expect(
-        repository.requests.every(
-          (r) =>
-              r.from == null &&
-              r.to == null &&
-              r.limit == 50 &&
-              !r.includeVoided,
-        ),
-        isTrue,
-      );
-      expect(repository.requests.first.to, repository.requests.last.to);
-    },
-  );
-  for (final days in [7, 30]) {
+  for (final days in <int?>[7, 30, null]) {
     test(
-      '$days day range is sent to the API with a fixed end instant',
+      'statistics provider sends $days days using one fixed end instant',
       () async {
         final repository = _Repository();
-        final container = await _container(repository);
+        final container = ProviderContainer(
+          overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(container.dispose);
+        final before = DateTime.now();
         await container.read(
-          waterLogTrendProvider((seasonId: 'season', days: days)).future,
+          waterLogStatisticsProvider((
+            seasonId: 'season',
+            days: days,
+            granularity: 'day',
+          )).future,
         );
         final request = repository.requests.single;
-        expect(request.to!.difference(request.from!), Duration(days: days));
+        expect(request.to.isBefore(before), isFalse);
+        expect(request.to.isAfter(DateTime.now()), isFalse);
+        expect(
+          request.from,
+          days == null ? null : request.to.subtract(Duration(days: days)),
+        );
+        expect(request.granularity, 'day');
+        expect(repository.listCalls, 0);
       },
     );
   }
-  test(
-    'non-progressing pagination fails instead of silently truncating',
-    () async {
-      final container = await _container(
-        _Repository()
-          ..paginated = true
-          ..badCursor = true,
+
+  testWidgets('chips request statistics only and summary uses backend totals', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await _open(tester, repository, width: 320);
+    expect(find.text('Thống kê chất lượng nước'), findsOneWidget);
+    expect(find.text('11 lần đo hợp lệ'), findsOneWidget);
+    expect(
+      find.text('11 nhật ký hợp lệ · 6/17 phép đo ngoài ngưỡng'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const Key('water_average_dissolvedOxygenMgL')),
+          )
+          .data,
+      '6,37',
+    );
+    expect(
+      repository.requests.single.to.difference(
+        repository.requests.single.from!,
+      ),
+      const Duration(days: 7),
+    );
+    expect(find.text('4 · 40%'), findsOneWidget);
+    expect(find.text('0 · 0%'), findsOneWidget);
+    for (final days in <int?>[7, 30, null]) {
+      final chip = find.byKey(Key('water_range_${days ?? 'all'}'));
+      await tester.ensureVisible(chip);
+      await tester.pumpAndSettle();
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+      final request = repository.requests.last;
+      expect(
+        request.from,
+        days == null ? null : request.to.subtract(Duration(days: days)),
       );
-      final provider = waterLogTrendProvider((seasonId: 'season', days: null));
-      final subscription = container.listen(provider, (_, _) {});
-      addTearDown(subscription.close);
-      await expectLater(
-        container.read(provider.future),
-        throwsA(isA<InvalidResponseException>()),
+      expect(request.granularity, 'day');
+    }
+    expect(repository.requests, hasLength(3));
+    expect(repository.listCalls, 0);
+    final chart = tester.widget<WaterTrendChart>(find.byType(WaterTrendChart));
+    expect(chart.field, 'dissolvedOxygenMgL');
+    expect(chart.series, hasLength(3));
+    expect(chart.series.map((p) => p.values[chart.field]!.avg), [5, 6, 7]);
+    expect(chart.metric.warningMin, 4);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'refresh and revision reload backend data without a list request',
+    (tester) async {
+      final repository = _Repository();
+      await _open(tester, repository);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WaterLogStatisticsPage)),
+      );
+      repository.data = sampleStatistics(empty: true);
+      container.read(waterLogRevisionProvider('season').notifier).changed();
+      await tester.pumpAndSettle();
+      expect(find.text('0 lần đo hợp lệ'), findsOneWidget);
+      expect(
+        find.text(
+          'Chưa có dữ liệu cho chỉ số này trong khoảng thời gian đã chọn.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(WaterTrendChart), findsNothing);
+      final reads = repository.requests.length;
+      await tester
+          .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+          .onRefresh();
+      await tester.pumpAndSettle();
+      expect(repository.requests, hasLength(reads + 1));
+      expect(repository.listCalls, 0);
+    },
+  );
+
+  testWidgets(
+    'old response keeps averages but does not infer counts from rates',
+    (tester) async {
+      await _open(
+        tester,
+        _Repository()..data = sampleStatistics(counts: false),
+      );
+      expect(
+        find.text('11 nhật ký hợp lệ · —/17 phép đo ngoài ngưỡng'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const Key('water_average_dissolvedOxygenMgL')),
+            )
+            .data,
+        '6,37',
       );
     },
   );
-  test('mutation revision reloads trend data', () async {
-    final repository = _Repository();
-    final container = await _container(repository);
-    final provider = waterLogTrendProvider((seasonId: 'season', days: null));
-    final sub = container.listen(provider, (_, _) {});
-    addTearDown(sub.close);
-    await container.read(provider.future);
-    repository.logs = [];
-    container.read(waterLogRevisionProvider('season').notifier).changed();
-    expect((await container.read(provider.future)).logs, isEmpty);
-  });
-  testWidgets('statistics button navigates with pond and season labels', (
-    tester,
-  ) async {
-    await _open(tester, _Repository(), list: true);
-    await expectLater(
-      find.byKey(const Key('preview')),
-      matchesGoldenFile('goldens/water_list_statistics_button.png'),
-    );
-    await tester.tap(find.byKey(const Key('water_statistics_button')));
-    await tester.pumpAndSettle();
-    expect(find.byType(WaterLogStatisticsPage), findsOneWidget);
-    expect(find.text('Ao A3 · Vụ Đông Xuân 2025'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-  testWidgets('trend matches Figma layout and supports sample selection', (
-    tester,
-  ) async {
-    await _open(tester, _Repository());
-    expect(find.text('12 lần đo hợp lệ'), findsOneWidget);
-    expect(find.text('10/12 lần đo'), findsOneWidget);
-    expect(find.text('từ 4 mg/L'), findsOneWidget);
-    expect(find.text('5,2'), findsOneWidget);
-    expect(find.text('Tăng 0,2 mg/L'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.byKey(const Key('water_trend_chart'))).dy,
-      lessThan(
-        tester.getTopLeft(find.byKey(const Key('water_average_summary'))).dy,
-      ),
-    );
-    await expectLater(
-      find.byKey(const Key('preview')),
-      matchesGoldenFile('goldens/water_statistics.png'),
-    );
-    await tester.ensureVisible(find.byKey(const Key('water_trend_chart')));
-    await tester.pumpAndSettle();
-    final chart = tester.getRect(find.byKey(const Key('water_trend_chart')));
-    await tester.tapAt(Offset(chart.left + 12, chart.center.dy));
+
+  testWidgets('loading, API error and retry remain usable', (tester) async {
+    final repository = _Repository()..pending = Completer<WaterLogStatistics>();
+    await _open(tester, repository, settle: false);
     await tester.pump();
-    expect(find.text('4,6'), findsOneWidget);
-    expect(find.text('Chưa có lần đo trước'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    repository.pending!.completeError(
+      const ApiException('Statistics unavailable', statusCode: 403),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Statistics unavailable'), findsOneWidget);
+    repository.pending = null;
+    await tester.tap(find.text('Thử lại'));
+    await tester.pumpAndSettle();
+    expect(find.byType(WaterTrendChart), findsOneWidget);
+    expect(repository.listCalls, 0);
   });
-  testWidgets(
-    'small screen switches range and scrolls to H2S without losing precision',
-    (tester) async {
-      final repository = _Repository();
-      await _open(tester, repository, width: 320);
-      await tester.ensureVisible(find.byKey(const Key('water_range_7')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('water_range_7')));
-      await tester.pumpAndSettle();
-      expect(
-        repository.requests.last.to!.difference(repository.requests.last.from!),
-        const Duration(days: 7),
+
+  testWidgets('metadata errors retry independently of statistics aggregation', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..metadataError = const ApiException(
+        'Metadata unavailable',
+        statusCode: 403,
       );
-      await tester.ensureVisible(find.byType(ListView).first);
-      await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView).first, const Offset(-600, 0));
+    await _open(tester, repository);
+    expect(find.text('Metadata unavailable'), findsOneWidget);
+    repository.metadataError = null;
+    await tester.tap(find.text('Thử lại'));
+    await tester.pumpAndSettle();
+    expect(find.byType(WaterTrendChart), findsOneWidget);
+  });
+
+  testWidgets(
+    'metric switching preserves five-decimal precision on narrow screens',
+    (tester) async {
+      final payload = statisticsJson();
+      payload['series'] = [
+        {
+          'bucket': '2026-01-01',
+          'h2sMgL': {'count': 1, 'min': .00001, 'max': .00001, 'avg': .00001},
+        },
+      ];
+      final repository = _Repository()
+        ..data = WaterLogStatistics.parse(payload);
+      await _open(tester, repository, width: 320);
+      final metrics = find.byType(ListView).first;
+      await tester.ensureVisible(metrics);
+      await tester.drag(metrics, const Offset(-600, 0));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('water_metric_h2sMgL')));
       await tester.pumpAndSettle();
@@ -302,31 +304,57 @@ void main() {
             .data,
         '0,00001',
       );
-      expect(find.text('12/12 lần đo'), findsOneWidget);
+      expect(repository.listCalls, 0);
+      expect(repository.requests, hasLength(1));
       expect(tester.takeException(), isNull);
     },
   );
-  testWidgets('loading, API error, retry and empty metric remain usable', (
+
+  testWidgets('statistics button still navigates with pond and season labels', (
     tester,
   ) async {
-    final repository = _Repository()..pending = Completer<WaterLogPage>();
-    await _open(tester, repository, settle: false);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    repository.pending!.completeError(const NetworkException());
+    final repository = _Repository();
+    await _open(tester, repository, list: true);
+    await tester.tap(find.byKey(const Key('water_statistics_button')));
     await tester.pumpAndSettle();
-    expect(find.text(const NetworkException().message), findsOneWidget);
-    repository.pending = null;
-    repository.logs = [];
-    await tester.tap(find.text('Thử lại'));
-    await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Chưa có dữ liệu cho chỉ số này'),
-      findsOneWidget,
-    );
-    repository.error = const NetworkException();
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 350));
-    await tester.pumpAndSettle();
-    expect(find.text(const NetworkException().message), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    expect(find.byType(WaterLogStatisticsPage), findsOneWidget);
+    expect(find.text('Ao A3 · Vụ Đông Xuân 2025'), findsOneWidget);
+    expect(repository.requests, hasLength(1));
   });
+
+  test(
+    'legacy and new statistics payloads parse without requiring exceedCount',
+    () {
+      expect(
+        sampleStatistics().parameters['dissolvedOxygenMgL']!.exceedCount,
+        4,
+      );
+      final current = sampleStatistics().parameters['dissolvedOxygenMgL']!;
+      expect(current.belowMinCount, 4);
+      expect(current.aboveMaxCount, 0);
+      expect(current.belowMinRate, .4);
+      expect(current.aboveMaxRate, 0);
+      final legacy = sampleStatistics(
+        counts: false,
+      ).parameters['dissolvedOxygenMgL']!;
+      expect(legacy.belowMinCount, isNull);
+      expect(legacy.aboveMaxCount, isNull);
+      expect(legacy.belowMinRate, isNull);
+      expect(legacy.aboveMaxRate, isNull);
+      expect(
+        sampleStatistics(
+          counts: false,
+        ).parameters['dissolvedOxygenMgL']!.exceedCount,
+        isNull,
+      );
+      expect(
+        sampleStatistics()
+            .series
+            .first
+            .values['dissolvedOxygenMgL']!
+            .exceedCount,
+        isNull,
+      );
+    },
+  );
 }
