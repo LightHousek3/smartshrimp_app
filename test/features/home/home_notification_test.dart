@@ -1,5 +1,7 @@
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import 'owner_dashboard_fixtures.dart';
+import 'technician_dashboard_fixtures.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +35,9 @@ void main() {
               DashboardFixtureRepository(),
             ),
             authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
+            technicianDashboardRepositoryProvider.overrideWithValue(
+              TechnicianFixtureRepository(),
+            ),
             notificationRepositoryProvider.overrideWithValue(
               const _NotificationRepository(unreadCount: 25),
             ),

@@ -304,9 +304,7 @@ class OperationListPage extends ConsumerWidget {
                                 '/seasons/$seasonId/operations/stats',
                               ),
                               borderRadius: BorderRadius.circular(18),
-                              child: OperationStatsBar(
-                                summary: result.summary,
-                              ),
+                              child: OperationStatsBar(summary: result.summary),
                             ),
                             const SizedBox(height: 14),
 
@@ -348,7 +346,7 @@ class OperationListPage extends ConsumerWidget {
                                           const SizedBox(height: 4),
                                           Text(
                                             result.banner.message ??
-                                                'Chưa có bản ghi sinh khối hợp lệ trong 3 ngày — không thể tính liều theo % sinh khối.',
+                                                'Chưa có nguồn sinh khối hợp lệ trong 7 ngày (168 giờ). Nguồn phải còn hạn tại cữ dự kiến.',
                                             style: const TextStyle(
                                               color: Color(0xFFD84315),
                                               fontSize: 11.5,
