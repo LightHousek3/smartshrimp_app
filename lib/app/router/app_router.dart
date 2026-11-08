@@ -20,6 +20,7 @@ import 'package:smartshrimp_app/features/rag/presentation/pages/rag_conversation
 import 'package:smartshrimp_app/features/ai_diagnosis/presentation/pages/ai_diagnosis_page.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/presentation/pages/ai_diagnosis_detail_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_list_page.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/pages/owner_water_log_list_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_list_page.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_detail_page.dart';
@@ -390,6 +391,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                               seasonId: state.pathParameters['seasonId']!,
                             ),
                             routes: <RouteBase>[
+                              GoRoute(
+                                path: 'water-logs',
+                                builder: (_, state) {
+                                  final extra =
+                                      state.extra is Map<String, String>
+                                      ? state.extra! as Map<String, String>
+                                      : null;
+                                  return OwnerWaterLogListPage(
+                                    farmId: state.pathParameters['farmId']!,
+                                    pondId: state.pathParameters['pondId']!,
+                                    seasonId: state.pathParameters['seasonId']!,
+                                    pondName: extra?['pondName'],
+                                    seasonName: extra?['seasonName'],
+                                  );
+                                },
+                                routes: [
+                                  GoRoute(
+                                    path: 'statistics',
+                                    builder: (_, state) {
+                                      final extra =
+                                          state.extra is Map<String, String>
+                                          ? state.extra! as Map<String, String>
+                                          : null;
+                                      return WaterLogStatisticsPage(
+                                        seasonId:
+                                            state.pathParameters['seasonId']!,
+                                        pondName: extra?['pondName'],
+                                        seasonName: extra?['seasonName'],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                               GoRoute(
                                 path: 'harvests',
                                 builder: (_, state) => HarvestListPage(

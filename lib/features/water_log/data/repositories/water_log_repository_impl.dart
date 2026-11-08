@@ -50,7 +50,7 @@ final class WaterLogRepositoryImpl implements WaterLogRepository {
   @override
   Future<WaterLogStatistics> getStatistics({
     required String seasonId,
-    required DateTime from,
+    DateTime? from,
     required DateTime to,
     required String granularity,
   }) => _apiService.getStatistics(
