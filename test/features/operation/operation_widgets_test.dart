@@ -108,7 +108,6 @@ void main() {
       expect(find.text('Đã hủy'), findsOneWidget);
       expect(find.textContaining('5.0 lít'), findsOneWidget);
     });
-
   });
 
   group('OperationStatsBar Widget', () {
@@ -161,7 +160,7 @@ void main() {
       // Verify biomass warning banner
       expect(find.text('Chưa thể sinh lịch kế tiếp'), findsOneWidget);
       expect(
-        find.textContaining('Chưa cập nhật sinh khối quá 3 ngày'),
+        find.textContaining('Chưa cập nhật sinh khối quá 7 ngày (168 giờ)'),
         findsOneWidget,
       );
 
@@ -201,7 +200,7 @@ final class _MockOperationRepository implements OperationRepository {
       ),
       banner: const OperationBanner(
         hasBiomassWarning: true,
-        message: 'Chưa cập nhật sinh khối quá 3 ngày',
+        message: 'Chưa cập nhật sinh khối quá 7 ngày (168 giờ)',
       ),
       seasonName: 'Vụ 1 - Nuôi chính',
       pondName: 'Ao A1',

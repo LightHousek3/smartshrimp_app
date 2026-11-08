@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/task/data/repositories/task_repository_impl.dart';
@@ -105,6 +106,7 @@ final class AssignedTaskMutationController extends AsyncNotifier<void> {
         state = const AsyncData(null);
         ref.invalidate(assignedTaskListProvider);
         ref.invalidate(assignedTaskDetailProvider(task.id));
+        ref.invalidate(technicianDashboardProvider);
       }
       return updated;
     } catch (error, stack) {

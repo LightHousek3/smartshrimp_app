@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -235,6 +236,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
         level: AppNoticeLevel.success,
       );
 
+      ref.invalidate(technicianDashboardProvider);
       widget.onCreated?.call();
       Navigator.of(context).pop(true);
     } catch (e) {

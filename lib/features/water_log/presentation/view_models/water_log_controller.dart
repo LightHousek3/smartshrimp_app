@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/water_log/data/repositories/water_log_repository_impl.dart';
@@ -304,6 +305,7 @@ final class WaterLogListController extends AsyncNotifier<WaterLogListState> {
 
   Future<void> _refreshAfterMutation() async {
     if (!ref.mounted) return;
+    ref.invalidate(technicianDashboardProvider);
     ref.invalidate(latestWaterLogProvider(seasonId));
     ref.read(waterLogRevisionProvider(seasonId).notifier).changed();
     try {

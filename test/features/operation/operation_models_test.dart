@@ -125,8 +125,6 @@ void main() {
       expect(schedule.cancellationType, isNull);
     });
 
-
-
     test('parses OperationSchedule with season and pond names', () {
       final json = <String, dynamic>{
         'id': 'sched-season-info',
@@ -143,10 +141,7 @@ void main() {
         'season': {
           'id': 'season-1',
           'name': 'Vụ test - Đang nuôi mới',
-          'pond': {
-            'id': 'pond-1',
-            'name': 'Ao Làng Óng',
-          },
+          'pond': {'id': 'pond-1', 'name': 'Ao Làng Óng'},
         },
       };
 
@@ -187,7 +182,7 @@ void main() {
         'summary': {'planned': 5, 'completed': 3, 'cancelled': 1, 'total': 9},
         'banner': {
           'hasBiomassWarning': true,
-          'message': 'Chưa cập nhật sinh khối quá 3 ngày',
+          'message': 'Chưa cập nhật sinh khối quá 7 ngày (168 giờ)',
         },
         'schedules': <dynamic>[],
         'season': {
@@ -203,7 +198,10 @@ void main() {
       expect(result.summary.cancelled, 1);
       expect(result.summary.total, 9);
       expect(result.banner.hasBiomassWarning, isTrue);
-      expect(result.banner.message, 'Chưa cập nhật sinh khối quá 3 ngày');
+      expect(
+        result.banner.message,
+        'Chưa cập nhật sinh khối quá 7 ngày (168 giờ)',
+      );
       expect(result.seasonName, 'Vụ 1 - Nuôi thương phẩm');
       expect(result.pondName, 'Ao A1');
 
