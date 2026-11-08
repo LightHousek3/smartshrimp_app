@@ -7,7 +7,6 @@ import 'package:smartshrimp_app/features/water_log/data/repositories/water_log_r
 import 'package:smartshrimp_app/features/water_log/data/services/water_log_api_service.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_list_state.dart';

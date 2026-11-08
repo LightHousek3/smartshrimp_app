@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
 import 'package:smartshrimp_app/features/rag/presentation/widgets/rag_chat_widgets.dart';

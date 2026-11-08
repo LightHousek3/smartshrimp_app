@@ -6,7 +6,6 @@ import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnos
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis_image.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/repositories/ai_diagnosis_repository.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/presentation/view_models/ai_diagnosis_controller.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';

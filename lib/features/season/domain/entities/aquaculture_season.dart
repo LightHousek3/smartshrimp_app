@@ -44,10 +44,13 @@ String seasonStatusLabel(SeasonStatus value) => switch (value) {
   SeasonStatus.unknown => 'Không xác định',
 };
 
-String shrimpTypeLabel(ShrimpType value) => switch (value) {
+String shrimpTypeLabel(
+  ShrimpType value, {
+  String unknownLabel = 'Không xác định',
+}) => switch (value) {
   ShrimpType.whiteleg => 'Tôm thẻ chân trắng',
   ShrimpType.blackTiger => 'Tôm sú',
-  ShrimpType.unknown => 'Không xác định',
+  ShrimpType.unknown => unknownLabel,
 };
 
 @Freezed(fromJson: false, toJson: false)

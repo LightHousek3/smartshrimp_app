@@ -13,9 +13,6 @@ import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_cont
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_counts.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
-import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
@@ -607,7 +604,7 @@ class _Seasons implements AssignedSeasonRepository {
         id: seasonId,
         name: 'Vụ nuôi',
         status: status,
-        shrimpType: 'WHITELEG',
+        shrimpType: ShrimpType.whiteleg,
         pondId: 'pond',
         pondName: 'Ao A5',
         pondType: 'LINED',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +8,9 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
+import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 
 class AssignedSeasonListPage extends ConsumerStatefulWidget {
   const AssignedSeasonListPage({super.key});
@@ -19,12 +22,17 @@ class AssignedSeasonListPage extends ConsumerStatefulWidget {
 class _AssignedSeasonListPageState
     extends ConsumerState<AssignedSeasonListPage> {
   final _scroll = ScrollController();
-  bool _activeOnly = true;
+  late final TextEditingController _search;
+  Timer? _debounce;
+  int _queryEpoch = 0;
   bool _loadingMore = false;
   String? _loadMoreError;
   @override
   void initState() {
     super.initState();
+    _search = TextEditingController(
+      text: ref.read(assignedSeasonListProvider.notifier).filter.search,
+    );
     _scroll.addListener(_onScroll);
   }
 
@@ -32,100 +40,222 @@ class _AssignedSeasonListPageState
   void dispose() {
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
+    _debounce?.cancel();
+    _search.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(assignedSeasonListProvider);
+    final controller = ref.read(assignedSeasonListProvider.notifier);
+    final filter = controller.filter;
+    final retainRows = controller.retainRowsOnRefresh;
+    final page = retainRows ? state.value : state.asData?.value;
+    final farms = ref.watch(assignedSeasonFarmOptionsProvider);
+    final filtered = filter.search.isNotEmpty || filter.farmId != null;
+    ref.listen(assignedSeasonFarmOptionsProvider, (_, next) {
+      final selectedFarm = ref
+          .read(assignedSeasonListProvider.notifier)
+          .filter
+          .farmId;
+      if (next.hasError || !next.hasValue || selectedFarm == null) return;
+      if (next.value!.any((farm) => farm.id == selectedFarm)) return;
+      // Assignment changes can remove the selected farm from the allowed choices.
+      unawaited(_applyFilters(changeFarm: true));
+      AppNoticeService.danger(
+        context,
+        'Trại đã chọn không còn vụ nuôi được phân công.',
+      );
+    });
     return AppGradientBackground(
       child: SafeArea(
         bottom: false,
-        child: state.when(
-          skipLoadingOnRefresh: true,
-          skipError: true,
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.ocean),
-          ),
-          error: (error, _) => _ErrorState(
-            message: _message(error),
-            onRetry: () =>
-                ref.read(assignedSeasonListProvider.notifier).refresh(),
-          ),
-          data: (page) => RefreshIndicator(
-            onRefresh: _refresh,
-            child: CustomScrollView(
-              controller: _scroll,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                const StickyPageHeader(
-                  title: 'Vụ nuôi',
-                  subtitle: 'Các vụ nuôi bạn được phân công',
-                  showBack: false,
-                  height: 80,
-                  titleSize: 22,
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: CustomScrollView(
+            controller: _scroll,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[
+              const StickyPageHeader(
+                title: 'Vụ nuôi',
+                subtitle: 'Các vụ nuôi bạn được phân công',
+                showBack: false,
+                height: 80,
+                titleSize: 22,
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    children: [
+                      _SeasonSearchTools(
+                        search: _search,
+                        farms: farms,
+                        farmId: filter.farmId,
+                        onSearch: _onSearch,
+                        onSubmit: () => unawaited(_applyFilters()),
+                        onClear: () {
+                          _search.clear();
+                          unawaited(_applyFilters());
+                        },
+                        onFarm: (id) => unawaited(
+                          _applyFilters(changeFarm: true, farmId: id),
+                        ),
+                        onRetryFarms: () =>
+                            ref.invalidate(assignedSeasonFarmOptionsProvider),
+                      ),
+                      const SizedBox(height: 12),
+                      _Segmented(
+                        activeOnly:
+                            filter.status == AssignedSeasonStatus.active,
+                        activeCount: page?.activeResults,
+                        totalCount: page?.allResults,
+                        onChanged: (value) =>
+                            unawaited(_applyFilters(activeOnly: value)),
+                      ),
+                      if (filtered)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _clearFilters,
+                            child: const Text('Xóa bộ lọc'),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
+              ),
+              // Keep controls mounted so typing, clearing and retrying work
+              // while a different query is loading or has failed.
+              state.when<Widget>(
+                skipLoadingOnRefresh: retainRows,
+                skipError: retainRows,
+                loading: () => const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.ocean),
+                  ),
+                ),
+                error: (error, _) => SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _ErrorState(
+                    message: _message(error),
+                    onRetry: _refresh,
+                  ),
+                ),
+                data: (result) => result.items.isEmpty
+                    ? SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyState(
+                          filtered: filtered,
+                          onReset: _clearFilters,
+                        ),
+                      )
+                    : SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        sliver: SliverList.separated(
+                          itemCount: result.items.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (_, index) =>
+                              _SeasonCard(season: result.items[index]),
+                        ),
+                      ),
+              ),
+              if (page != null && (page.hasNextPage || _loadMoreError != null))
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: _Segmented(
-                      activeOnly: _activeOnly,
-                      activeCount: page.activeResults,
-                      totalCount: page.allResults,
-                      onChanged: (value) {
-                        setState(() {
-                          _activeOnly = value;
-                          _loadingMore = false;
-                          _loadMoreError = null;
-                        });
-                        ref
-                            .read(assignedSeasonListProvider.notifier)
-                            .setActiveOnly(value);
-                      },
-                    ),
+                  child: _PaginationFooter(
+                    loading: _loadingMore,
+                    error: _loadMoreError,
+                    onRetry: () => _loadMore(page),
                   ),
                 ),
-                if (page.items.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _EmptyState(),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    sliver: SliverList.separated(
-                      itemCount: page.items.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, index) =>
-                          _SeasonCard(season: page.items[index]),
-                    ),
-                  ),
-                if (page.hasNextPage || _loadMoreError != null)
-                  SliverToBoxAdapter(
-                    child: _PaginationFooter(
-                      loading: _loadingMore,
-                      error: _loadMoreError,
-                      onRetry: () => _loadMore(page),
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
+  void _onSearch(String _) {
+    setState(() {});
+    _debounce?.cancel();
+    _debounce = Timer(
+      AssignedSeasonRules.searchDebounce,
+      () => unawaited(_applyFilters()),
+    );
+  }
+
+  Future<void> _applyFilters({
+    bool? activeOnly,
+    bool changeFarm = false,
+    String? farmId,
+  }) async {
+    _debounce?.cancel();
+    final controller = ref.read(assignedSeasonListProvider.notifier);
+    final current = controller.filter;
+    final next = (
+      status: activeOnly == null
+          ? current.status
+          : activeOnly
+          ? AssignedSeasonStatus.active
+          : null,
+      search: _search.text.trim(),
+      farmId: changeFarm ? farmId : current.farmId,
+    );
+    if (next == current) {
+      setState(() {});
+      return;
+    }
+    _resetPagination();
+    // Invalidate the old query before a scroll reset can request its next page.
+    final loading = controller.setFilters(
+      status: next.status,
+      search: next.search,
+      farmId: next.farmId,
+    );
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    await loading;
+  }
+
+  void _clearFilters() {
+    _search.clear();
+    unawaited(_applyFilters(changeFarm: true));
+  }
+
+  void _resetPagination() {
+    setState(() {
+      _queryEpoch++;
+      _loadingMore = false;
+      _loadMoreError = null;
+    });
+  }
+
   void _onScroll() {
     if (_scroll.hasClients && _scroll.position.extentAfter < 260) {
-      final page = ref.read(assignedSeasonListProvider).value;
+      final state = ref.read(assignedSeasonListProvider);
+      if (state.isLoading ||
+          !ref.read(assignedSeasonListProvider.notifier).retainRowsOnRefresh) {
+        return;
+      }
+      final page = state.value;
       if (page != null) _loadMore(page);
     }
   }
 
   Future<void> _refresh() async {
+    _debounce?.cancel();
+    // Refresh also supersedes any pagination spinner/error still in flight.
+    _resetPagination();
+    ref.invalidate(assignedSeasonFarmOptionsProvider);
     try {
-      await ref.read(assignedSeasonListProvider.notifier).refresh();
+      final controller = ref.read(assignedSeasonListProvider.notifier);
+      if (_search.text.trim() != controller.filter.search) {
+        await _applyFilters();
+      } else {
+        await controller.refresh();
+      }
       if (mounted) setState(() => _loadMoreError = null);
     } on AppException catch (error) {
       if (mounted) AppNoticeService.danger(context, error.message);
@@ -141,6 +271,7 @@ class _AssignedSeasonListPageState
 
   Future<void> _loadMore(AssignedSeasonPage page) async {
     if (_loadingMore || !page.hasNextPage) return;
+    final epoch = _queryEpoch;
     setState(() {
       _loadingMore = true;
       _loadMoreError = null;
@@ -148,17 +279,189 @@ class _AssignedSeasonListPageState
     try {
       await ref.read(assignedSeasonListProvider.notifier).loadMore();
     } on AppException catch (error) {
-      if (mounted) setState(() => _loadMoreError = error.message);
+      if (mounted && epoch == _queryEpoch) {
+        setState(() => _loadMoreError = error.message);
+      }
     } on Object {
-      if (mounted) {
+      if (mounted && epoch == _queryEpoch) {
         setState(
           () =>
               _loadMoreError = 'Không thể tải thêm vụ nuôi. Vui lòng thử lại.',
         );
       }
     } finally {
-      if (mounted) setState(() => _loadingMore = false);
+      if (mounted && epoch == _queryEpoch) setState(() => _loadingMore = false);
     }
+  }
+}
+
+/// Search and popup geometry follows the pond's season toolbar.
+class _SeasonSearchTools extends StatelessWidget {
+  const _SeasonSearchTools({
+    required this.search,
+    required this.farms,
+    required this.farmId,
+    required this.onSearch,
+    required this.onSubmit,
+    required this.onClear,
+    required this.onFarm,
+    required this.onRetryFarms,
+  });
+  final TextEditingController search;
+  final AsyncValue<List<AssignedSeasonFarm>> farms;
+  final String? farmId;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onSubmit, onClear, onRetryFarms;
+  final ValueChanged<String?> onFarm;
+
+  @override
+  Widget build(BuildContext context) {
+    final choices = farms.value ?? const <AssignedSeasonFarm>[];
+    final name = choices.where((farm) => farm.id == farmId).firstOrNull?.name;
+    return Column(
+      children: [
+        SizedBox(
+          height: 36,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('assigned_season_search'),
+                  controller: search,
+                  onChanged: onSearch,
+                  onSubmitted: (_) => onSubmit(),
+                  textInputAction: TextInputAction.search,
+                  maxLength: AssignedSeasonRules.searchMaxLength,
+                  style: const TextStyle(color: AppColors.ink, fontSize: 11),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm tên vụ nuôi hoặc tên ao…',
+                    counterText: '',
+                    hintStyle: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.inkMuted,
+                      size: 15,
+                    ),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 31,
+                      minHeight: 36,
+                    ),
+                    suffixIcon: search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Xóa tìm kiếm',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 34,
+                              minHeight: 36,
+                            ),
+                            onPressed: onClear,
+                            icon: const Icon(Icons.close_rounded, size: 15),
+                          ),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.line),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.oceanLight),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              PopupMenuButton<String>(
+                key: const Key('assigned_season_farm_filter'),
+                tooltip: 'Lọc trại',
+                enabled: farms.hasValue && !farms.isLoading,
+                initialValue: farmId ?? AssignedSeasonRules.allFarmsValue,
+                onSelected: (value) => onFarm(
+                  value == AssignedSeasonRules.allFarmsValue ? null : value,
+                ),
+                color: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: AssignedSeasonRules.allFarmsValue,
+                    child: Text('Tất cả trại'),
+                  ),
+                  for (final farm in choices)
+                    PopupMenuItem(value: farm.id, child: Text(farm.name)),
+                ],
+                child: Container(
+                  width: 100,
+                  height: 36,
+                  padding: const EdgeInsets.only(left: 12, right: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: farmId == null ? AppColors.line : AppColors.ocean,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          farmId == null
+                              ? 'Tất cả trại'
+                              : name ?? 'Trại đã chọn',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.inkSoft,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (farms.isLoading)
+                        const SizedBox.square(
+                          dimension: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.inkSoft,
+                          size: 17,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (farms.hasError)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  farms.error is AppException
+                      ? (farms.error! as AppException).message
+                      : 'Không thể tải danh sách trại.',
+                  style: const TextStyle(color: AppColors.error, fontSize: 11),
+                ),
+              ),
+              TextButton(
+                onPressed: onRetryFarms,
+                child: const Text('Thử lại trại'),
+              ),
+            ],
+          ),
+      ],
+    );
   }
 }
 
@@ -314,7 +617,7 @@ class _SeasonCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _StatusBadge(status: season.status),
+                SeasonStatusBadge(status: season.status),
               ],
             ),
             const SizedBox(height: 12),
@@ -347,7 +650,7 @@ class _SeasonCard extends StatelessWidget {
                         : '${season.initialDensityPerM2!.toStringAsFixed(season.initialDensityPerM2! % 1 == 0 ? 0 : 1)} con/m²',
                   ),
                   const SizedBox(width: 8),
-                  const _MiniStat('SỨC KHỎE', 'Chưa có'),
+                  _HealthStat(season.currentHealthStatus),
                 ],
               ),
           ],
@@ -357,9 +660,28 @@ class _SeasonCard extends StatelessWidget {
   );
 }
 
+/// Unknown server values must never silently become a healthy assessment.
+class _HealthStat extends StatelessWidget {
+  const _HealthStat(this.value);
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = HealthStatus.values
+        .where((status) => status.toApiValue() == value)
+        .firstOrNull;
+    return _MiniStat(
+      'SỨC KHỎE',
+      value == null ? 'Chưa có' : status?.displayName ?? 'Không xác định',
+      valueColor: status?.color ?? AppColors.inkMuted,
+    );
+  }
+}
+
 class _MiniStat extends StatelessWidget {
-  const _MiniStat(this.label, this.value);
+  const _MiniStat(this.label, this.value, {this.valueColor = AppColors.ink});
   final String label, value;
+  final Color valueColor;
   @override
   Widget build(BuildContext context) => Expanded(
     child: Container(
@@ -381,8 +703,8 @@ class _MiniStat extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: valueColor,
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -393,71 +715,38 @@ class _MiniStat extends StatelessWidget {
   );
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-  final AssignedSeasonStatus status;
-  @override
-  Widget build(BuildContext context) {
-    final (label, foreground, background) = switch (status) {
-      AssignedSeasonStatus.planning => (
-        '● Đang chuẩn bị',
-        const Color(0xFF7B5BD6),
-        const Color(0xFFEFEAFC),
-      ),
-      AssignedSeasonStatus.active => (
-        '● Đang nuôi',
-        const Color(0xFF0F9B8E),
-        const Color(0xFFE2F6F3),
-      ),
-      AssignedSeasonStatus.completed => (
-        '● Hoàn tất',
-        const Color(0xFF52647F),
-        const Color(0xFFEEF1F6),
-      ),
-      AssignedSeasonStatus.cancelled => (
-        '● Đã hủy',
-        AppColors.error,
-        const Color(0xFFFBE6EA),
-      ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: foreground,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({this.filtered = false, this.onReset});
+  final bool filtered;
+  final VoidCallback? onReset;
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
       padding: EdgeInsets.all(32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(
+          const Icon(
             Icons.layers_clear_outlined,
             size: 48,
             color: AppColors.inkMuted,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            'Chưa có vụ nuôi được phân công',
+            filtered
+                ? 'Không tìm thấy vụ nuôi phù hợp'
+                : 'Chưa có vụ nuôi được phân công',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w700,
+            ),
           ),
+          if (filtered)
+            TextButton(
+              onPressed: onReset,
+              child: const Text('Xóa bộ lọc tìm kiếm'),
+            ),
         ],
       ),
     ),

@@ -20,8 +20,6 @@ import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/domain/repositories/rag_repository.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 
@@ -314,6 +312,9 @@ final class _Auth implements AuthRepository {
 }
 
 final class _Seasons implements AssignedSeasonRepository {
+  @override
+  Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() async => [];
+
   _Seasons({this.status = AssignedSeasonStatus.active});
   final AssignedSeasonStatus status;
   @override
@@ -322,7 +323,7 @@ final class _Seasons implements AssignedSeasonRepository {
         id: id,
         name: 'Vụ Đông Xuân 2025',
         status: status,
-        shrimpType: 'WHITELEG',
+        shrimpType: ShrimpType.whiteleg,
         pondId: 'pond',
         pondName: 'Ao A3',
         pondType: 'AQUACULTURE',

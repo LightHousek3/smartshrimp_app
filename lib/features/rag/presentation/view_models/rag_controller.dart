@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/rag/data/repositories/rag_repository_impl.dart';
 import 'package:smartshrimp_app/features/rag/data/services/rag_api_service.dart';

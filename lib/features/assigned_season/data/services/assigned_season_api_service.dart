@@ -7,6 +7,26 @@ final class AssignedSeasonApiService {
   AssignedSeasonApiService(this._client);
   final ApiClient _client;
 
+  Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() async {
+    final response = await _client.get(
+      '/me/seasons/farms',
+      authenticated: true,
+    );
+    return response
+        .requireListData()
+        .map((raw) {
+          if (raw is! Map<String, dynamic> ||
+              raw['id'] is! String ||
+              raw['name'] is! String ||
+              (raw['id'] as String).isEmpty ||
+              (raw['name'] as String).trim().isEmpty) {
+            throw const InvalidResponseException();
+          }
+          return (id: raw['id'] as String, name: raw['name'] as String);
+        })
+        .toList(growable: false);
+  }
+
   Future<AssignedSeasonPage> getAssignedSeasons(
     Map<String, dynamic> query,
   ) async {
