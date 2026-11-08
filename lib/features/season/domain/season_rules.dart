@@ -1,6 +1,16 @@
+import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart'
+    show FarmStatus;
+import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
+
 abstract final class SeasonRules {
   static const nameMaxLength = 255;
   static const replacementReasonMaxLength = 2000;
+
+  static bool canCreateForPond(Pond pond) =>
+      !pond.hasOpenSeason &&
+      pond.type == PondType.aquaculture &&
+      pond.status == PondStatus.available &&
+      pond.farm?.status == FarmStatus.active;
 
   static String normalizeText(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');

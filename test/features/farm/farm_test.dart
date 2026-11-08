@@ -4,16 +4,46 @@ import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/domain/farm_rules.dart';
 
 void main() {
+  test(
+    'farm pond readiness matches the pond API while farm INACTIVE stays valid',
+    () {
+      for (final entry in <String, PondStatus>{
+        'AVAILABLE': PondStatus.available,
+        'MAINTENANCE': PondStatus.maintenance,
+        'INACTIVE': PondStatus.unknown,
+      }.entries) {
+        final farm = Farm.parse(<String, dynamic>{
+          'id': 'farm-1',
+          'ownerId': 'owner-1',
+          'name': 'Farm',
+          'status': 'INACTIVE',
+          'ponds': <Object?>[
+            <String, dynamic>{
+              'id': 'pond-1',
+              'name': 'Pond',
+              'type': 'AQUACULTURE',
+              'status': entry.key,
+            },
+          ],
+        });
+        expect(farm.status, FarmStatus.inactive);
+        expect(farm.ponds.single.status, entry.value);
+      }
+    },
+  );
+
   test('parses the complete farm detail projection safely', () {
     final farm = Farm.parse(<String, dynamic>{
       'id': 'farm-1',
       'ownerId': 'owner-1',
       'name': 'Trại Cà Mau',
+      'status': 'INACTIVE',
       'address': 'Cà Mau',
       'totalAreaHectares': 3.5,
       'pondCount': 1,
       'activeSeasonCount': 1,
       'canDelete': false,
+      'templateCount': 2,
       'ponds': <Object?>[
         <String, dynamic>{
           'id': 'pond-1',
@@ -33,8 +63,9 @@ void main() {
       ],
     });
 
-    expect(farm.isDeleted, isFalse);
     expect(farm.canDelete, isFalse);
+    expect(farm.templateCount, 2);
+    expect(farm.status, FarmStatus.inactive);
     expect(farm.ponds.single.type, PondType.aquaculture);
     expect(farm.ponds.single.status, PondStatus.available);
     expect(farm.ponds.single.currentSeason?.dayOfCulture, 72);
@@ -45,6 +76,7 @@ void main() {
       'id': 'farm-1',
       'ownerId': 'owner-1',
       'name': 'Trại mới',
+      'status': 'FUTURE_STATUS',
       'ponds': <Object?>[
         <String, dynamic>{
           'id': 'pond-1',
@@ -57,6 +89,7 @@ void main() {
 
     expect(farm.ponds.single.type, PondType.unknown);
     expect(farm.ponds.single.status, PondStatus.unknown);
+    expect(farm.status, FarmStatus.unknown);
   });
 
   test('rejects malformed required fields at the parsing boundary', () {
@@ -73,6 +106,17 @@ void main() {
   group('FarmRules', () {
     test('normalizes whitespace consistently with backend', () {
       expect(FarmRules.normalizeText('  Trại   Cà Mau  '), 'Trại Cà Mau');
+    });
+
+    test('matches the database address length boundary', () {
+      expect(
+        FarmRules.validateAddress(List<String>.filled(500, 'a').join()),
+        isNull,
+      );
+      expect(
+        FarmRules.validateAddress(List<String>.filled(501, 'a').join()),
+        isNotNull,
+      );
     });
 
     test('accepts and rounds comma decimals to two places', () {

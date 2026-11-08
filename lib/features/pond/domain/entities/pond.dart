@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart'
+    show FarmStatus;
 
 part 'pond.freezed.dart';
 part 'pond.g.dart';
@@ -12,13 +14,13 @@ enum PondType {
   unknown,
 }
 
+/// Operational readiness; an open season is represented by [Pond.currentSeason].
 enum PondStatus {
   @JsonValue('AVAILABLE')
   available,
   @JsonValue('MAINTENANCE')
   maintenance,
-  @JsonValue('INACTIVE')
-  inactive,
+  // Preserve safe parsing when the server returns a future status.
   unknown,
 }
 
@@ -35,7 +37,9 @@ abstract class PondFarm with _$PondFarm {
   const factory PondFarm({
     required String id,
     required String name,
-    DateTime? deletedAt,
+    @JsonKey(unknownEnumValue: FarmStatus.unknown)
+    @Default(FarmStatus.unknown)
+    FarmStatus status,
   }) = _PondFarm;
 
   factory PondFarm.fromJson(Map<String, dynamic> json) =>
@@ -69,7 +73,6 @@ abstract class Pond with _$Pond {
     double? volumeM3,
     @JsonKey(unknownEnumValue: PondType.unknown) required PondType type,
     @JsonKey(unknownEnumValue: PondStatus.unknown) required PondStatus status,
-    DateTime? deletedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
     PondFarm? farm,
@@ -86,7 +89,6 @@ abstract class Pond with _$Pond {
     }
   }
 
-  bool get isDeleted => deletedAt != null;
   bool get hasOpenSeason => currentSeason != null;
 }
 

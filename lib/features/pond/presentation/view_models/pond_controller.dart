@@ -28,6 +28,7 @@ final pondDetailControllerProvider = AsyncNotifierProvider.autoDispose
 final pondMutationControllerProvider = AsyncNotifierProvider.autoDispose
     .family<PondMutationController, void, String>(PondMutationController.new);
 
+/// Gate owner screens locally; the server still validates ownership on every call.
 abstract base class _OwnerPondController<T> extends AsyncNotifier<T> {
   void requireOwner() {
     if (ref.watch(authControllerProvider).value?.role !=
@@ -36,6 +37,7 @@ abstract base class _OwnerPondController<T> extends AsyncNotifier<T> {
     }
   }
 
+  /// Expire local authentication only when the network layer reports session expiry.
   Future<R> runAuthenticated<R>(Future<R> Function() operation) async {
     try {
       return await operation();
@@ -46,6 +48,7 @@ abstract base class _OwnerPondController<T> extends AsyncNotifier<T> {
   }
 }
 
+/// Server-paginated list support; farm detail currently renders its embedded ponds.
 final class PondListController extends _OwnerPondController<PondPage> {
   PondListController(this.farmId);
   final String farmId;
@@ -63,6 +66,7 @@ final class PondListController extends _OwnerPondController<PondPage> {
     return _fetch(1);
   }
 
+  /// Omitted arguments retain filters; explicit clear flags reset nullable filters.
   Future<void> applyFilters({
     String? search,
     PondStatus? status,
@@ -85,6 +89,7 @@ final class PondListController extends _OwnerPondController<PondPage> {
   }
 
   Future<void> refresh() async {
+    // A later refresh/filter request must win over an older in-flight response.
     final generation = ++_generation;
     final result = await AsyncValue.guard(() => _fetch(1));
     if (ref.mounted && generation == _generation) state = result;
@@ -98,6 +103,7 @@ final class PondListController extends _OwnerPondController<PondPage> {
     try {
       final next = await _fetch(current.page + 1);
       if (!ref.mounted || generation != _generation) return;
+      // Preserve earlier pages while using the newest pagination metadata.
       state = AsyncData(
         next.copyWith(items: <Pond>[...current.items, ...next.items]),
       );
@@ -124,6 +130,7 @@ final class PondListController extends _OwnerPondController<PondPage> {
   );
 }
 
+/// Load the owner-scoped pond and its current open season; history loads separately.
 final class PondDetailController extends _OwnerPondController<Pond> {
   PondDetailController(this.ids);
   final ({String farmId, String pondId}) ids;
@@ -141,6 +148,7 @@ final class PondDetailController extends _OwnerPondController<Pond> {
   );
 }
 
+/// Serialize form writes and invalidate affected views only after server success.
 final class PondMutationController extends _OwnerPondController<void> {
   PondMutationController(this.farmId);
   final String farmId;
@@ -148,8 +156,7 @@ final class PondMutationController extends _OwnerPondController<void> {
   @override
   Future<void> build() async => requireOwner();
 
-  Future<Pond> save({
-    String? pondId,
+  Future<Pond> createPond({
     required String name,
     required double areaM2,
     required double depthM,
@@ -157,30 +164,36 @@ final class PondMutationController extends _OwnerPondController<void> {
     required PondType type,
     required PondStatus status,
   }) => _mutate(
-    () => pondId == null
-        ? ref
-              .read(pondRepositoryProvider)
-              .createPond(
-                farmId: farmId,
-                name: name,
-                areaM2: areaM2,
-                depthM: depthM,
-                volumeM3: volumeM3,
-                type: type,
-                status: status,
-              )
-        : ref
-              .read(pondRepositoryProvider)
-              .updatePond(
-                farmId: farmId,
-                pondId: pondId,
-                name: name,
-                areaM2: areaM2,
-                depthM: depthM,
-                volumeM3: volumeM3,
-                type: type,
-                status: status,
-              ),
+    () => ref
+        .read(pondRepositoryProvider)
+        .createPond(
+          farmId: farmId,
+          name: name,
+          areaM2: areaM2,
+          depthM: depthM,
+          volumeM3: volumeM3,
+          type: type,
+          status: status,
+        ),
+  );
+
+  Future<Pond> updatePond({
+    required String pondId,
+    required String name,
+    double? volumeM3,
+    required PondType type,
+    required PondStatus status,
+  }) => _mutate(
+    () => ref
+        .read(pondRepositoryProvider)
+        .updatePond(
+          farmId: farmId,
+          pondId: pondId,
+          name: name,
+          volumeM3: volumeM3,
+          type: type,
+          status: status,
+        ),
     pondId: pondId,
   );
 
@@ -200,6 +213,7 @@ final class PondMutationController extends _OwnerPondController<void> {
     try {
       final pond = await runAuthenticated(operation);
       state = const AsyncData<void>(null);
+      // Farm detail owns the embedded pond list, so it must refresh as well.
       ref.invalidate(pondListControllerProvider(farmId));
       ref.invalidate(farmDetailControllerProvider(farmId));
       if (pondId != null) {

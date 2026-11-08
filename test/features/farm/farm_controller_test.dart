@@ -9,7 +9,7 @@ import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_cont
 
 void main() {
   test(
-    'searches and paginates non-deleted farms locally after one API load',
+    'searches, filters and paginates farms locally after one API load',
     () async {
       final repository = _CatalogFarmRepository();
       final container = ProviderContainer(
@@ -30,20 +30,29 @@ void main() {
       final firstPage = await container.read(farmListControllerProvider.future);
 
       expect(firstPage.items, hasLength(20));
-      expect(firstPage.totalResults, 25);
+      expect(firstPage.totalResults, 24);
       expect(firstPage.totalPages, 2);
       expect(repository.getCalls, 1);
 
       await container.read(farmListControllerProvider.notifier).loadMore();
       expect(
         container.read(farmListControllerProvider).value?.items,
-        hasLength(25),
+        hasLength(24),
       );
       expect(repository.getCalls, 1);
 
       await container
           .read(farmListControllerProvider.notifier)
-          .load(search: 'TRANG TRẠI 24');
+          .load(search: 'TRANG TRẠI 23');
+      expect(
+        container.read(farmListControllerProvider).value?.items.single.name,
+        'Trang trại 23',
+      );
+      expect(repository.getCalls, 1);
+
+      await container
+          .read(farmListControllerProvider.notifier)
+          .load(status: FarmStatus.inactive);
       expect(
         container.read(farmListControllerProvider).value?.items.single.name,
         'Trang trại 24',
@@ -83,6 +92,7 @@ final class _CatalogFarmRepository implements FarmRepository {
         id: 'farm-$index',
         ownerId: _owner.id,
         name: 'Trang trại ${index.toString().padLeft(2, '0')}',
+        status: index == 24 ? FarmStatus.inactive : FarmStatus.active,
       ),
   ];
 
@@ -98,6 +108,7 @@ final class _CatalogFarmRepository implements FarmRepository {
   @override
   Future<Farm> createFarm({
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -108,6 +119,7 @@ final class _CatalogFarmRepository implements FarmRepository {
   Future<Farm> updateFarm({
     required String farmId,
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,

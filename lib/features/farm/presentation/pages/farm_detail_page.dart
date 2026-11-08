@@ -134,17 +134,13 @@ class _FarmDetailContent extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (farm.address?.trim().isNotEmpty == true ||
-                    (farm.latitude != null &&
-                        farm.longitude != null)) ...<Widget>[
-                  const SizedBox(height: 16),
-                  _FarmLocationCard(
-                    farm: farm,
-                    onOpenMap: farm.latitude == null || farm.longitude == null
-                        ? null
-                        : () => _openMap(context),
-                  ),
-                ],
+                const SizedBox(height: 16),
+                _FarmLocationCard(
+                  farm: farm,
+                  onOpenMap: farm.latitude == null || farm.longitude == null
+                      ? null
+                      : () => _openMap(context),
+                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -165,18 +161,21 @@ class _FarmDetailContent extends ConsumerWidget {
                       context.push('/farms/${farm.id}/inventory', extra: farm),
                 ),
                 const SizedBox(height: 16),
+                // Farm detail supplies all embedded ponds; this section is not paginated.
                 _PondSection(
                   ponds: farm.ponds,
                   onAdd: () => context.push('/farms/${farm.id}/ponds/create'),
                   onOpen: (pond) =>
                       context.push('/farms/${farm.id}/ponds/${pond.id}'),
                 ),
-                const SizedBox(height: 16),
-                DestructiveActionButton(
-                  label: 'Xóa trang trại',
-                  loading: mutation.isLoading,
-                  onPressed: () => _deleteFarm(context, ref),
-                ),
+                if (farm.canDelete) ...<Widget>[
+                  const SizedBox(height: 16),
+                  DestructiveActionButton(
+                    label: 'Xóa trang trại',
+                    loading: mutation.isLoading,
+                    onPressed: () => _deleteFarm(context, ref),
+                  ),
+                ],
               ],
             ),
           ),
@@ -198,17 +197,14 @@ class _FarmDetailContent extends ConsumerWidget {
   }
 
   Future<void> _deleteFarm(BuildContext context, WidgetRef ref) async {
+    if (!farm.canDelete) return;
     final confirmed = await showAppConfirmDialog(
       context,
       entityLabel: 'trang trại',
       entityName: farm.name,
-      retentionMessage:
-          'Trang trại sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn ao hoặc dữ liệu liên quan.',
-      blockers: farm.canDelete
-          ? const <String>[]
-          : <String>[
-              '${farm.activeSeasonCount} vụ nuôi đang ở trạng thái chuẩn bị hoặc đang nuôi.',
-            ],
+      retentionMessage: farm.templateCount == 0
+          ? 'Trang trại sẽ bị xóa vĩnh viễn.'
+          : 'Trang trại sẽ bị xóa vĩnh viễn. ${farm.templateCount} phác đồ mẫu sẽ chuyển sang ngừng sử dụng và Chuyên gia được thông báo.',
     );
     if (!confirmed || !context.mounted) return;
     try {
@@ -315,15 +311,23 @@ class _FarmLocationCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'Vị trí trang trại',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.display(
-            color: AppColors.ink,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Trang trại',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(
+                  color: AppColors.ink,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FarmStatusBadge(status: farm.status),
+          ],
         ),
         if (farm.address?.trim().isNotEmpty == true) ...<Widget>[
           const SizedBox(height: 12),
@@ -466,6 +470,7 @@ class _PondSectionState extends State<_PondSection> {
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
+    // Search and filters operate on the loaded farm snapshot, without API requests.
     final ponds = widget.ponds.where((pond) {
       final matchesName =
           query.isEmpty || pond.name.toLowerCase().contains(query);
@@ -560,7 +565,6 @@ class _PondSectionState extends State<_PondSection> {
                 values: const <PondStatus>[
                   PondStatus.available,
                   PondStatus.maintenance,
-                  PondStatus.inactive,
                 ],
                 text: _pondStatusLabel,
                 onChanged: (value) => setState(() => _status = value),
@@ -665,7 +669,6 @@ class _PondFilter<T> extends StatelessWidget {
 String _pondStatusLabel(PondStatus status) => switch (status) {
   PondStatus.available => 'Sẵn sàng',
   PondStatus.maintenance => 'Đang bảo trì',
-  PondStatus.inactive => 'Ngừng hoạt động',
   PondStatus.unknown => 'Không xác định',
 };
 
@@ -692,11 +695,6 @@ class _PondCard extends StatelessWidget {
         'Đang bảo trì',
         const Color(0xFFFBF0DC),
         const Color(0xFFD98314),
-      ),
-      PondStatus.inactive => (
-        'Ngừng hoạt động',
-        const Color(0xFFF0F1F4),
-        AppColors.inkMuted,
       ),
       PondStatus.unknown => (
         'Không xác định',

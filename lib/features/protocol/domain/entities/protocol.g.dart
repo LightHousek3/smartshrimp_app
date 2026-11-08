@@ -143,6 +143,221 @@ Map<String, dynamic> _$ProtocolDayMarkerToJson(_ProtocolDayMarker instance) =>
       'issues': instance.issues,
     };
 
+_ProtocolMaterialProfile _$ProtocolMaterialProfileFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolMaterialProfile', json, ($checkedConvert) {
+  final val = _ProtocolMaterialProfile(
+    regulatoryType: $checkedConvert('regulatoryType', (v) => v as String?),
+    registrationNumber: $checkedConvert(
+      'registrationNumber',
+      (v) => v as String?,
+    ),
+    ingredientsText: $checkedConvert('ingredientsText', (v) => v as String?),
+    containsAntibiotic: $checkedConvert(
+      'containsAntibiotic',
+      (v) => v as bool?,
+    ),
+    usageInstructions: $checkedConvert(
+      'usageInstructions',
+      (v) => v as String?,
+    ),
+    withdrawalDays: $checkedConvert(
+      'withdrawalDays',
+      (v) => _optionalDecimalString(v),
+    ),
+    evidenceUrls: $checkedConvert(
+      'evidenceUrls',
+      (v) =>
+          (v as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+    ),
+    complianceStatus: $checkedConvert('complianceStatus', (v) => v as String?),
+    checkedBy: $checkedConvert('checkedBy', (v) => v as String?),
+    checkedAt: $checkedConvert(
+      'checkedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    reviewNote: $checkedConvert('reviewNote', (v) => v as String?),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolMaterialProfileToJson(
+  _ProtocolMaterialProfile instance,
+) => <String, dynamic>{
+  'regulatoryType': instance.regulatoryType,
+  'registrationNumber': instance.registrationNumber,
+  'ingredientsText': instance.ingredientsText,
+  'containsAntibiotic': instance.containsAntibiotic,
+  'usageInstructions': instance.usageInstructions,
+  'withdrawalDays': instance.withdrawalDays,
+  'evidenceUrls': instance.evidenceUrls,
+  'complianceStatus': instance.complianceStatus,
+  'checkedBy': instance.checkedBy,
+  'checkedAt': instance.checkedAt?.toIso8601String(),
+  'reviewNote': instance.reviewNote,
+};
+
+_ProtocolManufacturer _$ProtocolManufacturerFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolManufacturer', json, ($checkedConvert) {
+  final val = _ProtocolManufacturer(
+    name: $checkedConvert('name', (v) => v as String),
+    id: $checkedConvert('id', (v) => v as String?),
+    address: $checkedConvert('address', (v) => v as String?),
+    phone: $checkedConvert('phone', (v) => v as String?),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolManufacturerToJson(
+  _ProtocolManufacturer instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'id': instance.id,
+  'address': instance.address,
+  'phone': instance.phone,
+};
+
+_ProtocolMaterialSnapshot _$ProtocolMaterialSnapshotFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolMaterialSnapshot', json, ($checkedConvert) {
+  final val = _ProtocolMaterialSnapshot(
+    name: $checkedConvert('name', (v) => v as String),
+    category: $checkedConvert('category', (v) => v as String),
+    unit: $checkedConvert('unit', (v) => v as String),
+    description: $checkedConvert('description', (v) => v as String?),
+    recommendationReason: $checkedConvert(
+      'recommendationReason',
+      (v) => v as String?,
+    ),
+    manufacturerId: $checkedConvert('manufacturerId', (v) => v as String?),
+    manufacturer: $checkedConvert(
+      'manufacturer',
+      (v) => v == null
+          ? null
+          : ProtocolManufacturer.fromJson(v as Map<String, dynamic>),
+    ),
+    productCompliance: $checkedConvert(
+      'productCompliance',
+      (v) => v == null
+          ? null
+          : ProtocolMaterialProfile.fromJson(v as Map<String, dynamic>),
+    ),
+    conversionUnit: $checkedConvert('conversionUnit', (v) => v as String?),
+    conversionQuantity: $checkedConvert(
+      'conversionQuantity',
+      (v) => _optionalDecimalString(v),
+    ),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolMaterialSnapshotToJson(
+  _ProtocolMaterialSnapshot instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'category': instance.category,
+  'unit': instance.unit,
+  'description': instance.description,
+  'recommendationReason': instance.recommendationReason,
+  'manufacturerId': instance.manufacturerId,
+  'manufacturer': instance.manufacturer,
+  'productCompliance': instance.productCompliance,
+  'conversionUnit': instance.conversionUnit,
+  'conversionQuantity': instance.conversionQuantity,
+};
+
+_ProtocolMaterialReview _$ProtocolMaterialReviewFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolMaterialReview', json, ($checkedConvert) {
+  final val = _ProtocolMaterialReview(
+    itemId: $checkedConvert('itemId', (v) => v as String),
+    name: $checkedConvert('name', (v) => v as String),
+    productId: $checkedConvert('productId', (v) => v as String?),
+    operationType: $checkedConvert('operationType', (v) => v as String),
+    doseBasis: $checkedConvert('doseBasis', (v) => v as String),
+    doseValue: $checkedConvert('doseValue', (v) => v as String),
+    doseUnit: $checkedConvert('doseUnit', (v) => v as String),
+    dailyDoseIncrement: $checkedConvert(
+      'dailyDoseIncrement',
+      (v) => v as String,
+    ),
+    firstDay: $checkedConvert('firstDay', (v) => (v as num).toInt()),
+    lastDay: $checkedConvert('lastDay', (v) => (v as num).toInt()),
+    repeatIntervalDays: $checkedConvert(
+      'repeatIntervalDays',
+      (v) => (v as num).toInt(),
+    ),
+    recurrenceAnchorDay: $checkedConvert(
+      'recurrenceAnchorDay',
+      (v) => (v as num).toInt(),
+    ),
+    doseAnchorDay: $checkedConvert('doseAnchorDay', (v) => (v as num).toInt()),
+    mealNumber: $checkedConvert('mealNumber', (v) => (v as num?)?.toInt()),
+    plannedTime: $checkedConvert('plannedTime', (v) => v as String?),
+    recommendedManufacturerId: $checkedConvert(
+      'recommendedManufacturerId',
+      (v) => v as String?,
+    ),
+    requiresResolution: $checkedConvert('requiresResolution', (v) => v as bool),
+    resolutionMessage: $checkedConvert(
+      'resolutionMessage',
+      (v) => v as String?,
+    ),
+    proposed: $checkedConvert('proposed', (v) => _materialFromJson(v)),
+    catalog: $checkedConvert('catalog', (v) => _materialFromJson(v)),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolMaterialReviewToJson(
+  _ProtocolMaterialReview instance,
+) => <String, dynamic>{
+  'itemId': instance.itemId,
+  'name': instance.name,
+  'productId': instance.productId,
+  'operationType': instance.operationType,
+  'doseBasis': instance.doseBasis,
+  'doseValue': instance.doseValue,
+  'doseUnit': instance.doseUnit,
+  'dailyDoseIncrement': instance.dailyDoseIncrement,
+  'firstDay': instance.firstDay,
+  'lastDay': instance.lastDay,
+  'repeatIntervalDays': instance.repeatIntervalDays,
+  'recurrenceAnchorDay': instance.recurrenceAnchorDay,
+  'doseAnchorDay': instance.doseAnchorDay,
+  'mealNumber': instance.mealNumber,
+  'plannedTime': instance.plannedTime,
+  'recommendedManufacturerId': instance.recommendedManufacturerId,
+  'requiresResolution': instance.requiresResolution,
+  'resolutionMessage': instance.resolutionMessage,
+  'proposed': instance.proposed,
+  'catalog': instance.catalog,
+};
+
+_ProtocolMaterialOption _$ProtocolMaterialOptionFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolMaterialOption', json, ($checkedConvert) {
+  final val = _ProtocolMaterialOption(
+    id: $checkedConvert('id', (v) => v as String),
+    name: $checkedConvert('name', (v) => v as String),
+    unit: $checkedConvert('unit', (v) => v as String),
+    manufacturerName: $checkedConvert('manufacturerName', (v) => v as String),
+    material: $checkedConvert('material', (v) => _materialFromJson(v)),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolMaterialOptionToJson(
+  _ProtocolMaterialOption instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'unit': instance.unit,
+  'manufacturerName': instance.manufacturerName,
+  'material': instance.material,
+};
+
 _ProtocolDetail _$ProtocolDetailFromJson(
   Map<String, dynamic> json,
 ) => $checkedCreate('_ProtocolDetail', json, ($checkedConvert) {
@@ -177,6 +392,26 @@ _ProtocolDetail _$ProtocolDetailFromJson(
           .toList(),
     ),
     canReview: $checkedConvert('canReview', (v) => v as bool),
+    contentVersion: $checkedConvert(
+      'contentVersion',
+      (v) => (v as num?)?.toInt() ?? 1,
+    ),
+    sourceTemplateVersionNo: $checkedConvert(
+      'sourceTemplateVersionNo',
+      (v) => (v as num?)?.toInt(),
+    ),
+    scheduleMessage: $checkedConvert('scheduleMessage', (v) => v as String?),
+    materialReviews: $checkedConvert(
+      'materialReviews',
+      (v) =>
+          (v as List<dynamic>?)
+              ?.map(
+                (e) =>
+                    ProtocolMaterialReview.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          const [],
+    ),
   );
   return val;
 });
@@ -194,6 +429,10 @@ Map<String, dynamic> _$ProtocolDetailToJson(_ProtocolDetail instance) =>
       'dayMarkers': instance.dayMarkers,
       'history': instance.history,
       'canReview': instance.canReview,
+      'contentVersion': instance.contentVersion,
+      'sourceTemplateVersionNo': instance.sourceTemplateVersionNo,
+      'scheduleMessage': instance.scheduleMessage,
+      'materialReviews': instance.materialReviews,
     };
 
 _ProtocolDayRow _$ProtocolDayRowFromJson(Map<String, dynamic> json) =>

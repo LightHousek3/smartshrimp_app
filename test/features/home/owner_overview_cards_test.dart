@@ -10,6 +10,44 @@ import 'owner_dashboard_fixtures.dart';
 import '../../support/load_app_fonts.dart';
 
 void main() {
+  testWidgets(
+    'N/B: urgent group keeps every title and ellipsizes the combined caption',
+    (tester) async {
+      final titles = [
+        'Đo NO2 ao A3',
+        'Theo dõi oxy ao A3',
+        'Kiểm tra nước ' * 15,
+      ];
+      final first = overviewFixture.alerts.firstWhere(
+        (item) => item.kind == DashboardAlertKind.urgentTask,
+      );
+      final alert = first.copyWith(
+        count: titles.length,
+        preview: first.preview.copyWith(title: titles.join(', ')),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(width: 320, child: DashboardAlertCard(alert)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('3 nhiệm vụ khẩn cấp'), findsOneWidget);
+      final caption = tester.renderObject<RenderParagraph>(
+        find.text(titles.join(', ')),
+      );
+      expect(caption.maxLines, 1);
+      expect(caption.overflow, TextOverflow.ellipsis);
+      expect(caption.didExceedMaxLines, isTrue);
+      expect(
+        find.text(
+          '${first.preview.farmName} · ${first.preview.pondName} · ${first.preview.seasonName}',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
   testWidgets('B: every alert stays within three rows on a narrow screen', (
     tester,
   ) async {

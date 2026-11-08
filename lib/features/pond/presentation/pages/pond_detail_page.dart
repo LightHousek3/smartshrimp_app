@@ -14,9 +14,11 @@ import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/widgets/pond_ui.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
+import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
 
+/// Owner pond details with separately loaded season history and mutation actions.
 class PondDetailPage extends ConsumerWidget {
   const PondDetailPage({required this.farmId, required this.pondId, super.key});
 
@@ -69,11 +71,8 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
 
   Pond get pond => widget.pond;
   PondSeasonScope get _scope => (farmId: pond.farmId, pondId: pond.id);
-  bool get _canCreateSeason =>
-      !pond.isDeleted &&
-      !pond.hasOpenSeason &&
-      pond.type == PondType.aquaculture &&
-      pond.status == PondStatus.available;
+  // The season API rechecks eligibility when the form is submitted.
+  bool get _canCreateSeason => SeasonRules.canCreateForPond(pond);
 
   @override
   void dispose() {
@@ -147,7 +146,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _deleteButton(mutation.isLoading),
+                _deleteButton(mutation.isLoading || seasons.isLoading),
               ],
             ),
           ),
@@ -387,6 +386,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     setState(() => _filter = value);
   }
 
+  // History pages have already been loaded by the provider; these tools filter locally.
   List<AquacultureSeason> _filterSeasons(List<AquacultureSeason> seasons) {
     final query = _searchController.text.trim().toLowerCase();
     return seasons
@@ -410,7 +410,18 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     await ref.read(pondSeasonHistoryProvider(_scope).future);
   }
 
+  /// Block open seasons and history locally before offering permanent deletion.
   Future<void> _delete() async {
+    final seasons = ref.read(pondSeasonHistoryProvider(_scope));
+    if (seasons.isLoading) return;
+    final blockers = <String>[
+      if (pond.hasOpenSeason)
+        'Ao đang có vụ nuôi mở. Không thể xóa ao khi còn vụ nuôi hoặc dữ liệu liên quan.',
+      if (seasons.hasError || !seasons.hasValue)
+        'Không thể tải danh sách vụ nuôi.',
+      if (seasons.value?.isNotEmpty ?? false)
+        'Ao đã có lịch sử vụ nuôi. Không thể xóa ao khi còn lịch sử vụ nuôi.',
+    ];
     final confirmed = await showAppConfirmDialog(
       context,
       entityLabel: 'ao',
@@ -418,11 +429,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
       retentionMessage:
           'Ao sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn dữ liệu liên quan hoặc lịch sử vụ nuôi.',
       confirmLabel: 'Xóa ao',
-      blockers: pond.hasOpenSeason
-          ? const <String>[
-              'Ao đang có vụ nuôi mở. Không thể xóa ao khi còn vụ nuôi hoặc dữ liệu liên quan.',
-            ]
-          : const <String>[],
+      blockers: blockers,
     );
     if (!confirmed || !mounted) return;
     try {

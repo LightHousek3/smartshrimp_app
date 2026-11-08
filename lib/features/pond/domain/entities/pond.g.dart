@@ -9,15 +9,25 @@ part of 'pond.dart';
 _PondFarm _$PondFarmFromJson(Map<String, dynamic> json) => _PondFarm(
   id: json['id'] as String,
   name: json['name'] as String,
-  deletedAt: json['deletedAt'] == null
-      ? null
-      : DateTime.parse(json['deletedAt'] as String),
+  status:
+      $enumDecodeNullable(
+        _$FarmStatusEnumMap,
+        json['status'],
+        unknownValue: FarmStatus.unknown,
+      ) ??
+      FarmStatus.unknown,
 );
 
 Map<String, dynamic> _$PondFarmToJson(_PondFarm instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
-  'deletedAt': instance.deletedAt?.toIso8601String(),
+  'status': _$FarmStatusEnumMap[instance.status]!,
+};
+
+const _$FarmStatusEnumMap = {
+  FarmStatus.active: 'ACTIVE',
+  FarmStatus.inactive: 'INACTIVE',
+  FarmStatus.unknown: 'unknown',
 };
 
 _PondCurrentSeason _$PondCurrentSeasonFromJson(Map<String, dynamic> json) =>
@@ -65,9 +75,6 @@ _Pond _$PondFromJson(Map<String, dynamic> json) => _Pond(
     json['status'],
     unknownValue: PondStatus.unknown,
   ),
-  deletedAt: json['deletedAt'] == null
-      ? null
-      : DateTime.parse(json['deletedAt'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -93,7 +100,6 @@ Map<String, dynamic> _$PondToJson(_Pond instance) => <String, dynamic>{
   'volumeM3': instance.volumeM3,
   'type': _$PondTypeEnumMap[instance.type]!,
   'status': _$PondStatusEnumMap[instance.status]!,
-  'deletedAt': instance.deletedAt?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'updatedAt': instance.updatedAt?.toIso8601String(),
   'farm': instance.farm,
@@ -109,6 +115,5 @@ const _$PondTypeEnumMap = {
 const _$PondStatusEnumMap = {
   PondStatus.available: 'AVAILABLE',
   PondStatus.maintenance: 'MAINTENANCE',
-  PondStatus.inactive: 'INACTIVE',
   PondStatus.unknown: 'unknown',
 };

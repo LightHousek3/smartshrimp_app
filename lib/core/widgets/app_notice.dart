@@ -257,62 +257,76 @@ class _AppNoticeCard extends StatelessWidget {
   }
 }
 
-class AppFormErrorBanner extends StatelessWidget {
-  const AppFormErrorBanner({
+class AppFormMessageBanner extends StatelessWidget {
+  const AppFormMessageBanner({
     required this.message,
-    this.title = 'Không thể lưu thông tin',
+    required this.title,
+    this.level = AppNoticeLevel.info,
     super.key,
   });
 
   final String title;
   final String message;
+  final AppNoticeLevel level;
 
   @override
   Widget build(BuildContext context) {
-    final visual = appNoticeVisualFor(AppNoticeLevel.danger);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: visual.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: visual.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(visual.icon, size: 18, color: visual.foreground),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+    final visual = appNoticeVisualFor(level);
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: visual.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: visual.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(visual.icon, size: 18, color: visual.foreground),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 11,
-                    height: 1.45,
+                  const SizedBox(height: 2),
+                  Text(
+                    message,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 11,
+                      height: 1.45,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class AppFormErrorBanner extends AppFormMessageBanner {
+  const AppFormErrorBanner({
+    required super.message,
+    super.title = 'Không thể lưu thông tin',
+    super.key,
+  }) : super(level: AppNoticeLevel.danger);
 }

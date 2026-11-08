@@ -17,6 +17,7 @@ final class FarmRepositoryImpl implements FarmRepository {
   @override
   Future<Farm> createFarm({
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -24,6 +25,7 @@ final class FarmRepositoryImpl implements FarmRepository {
   }) => _remoteDataSource.createFarm(
     _writeData(
       name: name,
+      status: status,
       address: address,
       latitude: latitude,
       longitude: longitude,
@@ -35,6 +37,7 @@ final class FarmRepositoryImpl implements FarmRepository {
   Future<Farm> updateFarm({
     required String farmId,
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -43,6 +46,7 @@ final class FarmRepositoryImpl implements FarmRepository {
     farmId,
     _writeData(
       name: name,
+      status: status,
       address: address,
       latitude: latitude,
       longitude: longitude,
@@ -56,6 +60,7 @@ final class FarmRepositoryImpl implements FarmRepository {
 
   static Map<String, dynamic> _writeData({
     required String name,
+    required FarmStatus status,
     required String? address,
     required double? latitude,
     required double? longitude,
@@ -64,6 +69,15 @@ final class FarmRepositoryImpl implements FarmRepository {
     final normalizedAddress = FarmRules.normalizeText(address ?? '');
     return <String, dynamic>{
       'name': FarmRules.normalizeText(name),
+      'status': switch (status) {
+        FarmStatus.active => 'ACTIVE',
+        FarmStatus.inactive => 'INACTIVE',
+        FarmStatus.unknown => throw ArgumentError.value(
+          status,
+          'status',
+          'Unknown farm status cannot be submitted.',
+        ),
+      },
       'address': normalizedAddress.isEmpty ? null : normalizedAddress,
       'latitude': latitude,
       'longitude': longitude,

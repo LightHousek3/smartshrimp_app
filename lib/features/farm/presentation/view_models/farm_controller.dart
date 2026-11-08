@@ -1,6 +1,4 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/config/app_config.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -16,23 +14,8 @@ final farmRemoteDataSourceProvider = Provider<FarmRemoteDataSource>((ref) {
   return FarmApiService(ref.watch(apiClientProvider));
 });
 
-final farmGeocodingDioProvider = Provider<Dio>((ref) {
-  return Dio(
-    BaseOptions(
-      baseUrl: AppConfig.osmNominatimBaseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: const <String, Object>{
-        'Accept': 'application/json',
-        'Accept-Language': 'vi',
-        'User-Agent': AppConfig.osmUserAgent,
-      },
-    ),
-  );
-});
-
 final farmGeocodingServiceProvider = Provider<FarmGeocodingService>((ref) {
-  return NominatimFarmGeocodingService(ref.watch(farmGeocodingDioProvider));
+  return GoongFarmGeocodingService(ref.watch(apiClientProvider));
 });
 
 final deviceLocationServiceProvider = Provider<DeviceLocationService>((ref) {
@@ -79,8 +62,11 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
 
   List<Farm> _allFarms = const <Farm>[];
   String _search = '';
+  FarmStatus? _statusFilter = FarmStatus.active;
   int _currentPage = 1;
   int _generation = 0;
+
+  bool get hasAnyFarm => _allFarms.isNotEmpty;
 
   @override
   Future<FarmPage> build() async {
@@ -89,8 +75,12 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
     return _buildPage();
   }
 
-  Future<void> load({String search = ''}) async {
+  Future<void> load({
+    String search = '',
+    FarmStatus? status = FarmStatus.active,
+  }) async {
     _search = search;
+    _statusFilter = status;
     _currentPage = 1;
     state = AsyncData(_buildPage());
   }
@@ -119,7 +109,9 @@ final class FarmListController extends _OwnerFarmController<FarmPage> {
           final matchesName =
               normalizedSearch.isEmpty ||
               farm.name.toLowerCase().contains(normalizedSearch);
-          return matchesName;
+          final matchesStatus =
+              _statusFilter == null || farm.status == _statusFilter;
+          return matchesName && matchesStatus;
         })
         .toList(growable: false);
     final totalPages = (filtered.length + _pageSize - 1) ~/ _pageSize;
@@ -167,6 +159,7 @@ final class FarmMutationController extends _OwnerFarmController<void> {
 
   Future<Farm> create({
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -176,6 +169,7 @@ final class FarmMutationController extends _OwnerFarmController<void> {
         .read(farmRepositoryProvider)
         .createFarm(
           name: name,
+          status: status,
           address: address,
           latitude: latitude,
           longitude: longitude,
@@ -186,6 +180,7 @@ final class FarmMutationController extends _OwnerFarmController<void> {
   Future<Farm> updateFarm({
     required String farmId,
     required String name,
+    required FarmStatus status,
     String? address,
     double? latitude,
     double? longitude,
@@ -196,6 +191,7 @@ final class FarmMutationController extends _OwnerFarmController<void> {
         .updateFarm(
           farmId: farmId,
           name: name,
+          status: status,
           address: address,
           latitude: latitude,
           longitude: longitude,

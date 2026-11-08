@@ -102,11 +102,9 @@ class TaskListView extends StatelessWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: tasks.when(
                   loading: () => const [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
                   ],
                   error: (error, _) => [

@@ -17,6 +17,7 @@ void main() {
     () async {
       await repository.createFarm(
         name: '  Trại   Cà Mau  ',
+        status: FarmStatus.inactive,
         address: '   ',
         latitude: 10.4892,
         longitude: 107.1647,
@@ -25,6 +26,7 @@ void main() {
 
       expect(remote.lastData, <String, dynamic>{
         'name': 'Trại Cà Mau',
+        'status': 'INACTIVE',
         'address': null,
         'latitude': 10.4892,
         'longitude': 107.1647,
@@ -40,7 +42,7 @@ void main() {
     expect(farms, const <Farm>[_farm]);
   });
 
-  test('delegates soft deletion using the selected farm id', () async {
+  test('delegates farm deletion using the selected farm id', () async {
     await repository.deleteFarm('farm-1');
 
     expect(remote.deletedFarmId, 'farm-1');

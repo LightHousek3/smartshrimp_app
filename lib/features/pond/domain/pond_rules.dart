@@ -1,9 +1,11 @@
+/// Form validation matching the pond API; ownership/season rules remain server-side.
 abstract final class PondRules {
   static const nameMaxLength = 255;
   static const maxAreaM2 = 9999999999.99;
   static const maxDepthM = 9999.99;
   static const maxVolumeM3 = 999999999999.99;
 
+  /// Normalize display/input whitespace without changing the user's letter case.
   static String normalizeName(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');
 
@@ -16,11 +18,13 @@ abstract final class PondRules {
     return null;
   }
 
+  /// Accept either decimal separator; an empty optional field has no value.
   static double? parseNumber(String value) {
     final normalized = value.trim().replaceAll(',', '.');
     return normalized.isEmpty ? null : double.tryParse(normalized);
   }
 
+  /// Validate user text before converting it to a numeric JSON body value.
   static String? validatePositiveNumber(
     String? value,
     String label, {
@@ -52,8 +56,25 @@ abstract final class PondRules {
   static String? validateDepth(String? value) =>
       validatePositiveNumber(value, 'Độ sâu', required: true, max: maxDepthM);
 
+  /// Match the backend capacity calculation before autofilling or comparing volume.
+  static double? calculateVolume(double? areaM2, double? depthM) {
+    if (areaM2 == null ||
+        depthM == null ||
+        !areaM2.isFinite ||
+        !depthM.isFinite ||
+        areaM2 <= 0 ||
+        depthM <= 0 ||
+        areaM2 > maxAreaM2 ||
+        depthM > maxDepthM) {
+      return null;
+    }
+    final volume = (areaM2 * depthM * 100).round() / 100;
+    return volume > maxVolumeM3 ? null : volume;
+  }
+
+  /// Run after individual dimension validation, before submitting the form.
   static String? validateCalculatedVolume(double areaM2, double depthM) {
-    if (areaM2 * depthM > maxVolumeM3) {
+    if (calculateVolume(areaM2, depthM) == null) {
       return 'Thể tích tính từ diện tích và độ sâu vượt quá '
           '${_formatLimit(maxVolumeM3)} m³.';
     }
@@ -63,14 +84,16 @@ abstract final class PondRules {
   static String? validateVolume(String? value) =>
       validatePositiveNumber(value, 'Thể tích', max: maxVolumeM3);
 
+  /// A manually entered usable volume may be lower than the rounded capacity.
   static String? validateVolumeCapacity(
     double? volumeM3,
     double areaM2,
     double depthM,
   ) {
-    if (volumeM3 != null && volumeM3 > areaM2 * depthM) {
+    final capacity = calculateVolume(areaM2, depthM);
+    if (volumeM3 != null && capacity != null && volumeM3 > capacity) {
       return 'Thể tích không được vượt quá diện tích × độ sâu '
-          '(${_formatLimit(areaM2 * depthM)} m³).';
+          '(${_formatLimit(capacity)} m³).';
     }
     return null;
   }

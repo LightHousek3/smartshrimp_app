@@ -92,6 +92,7 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
   String? _locationStatus;
   String? _lastGeocodedAddress;
   String? _submitError;
+  late FarmStatus _farmStatus;
 
   bool get _isEditing => widget.farm != null;
   double? get _latitude => FarmRules.parseCoordinate(_latitudeController.text);
@@ -110,6 +111,7 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
   void initState() {
     super.initState();
     final farm = widget.farm;
+    _farmStatus = farm?.status ?? FarmStatus.active;
     _nameController = TextEditingController(text: farm?.name ?? '');
     _addressController = TextEditingController(text: farm?.address ?? '');
     _areaController = TextEditingController(
@@ -196,6 +198,36 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
                           textInputAction: TextInputAction.next,
                           validator: FarmRules.validateName,
                           decoration: _decoration('VD: Trang trại Cửa Lấp'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _FarmFormField(
+                        label: 'Trạng thái',
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: _FarmStatusOption(
+                                  status: FarmStatus.active,
+                                  selected: _farmStatus == FarmStatus.active,
+                                  onTap: () => setState(
+                                    () => _farmStatus = FarmStatus.active,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _FarmStatusOption(
+                                  status: FarmStatus.inactive,
+                                  selected: _farmStatus == FarmStatus.inactive,
+                                  onTap: () => setState(
+                                    () => _farmStatus = FarmStatus.inactive,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -691,12 +723,17 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
     final formValid = _formKey.currentState?.validate() ?? false;
     final coordinatesValid = _coordinateKey.currentState?.validate() ?? false;
     if (!formValid || !coordinatesValid) return;
+    if (_farmStatus == FarmStatus.unknown) {
+      setState(() => _submitError = 'Vui lòng chọn trạng thái trang trại.');
+      return;
+    }
     try {
       final notifier = ref.read(farmMutationControllerProvider.notifier);
       final result = _isEditing
           ? await notifier.updateFarm(
               farmId: widget.farm!.id,
               name: _nameController.text,
+              status: _farmStatus,
               address: _addressController.text,
               latitude: _latitude,
               longitude: _longitude,
@@ -704,6 +741,7 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
             )
           : await notifier.create(
               name: _nameController.text,
+              status: _farmStatus,
               address: _addressController.text,
               latitude: _latitude,
               longitude: _longitude,
@@ -714,12 +752,67 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
         AppNoticeService.success(context, 'Cập nhật trang trại thành công.');
         context.pop(result);
       } else {
-        context.go('/farms?created=1');
+        context.go(
+          _farmStatus == FarmStatus.inactive
+              ? '/farms?created=1&status=inactive'
+              : '/farms?created=1',
+        );
       }
     } on AppException catch (error) {
       if (!mounted) return;
       setState(() => _submitError = error.message);
     }
+  }
+}
+
+class _FarmStatusOption extends StatelessWidget {
+  const _FarmStatusOption({
+    required this.status,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final FarmStatus status;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? const Color(0xFF0C4E8F) : AppColors.inkMuted;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: farmStatusLabel(status),
+      child: Material(
+        color: selected ? const Color(0xFFEAF4FF) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? const Color(0xFF3F97E8) : AppColors.line,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              farmStatusLabel(status),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

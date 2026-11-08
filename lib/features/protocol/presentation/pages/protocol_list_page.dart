@@ -114,65 +114,86 @@ class _ProtocolListPageState extends ConsumerState<ProtocolListPage> {
           ref.invalidate(protocolListProvider(scope));
           await ref.read(protocolListProvider(scope).future);
         },
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: [
+          slivers: [
             ...state.when(
-              loading: () => [
-                const Padding(
-                  padding: EdgeInsets.all(40),
+              loading: () => const [
+                SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(child: CircularProgressIndicator()),
                 ),
               ],
               error: (error, _) => [
-                ProtocolFailure(
-                  error: error,
-                  onRetry: () => ref.invalidate(protocolListProvider(scope)),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                  sliver: SliverToBoxAdapter(
+                    child: ProtocolFailure(
+                      error: error,
+                      onRetry: () =>
+                          ref.invalidate(protocolListProvider(scope)),
+                    ),
+                  ),
                 ),
               ],
-              data: (page) => page.items.isEmpty
-                  ? [const ProtocolEmptyState()]
-                  : [
-                      for (final item in page.items)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ProtocolCard(
-                            data: item,
-                            onTap: () => context.push('/protocols/${item.id}'),
-                          ),
-                        ),
-                      if (page.hasNextPage)
-                        OutlinedButton(
-                          onPressed: _loadingMore
-                              ? null
-                              : () async {
-                                  setState(() => _loadingMore = true);
-                                  try {
-                                    await ref
-                                        .read(
-                                          protocolListProvider(scope).notifier,
-                                        )
-                                        .loadMore();
-                                  } catch (error) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(protocolError(error)),
-                                        ),
-                                      );
-                                    }
-                                  } finally {
-                                    if (mounted) {
-                                      setState(() => _loadingMore = false);
-                                    }
-                                  }
-                                },
-                          child: Text(_loadingMore ? 'Đang tải…' : 'Xem thêm'),
-                        ),
-                    ],
+              data: (page) => [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                  sliver: SliverList.list(
+                    children: page.items.isEmpty
+                        ? [const ProtocolEmptyState()]
+                        : [
+                            for (final item in page.items)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: ProtocolCard(
+                                  data: item,
+                                  onTap: () =>
+                                      context.push('/protocols/${item.id}'),
+                                ),
+                              ),
+                            if (page.hasNextPage)
+                              OutlinedButton(
+                                onPressed: _loadingMore
+                                    ? null
+                                    : () async {
+                                        setState(() => _loadingMore = true);
+                                        try {
+                                          await ref
+                                              .read(
+                                                protocolListProvider(
+                                                  scope,
+                                                ).notifier,
+                                              )
+                                              .loadMore();
+                                        } catch (error) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  protocolError(error),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } finally {
+                                          if (mounted) {
+                                            setState(
+                                              () => _loadingMore = false,
+                                            );
+                                          }
+                                        }
+                                      },
+                                child: Text(
+                                  _loadingMore ? 'Đang tải…' : 'Xem thêm',
+                                ),
+                              ),
+                          ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
