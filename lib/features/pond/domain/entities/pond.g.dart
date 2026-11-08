@@ -6,12 +6,28 @@ part of 'pond.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_PondFarm _$PondFarmFromJson(Map<String, dynamic> json) =>
-    _PondFarm(id: json['id'] as String, name: json['name'] as String);
+_PondFarm _$PondFarmFromJson(Map<String, dynamic> json) => _PondFarm(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  status:
+      $enumDecodeNullable(
+        _$FarmStatusEnumMap,
+        json['status'],
+        unknownValue: FarmStatus.unknown,
+      ) ??
+      FarmStatus.unknown,
+);
 
 Map<String, dynamic> _$PondFarmToJson(_PondFarm instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
+  'status': _$FarmStatusEnumMap[instance.status]!,
+};
+
+const _$FarmStatusEnumMap = {
+  FarmStatus.active: 'ACTIVE',
+  FarmStatus.inactive: 'INACTIVE',
+  FarmStatus.unknown: 'unknown',
 };
 
 _PondCurrentSeason _$PondCurrentSeasonFromJson(Map<String, dynamic> json) =>

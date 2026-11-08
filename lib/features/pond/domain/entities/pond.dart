@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart'
+    show FarmStatus;
 
 part 'pond.freezed.dart';
 part 'pond.g.dart';
@@ -32,8 +34,13 @@ enum PondSeasonStatus {
 
 @freezed
 abstract class PondFarm with _$PondFarm {
-  const factory PondFarm({required String id, required String name}) =
-      _PondFarm;
+  const factory PondFarm({
+    required String id,
+    required String name,
+    @JsonKey(unknownEnumValue: FarmStatus.unknown)
+    @Default(FarmStatus.unknown)
+    FarmStatus status,
+  }) = _PondFarm;
 
   factory PondFarm.fromJson(Map<String, dynamic> json) =>
       _$PondFarmFromJson(json);
