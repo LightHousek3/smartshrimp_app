@@ -150,6 +150,12 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_editing && !SeasonRules.canCreateForPond(widget.pond)) {
+      return _BlockedSeasonCreation(
+        farmId: widget.farmId,
+        pondId: widget.pond.id,
+      );
+    }
     final loading = ref.watch(seasonMutationControllerProvider).isLoading;
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -473,6 +479,35 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
       }
     }
   }
+}
+
+class _BlockedSeasonCreation extends StatefulWidget {
+  const _BlockedSeasonCreation({required this.farmId, required this.pondId});
+
+  final String farmId;
+  final String pondId;
+
+  @override
+  State<_BlockedSeasonCreation> createState() => _BlockedSeasonCreationState();
+}
+
+class _BlockedSeasonCreationState extends State<_BlockedSeasonCreation> {
+  @override
+  void initState() {
+    super.initState();
+    // Wait for a mounted route before showing the notice and navigating.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppNoticeService.danger(
+        context,
+        'Không thể tạo vụ nuôi cho ao này. Ao phải là ao nuôi đang sẵn sàng của trại đang hoạt động và chưa có vụ đang mở.',
+      );
+      context.go('/farms/${widget.farmId}/ponds/${widget.pondId}');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => _loading();
 }
 
 class _ShrimpTypeOption extends StatelessWidget {

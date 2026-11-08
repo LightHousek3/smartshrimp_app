@@ -1,9 +1,37 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart'
+    show FarmStatus;
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
 
 void main() {
+  test(
+    'pond farm status parses known values and safely defaults to unknown',
+    () {
+      for (final entry in <String?, FarmStatus>{
+        'ACTIVE': FarmStatus.active,
+        'INACTIVE': FarmStatus.inactive,
+        'FUTURE_STATUS': FarmStatus.unknown,
+        null: FarmStatus.unknown,
+      }.entries) {
+        final farm = PondFarm.fromJson({
+          'id': 'farm-1',
+          'name': 'Farm',
+          'status': entry.key,
+        });
+        expect(farm.status, entry.value);
+        if (entry.value != FarmStatus.unknown) {
+          expect(farm.toJson()['status'], entry.key);
+        }
+      }
+      expect(
+        PondFarm.fromJson({'id': 'farm-1', 'name': 'Farm'}).status,
+        FarmStatus.unknown,
+      );
+    },
+  );
+
   test(
     'autofill capacity uses backend rounding and validates the rounded result',
     () {
