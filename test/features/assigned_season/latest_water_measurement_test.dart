@@ -8,8 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_detail_page.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -18,7 +16,6 @@ import 'package:smartshrimp_app/features/operation/domain/repositories/operation
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
-import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 
 Future<void> _open(
@@ -231,7 +228,7 @@ class _Seasons implements AssignedSeasonRepository {
         id: seasonId,
         name: 'Vụ nuôi',
         status: status,
-        shrimpType: 'WHITELEG',
+        shrimpType: ShrimpType.whiteleg,
         pondId: 'pond',
         pondName: 'Ao A3',
         pondType: 'LINED',

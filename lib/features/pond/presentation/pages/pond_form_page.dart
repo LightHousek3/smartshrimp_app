@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -206,165 +206,163 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
         child: SafeArea(
           child: Form(
             key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    AppCircleButton(
-                      icon: Icons.arrow_back_ios_new_rounded,
-                      tooltip: 'Quay lại',
-                      onPressed: loading ? null : context.pop,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      editing ? 'Cập nhật ao' : 'Tạo ao mới',
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+            child: CustomScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              slivers: <Widget>[
+                StickyPageHeader(
+                  title: editing ? 'Cập nhật ao' : 'Tạo ao mới',
+                  titleSize: 18,
+                  onBack: loading ? null : context.pop,
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
+                  sliver: SliverList.list(
+                    children: <Widget>[
+                      _label('Tên ao', required: true),
+                      const SizedBox(height: 7),
+                      TextFormField(
+                        controller: _name,
+                        maxLength: PondRules.nameMaxLength,
+                        maxLengthEnforcement: MaxLengthEnforcement.none,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: PondRules.validateName,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          hintText: 'VD: Ao A1, Ao Lắng...',
+                          counterText: '',
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 26),
-                _label('Tên ao', required: true),
-                const SizedBox(height: 7),
-                TextFormField(
-                  controller: _name,
-                  maxLength: PondRules.nameMaxLength,
-                  maxLengthEnforcement: MaxLengthEnforcement.none,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  validator: PondRules.validateName,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    hintText: 'VD: Ao A1, Ao Lắng...',
-                    counterText: '',
-                  ),
-                ),
-                const SizedBox(height: 15),
-                _numberField(
-                  _area,
-                  'Diện tích (m²)',
-                  '1200',
-                  PondRules.validateArea,
-                  readOnly: editing,
-                ),
-                const SizedBox(height: 15),
-                _numberField(
-                  _depth,
-                  'Độ sâu (m)',
-                  '1.5',
-                  PondRules.validateDepth,
-                  readOnly: editing,
-                ),
-                if (_volumeError != null) ...<Widget>[
-                  const SizedBox(height: 7),
-                  Text(
-                    _volumeError!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 15),
-                _numberField(
-                  _volume,
-                  'Thể tích (m³) - tùy chọn',
-                  editing
-                      ? 'Để trống để giữ thể tích hiện tại'
-                      : 'Để trống để hệ thống tự tính',
-                  PondRules.validateVolume,
-                  required: false,
-                  readOnly: !_canEditVolume,
-                ),
-                if (editing && !_canEditVolume) ...<Widget>[
-                  const SizedBox(height: 7),
-                  const Text(
-                    'Chưa đủ thông tin diện tích và độ sâu để cập nhật thể tích.',
-                  ),
-                ],
-                const SizedBox(height: 15),
-                _label('Loại ao'),
-                const SizedBox(height: 8),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _ChoiceButton(
-                        label: 'Ao nuôi',
-                        selected: _type == PondType.aquaculture,
-                        onTap: loading || _hasOpenSeason
-                            ? null
-                            : () =>
-                                  setState(() => _type = PondType.aquaculture),
+                      const SizedBox(height: 15),
+                      _numberField(
+                        _area,
+                        'Diện tích (m²)',
+                        '1200',
+                        PondRules.validateArea,
+                        readOnly: editing,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ChoiceButton(
-                        label: 'Ao xử lý nước',
-                        selected: _type == PondType.waterTreatment,
-                        onTap: loading || _hasOpenSeason
-                            ? null
-                            : () => setState(
-                                () => _type = PondType.waterTreatment,
-                              ),
+                      const SizedBox(height: 15),
+                      _numberField(
+                        _depth,
+                        'Độ sâu (m)',
+                        '1.5',
+                        PondRules.validateDepth,
+                        readOnly: editing,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                _label('Trạng thái'),
-                const SizedBox(height: 7),
-                DropdownButtonFormField<PondStatus>(
-                  initialValue: _status,
-                  decoration: const InputDecoration(),
-                  items:
-                      const <PondStatus>[
-                        PondStatus.available,
-                        PondStatus.maintenance,
-                      ].map((value) {
-                        return DropdownMenuItem(
-                          value: value,
-                          enabled:
-                              value != PondStatus.maintenance ||
-                              _canEnterMaintenance,
-                          child: Text(pondStatusLabel(value)),
-                        );
-                      }).toList(),
-                  onChanged: loading
-                      ? null
-                      : (value) => setState(() => _status = value!),
-                ),
-                if (widget.initialPond?.hasOpenSeason == true) ...<Widget>[
-                  const SizedBox(height: 13),
-                  const Text(
-                    'Ao có vụ nuôi mở: không thể đổi loại ao hoặc chuyển sang bảo trì.',
-                    style: TextStyle(color: Color(0xFF9A5B00), fontSize: 12),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                SizedBox(
-                  height: 50,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1976D2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(13),
+                      if (_volumeError != null) ...<Widget>[
+                        const SizedBox(height: 7),
+                        Text(
+                          _volumeError!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 15),
+                      _numberField(
+                        _volume,
+                        'Thể tích (m³) - tùy chọn',
+                        editing
+                            ? 'Để trống để giữ thể tích hiện tại'
+                            : 'Để trống để hệ thống tự tính',
+                        PondRules.validateVolume,
+                        required: false,
+                        readOnly: !_canEditVolume,
                       ),
-                    ),
-                    onPressed: loading || !_hasChanges ? null : _submit,
-                    child: loading
-                        ? const SizedBox.square(
-                            dimension: 19,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                      if (editing && !_canEditVolume) ...<Widget>[
+                        const SizedBox(height: 7),
+                        const Text(
+                          'Chưa đủ thông tin diện tích và độ sâu để cập nhật thể tích.',
+                        ),
+                      ],
+                      const SizedBox(height: 15),
+                      _label('Loại ao'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: _ChoiceButton(
+                              label: 'Ao nuôi',
+                              selected: _type == PondType.aquaculture,
+                              onTap: loading || _hasOpenSeason
+                                  ? null
+                                  : () => setState(
+                                      () => _type = PondType.aquaculture,
+                                    ),
                             ),
-                          )
-                        : Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ChoiceButton(
+                              label: 'Ao xử lý nước',
+                              selected: _type == PondType.waterTreatment,
+                              onTap: loading || _hasOpenSeason
+                                  ? null
+                                  : () => setState(
+                                      () => _type = PondType.waterTreatment,
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      _label('Trạng thái'),
+                      const SizedBox(height: 7),
+                      DropdownButtonFormField<PondStatus>(
+                        initialValue: _status,
+                        decoration: const InputDecoration(),
+                        items:
+                            const <PondStatus>[
+                              PondStatus.available,
+                              PondStatus.maintenance,
+                            ].map((value) {
+                              return DropdownMenuItem(
+                                value: value,
+                                enabled:
+                                    value != PondStatus.maintenance ||
+                                    _canEnterMaintenance,
+                                child: Text(pondStatusLabel(value)),
+                              );
+                            }).toList(),
+                        onChanged: loading
+                            ? null
+                            : (value) => setState(() => _status = value!),
+                      ),
+                      if (widget.initialPond?.hasOpenSeason ==
+                          true) ...<Widget>[
+                        const SizedBox(height: 13),
+                        const Text(
+                          'Ao có vụ nuôi mở: không thể đổi loại ao hoặc chuyển sang bảo trì.',
+                          style: TextStyle(
+                            color: Color(0xFF9A5B00),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        height: 50,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF1976D2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                          ),
+                          onPressed: loading || !_hasChanges ? null : _submit,
+                          child: loading
+                              ? const SizedBox.square(
+                                  dimension: 19,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

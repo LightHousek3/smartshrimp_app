@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AssignedSeasonPersonnel {
 
- String get role; String get name; String? get avatarUrl;
+ AssignedSeasonPersonnelRole get role; String get name; String? get avatarUrl;
 /// Create a copy of AssignedSeasonPersonnel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $AssignedSeasonPersonnelCopyWith<$Res>  {
   factory $AssignedSeasonPersonnelCopyWith(AssignedSeasonPersonnel value, $Res Function(AssignedSeasonPersonnel) _then) = _$AssignedSeasonPersonnelCopyWithImpl;
 @useResult
 $Res call({
- String role, String name, String? avatarUrl
+ AssignedSeasonPersonnelRole role, String name, String? avatarUrl
 });
 
 
@@ -65,7 +65,7 @@ class _$AssignedSeasonPersonnelCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? role = null,Object? name = null,Object? avatarUrl = freezed,}) {
   return _then(_self.copyWith(
 role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as AssignedSeasonPersonnelRole,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -152,7 +152,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String role,  String name,  String? avatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AssignedSeasonPersonnelRole role,  String name,  String? avatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AssignedSeasonPersonnel() when $default != null:
 return $default(_that.role,_that.name,_that.avatarUrl);case _:
@@ -173,7 +173,7 @@ return $default(_that.role,_that.name,_that.avatarUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String role,  String name,  String? avatarUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AssignedSeasonPersonnelRole role,  String name,  String? avatarUrl)  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeasonPersonnel():
 return $default(_that.role,_that.name,_that.avatarUrl);case _:
@@ -193,7 +193,7 @@ return $default(_that.role,_that.name,_that.avatarUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String role,  String name,  String? avatarUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AssignedSeasonPersonnelRole role,  String name,  String? avatarUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeasonPersonnel() when $default != null:
 return $default(_that.role,_that.name,_that.avatarUrl);case _:
@@ -211,7 +211,7 @@ class _AssignedSeasonPersonnel implements AssignedSeasonPersonnel {
   const _AssignedSeasonPersonnel({required this.role, required this.name, this.avatarUrl});
   
 
-@override final  String role;
+@override final  AssignedSeasonPersonnelRole role;
 @override final  String name;
 @override final  String? avatarUrl;
 
@@ -245,7 +245,7 @@ abstract mixin class _$AssignedSeasonPersonnelCopyWith<$Res> implements $Assigne
   factory _$AssignedSeasonPersonnelCopyWith(_AssignedSeasonPersonnel value, $Res Function(_AssignedSeasonPersonnel) _then) = __$AssignedSeasonPersonnelCopyWithImpl;
 @override @useResult
 $Res call({
- String role, String name, String? avatarUrl
+ AssignedSeasonPersonnelRole role, String name, String? avatarUrl
 });
 
 
@@ -265,7 +265,7 @@ class __$AssignedSeasonPersonnelCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? role = null,Object? name = null,Object? avatarUrl = freezed,}) {
   return _then(_AssignedSeasonPersonnel(
 role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as AssignedSeasonPersonnelRole,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -558,7 +558,7 @@ as double?,
 /// @nodoc
 mixin _$AssignedSeasonDetail {
 
- String get id; String get name; AssignedSeasonStatus get status; String get shrimpType; String get pondId; String get pondName; String get pondType; String get pondStatus; String get farmId; String get farmName; List<AssignedSeasonPersonnel> get personnel; List<OtherAssignedSeason> get otherAssignedSeasons; DateTime get assignedAt; String? get farmAddress; DateTime? get stockingDate; DateTime? get expectedEndDate; int? get initialQuantity; double? get initialDensityPerM2; double? get currentBiomassKg; double? get areaM2; double? get depthM; double? get volumeM3;
+ String get id; String get name; AssignedSeasonStatus get status; ShrimpType get shrimpType; String get pondId; String get pondName; String get pondType; String get pondStatus; String get farmId; String get farmName; List<AssignedSeasonPersonnel> get personnel; List<OtherAssignedSeason> get otherAssignedSeasons; DateTime get assignedAt; String? get farmAddress; DateTime? get stockingDate; DateTime? get expectedEndDate; int? get initialQuantity; double? get initialDensityPerM2; double? get currentBiomassKg; double? get areaM2; double? get depthM; double? get volumeM3;
 /// Create a copy of AssignedSeasonDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -589,7 +589,7 @@ abstract mixin class $AssignedSeasonDetailCopyWith<$Res>  {
   factory $AssignedSeasonDetailCopyWith(AssignedSeasonDetail value, $Res Function(AssignedSeasonDetail) _then) = _$AssignedSeasonDetailCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String pondType, String pondStatus, String farmId, String farmName, List<AssignedSeasonPersonnel> personnel, List<OtherAssignedSeason> otherAssignedSeasons, DateTime assignedAt, String? farmAddress, DateTime? stockingDate, DateTime? expectedEndDate, int? initialQuantity, double? initialDensityPerM2, double? currentBiomassKg, double? areaM2, double? depthM, double? volumeM3
+ String id, String name, AssignedSeasonStatus status, ShrimpType shrimpType, String pondId, String pondName, String pondType, String pondStatus, String farmId, String farmName, List<AssignedSeasonPersonnel> personnel, List<OtherAssignedSeason> otherAssignedSeasons, DateTime assignedAt, String? farmAddress, DateTime? stockingDate, DateTime? expectedEndDate, int? initialQuantity, double? initialDensityPerM2, double? currentBiomassKg, double? areaM2, double? depthM, double? volumeM3
 });
 
 
@@ -612,7 +612,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AssignedSeasonStatus,shrimpType: null == shrimpType ? _self.shrimpType : shrimpType // ignore: cast_nullable_to_non_nullable
-as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
+as ShrimpType,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
 as String,pondName: null == pondName ? _self.pondName : pondName // ignore: cast_nullable_to_non_nullable
 as String,pondType: null == pondType ? _self.pondType : pondType // ignore: cast_nullable_to_non_nullable
 as String,pondStatus: null == pondStatus ? _self.pondStatus : pondStatus // ignore: cast_nullable_to_non_nullable
@@ -715,7 +715,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  ShrimpType shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AssignedSeasonDetail() when $default != null:
 return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.pondType,_that.pondStatus,_that.farmId,_that.farmName,_that.personnel,_that.otherAssignedSeasons,_that.assignedAt,_that.farmAddress,_that.stockingDate,_that.expectedEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.currentBiomassKg,_that.areaM2,_that.depthM,_that.volumeM3);case _:
@@ -736,7 +736,7 @@ return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  AssignedSeasonStatus status,  ShrimpType shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeasonDetail():
 return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.pondType,_that.pondStatus,_that.farmId,_that.farmName,_that.personnel,_that.otherAssignedSeasons,_that.assignedAt,_that.farmAddress,_that.stockingDate,_that.expectedEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.currentBiomassKg,_that.areaM2,_that.depthM,_that.volumeM3);case _:
@@ -756,7 +756,7 @@ return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  AssignedSeasonStatus status,  String shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  AssignedSeasonStatus status,  ShrimpType shrimpType,  String pondId,  String pondName,  String pondType,  String pondStatus,  String farmId,  String farmName,  List<AssignedSeasonPersonnel> personnel,  List<OtherAssignedSeason> otherAssignedSeasons,  DateTime assignedAt,  String? farmAddress,  DateTime? stockingDate,  DateTime? expectedEndDate,  int? initialQuantity,  double? initialDensityPerM2,  double? currentBiomassKg,  double? areaM2,  double? depthM,  double? volumeM3)?  $default,) {final _that = this;
 switch (_that) {
 case _AssignedSeasonDetail() when $default != null:
 return $default(_that.id,_that.name,_that.status,_that.shrimpType,_that.pondId,_that.pondName,_that.pondType,_that.pondStatus,_that.farmId,_that.farmName,_that.personnel,_that.otherAssignedSeasons,_that.assignedAt,_that.farmAddress,_that.stockingDate,_that.expectedEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.currentBiomassKg,_that.areaM2,_that.depthM,_that.volumeM3);case _:
@@ -777,7 +777,7 @@ class _AssignedSeasonDetail extends AssignedSeasonDetail {
 @override final  String id;
 @override final  String name;
 @override final  AssignedSeasonStatus status;
-@override final  String shrimpType;
+@override final  ShrimpType shrimpType;
 @override final  String pondId;
 @override final  String pondName;
 @override final  String pondType;
@@ -839,7 +839,7 @@ abstract mixin class _$AssignedSeasonDetailCopyWith<$Res> implements $AssignedSe
   factory _$AssignedSeasonDetailCopyWith(_AssignedSeasonDetail value, $Res Function(_AssignedSeasonDetail) _then) = __$AssignedSeasonDetailCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, AssignedSeasonStatus status, String shrimpType, String pondId, String pondName, String pondType, String pondStatus, String farmId, String farmName, List<AssignedSeasonPersonnel> personnel, List<OtherAssignedSeason> otherAssignedSeasons, DateTime assignedAt, String? farmAddress, DateTime? stockingDate, DateTime? expectedEndDate, int? initialQuantity, double? initialDensityPerM2, double? currentBiomassKg, double? areaM2, double? depthM, double? volumeM3
+ String id, String name, AssignedSeasonStatus status, ShrimpType shrimpType, String pondId, String pondName, String pondType, String pondStatus, String farmId, String farmName, List<AssignedSeasonPersonnel> personnel, List<OtherAssignedSeason> otherAssignedSeasons, DateTime assignedAt, String? farmAddress, DateTime? stockingDate, DateTime? expectedEndDate, int? initialQuantity, double? initialDensityPerM2, double? currentBiomassKg, double? areaM2, double? depthM, double? volumeM3
 });
 
 
@@ -862,7 +862,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AssignedSeasonStatus,shrimpType: null == shrimpType ? _self.shrimpType : shrimpType // ignore: cast_nullable_to_non_nullable
-as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
+as ShrimpType,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
 as String,pondName: null == pondName ? _self.pondName : pondName // ignore: cast_nullable_to_non_nullable
 as String,pondType: null == pondType ? _self.pondType : pondType // ignore: cast_nullable_to_non_nullable
 as String,pondStatus: null == pondStatus ? _self.pondStatus : pondStatus // ignore: cast_nullable_to_non_nullable

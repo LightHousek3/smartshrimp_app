@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/pages/assigned_season_detail_page.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -584,6 +582,9 @@ final class _PersonnelRepository implements PersonnelRepository {
 }
 
 final class _AssignedSeasonRepository implements AssignedSeasonRepository {
+  @override
+  Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() async => [];
+
   String? requestedSeasonId;
 
   @override
@@ -608,7 +609,7 @@ final class _AssignedSeasonRepository implements AssignedSeasonRepository {
       id: seasonId,
       name: 'Vụ thử nghiệm',
       status: AssignedSeasonStatus.planning,
-      shrimpType: 'WHITELEG',
+      shrimpType: ShrimpType.whiteleg,
       pondId: 'pond-1',
       pondName: 'Ao thử nghiệm',
       pondType: 'AQUACULTURE',

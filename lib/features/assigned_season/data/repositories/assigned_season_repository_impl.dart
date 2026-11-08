@@ -8,15 +8,19 @@ final class AssignedSeasonRepositoryImpl implements AssignedSeasonRepository {
   final AssignedSeasonApiService _api;
 
   @override
+  Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() =>
+      _api.getAssignedSeasonFarms();
+
+  @override
   Future<AssignedSeasonPage> getAssignedSeasons({
     AssignedSeasonStatus? status,
     String? search,
     String? farmId,
     String? cursor,
-    int limit = 20,
+    int limit = AssignedSeasonRules.pageSize,
   }) {
     final query = <String, dynamic>{'limit': limit};
-    if (status != null) query['status'] = status.name;
+    if (status != null) query['status'] = seasonStatusApiValue(status);
     if (search != null && search.trim().isNotEmpty) {
       query['search'] = search.trim();
     }
