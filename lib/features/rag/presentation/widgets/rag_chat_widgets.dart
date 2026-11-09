@@ -286,6 +286,17 @@ class RagMessagePair extends StatelessWidget {
   final RagQuery query;
   final bool busy;
   final void Function(int? rating) onRate;
+
+  String? get _warning =>
+      query.warning ??
+      switch (query.queryStatus) {
+        RagQueryStatus.noSource =>
+          'Chưa tìm thấy nguồn tham chiếu. Vui lòng kiểm chứng câu trả lời trước khi áp dụng.',
+        RagQueryStatus.lowMatch =>
+          'Nguồn tham chiếu có độ liên quan thấp. Vui lòng kiểm chứng câu trả lời trước khi áp dụng.',
+        _ => null,
+      };
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => Padding(
@@ -311,27 +322,36 @@ class RagMessagePair extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
-                    SvgPicture.asset(RagAssets.assistant),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'Trợ lý AI',
-                      style: TextStyle(
-                        color: Color(0xFF7B5BD6),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(RagAssets.assistant),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Trợ lý AI',
+                          style: TextStyle(
+                            color: Color(0xFF7B5BD6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
+                    _RagQueryStatusBadge(status: query.queryStatus),
                   ],
                 ),
                 const SizedBox(height: 4),
-                if (query.warning != null)
+                if (_warning != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
-                      '${query.warning}',
+                      _warning!,
                       style: const TextStyle(
                         color: Color(0xFF99631A),
                         fontSize: 12,
@@ -341,8 +361,9 @@ class RagMessagePair extends StatelessWidget {
                   ),
                 RagAnswerBody(
                   text:
-                      query.answer ??
-                      query.errorMessage ??
+                      (query.queryStatus == RagQueryStatus.error
+                          ? query.errorMessage
+                          : query.answer ?? query.errorMessage) ??
                       'AI chưa thể tạo câu trả lời. Vui lòng thử lại.',
                 ),
                 if (query.retrievedChunks.isNotEmpty)
@@ -385,6 +406,18 @@ class RagMessagePair extends StatelessWidget {
                           ),
                         ),
                     ],
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Không có nguồn tham chiếu.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.inkMuted,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 if (query.canRate) ...[
                   const SizedBox(height: 8),
@@ -460,6 +493,51 @@ class RagMessagePair extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _RagQueryStatusBadge extends StatelessWidget {
+  const _RagQueryStatusBadge({required this.status});
+  final RagQueryStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      RagQueryStatus.answered => ('Đã trả lời', AppColors.inkMuted),
+      RagQueryStatus.noSource => (
+        'Không tìm thấy nguồn',
+        const Color(0xFF99631A),
+      ),
+      RagQueryStatus.lowMatch => ('Nguồn ít phù hợp', const Color(0xFF99631A)),
+      RagQueryStatus.error => (
+        'Lỗi xử lý',
+        Theme.of(context).colorScheme.error,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 4,
+        children: [
+          if (status == RagQueryStatus.error)
+            Icon(Icons.error_outline, size: 14, color: color),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class RagComposer extends StatelessWidget {
