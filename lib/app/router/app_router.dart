@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/presentation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -126,6 +127,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
       final account = authState.value;
+      if (location.contains('/disease-cases') &&
+          account?.role != AccountRole.technician) {
+        return AppRoutes.home;
+      }
       if ((location.contains('/rag') || location.contains('/ai-diagnoses')) &&
           (account?.role != AccountRole.technician ||
               account?.status != AccountStatus.active)) {
@@ -206,15 +211,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     routes: [
                       GoRoute(
                         path: 'ai-diagnoses',
+                        // Case creation also opens on the root navigator. Keep
+                        // AI above that form instead of pushing its shell again.
+                        parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) => AiDiagnosisPage(
                           seasonId: state.pathParameters['seasonId']!,
                         ),
                         routes: [
                           GoRoute(
                             path: ':diagnosisId',
+                            parentNavigatorKey: rootNavigatorKey,
                             builder: (_, state) => AiDiagnosisDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
                               diagnosisId: state.pathParameters['diagnosisId']!,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'disease-cases',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (_, state) => DiseaseCaseListPage(
+                          seasonId: state.pathParameters['seasonId']!,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'create',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => DiseaseCaseFormPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':caseId',
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => DiseaseCaseDetailPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              caseId: state.pathParameters['caseId']!,
                             ),
                           ),
                         ],

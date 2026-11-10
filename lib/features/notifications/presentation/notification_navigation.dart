@@ -135,8 +135,9 @@ String? notificationDestination(
                   : null
             : seasonDestination();
       case 'disease_case':
-        // Clinical case details are not implemented in the mobile router yet.
-        return seasonDestination();
+        return role == AccountRole.technician && seasonId != null
+            ? '${AppRoutes.seasons}/$seasonId/disease-cases/$encodedId'
+            : seasonDestination();
       case 'task':
         return owner || role == AccountRole.technician
             ? '${AppRoutes.tasks}/$encodedId'
@@ -174,7 +175,8 @@ String notificationActionLabel(
     role == AccountRole.technician ? 'Xem nhật ký nước' : 'Xem vụ nuôi',
   'protocol' || 'production_protocol' || 'treatment_protocol' =>
     role == AccountRole.farmOwner ? 'Xem phác đồ' : 'Xem vụ nuôi',
-  'disease_case' => 'Xem vụ nuôi',
+  'disease_case' =>
+    role == AccountRole.technician ? 'Xem ca bệnh' : 'Xem vụ nuôi',
   'account' when role != AccountRole.farmOwner => 'Xem tài khoản',
   _ => NotificationVisuals.actionLabel(notification.type),
 };

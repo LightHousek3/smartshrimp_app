@@ -81,6 +81,16 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                             ),
                           ],
                           if (season.status != AssignedSeasonStatus.active)
+                            TextButton.icon(
+                              onPressed: () => context.push(
+                                '/seasons/${season.id}/disease-cases',
+                              ),
+                              icon: const Icon(
+                                Icons.medical_information_outlined,
+                              ),
+                              label: const Text('Xem ca bệnh'),
+                            ),
+                          if (season.status != AssignedSeasonStatus.active)
                             TextButton(
                               onPressed: () async {
                                 await context.push(
@@ -488,6 +498,7 @@ class _FeatureActions extends ConsumerWidget {
         },
         3 => () => context.push('/seasons/$seasonId/ai-diagnoses'),
         4 => () => context.push('/seasons/$seasonId/rag'),
+        5 => () => context.push('/seasons/$seasonId/disease-cases'),
         _ => null,
       },
     ),

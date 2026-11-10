@@ -26,6 +26,7 @@ abstract final class AppConfig {
   );
   static const cloudinaryAvatarFolder = 'smartshrimp/avatars';
   static const cloudinaryInventoryFolder = 'smartshrimp/inventory';
+  static const cloudinaryDiseaseCaseFolder = 'smartshrimp/disease-cases';
 
   static String get cloudinaryImageUploadUrl =>
       'https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload';
