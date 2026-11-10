@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_compliance.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ingredient_editor.dart';
 
 /// Keep optional photos and label facts together for completeness checks.
 class InventoryComplianceEditor extends StatelessWidget {
@@ -10,6 +11,7 @@ class InventoryComplianceEditor extends StatelessWidget {
     required this.onChanged,
     required this.imageSection,
     this.enabled = true,
+    this.farmId,
     super.key,
   });
 
@@ -17,6 +19,7 @@ class InventoryComplianceEditor extends StatelessWidget {
   final ValueChanged<InventoryCompliance> onChanged;
   final Widget imageSection;
   final bool enabled;
+  final String? farmId;
 
   Widget get _dropdownIcon => const Center(
     widthFactor: 1,
@@ -63,15 +66,6 @@ class InventoryComplianceEditor extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       height: 1.4,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Nhập đủ thông tin theo nhãn để vật tư có thể sử dụng. Ảnh nhãn là tùy chọn.',
-                    style: TextStyle(
-                      color: AppColors.inkMuted,
-                      fontSize: 12,
-                      height: 1.625,
                     ),
                   ),
                 ],
@@ -135,7 +129,7 @@ class InventoryComplianceEditor extends StatelessWidget {
           value.registrationNumber,
           (text) =>
               onChanged(value.copyWith(registrationNumber: _nullable(text))),
-          hint: 'Nhập mã số tiếp nhận theo nhãn',
+          hint: 'Nhập mã số',
           maxLength: 100,
         ),
         if (value.regulatoryType == 'unclassified') ...[
@@ -149,19 +143,29 @@ class InventoryComplianceEditor extends StatelessWidget {
             ),
           ),
         ],
-        _text(
-          'Thành phần / hoạt chất *',
-          value.ingredientsText,
-          (text) => onChanged(value.copyWith(ingredientsText: _nullable(text))),
-          hint: 'Tên, hàm lượng, đơn vị theo nhãn…',
-          multiline: true,
-        ),
+        if (farmId != null)
+          InventoryIngredientEditor(
+            farmId: farmId!,
+            value: value.ingredientsText,
+            enabled: enabled,
+            onChanged: (text) =>
+                onChanged(value.copyWith(ingredientsText: text)),
+          )
+        else
+          _text(
+            'Thành phần / hoạt chất *',
+            value.ingredientsText,
+            (text) =>
+                onChanged(value.copyWith(ingredientsText: _nullable(text))),
+            hint: 'Nhập thành phần',
+            multiline: true,
+          ),
         _text(
           'Hướng dẫn sử dụng *',
           value.usageInstructions,
           (text) =>
               onChanged(value.copyWith(usageInstructions: _nullable(text))),
-          hint: 'Liều lượng, cách dùng và lưu ý trên nhãn…',
+          hint: 'Nhập cách dùng',
           multiline: true,
         ),
         const SizedBox(height: 16),
@@ -207,7 +211,7 @@ class InventoryComplianceEditor extends StatelessWidget {
             enabled: enabled,
             style: inventoryInputTextStyle,
             decoration: inventoryInputDecoration(
-              hintText: 'Theo nhãn, không tự suy đoán',
+              hintText: '0 nếu không áp dụng',
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (text) => onChanged(
@@ -229,23 +233,6 @@ class InventoryComplianceEditor extends StatelessWidget {
                   ? 'Nhập số từ 0 đến 9999,999, tối đa 3 số lẻ'
                   : null;
             },
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFBF0DC),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text(
-            'Đủ thông tin bắt buộc, hồ sơ được tự xác nhận khi lưu; không cần ảnh. Chủ trại chịu trách nhiệm thông tin đã khai báo. Hồ sơ bị chặn không tự được mở lại.',
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.625,
-              color: Color(0xFFBB4D00),
-            ),
           ),
         ),
       ],

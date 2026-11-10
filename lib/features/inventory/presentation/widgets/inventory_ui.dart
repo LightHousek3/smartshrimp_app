@@ -13,6 +13,11 @@ const inventoryInputTextStyle = TextStyle(
   height: 1.5,
 );
 
+const inventoryTextButtonTextStyle = TextStyle(
+  fontFamily: 'PlusJakartaSans',
+  fontWeight: FontWeight.w700,
+);
+
 abstract final class InventoryAssets {
   static const _root = 'assets/icons/inventory';
   static const formManufacturer = '$_root/form_manufacturer.svg';

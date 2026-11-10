@@ -115,15 +115,16 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
       filteredInventoryListControllerProvider(_catalogKey),
     );
     final suppliedName = widget.farmName?.trim();
+    final farmState = suppliedName == null || suppliedName.isEmpty
+        ? ref.watch(farmDetailControllerProvider(widget.farmId))
+        : null;
     final farmName = suppliedName != null && suppliedName.isNotEmpty
         ? suppliedName
-        : ref
-              .watch(farmDetailControllerProvider(widget.farmId))
-              .when(
-                data: (farm) => farm.name,
-                loading: () => 'Đang tải tên trang trại…',
-                error: (_, _) => 'Không thể tải tên trang trại',
-              );
+        : farmState!.when(
+            data: (farm) => farm.name,
+            loading: () => 'Đang tải tên trang trại…',
+            error: (_, _) => 'Không thể tải tên trang trại',
+          );
     final page = inventoryState.value;
     final readOnly =
         page?.readOnly == true ||
@@ -156,6 +157,17 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: <Widget>[
+            if (farmState?.hasError == true)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  tooltip: 'Tải lại tên trang trại',
+                  onPressed: () => ref.invalidate(
+                    farmDetailControllerProvider(widget.farmId),
+                  ),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ),
             if (readOnly) const InventoryReadOnlyNotice(),
             Row(
               children: <Widget>[
@@ -282,6 +294,9 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 child: _loadingMore
                     ? const Center(child: CircularProgressIndicator())
                     : TextButton(
+                        style: TextButton.styleFrom(
+                          textStyle: inventoryTextButtonTextStyle,
+                        ),
                         onPressed: _loadMore,
                         child: Text(
                           _loadMoreError == null

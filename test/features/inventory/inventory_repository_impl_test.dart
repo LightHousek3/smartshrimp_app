@@ -15,6 +15,18 @@ void main() {
     repository = InventoryRepositoryImpl(remote);
   });
 
+  test(
+    'deletion keeps the confirmation token from the displayed impact',
+    () async {
+      await repository.deleteProduct(
+        farmId: 'farm-1',
+        productId: 'product-1',
+        confirmationToken: 'impact-token',
+      );
+      expect(remote.lastDeletionToken, 'impact-token');
+    },
+  );
+
   Future<InventoryStockResult> adjust() => repository.recordAdjustment(
     farmId: 'farm-1',
     productId: 'product-1',
@@ -206,6 +218,31 @@ void main() {
   );
 
   test(
+    'threshold edit does not resend a locked legacy bottle conversion',
+    () async {
+      final locked = inventoryTestProduct.copyWith(
+        metadataLocked: true,
+        unit: InventoryProductUnit.bottle,
+        conversionQuantity: 500,
+        conversionUnit: InventoryConversionUnit.g,
+      );
+      await repository.updateProduct(
+        farmId: 'farm-1',
+        product: locked,
+        name: locked.name,
+        category: locked.category,
+        unit: locked.unit,
+        conversionQuantity: locked.conversionQuantity,
+        conversionUnit: locked.conversionUnit,
+        minAlertQuantity: 20,
+      );
+      expect(remote.lastData!['minAlertQuantity'], 20);
+      expect(remote.lastData!.containsKey('conversionUnit'), isFalse);
+      expect(remote.lastData!.containsKey('unit'), isFalse);
+    },
+  );
+
+  test(
     'sends ordered photo URLs and an empty list to remove all photos',
     () async {
       for (final photos in [
@@ -327,6 +364,17 @@ void main() {
 }
 
 final class _InventoryRemote implements InventoryRemoteDataSource {
+  String? lastDeletionToken;
+
+  @override
+  Future<void> deleteProduct(
+    String farmId,
+    String productId, {
+    String? confirmationToken,
+  }) async {
+    lastDeletionToken = confirmationToken;
+  }
+
   final keys = <String>[];
   Map<String, dynamic>? lastData;
   AppException? error;

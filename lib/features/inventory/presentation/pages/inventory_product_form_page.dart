@@ -8,6 +8,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_label.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_label_review.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
@@ -59,8 +61,11 @@ class _InventoryProductFormPageState
   InventoryCompliance _compliance = const InventoryCompliance();
   bool _complianceChanged = false;
   bool _initialized = false;
+  bool _submitted = false;
   bool _saving = false;
   bool _picking = false;
+  bool _readingLabel = false;
+  int _complianceRevision = 0;
   final _images = List<_MaterialPhoto>.filled(
     InventoryRules.maxProductImages,
     _emptyPhoto,
@@ -108,11 +113,17 @@ class _InventoryProductFormPageState
         : _numberText(product.conversionQuantity!);
     _category = product.category;
     _unit = product.unit;
-    _conversionUnit = product.conversionUnit;
+    _conversionUnit =
+        product.metadataLocked ||
+            InventoryRules.conversionUnits(
+              product.unit,
+            ).contains(product.conversionUnit)
+        ? product.conversionUnit
+        : null;
   }
 
-  Future<void> _pickImage({int? slot}) async {
-    if (_saving || _picking) return;
+  Future<void> _pickImage({int? slot, ImageSource? source}) async {
+    if (_saving || _picking || _readingLabel) return;
     if (slot != null &&
         (slot < 0 || slot >= _images.length || _hasPhoto(_images[slot]))) {
       return;
@@ -125,11 +136,11 @@ class _InventoryProductFormPageState
     try {
       final picker = ref.read(inventoryImagePickerProvider);
       final List<XFile> files;
-      if (slot == null) {
+      if (slot == null && source != ImageSource.camera) {
         files = await picker.pickMultiImage(requestFullMetadata: false);
       } else {
         final file = await picker.pickImage(
-          source: ImageSource.gallery,
+          source: source ?? ImageSource.gallery,
           requestFullMetadata: false,
         );
         files = file == null ? [] : [file];
@@ -178,8 +189,83 @@ class _InventoryProductFormPageState
     }
   }
 
+  Future<void> _readLabel() async {
+    if (_saving ||
+        _picking ||
+        _readingLabel ||
+        _product?.metadataLocked == true) {
+      return;
+    }
+    final List<InventoryLabelImage> photos = _images
+        .where(_hasPhoto)
+        .map((image) => (bytes: image.bytes, url: image.url))
+        .toList();
+    if (photos.isEmpty) {
+      AppNoticeService.danger(context, 'Thêm ảnh nhãn trước khi đọc OCR.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _readingLabel = true);
+    try {
+      final result = await ref
+          .read(inventoryLabelControllerProvider(widget.farmId).notifier)
+          .scan(photos);
+      if (!mounted) return;
+      final selected = await showDialog<Set<String>>(
+        context: context,
+        builder: (_) => InventoryLabelReview(result: result, images: photos),
+      );
+      if (!mounted || selected == null || selected.isEmpty) return;
+      setState(() {
+        if (selected.contains('name')) _nameController.text = result.name!;
+        _compliance = _compliance.copyWith(
+          regulatoryType: selected.contains('regulatoryType')
+              ? result.regulatoryType!
+              : _compliance.regulatoryType,
+          registrationNumber: selected.contains('registrationNumber')
+              ? result.registrationNumber
+              : _compliance.registrationNumber,
+          ingredientsText: selected.contains('ingredientsText')
+              ? result.ingredientsText
+              : _compliance.ingredientsText,
+          usageInstructions: selected.contains('usageInstructions')
+              ? result.usageInstructions
+              : _compliance.usageInstructions,
+          containsAntibiotic: selected.contains('containsAntibiotic')
+              ? result.containsAntibiotic
+              : _compliance.containsAntibiotic,
+          withdrawalDays: selected.contains('withdrawalDays')
+              ? result.withdrawalDays
+              : _compliance.withdrawalDays,
+        );
+        if (selected.any((field) => field != 'name')) {
+          _complianceChanged = true;
+          // Recreate initialValue-based fields only after the user accepts OCR changes.
+          _complianceRevision++;
+        }
+      });
+      AppNoticeService.show(
+        context,
+        message: 'Đã điền thông tin đã chọn. Kiểm tra lại trước khi lưu.',
+        level: AppNoticeLevel.success,
+      );
+    } on AppException catch (error) {
+      if (mounted) AppNoticeService.danger(context, error.message);
+    } catch (_) {
+      if (mounted) {
+        AppNoticeService.danger(
+          context,
+          'Không thể đọc nhãn. Hãy thử lại hoặc nhập tay.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _readingLabel = false);
+    }
+  }
+
   Future<void> _submit() async {
-    if (_saving || _picking) return;
+    if (_saving || _picking || _readingLabel) return;
+    if (!_submitted) setState(() => _submitted = true);
     if (_formKey.currentState?.validate() != true) return;
     if (_product?.metadataLocked != true &&
         (_manufacturerId == null || _manufacturerId!.isEmpty)) {
@@ -224,13 +310,25 @@ class _InventoryProductFormPageState
         ? InventoryRules.parseNumber(_conversionQuantityController.text)
         : null;
     try {
-      InventoryRules.validateConversion(
-        unit: unit,
-        conversionQuantity: conversionQuantity,
-        conversionUnit: InventoryRules.isPackaged(unit)
-            ? _conversionUnit
-            : null,
-      );
+      if (_product?.metadataLocked != true) {
+        final check = await ref
+            .read(inventorySubstanceControllerProvider(widget.farmId).notifier)
+            .checkNow(_compliance.ingredientsText ?? '', throwOnError: true);
+        if (!mounted) return;
+        if (check!.blocksUse) {
+          AppNoticeService.danger(context, check.message);
+          return;
+        }
+      }
+      if (_product?.metadataLocked != true) {
+        InventoryRules.validateConversion(
+          unit: unit,
+          conversionQuantity: conversionQuantity,
+          conversionUnit: InventoryRules.isPackaged(unit)
+              ? _conversionUnit
+              : null,
+        );
+      }
       final notifier = ref.read(
         inventoryMutationControllerProvider(widget.farmId).notifier,
       );
@@ -353,10 +451,14 @@ class _InventoryProductFormPageState
     final mutation = ref.watch(
       inventoryMutationControllerProvider(widget.farmId),
     );
+    ref.watch(inventoryLabelControllerProvider(widget.farmId));
     if (_product?.metadataLocked == true) {
       return _frame(
         Form(
           key: _formKey,
+          autovalidateMode: _submitted
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -376,7 +478,7 @@ class _InventoryProductFormPageState
                   maxLines: 4,
                   style: inventoryInputTextStyle,
                   decoration: inventoryInputDecoration(
-                    hintText: 'Ghi chú thêm về vật tư…',
+                    hintText: 'Ghi chú…',
                   ).copyWith(counterText: ''),
                 ),
               ),
@@ -394,11 +496,14 @@ class _InventoryProductFormPageState
     return _frame(
       Form(
         key: _formKey,
+        autovalidateMode: _submitted
+            ? AutovalidateMode.onUserInteraction
+            : AutovalidateMode.disabled,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
           children: <Widget>[
             AbsorbPointer(
-              absorbing: _saving || _picking,
+              absorbing: _saving || _picking || _readingLabel,
               child: Padding(
                 padding: EdgeInsets.zero,
                 child: Column(
@@ -414,7 +519,7 @@ class _InventoryProductFormPageState
                         maxLength: InventoryRules.maxNameLength,
                         textCapitalization: TextCapitalization.sentences,
                         decoration: inventoryInputDecoration(
-                          hintText: 'VD: Thức ăn CP 9004',
+                          hintText: 'Nhập tên vật tư',
                         ).copyWith(counterText: ''),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -445,6 +550,10 @@ class _InventoryProductFormPageState
                           _unit = value;
                           if (!InventoryRules.isPackaged(value)) {
                             _conversionQuantityController.clear();
+                            _conversionUnit = null;
+                          } else if (!InventoryRules.conversionUnits(
+                            value,
+                          ).contains(_conversionUnit)) {
                             _conversionUnit = null;
                           }
                         }),
@@ -480,6 +589,7 @@ class _InventoryProductFormPageState
                             const SizedBox(width: 10),
                             Expanded(
                               child: _ConversionUnitDropdown(
+                                unit: _unit!,
                                 value: _conversionUnit,
                                 onChanged: (value) =>
                                     setState(() => _conversionUnit = value),
@@ -521,16 +631,12 @@ class _InventoryProductFormPageState
                         }
                       },
                     ),
-                    const Text(
-                      'Đơn vị in trên nhãn. Bên bán được ghi riêng ở từng lần nhập kho.',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.6,
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     InventoryComplianceEditor(
+                      farmId: widget.farmId,
+                      key: ValueKey(
+                        'inventory-compliance-$_complianceRevision',
+                      ),
                       value: _compliance,
                       imageSection: _buildPhotoSection(),
                       onChanged: (value) => setState(() {
@@ -556,7 +662,7 @@ class _InventoryProductFormPageState
                           minLines: 2,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: inventoryInputDecoration(
-                            hintText: 'Ghi chú thêm về vật tư…',
+                            hintText: 'Ghi chú…',
                           ).copyWith(counterText: ''),
                         ),
                       ),
@@ -574,7 +680,8 @@ class _InventoryProductFormPageState
                   ? 'Lưu thay đổi'
                   : 'Thêm vào kho',
               iconAsset: InventoryAssets.formSubmit,
-              onPressed: _saving || _picking || mutation.isLoading
+              onPressed:
+                  _saving || _picking || _readingLabel || mutation.isLoading
                   ? null
                   : _submit,
             ),
@@ -596,7 +703,19 @@ class _InventoryProductFormPageState
             key: const ValueKey('inventory-threshold-quantity'),
             controller: _thresholdController,
             style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: false,
+            ),
+            textInputAction: TextInputAction.done,
+            autocorrect: false,
+            enableSuggestions: false,
+            inputFormatters: [
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                final numeric = RegExp(r'^(?:[0-9]+(?:[.,][0-9]{0,3})?)?$');
+                return numeric.hasMatch(newValue.text) ? newValue : oldValue;
+              }),
+            ],
             decoration: inventoryInputDecoration(hintText: '0'),
             enabled: !_saving,
             validator: (value) =>
@@ -653,35 +772,43 @@ class _InventoryProductFormPageState
             ),
           ),
           const SizedBox(width: 8),
-          const Expanded(
-            child: Tooltip(
-              message:
-                  'Đọc nhãn OCR chưa khả dụng. Bạn có thể nhập thông tin theo nhãn bên dưới.',
-              child: Opacity(
-                opacity: .45,
-                child: InventoryGradientButton(
-                  label: 'Đọc nhãn OCR',
-                  iconAsset: InventoryAssets.formOcr,
-                  radius: 12,
-                  fitContent: true,
-                  disabledGradientColors: [
-                    AppColors.oceanLight,
-                    AppColors.tealLight,
-                    AppColors.oceanLight,
-                  ],
-                  onPressed: null,
-                ),
-              ),
+          Expanded(
+            child: InventoryGradientButton(
+              label: _readingLabel ? 'Đang đọc nhãn…' : 'Đọc nhãn OCR',
+              iconAsset: InventoryAssets.formOcr,
+              radius: 12,
+              fitContent: true,
+              onPressed:
+                  _saving || _picking || _readingLabel || _imageCount == 0
+                  ? null
+                  : _readLabel,
             ),
           ),
         ],
       ),
-      const SizedBox(height: 16),
+      TextButton.icon(
+        style: TextButton.styleFrom(textStyle: inventoryTextButtonTextStyle),
+        onPressed:
+            _saving ||
+                _picking ||
+                _readingLabel ||
+                _imageCount >= InventoryRules.maxProductImages
+            ? null
+            : () => _pickImage(source: ImageSource.camera),
+        icon: const Icon(Icons.camera_alt_outlined, size: 18),
+        label: const Text('Chụp ảnh nhãn'),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        'OCR: gửi ảnh đến Gemini, tối đa ${InventoryRules.maxOcrTotalBytes ~/ (1024 * 1024)} MB/lượt.',
+        style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkMuted),
+      ),
+      const SizedBox(height: 8),
       Text(
-        '$_imageCount/${InventoryRules.maxProductImages} ảnh · JPG, PNG, WebP · tối đa ${InventoryRules.maxImageBytes ~/ (1024 * 1024)} MB/ảnh.',
+        '$_imageCount/${InventoryRules.maxProductImages} ảnh · Tối đa ${InventoryRules.maxImageBytes ~/ (1024 * 1024)} MB/ảnh',
         style: const TextStyle(
           fontSize: 12,
-          height: 1.6,
+          height: 1.5,
           color: AppColors.inkMuted,
         ),
       ),
@@ -823,6 +950,9 @@ class _InventoryProductFormPageState
             style: const TextStyle(color: AppColors.error, fontSize: 12),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              textStyle: inventoryTextButtonTextStyle,
+            ),
             onPressed: () =>
                 ref.invalidate(supplierListControllerProvider(widget.farmId)),
             child: const Text('Thử lại'),
@@ -922,6 +1052,36 @@ class _InventoryProductFormPageState
   );
 }
 
+class _RequiredSelectionField<T> extends FormField<T> {
+  _RequiredSelectionField({
+    required T? selected,
+    required String errorText,
+    required ValueChanged<T> onChanged,
+    required Widget Function(T?, bool, ValueChanged<T>) selectionBuilder,
+  }) : super(
+         initialValue: selected,
+         autovalidateMode: AutovalidateMode.onUserInteraction,
+         validator: (value) => value == null ? errorText : null,
+         builder: (field) => Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             selectionBuilder(field.value, field.hasError, (value) {
+               field.didChange(value);
+               onChanged(value);
+             }),
+             if (field.errorText != null)
+               Padding(
+                 padding: const EdgeInsets.only(left: 14, top: 6),
+                 child: Text(
+                   field.errorText!,
+                   style: inventoryInputDecoration().errorStyle,
+                 ),
+               ),
+           ],
+         ),
+       );
+}
+
 class _CategorySelector extends StatelessWidget {
   const _CategorySelector({required this.selected, required this.onChanged});
 
@@ -929,25 +1089,32 @@ class _CategorySelector extends StatelessWidget {
   final ValueChanged<InventoryProductCategory> onChanged;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: InventoryProductCategory.values
-          .where((item) => item != InventoryProductCategory.unknown)
-          .map(
-            (category) => SizedBox(
-              width: (constraints.maxWidth - 12) / 3,
-              child: _SelectionChip(
-                label: category.label,
-                selected: selected == category,
-                onTap: () => onChanged(category),
-              ),
-            ),
-          )
-          .toList(growable: false),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      _RequiredSelectionField<InventoryProductCategory>(
+        selected: selected,
+        errorText: 'Vui lòng chọn danh mục vật tư',
+        onChanged: onChanged,
+        selectionBuilder: (value, hasError, onSelected) => LayoutBuilder(
+          builder: (context, constraints) => Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: InventoryProductCategory.values
+                .where((item) => item != InventoryProductCategory.unknown)
+                .map(
+                  (category) => SizedBox(
+                    width: (constraints.maxWidth - 12) / 3,
+                    child: _SelectionChip(
+                      label: category.label,
+                      selected: value == category,
+                      hasError: hasError,
+                      onTap: () => onSelected(category),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+      );
 }
 
 class _UnitSelector extends StatelessWidget {
@@ -957,39 +1124,51 @@ class _UnitSelector extends StatelessWidget {
   final ValueChanged<InventoryProductUnit> onChanged;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: InventoryProductUnit.values
-        .where(
-          (item) =>
-              item != InventoryProductUnit.unknown &&
-              item != InventoryProductUnit.pcs,
-        )
-        .map(
-          (unit) => _SelectionChip(
-            label: unit.label,
-            selected: selected == unit,
-            onTap: () => onChanged(unit),
-          ),
-        )
-        .toList(growable: false),
-  );
+  Widget build(BuildContext context) =>
+      _RequiredSelectionField<InventoryProductUnit>(
+        selected: selected,
+        errorText: 'Vui lòng chọn đơn vị',
+        onChanged: onChanged,
+        selectionBuilder: (value, hasError, onSelected) => Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: InventoryProductUnit.values
+              .where(
+                (item) =>
+                    item != InventoryProductUnit.unknown &&
+                    item != InventoryProductUnit.pcs,
+              )
+              .map(
+                (unit) => _SelectionChip(
+                  label: unit.label,
+                  selected: value == unit,
+                  hasError: hasError,
+                  onTap: () => onSelected(unit),
+                ),
+              )
+              .toList(growable: false),
+        ),
+      );
 }
 
 class _ConversionUnitDropdown extends StatelessWidget {
-  const _ConversionUnitDropdown({required this.value, required this.onChanged});
+  const _ConversionUnitDropdown({
+    required this.unit,
+    required this.value,
+    required this.onChanged,
+  });
 
+  final InventoryProductUnit unit;
   final InventoryConversionUnit? value;
   final ValueChanged<InventoryConversionUnit?> onChanged;
 
   @override
   Widget build(BuildContext context) => DropdownButtonFormField(
+    key: ValueKey(unit),
     initialValue: value,
     style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
     decoration: inventoryInputDecoration(hintText: 'Đơn vị'),
-    items: InventoryConversionUnit.values
-        .where((item) => item != InventoryConversionUnit.unknown)
+    items: InventoryRules.conversionUnits(unit)
         .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.label)))
         .toList(growable: false),
     onChanged: onChanged,
@@ -1002,11 +1181,13 @@ class _SelectionChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.hasError = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool hasError;
   static const selectedColor = Color(0xFFEAF4FF);
   static const selectedTextColor = Color(0xFF1D7AD6);
 
@@ -1021,7 +1202,9 @@ class _SelectionChip extends StatelessWidget {
         color: selected ? selectedColor : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected
+          color: hasError
+              ? AppColors.error
+              : selected
               ? selectedTextColor.withValues(alpha: 0.5)
               : AppColors.line,
         ),

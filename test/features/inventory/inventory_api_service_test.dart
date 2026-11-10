@@ -9,6 +9,61 @@ import 'package:smartshrimp_app/features/inventory/data/services/inventory_api_s
 
 void main() {
   test(
+    'deletion forwards the confirmed impact token and supports a 204 response',
+    () async {
+      late RequestOptions captured;
+      final service = InventoryApiService(
+        ApiClient(
+          _dioWithHandler((request, handler) {
+            captured = request;
+            handler.resolve(
+              Response<dynamic>(requestOptions: request, statusCode: 204),
+            );
+          }),
+          _SessionStore(),
+        ),
+      );
+      await service.deleteProduct(
+        'farm-1',
+        'product-1',
+        confirmationToken: 'confirmed-impact',
+      );
+      expect(captured.method, 'DELETE');
+      expect(captured.uri.path, '/owner/farms/farm-1/products/product-1');
+      expect(captured.data, {'confirmationToken': 'confirmed-impact'});
+      expect(captured.headers['Authorization'], 'Bearer access-token');
+    },
+  );
+
+  test(
+    'product detail keeps the warning and confirmation token supplied by the backend',
+    () async {
+      final service = InventoryApiService(
+        ApiClient(
+          _dioWithHandler((request, handler) {
+            handler.resolve(
+              _success(
+                request,
+                data: {
+                  ..._productJson(),
+                  'canDelete': true,
+                  'deletionConfirmationToken': 'impact-token',
+                  'deletionConfirmationMessage':
+                      'Update Starter template after deletion.',
+                },
+              ),
+            );
+          }),
+          _SessionStore(),
+        ),
+      );
+      final product = await service.getProduct('farm-1', 'product-1');
+      expect(product.deletionConfirmationToken, 'impact-token');
+      expect(product.deletionConfirmationMessage, contains('Starter template'));
+    },
+  );
+
+  test(
     'catalog accepts unmapped V2 products through the authenticated API envelope',
     () async {
       final service = InventoryApiService(

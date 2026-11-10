@@ -204,6 +204,9 @@ class InventoryDetailPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              textStyle: inventoryTextButtonTextStyle,
+            ),
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Hủy'),
           ),
@@ -240,20 +243,40 @@ class InventoryDetailPage extends ConsumerWidget {
       context,
       entityLabel: 'vật tư',
       entityName: product.name,
-      retentionMessage: 'Chỉ xóa vật tư chưa có phát sinh hoặc tham chiếu.',
+      retentionMessage:
+          product.deletionConfirmationMessage ??
+          'Chỉ xóa vật tư chưa phát sinh kho, lịch vận hành hoặc phác đồ đã duyệt.',
       confirmLabel: 'Xóa vật tư',
     );
     if (!confirmed || !context.mounted) return;
     try {
       await ref
           .read(inventoryMutationControllerProvider(farmId).notifier)
-          .delete(product.id);
+          .delete(
+            product.id,
+            confirmationToken: product.deletionConfirmationToken,
+          );
       if (context.mounted) {
-        AppNoticeService.success(context, 'Đã xóa vật tư.');
+        AppNoticeService.success(
+          context,
+          product.deletionConfirmationToken == null
+              ? 'Đã xóa vật tư.'
+              : 'Đã xóa vật tư. Vui lòng cập nhật các mẫu/phác đồ bị ảnh hưởng.',
+        );
         context.pop();
       }
     } on AppException catch (error) {
-      if (context.mounted) AppNoticeService.danger(context, error.message);
+      if (context.mounted) {
+        if (error.statusCode == 409) {
+          ref.invalidate(
+            inventoryDetailControllerProvider((
+              farmId: farmId,
+              productId: product.id,
+            )),
+          );
+        }
+        AppNoticeService.danger(context, error.message);
+      }
     }
   }
 
@@ -464,7 +487,18 @@ class _DetailContent extends StatelessWidget {
                       '${formatInventoryQuantity(product.compliance!.withdrawalDays!)} ngày',
                 ),
               if (product.compliance?.reviewNote != null)
-                Text(product.compliance!.reviewNote!),
+                Text(
+                  product.compliance!.reviewNote!.startsWith(
+                        'AUTO_SUBSTANCE_BLOCK:',
+                      )
+                      ? 'Phát hiện chất cấm trong sản phẩm.'
+                      : product.compliance!.reviewNote!,
+                  style: TextStyle(
+                    color: product.compliance?.complianceStatus == 'blocked'
+                        ? Colors.red.shade800
+                        : AppColors.ink,
+                  ),
+                ),
             ],
           ),
         ),
@@ -483,7 +517,9 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 16),
         if (!product.readOnly && product.isArchived && available.isNotEmpty)
           OutlinedButton.icon(
-            onPressed: () => _chooseStockOut(context, available),
+            onPressed: product.compliance?.complianceStatus == 'blocked'
+                ? null
+                : () => _chooseStockOut(context, available),
             icon: const Icon(Icons.assignment_return_outlined),
             label: const Text('Xuất kho'),
           ),
@@ -517,7 +553,9 @@ class _DetailContent extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: available.isEmpty
+                    onPressed:
+                        available.isEmpty ||
+                            product.compliance?.complianceStatus == 'blocked'
                         ? null
                         : () => _chooseStockOut(context, available),
                     icon: const InventorySvgIcon(
@@ -877,6 +915,9 @@ class _LotCard extends StatelessWidget {
         ),
         if (lot.expiryDate == null)
           TextButton(
+            style: TextButton.styleFrom(
+              textStyle: inventoryTextButtonTextStyle,
+            ),
             onPressed: onSetExpiry,
             child: const Text('Bổ sung hạn dùng'),
           ),

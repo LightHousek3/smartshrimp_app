@@ -183,6 +183,8 @@ abstract class InventoryProduct with _$InventoryProduct {
     InventoryCompliance? compliance,
     @Default(false) bool metadataLocked,
     @Default(false) bool canDelete,
+    String? deletionConfirmationToken,
+    String? deletionConfirmationMessage,
     @Default('ACTIVE') String status,
     @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)
     required InventoryProductCategory category,

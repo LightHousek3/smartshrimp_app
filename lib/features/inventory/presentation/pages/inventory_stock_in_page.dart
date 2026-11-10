@@ -329,6 +329,9 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
                             ),
                           ),
                           TextButton.icon(
+                            style: TextButton.styleFrom(
+                              textStyle: inventoryTextButtonTextStyle,
+                            ),
                             onPressed: mutation.isLoading
                                 ? null
                                 : _createSupplier,

@@ -66,6 +66,7 @@ abstract interface class InventoryRepository {
   Future<void> deleteProduct({
     required String farmId,
     required String productId,
+    String? confirmationToken,
   });
 
   Future<InventoryLot> updateLotExpiry({

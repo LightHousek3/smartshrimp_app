@@ -122,6 +122,9 @@ class _InventorySupplierFormPageState
                             : 'Không thể tải nhà cung cấp.',
                       ),
                       TextButton(
+                        style: TextButton.styleFrom(
+                          textStyle: inventoryTextButtonTextStyle,
+                        ),
                         onPressed: () => ref.invalidate(
                           supplierDetailProvider((
                             farmId: widget.farmId,
@@ -283,6 +286,9 @@ class _InventorySupplierFormPageState
           const SizedBox(height: 20),
           if (_conflict)
             TextButton(
+              style: TextButton.styleFrom(
+                textStyle: inventoryTextButtonTextStyle,
+              ),
               onPressed: _saving
                   ? null
                   : () {
