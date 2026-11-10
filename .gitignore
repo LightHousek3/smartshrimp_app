@@ -33,6 +33,7 @@ migrate_working_dir/
 /build/
 /android/build/
 /coverage/
+/.tmp/
 /package-lock.json
 # Build configuration values are local; commit only the template.
 /config/app.*.json

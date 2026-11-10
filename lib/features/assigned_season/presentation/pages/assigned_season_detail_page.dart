@@ -5,16 +5,16 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart'
+    show shrimpTypeLabel;
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_refresh_boundary.dart';
-import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_schedule_card.dart';
 
 class AssignedSeasonDetailPage extends ConsumerWidget {
@@ -25,6 +25,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
     final state = ref.watch(assignedSeasonDetailProvider(seasonId));
     Future<void> refresh() async {
       invalidateWaterLogViews(ref, seasonId);
+      ref.invalidate(assignedSeasonTodayOperationsProvider(seasonId));
       await ref.read(assignedSeasonDetailProvider(seasonId).notifier).refresh();
     }
 
@@ -53,7 +54,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                     subtitle:
                         '${season.name}${season.dayOfCulture == null ? '' : ' · DOC ${season.dayOfCulture}'}',
                     onBack: context.pop,
-                    trailing: _Badge(season.status),
+                    trailing: SeasonStatusBadge(status: season.status),
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
@@ -194,11 +195,27 @@ class _PlanningNotice extends StatelessWidget {
   );
 }
 
-class _PondCard extends StatelessWidget {
+/// Both health entry points must refresh the summary after create/void actions.
+Future<void> _openShrimpHealth(
+  BuildContext context,
+  WidgetRef ref, {
+  required String seasonId,
+  required Map<String, dynamic> extra,
+}) async {
+  await context.push('/seasons/$seasonId/shrimp-health', extra: extra);
+  if (!context.mounted) return;
+  // The list stays mounted behind detail and otherwise keeps its old assessment.
+  ref.invalidate(assignedSeasonListProvider);
+  ref.invalidate(assignedSeasonDetailProvider(seasonId));
+  // Voiding biomass measurements can also cancel derived operation schedules.
+  ref.invalidate(assignedSeasonTodayOperationsProvider(seasonId));
+}
+
+class _PondCard extends ConsumerWidget {
   const _PondCard(this.season);
   final AssignedSeasonDetail season;
   @override
-  Widget build(BuildContext context) => _Card(
+  Widget build(BuildContext context, WidgetRef ref) => _Card(
     child: Column(
       children: <Widget>[
         Row(
@@ -234,7 +251,7 @@ class _PondCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${season.shrimpType == 'WHITELEG' ? 'Tôm thẻ chân trắng' : 'Tôm sú'} · ${_num(season.areaM2)} m² · ${_num(season.volumeM3)} m³',
+                    '${shrimpTypeLabel(season.shrimpType, unknownLabel: 'Không rõ')} · ${_num(season.areaM2)} m² · ${_num(season.volumeM3)} m³',
                     style: const TextStyle(
                       color: AppColors.inkMuted,
                       fontSize: 12,
@@ -327,8 +344,10 @@ class _PondCard extends StatelessWidget {
                 'SỨC KHỎE ĐÀN',
                 'Xem chi tiết',
                 subtitle: 'Nhật ký & thể trạng',
-                onTap: () => context.push(
-                  '/seasons/${season.id}/shrimp-health',
+                onTap: () => _openShrimpHealth(
+                  context,
+                  ref,
+                  seasonId: season.id,
                   extra: <String, dynamic>{
                     'farmName': season.farmName,
                     'seasonName': season.name,
@@ -417,12 +436,12 @@ class _FeatureActions extends ConsumerWidget {
       background: Color(0xFFEAF4FF),
       foreground: Color(0xFF1378D1),
     ),
+    // Keep the entry visible without inventing a disease-case count.
     _FeatureActionData(
       label: 'Ca bệnh',
       icon: Icons.emergency_outlined,
       background: Color(0xFFFBE6EA),
       foreground: AppColors.error,
-      badge: '1',
     ),
   ];
 
@@ -451,17 +470,22 @@ class _FeatureActions extends ConsumerWidget {
           );
           if (context.mounted) invalidateWaterLogViews(ref, seasonId);
         },
-        1 => () async {
-          await context.push(
-            '/seasons/$seasonId/shrimp-health',
-            extra: <String, String>{
-              'farmName': farmName,
-              'seasonName': seasonName,
-              'pondName': pondName,
-            },
-          );
+        1 => () => _openShrimpHealth(
+          context,
+          ref,
+          seasonId: seasonId,
+          extra: <String, String>{
+            'farmName': farmName,
+            'seasonName': seasonName,
+            'pondName': pondName,
+          },
+        ),
+        2 => () async {
+          await context.push('/seasons/$seasonId/operations');
+          if (context.mounted) {
+            ref.invalidate(assignedSeasonTodayOperationsProvider(seasonId));
+          }
         },
-        2 => () => context.push('/seasons/$seasonId/operations'),
         3 => () => context.push('/seasons/$seasonId/ai-diagnoses'),
         4 => () => context.push('/seasons/$seasonId/rag'),
         _ => null,
@@ -476,14 +500,12 @@ class _FeatureActionData {
     required this.icon,
     required this.background,
     required this.foreground,
-    this.badge,
   });
 
   final String label;
   final IconData icon;
   final Color background;
   final Color foreground;
-  final String? badge;
 }
 
 class _FeatureAction extends StatelessWidget {
@@ -508,43 +530,14 @@ class _FeatureAction extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Stack(
-            clipBehavior: Clip.none,
-            children: <Widget>[
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: data.background,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(data.icon, color: data.foreground, size: 21),
-              ),
-              if (data.badge != null)
-                Positioned(
-                  right: -5,
-                  top: -5,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 18),
-                    height: 18,
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: Text(
-                      data.badge!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: data.background,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(data.icon, color: data.foreground, size: 21),
           ),
           const SizedBox(height: 9),
           Text(
@@ -835,7 +828,14 @@ class _TodayOperations extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final opState = ref.watch(operationListProvider(seasonId));
+    final provider = assignedSeasonTodayOperationsProvider(seasonId);
+    final opState = ref.watch(provider);
+
+    // Returning from execution must refresh the preview's independent state.
+    Future<void> openOperations(String path) async {
+      await context.push(path);
+      if (context.mounted) ref.invalidate(provider);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,7 +844,7 @@ class _TodayOperations extends ConsumerWidget {
           children: <Widget>[
             const Expanded(child: _Title('Cữ vận hành hôm nay')),
             TextButton(
-              onPressed: () => context.push('/seasons/$seasonId/operations'),
+              onPressed: () => openOperations('/seasons/$seasonId/operations'),
               child: const Text('Xem tất cả'),
             ),
           ],
@@ -857,9 +857,24 @@ class _TodayOperations extends ConsumerWidget {
               child: CircularProgressIndicator(color: AppColors.ocean),
             ),
           ),
-          error: (_, _) => const SizedBox.shrink(),
-          data: (result) {
-            if (result.schedules.isEmpty) {
+          error: (error, _) => _Card(
+            child: Column(
+              children: [
+                Text(
+                  error is AppException
+                      ? error.message
+                      : 'Không thể tải cữ vận hành hôm nay.',
+                  style: const TextStyle(color: AppColors.error),
+                ),
+                TextButton(
+                  onPressed: () => ref.invalidate(provider),
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          ),
+          data: (schedules) {
+            if (schedules.isEmpty) {
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -884,14 +899,13 @@ class _TodayOperations extends ConsumerWidget {
               );
             }
 
-            final topThree = result.schedules.take(3).toList(growable: false);
             return Column(
               children: <Widget>[
-                for (final s in topThree) ...<Widget>[
+                for (final s in schedules) ...<Widget>[
                   OperationScheduleCard(
                     schedule: s,
                     onTap: () =>
-                        context.push('/seasons/$seasonId/operations/${s.id}'),
+                        openOperations('/seasons/$seasonId/operations/${s.id}'),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -927,9 +941,7 @@ class _PersonnelCard extends StatelessWidget {
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             subtitle: Text(
-              season.personnel[i].role == 'TECHNICIAN'
-                  ? 'Kỹ thuật viên phụ trách'
-                  : 'Chuyên gia thủy sản',
+              assignedSeasonPersonnelRoleLabel(season.personnel[i].role),
               style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
             ),
           ),
@@ -973,13 +985,9 @@ class _OtherAssignedSeasonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (season.status) {
-      'PLANNING' => ('Đang chuẩn bị', const Color(0xFF7B5BD6)),
-      'ACTIVE' => ('Đang nuôi', const Color(0xFF0F9B8E)),
-      'COMPLETED' => ('Hoàn tất', const Color(0xFF52647F)),
-      'CANCELLED' => ('Đã hủy', AppColors.error),
-      _ => ('Không xác định', AppColors.inkMuted),
-    };
+    final status = seasonStatusFromJson(season.status);
+    final label = seasonStatusLabel(status);
+    final color = seasonStatusColors(status).foreground;
     return InkWell(
       onTap: () => context.push('/seasons/${season.id}'),
       borderRadius: BorderRadius.circular(18),
@@ -1186,27 +1194,6 @@ class _Title extends StatelessWidget {
       fontWeight: FontWeight.w800,
     ),
   );
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge(this.status);
-  final AssignedSeasonStatus status;
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      AssignedSeasonStatus.planning => (
-        '● Đang chuẩn bị',
-        const Color(0xFF7B5BD6),
-      ),
-      AssignedSeasonStatus.active => ('● Đang nuôi', const Color(0xFF0F9B8E)),
-      AssignedSeasonStatus.completed => ('● Hoàn tất', const Color(0xFF52647F)),
-      AssignedSeasonStatus.cancelled => ('● Đã hủy', AppColors.error),
-    };
-    return Text(
-      label,
-      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-    );
-  }
 }
 
 class _Failure extends StatelessWidget {

@@ -8,7 +8,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
-import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_trend_provider.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_refresh_boundary.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_metric_trend.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_threshold_summary.dart';
@@ -29,16 +30,31 @@ class WaterLogStatisticsPage extends ConsumerStatefulWidget {
 
 class _WaterLogStatisticsPageState
     extends ConsumerState<WaterLogStatisticsPage> {
-  int? _days;
+  int? _days = 7;
   String _field = 'dissolvedOxygenMgL';
   @override
   Widget build(BuildContext context) {
-    final query = (seasonId: widget.seasonId, days: _days);
-    final state = ref.watch(waterLogTrendProvider(query));
+    final query = (seasonId: widget.seasonId, days: _days, granularity: 'day');
+    final statistics = ref.watch(waterLogStatisticsProvider(query));
+    final metadata = ref.watch(waterLogMetadataProvider(widget.seasonId));
+    final AsyncValue<
+      ({WaterLogStatistics statistics, WaterLogMetadata metadata})
+    >
+    state = metadata.when(
+      data: (metadata) => statistics.whenData(
+        (statistics) => (statistics: statistics, metadata: metadata),
+      ),
+      loading: () => const AsyncLoading(),
+      error: (error, stack) => AsyncError(error, stack),
+    );
     Future<void> refresh() async {
-      ref.invalidate(waterLogTrendProvider(query));
+      ref.invalidate(waterLogStatisticsProvider(query));
+      ref.invalidate(waterLogMetadataProvider(widget.seasonId));
       try {
-        await ref.read(waterLogTrendProvider(query).future);
+        await Future.wait([
+          ref.read(waterLogStatisticsProvider(query).future),
+          ref.read(waterLogMetadataProvider(widget.seasonId).future),
+        ]);
       } on Object {
         // The provider publishes the error in the card, including on pull refresh.
       }
@@ -162,7 +178,7 @@ class _WaterLogStatisticsPageState
                                                   ),
                                             ),
                                             Text(
-                                              '${state.asData?.value.logs.length ?? '—'} lần đo hợp lệ',
+                                              '${statistics.asData?.value.validRecords ?? '—'} lần đo hợp lệ',
                                               style: const TextStyle(
                                                 color: AppColors.inkMuted,
                                                 fontSize: 10,
@@ -364,7 +380,7 @@ class _WaterLogStatisticsPageState
                                     child: WaterMetricTrend(
                                       key: ValueKey((_days, _field, data)),
                                       field: _field,
-                                      logs: data.logs,
+                                      statistics: data.statistics,
                                       metric: data.metadata.metrics.firstWhere(
                                         (metric) => metric.field == _field,
                                       ),
@@ -376,7 +392,7 @@ class _WaterLogStatisticsPageState
                             if (state.asData?.value case final data?) ...[
                               const SizedBox(height: 16),
                               WaterThresholdSummary(
-                                logs: data.logs,
+                                statistics: data.statistics,
                                 metadata: data.metadata,
                               ),
                             ],

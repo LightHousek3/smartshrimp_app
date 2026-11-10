@@ -51,6 +51,7 @@ class WaterLog {
     required this.exceededParameters,
     this.exceededParameterDetails = const <WaterLogExceedance>[],
     this.recordedBy,
+    this.recordedByName,
     this.temperatureC,
     this.ph,
     this.dissolvedOxygenMgL,
@@ -68,6 +69,7 @@ class WaterLog {
   final String id;
   final String seasonId;
   final String? recordedBy;
+  final String? recordedByName;
   final DateTime recordedAt;
   final double? temperatureC;
   final double? ph;
@@ -110,6 +112,7 @@ class WaterLog {
         id: json['id'] as String,
         seasonId: json['seasonId'] as String,
         recordedBy: json['recordedBy'] as String?,
+        recordedByName: json['recordedByName'] as String?,
         recordedAt: DateTime.parse(json['recordedAt'] as String),
         temperatureC: (json['temperatureC'] as num?)?.toDouble(),
         ph: (json['ph'] as num?)?.toDouble(),
@@ -175,6 +178,11 @@ class WaterLogParamStat {
     this.max,
     this.avg,
     this.exceedanceRate,
+    this.exceedCount,
+    this.belowMinCount,
+    this.aboveMaxCount,
+    this.belowMinRate,
+    this.aboveMaxRate,
   });
 
   final int count;
@@ -184,6 +192,11 @@ class WaterLogParamStat {
 
   /// Tỉ lệ mẫu vượt ngưỡng (0.0 – 1.0).
   final double? exceedanceRate;
+  final int? exceedCount;
+  final int? belowMinCount;
+  final int? aboveMaxCount;
+  final double? belowMinRate;
+  final double? aboveMaxRate;
 
   static WaterLogParamStat parse(Map<String, dynamic> json) {
     try {
@@ -193,6 +206,11 @@ class WaterLogParamStat {
         max: (json['max'] as num?)?.toDouble(),
         avg: (json['avg'] as num?)?.toDouble(),
         exceedanceRate: (json['exceedanceRate'] as num?)?.toDouble(),
+        exceedCount: json['exceedCount'] as int?,
+        belowMinCount: json['belowMinCount'] as int?,
+        aboveMaxCount: json['aboveMaxCount'] as int?,
+        belowMinRate: (json['belowMinRate'] as num?)?.toDouble(),
+        aboveMaxRate: (json['aboveMaxRate'] as num?)?.toDouble(),
       );
     } on Object catch (_, stackTrace) {
       Error.throwWithStackTrace(const InvalidResponseException(), stackTrace);

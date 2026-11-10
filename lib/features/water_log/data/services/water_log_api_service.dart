@@ -111,7 +111,7 @@ final class WaterLogApiService {
 
   Future<WaterLogStatistics> getStatistics(
     String seasonId, {
-    required DateTime from,
+    DateTime? from,
     required DateTime to,
     required String granularity,
   }) async {
@@ -119,7 +119,7 @@ final class WaterLogApiService {
       '${_path(seasonId)}/statistics',
       authenticated: true,
       queryParameters: <String, dynamic>{
-        'from': from.toUtc().toIso8601String(),
+        if (from != null) 'from': from.toUtc().toIso8601String(),
         'to': to.toUtc().toIso8601String(),
         'granularity': granularity,
       },

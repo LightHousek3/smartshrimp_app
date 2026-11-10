@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/operation/data/repositories/operation_repository_impl.dart';
 import 'package:smartshrimp_app/features/operation/data/services/operation_api_service.dart';
@@ -126,6 +127,9 @@ final class OperationDetailController extends AsyncNotifier<OperationSchedule> {
             varianceReason: varianceReason,
             executedAt: executedAt,
           );
+      if (ref.mounted) {
+        ref.invalidate(technicianDashboardProvider);
+      }
       await refresh();
       return result;
     } on SessionExpiredException {

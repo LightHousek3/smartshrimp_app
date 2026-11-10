@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/water_log/data/repositories/water_log_repository_impl.dart';
 import 'package:smartshrimp_app/features/water_log/data/services/water_log_api_service.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_list_state.dart';
@@ -61,7 +61,7 @@ final waterLogCanWriteProvider = Provider.autoDispose.family<bool, String>((
       AssignedSeasonStatus.active;
 });
 
-typedef WaterLogStatsQuery = ({String seasonId, int days, String granularity});
+typedef WaterLogStatsQuery = ({String seasonId, int? days, String granularity});
 
 final waterLogStatisticsProvider = FutureProvider.autoDispose
     .family<WaterLogStatistics, WaterLogStatsQuery>((ref, query) async {
@@ -71,15 +71,19 @@ final waterLogStatisticsProvider = FutureProvider.autoDispose
       try {
         return await repository.getStatistics(
           seasonId: query.seasonId,
-          from: to.subtract(Duration(days: query.days)),
+          from: query.days == null
+              ? null
+              : to.subtract(Duration(days: query.days!)),
           to: to,
-          granularity: query.granularity,
+          granularity: query.days == null ? 'day' : query.granularity,
         );
       } on SessionExpiredException {
-        await ref.read(authControllerProvider.notifier).expireSession();
+        if (ref.mounted) {
+          await ref.read(authControllerProvider.notifier).expireSession();
+        }
         rethrow;
       }
-    });
+    }, retry: waterLogReadRetry);
 
 final waterLogRevisionProvider = NotifierProvider.autoDispose
     .family<WaterLogRevision, int, String>(WaterLogRevision.new);
@@ -301,6 +305,7 @@ final class WaterLogListController extends AsyncNotifier<WaterLogListState> {
 
   Future<void> _refreshAfterMutation() async {
     if (!ref.mounted) return;
+    ref.invalidate(technicianDashboardProvider);
     ref.invalidate(latestWaterLogProvider(seasonId));
     ref.read(waterLogRevisionProvider(seasonId).notifier).changed();
     try {

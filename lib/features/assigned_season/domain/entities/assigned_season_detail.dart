@@ -1,13 +1,32 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart'
+    show shrimpTypeFromJson;
 
 part 'assigned_season_detail.freezed.dart';
+
+enum AssignedSeasonPersonnelRole { technician, expert, unknown }
+
+AssignedSeasonPersonnelRole assignedSeasonPersonnelRoleFromJson(
+  Object? value,
+) => switch (value) {
+  'TECHNICIAN' => AssignedSeasonPersonnelRole.technician,
+  'EXPERT' => AssignedSeasonPersonnelRole.expert,
+  _ => AssignedSeasonPersonnelRole.unknown,
+};
+
+String assignedSeasonPersonnelRoleLabel(AssignedSeasonPersonnelRole value) =>
+    switch (value) {
+      AssignedSeasonPersonnelRole.technician => 'Kỹ thuật viên phụ trách',
+      AssignedSeasonPersonnelRole.expert => 'Chuyên gia thủy sản',
+      AssignedSeasonPersonnelRole.unknown => 'Không rõ',
+    };
 
 @freezed
 abstract class AssignedSeasonPersonnel with _$AssignedSeasonPersonnel {
   const factory AssignedSeasonPersonnel({
-    required String role,
+    required AssignedSeasonPersonnelRole role,
     required String name,
     String? avatarUrl,
   }) = _AssignedSeasonPersonnel;
@@ -36,7 +55,7 @@ abstract class AssignedSeasonDetail with _$AssignedSeasonDetail {
     required String id,
     required String name,
     required AssignedSeasonStatus status,
-    required String shrimpType,
+    required ShrimpType shrimpType,
     required String pondId,
     required String pondName,
     required String pondType,
@@ -58,27 +77,19 @@ abstract class AssignedSeasonDetail with _$AssignedSeasonDetail {
   }) = _AssignedSeasonDetail;
 
   int? get dayOfCulture =>
-      stockingDate == null || status != AssignedSeasonStatus.active
-      ? null
-      : DateTime.now().difference(stockingDate!).inDays + 1;
+      AssignedSeasonRules.dayOfCulture(stockingDate, status);
 
   static AssignedSeasonDetail parse(Map<String, dynamic> json) {
     try {
       final pond = json['pond'] as Map<String, dynamic>;
       final farm = json['farm'] as Map<String, dynamic>;
       final assignment = json['assignment'] as Map<String, dynamic>;
-      final status = switch (json['status']) {
-        'PLANNING' => AssignedSeasonStatus.planning,
-        'ACTIVE' => AssignedSeasonStatus.active,
-        'COMPLETED' => AssignedSeasonStatus.completed,
-        'CANCELLED' => AssignedSeasonStatus.cancelled,
-        _ => throw const InvalidResponseException(),
-      };
+      final status = assignedSeasonStatusFromJson(json['status']);
       return AssignedSeasonDetail(
         id: json['id'] as String,
         name: json['name'] as String,
         status: status,
-        shrimpType: json['shrimpType'] as String,
+        shrimpType: shrimpTypeFromJson(json['shrimpType']),
         pondId: pond['id'] as String,
         pondName: pond['name'] as String,
         pondType: pond['type'] as String,
@@ -99,7 +110,7 @@ abstract class AssignedSeasonDetail with _$AssignedSeasonDetail {
               final item = raw as Map<String, dynamic>;
               final account = item['account'] as Map<String, dynamic>;
               return AssignedSeasonPersonnel(
-                role: item['role'] as String,
+                role: assignedSeasonPersonnelRoleFromJson(item['role']),
                 name: (account['fullName'] as String?) ?? 'Chưa cập nhật tên',
                 avatarUrl: account['avatarUrl'] as String?,
               );

@@ -210,7 +210,7 @@ AssignedSeasonDetail diagnosisSeason(AssignedSeasonStatus status) =>
       id: 'season',
       name: 'Vụ Đông Xuân 2026',
       status: status,
-      shrimpType: 'WHITELEG',
+      shrimpType: ShrimpType.whiteleg,
       pondId: 'pond',
       pondName: 'Ao A3',
       pondType: 'GROW_OUT',

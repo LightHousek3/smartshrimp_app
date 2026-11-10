@@ -20,8 +20,6 @@ import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/domain/repositories/rag_repository.dart';
 import 'package:smartshrimp_app/features/rag/presentation/pages/rag_chat_page.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
-import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 
@@ -214,7 +212,18 @@ void main() {
     tester,
   ) async {
     final repository = _Repository()..pending = Completer<RagQuery>();
-    await tester.pumpWidget(_app(repository, conversationId: null));
+    // The first successful reply replaces the new-conversation URL.
+    final router = GoRouter(
+      initialLocation: '/seasons/season/rag/new',
+      routes: [
+        GoRoute(
+          path: '/seasons/season/rag/:id',
+          builder: (_, _) => const RagChatPage(seasonId: 'season'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(repository, router: router));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Câu hỏi đầu tiên');
     await tester.tap(find.byTooltip('Gửi câu hỏi'));
@@ -233,6 +242,10 @@ void main() {
     expect(find.text('AI đang suy nghĩ…'), findsNothing);
     expect(find.text('Câu trả lời'), findsOneWidget);
     expect(find.text('Câu hỏi đầu tiên'), findsOneWidget);
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      '/seasons/season/rag/conversation',
+    );
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       isEmpty,
@@ -282,17 +295,20 @@ void main() {
 Widget _app(
   _Repository repository, {
   String? conversationId = 'conversation',
+  GoRouter? router,
 }) => ProviderScope(
   overrides: [
     ragRepositoryProvider.overrideWithValue(repository),
     authRepositoryProvider.overrideWithValue(_Auth()),
     assignedSeasonRepositoryProvider.overrideWithValue(_Seasons()),
   ],
-  child: MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme.light,
-    home: RagChatPage(seasonId: 'season', conversationId: conversationId),
-  ),
+  child: router != null
+      ? MaterialApp.router(theme: AppTheme.light, routerConfig: router)
+      : MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          home: RagChatPage(seasonId: 'season', conversationId: conversationId),
+        ),
 );
 
 final class _Auth implements AuthRepository {
@@ -314,6 +330,9 @@ final class _Auth implements AuthRepository {
 }
 
 final class _Seasons implements AssignedSeasonRepository {
+  @override
+  Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() async => [];
+
   _Seasons({this.status = AssignedSeasonStatus.active});
   final AssignedSeasonStatus status;
   @override
@@ -322,7 +341,7 @@ final class _Seasons implements AssignedSeasonRepository {
         id: id,
         name: 'Vụ Đông Xuân 2025',
         status: status,
-        shrimpType: 'WHITELEG',
+        shrimpType: ShrimpType.whiteleg,
         pondId: 'pond',
         pondName: 'Ao A3',
         pondType: 'AQUACULTURE',

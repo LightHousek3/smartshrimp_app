@@ -7,12 +7,12 @@ import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_tr
 
 class WaterMetricTrend extends StatefulWidget {
   const WaterMetricTrend({
-    required this.logs,
+    required this.statistics,
     required this.metric,
     required this.field,
     super.key,
   });
-  final List<WaterLog> logs;
+  final WaterLogStatistics statistics;
   final WaterMetricMetadata metric;
   final String field;
   @override
@@ -22,17 +22,17 @@ class WaterMetricTrend extends StatefulWidget {
 class _WaterMetricTrendState extends State<WaterMetricTrend> {
   int? _selected;
   String _day(DateTime value) {
-    final date = value.toLocal();
+    final date = value;
     return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}';
   }
 
   String _number(double value) => formatWaterValue(value).replaceAll('.', ',');
   @override
   Widget build(BuildContext context) {
-    final logs = widget.logs
-        .where((log) => log.valueOf(widget.field) != null)
+    final series = widget.statistics.series
+        .where((point) => point.values[widget.field]?.avg != null)
         .toList(growable: false);
-    if (logs.isEmpty) {
+    if (series.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 24, vertical: 80),
         child: Text(
@@ -42,19 +42,24 @@ class _WaterMetricTrendState extends State<WaterMetricTrend> {
         ),
       );
     }
-    final index = _selected ?? logs.length - 1;
-    final log = logs[index];
-    final sameTime = logs
-        .where((entry) => entry.recordedAt == log.recordedAt)
-        .toList(growable: false);
-    final value = log.valueOf(widget.field)!;
-    final warning = log.exceededParameters.contains(widget.field);
-    final previous = index == 0 ? null : logs[index - 1].valueOf(widget.field);
+    final index = (_selected ?? series.length - 1).clamp(0, series.length - 1);
+    final point = series[index];
+    final stat = point.values[widget.field]!;
+    final value = stat.avg!;
+    final warning =
+        (widget.metric.warningMin != null &&
+            (stat.min ?? value) < widget.metric.warningMin!) ||
+        (widget.metric.warningMax != null &&
+            (stat.max ?? value) > widget.metric.warningMax!);
+    final previous = index == 0
+        ? null
+        : series[index - 1].values[widget.field]?.avg;
     final delta = previous == null ? null : value - previous;
     final unit = widget.metric.unit;
-    final safeCount = logs
-        .where((log) => !log.exceededParameters.contains(widget.field))
-        .length;
+    final summary = widget.statistics.parameters[widget.field];
+    final safeCount = summary?.exceedCount == null
+        ? null
+        : summary!.count - summary.exceedCount!;
     final min = widget.metric.warningMin;
     final max = widget.metric.warningMax;
     final threshold = min != null && max != null
@@ -79,7 +84,8 @@ class _WaterMetricTrendState extends State<WaterMetricTrend> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$label · ${_day(log.recordedAt)}'.toUpperCase(),
+                      '$label · ${_day(DateTime.parse(point.bucket))}'
+                          .toUpperCase(),
                       style: const TextStyle(
                         color: AppColors.inkMuted,
                         fontSize: 10,
@@ -175,23 +181,10 @@ class _WaterMetricTrendState extends State<WaterMetricTrend> {
             ],
           ),
         ),
-        if (sameTime.length > 1)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Text(
-              'Lần đo ${sameTime.indexOf(log) + 1}/${sameTime.length} cùng thời điểm · Chạm lại để đổi',
-              key: const Key('water_trend_overlapping_selection'),
-              style: const TextStyle(
-                color: AppColors.inkMuted,
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: WaterTrendChart(
-            logs: logs,
+            series: series,
             field: widget.field,
             metric: widget.metric,
             selectedIndex: index,
@@ -206,7 +199,9 @@ class _WaterMetricTrendState extends State<WaterMetricTrend> {
               Expanded(
                 child: _FooterStat(
                   label: 'TRONG NGƯỠNG',
-                  value: '$safeCount/${logs.length} lần đo',
+                  value: safeCount == null
+                      ? '—'
+                      : '$safeCount/${summary!.count} lần đo',
                   accent: true,
                 ),
               ),

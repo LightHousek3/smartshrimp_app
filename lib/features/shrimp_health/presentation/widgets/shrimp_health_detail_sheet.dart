@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
@@ -201,6 +202,7 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
         level: AppNoticeLevel.success,
       );
 
+      ref.invalidate(technicianDashboardProvider);
       widget.onVoided?.call();
       Navigator.of(context).pop(true);
     } catch (e) {

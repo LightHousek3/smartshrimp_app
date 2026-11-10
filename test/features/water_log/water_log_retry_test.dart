@@ -6,35 +6,33 @@ import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dar
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/domain/repositories/water_log_repository.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
-import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_trend_provider.dart';
+import 'water_statistics_fixtures.dart';
 
 class _Repository implements WaterLogRepository {
-  AppException? metadataError, listError;
-  int metadataCalls = 0, listCalls = 0;
+  AppException? error;
+  int metadataCalls = 0, statisticsCalls = 0;
   bool recoverAfterFirst = false;
   @override
   Future<WaterLogMetadata> getMetadata({required String seasonId}) async {
     metadataCalls++;
-    if (metadataError != null && !(recoverAfterFirst && metadataCalls > 1)) {
-      throw metadataError!;
+    if (error != null && !(recoverAfterFirst && metadataCalls > 1)) {
+      throw error!;
     }
     return WaterLogMetadata.legacy(ShrimpType.whiteleg);
   }
 
   @override
-  Future<WaterLogPage> getWaterLogs({
+  Future<WaterLogStatistics> getStatistics({
     required String seasonId,
     DateTime? from,
-    DateTime? to,
-    bool includeVoided = false,
-    WaterLogFilter? filter,
-    bool includeCounts = false,
-    int limit = 20,
-    String? cursor,
+    required DateTime to,
+    required String granularity,
   }) async {
-    listCalls++;
-    if (listError != null) throw listError!;
-    return const WaterLogPage(items: [], totalResults: 0, hasNextPage: false);
+    statisticsCalls++;
+    if (error != null && !(recoverAfterFirst && statisticsCalls > 1)) {
+      throw error!;
+    }
+    return sampleStatistics();
   }
 
   @override
@@ -42,96 +40,81 @@ class _Repository implements WaterLogRepository {
 }
 
 void main() {
-  for (final scenario in ['metadata', 'trend metadata', 'trend list']) {
+  for (final statistics in [false, true]) {
     testWidgets(
-      '$scenario does not retry 403 with production defaults and explicit retry recovers',
+      '${statistics ? 'statistics' : 'metadata'} does not retry 403, explicit retry recovers',
       (tester) async {
         const denied = ApiException(
           'Không có quyền xem dữ liệu vụ nuôi.',
           statusCode: 403,
         );
-        final repository = _Repository();
-        if (scenario == 'trend list') {
-          repository.listError = denied;
-        } else {
-          repository.metadataError = denied;
-        }
-        // No container-level retry override: exercise the production policy.
+        final repository = _Repository()..error = denied;
         final container = ProviderContainer(
           overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
         );
-        if (scenario == 'metadata') {
-          final provider = waterLogMetadataProvider('season');
-          final sub = container.listen(provider, (_, _) {});
-          try {
-            await expectLater(
-              container.read(provider.future),
-              throwsA(same(denied)),
-            );
-            await tester.pump(const Duration(seconds: 2));
-            expect(repository.metadataCalls, 1);
-            expect(container.read(provider).error, same(denied));
-            repository.metadataError = null;
-            container.invalidate(provider);
-            await container.read(provider.future);
-            expect(repository.metadataCalls, 2);
-          } finally {
-            sub.close();
-            container.dispose();
-            await tester.pump();
+        final provider = statistics
+            ? waterLogStatisticsProvider((
+                seasonId: 'season',
+                days: null,
+                granularity: 'day',
+              ))
+            : waterLogMetadataProvider('season');
+        final sub = container.listen(provider, (_, _) {});
+        try {
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 2));
+          expect(container.read(provider).error, same(denied));
+          expect(repository.metadataCalls + repository.statisticsCalls, 1);
+          repository.error = null;
+          if (statistics) {
+            final target = waterLogStatisticsProvider((
+              seasonId: 'season',
+              days: null,
+              granularity: 'day',
+            ));
+            container.invalidate(target);
+            await container.read(target.future);
+          } else {
+            container.invalidate(waterLogMetadataProvider('season'));
+            await container.read(waterLogMetadataProvider('season').future);
           }
-        } else {
-          final provider = waterLogTrendProvider((
-            seasonId: 'season',
-            days: null,
-          ));
-          final sub = container.listen(provider, (_, _) {});
-          try {
-            await expectLater(
-              container.read(provider.future),
-              throwsA(same(denied)),
-            );
-            await tester.pump(const Duration(seconds: 2));
-            expect(repository.metadataCalls, 1);
-            expect(repository.listCalls, scenario == 'trend list' ? 1 : 0);
-            expect(container.read(provider).error, same(denied));
-            repository.metadataError = null;
-            repository.listError = null;
-            container.invalidate(provider);
-            expect((await container.read(provider.future)).logs, isEmpty);
-            expect(repository.metadataCalls, 2);
-          } finally {
-            sub.close();
-            container.dispose();
-            await tester.pump();
-          }
+          expect(repository.metadataCalls + repository.statisticsCalls, 2);
+        } finally {
+          sub.close();
+          container.dispose();
+          await tester.pump();
+        }
+      },
+    );
+    testWidgets(
+      '${statistics ? 'statistics' : 'metadata'} retries transient network errors',
+      (tester) async {
+        final repository = _Repository()
+          ..error = const NetworkException()
+          ..recoverAfterFirst = true;
+        final container = ProviderContainer(
+          overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
+        );
+        final provider = statistics
+            ? waterLogStatisticsProvider((
+                seasonId: 'season',
+                days: null,
+                granularity: 'day',
+              ))
+            : waterLogMetadataProvider('season');
+        final sub = container.listen(provider, (_, _) {});
+        try {
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+          await tester.pump();
+          expect(repository.metadataCalls + repository.statisticsCalls, 2);
+          expect(container.read(provider).hasValue, isTrue);
+        } finally {
+          sub.close();
+          container.dispose();
+          await tester.pump();
         }
       },
     );
   }
-  testWidgets(
-    'metadata still automatically retries a transient network error',
-    (tester) async {
-      final repository = _Repository()
-        ..metadataError = const NetworkException()
-        ..recoverAfterFirst = true;
-      final container = ProviderContainer(
-        overrides: [waterLogRepositoryProvider.overrideWithValue(repository)],
-      );
-      final provider = waterLogMetadataProvider('season');
-      final sub = container.listen(provider, (_, _) {});
-      try {
-        await tester.pump();
-        expect(repository.metadataCalls, 1);
-        await tester.pump(const Duration(milliseconds: 250));
-        await tester.pump();
-        expect(repository.metadataCalls, 2);
-        expect(container.read(provider).asData?.value.shrimpType, 'WHITELEG');
-      } finally {
-        sub.close();
-        container.dispose();
-        await tester.pump();
-      }
-    },
-  );
 }
