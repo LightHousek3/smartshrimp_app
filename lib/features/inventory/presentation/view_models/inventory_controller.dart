@@ -1,4 +1,13 @@
 import 'dart:typed_data';
+import 'dart:async';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_substance.dart';
+import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_substance_repository.dart';
+import 'package:smartshrimp_app/features/inventory/data/repositories/inventory_substance_repository_impl.dart';
+import 'package:smartshrimp_app/features/inventory/data/services/inventory_substance_api_service.dart';
+import 'package:smartshrimp_app/features/inventory/data/repositories/inventory_label_repository_impl.dart';
+import 'package:smartshrimp_app/features/inventory/data/services/inventory_label_api_service.dart';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_label.dart';
+import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_label_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/features/inventory/data/services/cloudinary_inventory_image_storage.dart';
@@ -36,6 +45,218 @@ final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
   ref.watch(authControllerProvider.select((state) => state.value?.id));
   return InventoryRepositoryImpl(ref.watch(inventoryRemoteDataSourceProvider));
 });
+
+final inventoryLabelRepositoryProvider = Provider<InventoryLabelRepository>((
+  ref,
+) {
+  ref.watch(authControllerProvider.select((state) => state.value?.id));
+  return InventoryLabelRepositoryImpl(
+    InventoryLabelApiService(ref.watch(apiClientProvider)),
+  );
+});
+
+final inventoryLabelControllerProvider = AsyncNotifierProvider.autoDispose
+    .family<InventoryLabelController, void, String>(
+      InventoryLabelController.new,
+    );
+
+final inventorySubstanceRepositoryProvider =
+    Provider<InventorySubstanceRepository>(
+      (ref) => InventorySubstanceRepositoryImpl(
+        InventorySubstanceApiService(ref.watch(apiClientProvider)),
+      ),
+    );
+
+final inventorySubstanceControllerProvider = AsyncNotifierProvider.autoDispose
+    .family<InventorySubstanceController, InventorySubstanceState, String>(
+      InventorySubstanceController.new,
+    );
+
+final class InventorySubstanceController
+    extends _OwnerInventoryController<InventorySubstanceState> {
+  InventorySubstanceController(this.farmId);
+  final String farmId;
+  Timer? _searchTimer;
+  Timer? _checkTimer;
+  int _searchGeneration = 0;
+  int _checkGeneration = 0;
+
+  @override
+  InventorySubstanceState build() {
+    requireOwner();
+    ref.onDispose(() {
+      _searchTimer?.cancel();
+      _checkTimer?.cancel();
+      _searchGeneration++;
+      _checkGeneration++;
+    });
+    return const InventorySubstanceState();
+  }
+
+  void searchChanged(String query) {
+    _searchTimer?.cancel();
+    final generation = ++_searchGeneration;
+    state = AsyncData(
+      (state.value ?? const InventorySubstanceState()).copyWith(
+        query: query,
+        items: [],
+        isSearching: true,
+        isLoadingMore: false,
+        hasNextPage: false,
+        nextCursor: null,
+        searchError: null,
+      ),
+    );
+    _searchTimer = Timer(
+      const Duration(milliseconds: 350),
+      () => _search(query, generation),
+    );
+  }
+
+  Future<void> _search(String query, int generation, {String? cursor}) async {
+    try {
+      final page = await runAuthenticated(
+        () => ref
+            .read(inventorySubstanceRepositoryProvider)
+            .search(farmId: farmId, query: query, cursor: cursor),
+      );
+      if (!ref.mounted || generation != _searchGeneration) return;
+      if (page.hasNextPage &&
+          (page.items.isEmpty ||
+              (int.tryParse(page.nextCursor ?? '') ?? -1) <=
+                  (int.tryParse(cursor ?? '0') ?? 0))) {
+        throw const InvalidResponseException();
+      }
+      final current = state.requireValue;
+      final items = {
+        for (final item in [
+          ...(cursor == null ? <InventorySubstance>[] : current.items),
+          ...page.items,
+        ])
+          item.id: item,
+      };
+      state = AsyncData(
+        current.copyWith(
+          items: items.values.toList(),
+          isSearching: false,
+          isLoadingMore: false,
+          hasNextPage: page.hasNextPage,
+          nextCursor: page.nextCursor,
+          searchError: null,
+        ),
+      );
+    } catch (error) {
+      if (!ref.mounted || generation != _searchGeneration) return;
+      state = AsyncData(
+        state.requireValue.copyWith(
+          isSearching: false,
+          isLoadingMore: false,
+          searchError: error is AppException
+              ? error.message
+              : 'Không tải được gợi ý thành phần.',
+        ),
+      );
+    }
+  }
+
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null ||
+        current.isSearching ||
+        current.isLoadingMore ||
+        !current.hasNextPage ||
+        current.nextCursor == null) {
+      return;
+    }
+    state = AsyncData(current.copyWith(isLoadingMore: true, searchError: null));
+    await _search(current.query, _searchGeneration, cursor: current.nextCursor);
+  }
+
+  void ingredientsChanged(String text) {
+    _checkTimer?.cancel();
+    _checkGeneration++;
+    state = AsyncData(
+      (state.value ?? const InventorySubstanceState()).copyWith(
+        check: null,
+        checkError: null,
+        isChecking: text.trim().isNotEmpty,
+      ),
+    );
+    if (text.trim().isEmpty) return;
+    _checkTimer = Timer(
+      const Duration(milliseconds: 350),
+      () => checkNow(text),
+    );
+  }
+
+  Future<InventorySubstanceCheck?> checkNow(
+    String text, {
+    bool throwOnError = false,
+  }) async {
+    _checkTimer?.cancel();
+    final generation = ++_checkGeneration;
+    state = AsyncData(
+      (state.value ?? const InventorySubstanceState()).copyWith(
+        isChecking: true,
+        checkError: null,
+      ),
+    );
+    try {
+      final result = await runAuthenticated(
+        () => ref
+            .read(inventorySubstanceRepositoryProvider)
+            .check(farmId: farmId, ingredientsText: text),
+      );
+      if (ref.mounted && generation == _checkGeneration) {
+        state = AsyncData(
+          state.requireValue.copyWith(check: result, isChecking: false),
+        );
+      }
+      return result;
+    } catch (error) {
+      if (ref.mounted && generation == _checkGeneration) {
+        state = AsyncData(
+          state.requireValue.copyWith(
+            isChecking: false,
+            check: null,
+            checkError: error is AppException
+                ? error.message
+                : 'Chưa kiểm tra được thành phần. Vui lòng thử lại.',
+          ),
+        );
+      }
+      if (throwOnError) rethrow;
+      return null;
+    }
+  }
+}
+
+final class InventoryLabelController extends _OwnerInventoryController<void> {
+  InventoryLabelController(this.farmId);
+  final String farmId;
+
+  @override
+  void build() => requireOwner();
+
+  Future<InventoryLabelResult> scan(List<InventoryLabelImage> images) async {
+    if (state.isLoading) {
+      throw const ApiException('Đang đọc nhãn, vui lòng chờ.');
+    }
+    state = const AsyncLoading();
+    try {
+      final result = await runAuthenticated(
+        () => ref
+            .read(inventoryLabelRepositoryProvider)
+            .scan(farmId: farmId, images: images),
+      );
+      if (ref.mounted) state = const AsyncData(null);
+      return result;
+    } catch (error, stack) {
+      if (ref.mounted) state = AsyncError(error, stack);
+      rethrow;
+    }
+  }
+}
 
 final inventoryListControllerProvider = AsyncNotifierProvider.autoDispose
     .family<InventoryListController, InventoryProductPage, String>(
@@ -425,10 +646,14 @@ final class InventoryMutationController
     productId: productId,
   );
 
-  Future<void> delete(String productId) => _mutate(
+  Future<void> delete(String productId, {String? confirmationToken}) => _mutate(
     () => ref
         .read(inventoryRepositoryProvider)
-        .deleteProduct(farmId: farmId, productId: productId),
+        .deleteProduct(
+          farmId: farmId,
+          productId: productId,
+          confirmationToken: confirmationToken,
+        ),
     productId: productId,
   );
 

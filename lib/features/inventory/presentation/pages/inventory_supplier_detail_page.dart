@@ -321,6 +321,9 @@ class _InventorySupplierDetailPageState
                               : 'Không thể tải thông tin liên quan. Kéo xuống để thử lại.',
                         ),
                         TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: inventoryTextButtonTextStyle,
+                          ),
                           onPressed: () =>
                               ref.invalidate(supplierDetailProvider(key)),
                           child: const Text('Thử lại'),

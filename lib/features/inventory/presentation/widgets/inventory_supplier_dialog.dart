@@ -125,7 +125,10 @@ class InventorySupplierDialog extends StatelessWidget {
         width: double.infinity,
         child: TextButton(
           onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: AppColors.inkSoft),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.inkSoft,
+            textStyle: inventoryTextButtonTextStyle,
+          ),
           child: const Text('Đóng'),
         ),
       ),

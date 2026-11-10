@@ -157,6 +157,9 @@ class InventoryCatalogFilters extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: inventoryTextButtonTextStyle,
+                ),
                 onPressed: onReset,
                 child: const Text('Xóa bộ lọc'),
               ),

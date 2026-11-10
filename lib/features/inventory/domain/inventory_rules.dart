@@ -6,6 +6,113 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 abstract final class InventoryRules {
   static const maxProductImages = 3;
   static const maxImageBytes = 5 * 1024 * 1024;
+  static const maxOcrTotalBytes = 5 * 1024 * 1024;
+
+  /// Raw offsets allow deleting a chip without rewriting the text being edited.
+  /// Preserve numeric/element locants, brackets and explicitly quoted names.
+  static List<({String text, int start, int end, bool terminated})>
+  ingredientSegments(String text) {
+    final result = <({String text, int start, int end, bool terminated})>[];
+    var start = 0;
+    final brackets = <String>[];
+    String? quote;
+    final whitespace = RegExp(r'\s');
+    final locant = RegExp(
+      r"^(?:[0-9０-９]+|[NOSP])['′″]*$",
+      caseSensitive: false,
+    );
+    final token = RegExp(r"[a-zA-Z0-9０-９'′″]");
+    bool digit(int index) =>
+        index >= 0 &&
+        index < text.length &&
+        ((text.codeUnitAt(index) >= 48 && text.codeUnitAt(index) <= 57) ||
+            (text.codeUnitAt(index) >= 65296 &&
+                text.codeUnitAt(index) <= 65305));
+    bool chemicalComma(int index) {
+      var left = index - 1;
+      var right = index + 1;
+      while (left >= 0 && whitespace.hasMatch(text[left])) {
+        left--;
+      }
+      while (right < text.length && whitespace.hasMatch(text[right])) {
+        right++;
+      }
+      if (digit(left) && digit(right)) return true;
+      final leftEnd = left + 1;
+      final rightStart = right;
+      while (left >= 0 && token.hasMatch(text[left])) {
+        left--;
+      }
+      while (right < text.length && token.hasMatch(text[right])) {
+        right++;
+      }
+      return locant.hasMatch(text.substring(left + 1, leftEnd)) &&
+          locant.hasMatch(text.substring(rightStart, right));
+    }
+
+    void add(int contentEnd, int end, bool terminated) {
+      final name = text.substring(start, contentEnd).trim();
+      if (name.isNotEmpty) {
+        result.add((
+          text: name,
+          start: start,
+          end: end,
+          terminated: terminated,
+        ));
+      }
+      start = end;
+    }
+
+    for (var index = 0; index < text.length; index++) {
+      final char = text[index];
+      final newline =
+          char == '\n' || char == '\r' || char == '\u2028' || char == '\u2029';
+      if (!newline) {
+        if (quote != null) {
+          if (char == quote) quote = null;
+          continue;
+        }
+        if (char == '"' || char == '“') {
+          quote = char == '“' ? '”' : '"';
+          continue;
+        }
+        const closing = {'(': ')', '[': ']', '{': '}'};
+        if (closing.containsKey(char)) {
+          brackets.add(closing[char]!);
+        } else if (brackets.isNotEmpty && char == brackets.last) {
+          brackets.removeLast();
+        }
+      }
+      final comma = char == ',' || char == '，' || char == '、';
+      if (newline ||
+          (brackets.isEmpty &&
+              (char == ';' ||
+                  char == '；' ||
+                  (comma && !chemicalComma(index))))) {
+        final contentEnd = index;
+        if (char == '\r' &&
+            index + 1 < text.length &&
+            text[index + 1] == '\n') {
+          index++;
+        }
+        add(contentEnd, index + 1, true);
+        if (newline) {
+          brackets.clear();
+          quote = null;
+        }
+      }
+    }
+    add(text.length, text.length, false);
+    return result;
+  }
+
+  /// A catalog selection is one item even when its full label contains separators.
+  static String ingredientLiteral(String name) {
+    final segments = ingredientSegments(name);
+    return segments.length == 1 && segments.single.text == name.trim()
+        ? name
+        : '"${name.replaceAll('"', '""')}"';
+  }
 
   /// Check size and file signatures instead of trusting names or MIME metadata.
   static void validateImage(Uint8List bytes) {
@@ -82,6 +189,23 @@ abstract final class InventoryRules {
 
   static bool isPackaged(InventoryProductUnit unit) =>
       unit == InventoryProductUnit.pack || unit == InventoryProductUnit.bottle;
+
+  static List<InventoryConversionUnit> conversionUnits(
+    InventoryProductUnit unit,
+  ) => switch (unit) {
+    InventoryProductUnit.bottle => const [
+      InventoryConversionUnit.ml,
+      InventoryConversionUnit.l,
+    ],
+    InventoryProductUnit.pack => const [
+      InventoryConversionUnit.mg,
+      InventoryConversionUnit.g,
+      InventoryConversionUnit.kg,
+      InventoryConversionUnit.ml,
+      InventoryConversionUnit.l,
+    ],
+    _ => const [],
+  };
 
   /// Accept decimal commas or dots without interpreting grouping or exponents.
   static double? parseNumber(String? value) {
@@ -166,6 +290,12 @@ abstract final class InventoryRules {
     if (!packaged && (conversionQuantity != null || conversionUnit != null)) {
       throw const FormatException(
         'Thông tin quy đổi chỉ áp dụng cho gói và chai.',
+      );
+    }
+    if (unit == InventoryProductUnit.bottle &&
+        !conversionUnits(unit).contains(conversionUnit)) {
+      throw const FormatException(
+        'Đơn vị chai chỉ được quy đổi sang lít hoặc ml.',
       );
     }
   }

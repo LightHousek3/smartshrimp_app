@@ -38,7 +38,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SmartShrimp cần truy cập thư viện ảnh để chọn ảnh đại diện, vật tư và ảnh tôm cần nhận diện.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>SmartShrimp cần camera để chụp ảnh tôm cần nhận diện.</string>
+	<string>SmartShrimp cần camera để chụp ảnh nhãn vật tư và ảnh tôm cần nhận diện.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SmartShrimp cần vị trí của bạn để điền tọa độ trang trại chính xác.</string>
 	<key>UIApplicationSceneManifest</key>

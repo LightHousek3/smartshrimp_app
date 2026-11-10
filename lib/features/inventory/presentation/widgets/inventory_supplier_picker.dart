@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 /// Offer active suppliers from the owner directory for a new receipt.
 /// Inactive suppliers remain managed in the directory, outside this picker.
@@ -63,6 +64,9 @@ class _InventorySupplierPickerState
                             : 'Không thể tải nhà cung cấp.',
                       ),
                       TextButton(
+                        style: TextButton.styleFrom(
+                          textStyle: inventoryTextButtonTextStyle,
+                        ),
                         onPressed: () => ref.invalidate(
                           supplierListControllerProvider(widget.farmId),
                         ),

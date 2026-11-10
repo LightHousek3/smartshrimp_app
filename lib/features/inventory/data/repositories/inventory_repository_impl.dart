@@ -98,11 +98,13 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     String? imageUrl,
     List<String>? imageUrls,
   }) {
-    InventoryRules.validateConversion(
-      unit: unit,
-      conversionQuantity: conversionQuantity,
-      conversionUnit: conversionUnit,
-    );
+    if (!product.metadataLocked) {
+      InventoryRules.validateConversion(
+        unit: unit,
+        conversionQuantity: conversionQuantity,
+        conversionUnit: conversionUnit,
+      );
+    }
     return _remoteDataSource
         .updateProduct(farmId, product.id, <String, dynamic>{
           if (!product.metadataLocked)
@@ -154,7 +156,12 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   Future<void> deleteProduct({
     required String farmId,
     required String productId,
-  }) => _remoteDataSource.deleteProduct(farmId, productId);
+    String? confirmationToken,
+  }) => _remoteDataSource.deleteProduct(
+    farmId,
+    productId,
+    confirmationToken: confirmationToken,
+  );
 
   @override
   Future<InventoryLot> updateLotExpiry({

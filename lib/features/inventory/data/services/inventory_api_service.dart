@@ -23,7 +23,11 @@ abstract interface class InventoryRemoteDataSource {
 
   Future<InventoryProduct> archiveProduct(String farmId, String productId);
 
-  Future<void> deleteProduct(String farmId, String productId);
+  Future<void> deleteProduct(
+    String farmId,
+    String productId, {
+    String? confirmationToken,
+  });
 
   Future<InventoryLot> updateLotExpiry(
     String farmId,
@@ -119,9 +123,16 @@ final class InventoryApiService implements InventoryRemoteDataSource {
   }
 
   @override
-  Future<void> deleteProduct(String farmId, String productId) async {
+  Future<void> deleteProduct(
+    String farmId,
+    String productId, {
+    String? confirmationToken,
+  }) async {
     await _client.delete(
       '${_basePath(farmId)}/products/${Uri.encodeComponent(productId)}',
+      data: confirmationToken == null
+          ? null
+          : {'confirmationToken': confirmationToken},
       authenticated: true,
     );
   }

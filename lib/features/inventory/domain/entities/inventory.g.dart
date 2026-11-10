@@ -44,62 +44,63 @@ Map<String, dynamic> _$InventoryLotToJson(_InventoryLot instance) =>
       'updatedAt': instance.updatedAt.toIso8601String(),
     };
 
-_InventoryProduct _$InventoryProductFromJson(Map<String, dynamic> json) =>
-    _InventoryProduct(
-      id: json['id'] as String,
-      farmId: json['farmId'] as String,
-      name: json['name'] as String,
-      readOnly: json['readOnly'] as bool? ?? false,
-      manufacturerId: json['manufacturerId'] as String? ?? '',
-      manufacturer:
-          json['manufacturer'] as Map<String, dynamic>? ??
-          const <String, dynamic>{},
-      compliance: json['compliance'] == null
-          ? null
-          : InventoryCompliance.fromJson(
-              json['compliance'] as Map<String, dynamic>,
-            ),
-      metadataLocked: json['metadataLocked'] as bool? ?? false,
-      canDelete: json['canDelete'] as bool? ?? false,
-      status: json['status'] as String? ?? 'ACTIVE',
-      category: $enumDecode(
-        _$InventoryProductCategoryEnumMap,
-        json['category'],
-        unknownValue: InventoryProductCategory.unknown,
-      ),
-      unit: $enumDecode(
-        _$InventoryProductUnitEnumMap,
-        json['unit'],
-        unknownValue: InventoryProductUnit.unknown,
-      ),
-      conversionQuantity: (json['conversionQuantity'] as num?)?.toDouble(),
-      conversionUnit: $enumDecodeNullable(
-        _$InventoryConversionUnitEnumMap,
-        json['conversionUnit'],
-        unknownValue: InventoryConversionUnit.unknown,
-      ),
-      minAlertQuantity: (json['minAlertQuantity'] as num).toDouble(),
-      description: json['description'] as String?,
-      imageUrl: json['imageUrl'] as String?,
-      imageUrls:
-          (json['imageUrls'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      currentStock: (json['currentStock'] as num).toDouble(),
-      inventoryValue: (json['inventoryValue'] as num).toDouble(),
-      activeLotCount: (json['activeLotCount'] as num).toInt(),
-      isLowStock: json['isLowStock'] as bool,
-      lots:
-          (json['lots'] as List<dynamic>?)
-              ?.map((e) => InventoryLot.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const <InventoryLot>[],
-      plannedUseCount: (json['plannedUseCount'] as num?)?.toInt(),
-      canArchive: json['canArchive'] as bool?,
-    );
+_InventoryProduct _$InventoryProductFromJson(
+  Map<String, dynamic> json,
+) => _InventoryProduct(
+  id: json['id'] as String,
+  farmId: json['farmId'] as String,
+  name: json['name'] as String,
+  readOnly: json['readOnly'] as bool? ?? false,
+  manufacturerId: json['manufacturerId'] as String? ?? '',
+  manufacturer:
+      json['manufacturer'] as Map<String, dynamic>? ??
+      const <String, dynamic>{},
+  compliance: json['compliance'] == null
+      ? null
+      : InventoryCompliance.fromJson(
+          json['compliance'] as Map<String, dynamic>,
+        ),
+  metadataLocked: json['metadataLocked'] as bool? ?? false,
+  canDelete: json['canDelete'] as bool? ?? false,
+  deletionConfirmationToken: json['deletionConfirmationToken'] as String?,
+  deletionConfirmationMessage: json['deletionConfirmationMessage'] as String?,
+  status: json['status'] as String? ?? 'ACTIVE',
+  category: $enumDecode(
+    _$InventoryProductCategoryEnumMap,
+    json['category'],
+    unknownValue: InventoryProductCategory.unknown,
+  ),
+  unit: $enumDecode(
+    _$InventoryProductUnitEnumMap,
+    json['unit'],
+    unknownValue: InventoryProductUnit.unknown,
+  ),
+  conversionQuantity: (json['conversionQuantity'] as num?)?.toDouble(),
+  conversionUnit: $enumDecodeNullable(
+    _$InventoryConversionUnitEnumMap,
+    json['conversionUnit'],
+    unknownValue: InventoryConversionUnit.unknown,
+  ),
+  minAlertQuantity: (json['minAlertQuantity'] as num).toDouble(),
+  description: json['description'] as String?,
+  imageUrl: json['imageUrl'] as String?,
+  imageUrls:
+      (json['imageUrls'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const <String>[],
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  currentStock: (json['currentStock'] as num).toDouble(),
+  inventoryValue: (json['inventoryValue'] as num).toDouble(),
+  activeLotCount: (json['activeLotCount'] as num).toInt(),
+  isLowStock: json['isLowStock'] as bool,
+  lots:
+      (json['lots'] as List<dynamic>?)
+          ?.map((e) => InventoryLot.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <InventoryLot>[],
+  plannedUseCount: (json['plannedUseCount'] as num?)?.toInt(),
+  canArchive: json['canArchive'] as bool?,
+);
 
 Map<String, dynamic> _$InventoryProductToJson(
   _InventoryProduct instance,
@@ -113,6 +114,8 @@ Map<String, dynamic> _$InventoryProductToJson(
   'compliance': instance.compliance,
   'metadataLocked': instance.metadataLocked,
   'canDelete': instance.canDelete,
+  'deletionConfirmationToken': instance.deletionConfirmationToken,
+  'deletionConfirmationMessage': instance.deletionConfirmationMessage,
   'status': instance.status,
   'category': _$InventoryProductCategoryEnumMap[instance.category]!,
   'unit': _$InventoryProductUnitEnumMap[instance.unit]!,

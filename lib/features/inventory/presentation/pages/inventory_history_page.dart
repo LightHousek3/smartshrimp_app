@@ -386,6 +386,9 @@ class _HistoryContent extends StatelessWidget {
           )
         else if (loadMoreError != null && history.hasNextPage)
           TextButton.icon(
+            style: TextButton.styleFrom(
+              textStyle: inventoryTextButtonTextStyle,
+            ),
             onPressed: onLoadMore,
             icon: const Icon(Icons.refresh),
             label: const Text('Thử tải thêm'),

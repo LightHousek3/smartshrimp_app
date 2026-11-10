@@ -3,6 +3,9 @@ import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:convert';
+import 'dart:async';
+import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_label.dart';
+import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_label_repository.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory_image_storage.dart';
 import 'package:flutter/rendering.dart';
@@ -37,12 +40,22 @@ import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventor
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_dialog.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import '../../support/farm_context_repository.dart';
+import 'inventory_substance_test_data.dart';
 
 void main() {
+  DropdownButton<domain.InventoryConversionUnit> conversionDropdown(
+    WidgetTester tester,
+  ) => tester.widget<DropdownButton<domain.InventoryConversionUnit>>(
+    find.byType(DropdownButton<domain.InventoryConversionUnit>),
+  );
+
   Widget buildTestableWidget(Widget child, {_SupplierRepository? suppliers}) =>
       ProviderScope(
         overrides: [
           farmRepositoryProvider.overrideWithValue(FarmContextRepository()),
+          inventorySubstanceRepositoryProvider.overrideWithValue(
+            FakeInventorySubstanceRepository(),
+          ),
           authRepositoryProvider.overrideWithValue(
             const _OwnerAuthRepository(),
           ),
@@ -76,6 +89,7 @@ void main() {
     _SupplierRepository? suppliers,
     ImagePicker? picker,
     InventoryImageStorage? storage,
+    InventoryLabelRepository? labelRepository,
     bool chooseManufacturer = true,
   }) async {
     configureMobileViewport(tester);
@@ -133,6 +147,11 @@ void main() {
             const _OwnerAuthRepository(),
           ),
           inventoryRepositoryProvider.overrideWithValue(repository),
+          inventorySubstanceRepositoryProvider.overrideWithValue(
+            FakeInventorySubstanceRepository(),
+          ),
+          if (labelRepository != null)
+            inventoryLabelRepositoryProvider.overrideWithValue(labelRepository),
           if (storage != null)
             inventoryImageStorageProvider.overrideWithValue(storage),
           if (picker != null)
@@ -387,6 +406,76 @@ void main() {
   );
 
   testWidgets(
+    'OCR waits for confirmation, fills only selected fields and never saves automatically',
+    (tester) async {
+      final repository = _InventoryRepository(
+        product: _product().copyWith(
+          imageUrls: ['https://example.com/label.jpg'],
+        ),
+        history: _history(),
+      );
+      final label = _LabelRepository();
+      await openForm(
+        tester,
+        const InventoryProductFormPage.edit(
+          farmId: 'farm-1',
+          productId: 'product-1',
+        ),
+        repository,
+        labelRepository: label,
+      );
+      await enterField(tester, 'Tên vật tư', 'Tên tự nhập');
+      await tester.ensureVisible(find.text('Đọc nhãn OCR'));
+      await tester.tap(find.text('Đọc nhãn OCR'));
+      await tester.pump();
+      expect(find.text('Đang đọc nhãn…'), findsOneWidget);
+      expect(label.calls, 1);
+      expect(label.images.single.url, 'https://example.com/label.jpg');
+      label.result.complete(
+        const InventoryLabelResult(
+          name: 'Tên OCR',
+          ingredientsText: 'Đạm 40%',
+          evidence: {'name': 'Tên OCR', 'ingredientsText': 'Đạm 40%'},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Kiểm tra kết quả đọc nhãn'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<CheckboxListTile>(find.byType(CheckboxListTile))
+            .every((tile) => tile.value == false),
+        isTrue,
+      );
+      final ingredientsChoice = find.byKey(
+        const ValueKey('inventory-label-field-ingredientsText'),
+      );
+      await tester.ensureVisible(ingredientsChoice);
+      await tester.tap(ingredientsChoice);
+      await tester.pump();
+      await tester.tap(find.text('Xác nhận & điền 1 trường'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kiểm tra kết quả đọc nhãn'), findsNothing);
+      final ingredients = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) =>
+              w is InventoryField &&
+              w.label.startsWith('Thành phần / hoạt chất'),
+        ),
+        matching: find.byType(TextFormField),
+      );
+      expect(
+        tester.widget<TextFormField>(ingredients).controller!.text,
+        'Đạm 40%',
+      );
+      await tester.ensureVisible(find.text('Tên vật tư *'));
+      expect(find.text('Tên tự nhập'), findsOneWidget);
+      expect(repository.updateCalls, 0);
+      expect(repository.createdProduct, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'product creation blocks missing label facts and places reception code below type',
     (tester) async {
       final repository = _InventoryRepository(
@@ -417,6 +506,37 @@ void main() {
       );
     },
   );
+
+  testWidgets('banned manual ingredient prevents saving the product', (
+    tester,
+  ) async {
+    final repository = _InventoryRepository(
+      product: _product(),
+      history: _history(),
+    );
+    await openForm(
+      tester,
+      const InventoryProductFormPage.create(farmId: 'farm-1'),
+      repository,
+    );
+    await enterField(tester, 'Tên vật tư', 'Sản phẩm kiểm tra');
+    await tester.ensureVisible(find.text('Thức ăn'));
+    await tester.tap(find.text('Thức ăn'));
+    await tester.ensureVisible(find.text('kg'));
+    await tester.tap(find.text('kg'));
+    await enterField(tester, 'Ngưỡng cảnh báo', '0');
+    await fillRequiredLabelFacts(tester);
+    await enterField(
+      tester,
+      'Thành phần / hoạt chất',
+      'Vitamin C\nChloramphenicol 1%',
+    );
+    await submitForm(tester, 'Thêm vào kho');
+    expect(repository.createdProduct, isNull);
+    expect(find.text('Open inventory form'), findsNothing);
+    expect(find.textContaining('Phát hiện chất cấm:'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'manufacturer selection excludes distributors and inactive entries and accepts both-role manufacturers',
@@ -1039,28 +1159,70 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('products expose pause and never expose deletion', (
-    tester,
-  ) async {
-    await openForm(
-      tester,
-      const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
-      _InventoryRepository(product: _product(), history: _history()),
-    );
-    expect(find.text('Xóa vật tư'), findsNothing);
-    final pause = find.widgetWithText(OutlinedButton, 'Tạm ngưng vật tư');
-    await tester.scrollUntilVisible(
-      pause,
-      250,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.tap(pause);
-    await tester.pumpAndSettle();
-    expect(find.text('Tạm ngưng vật tư?'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('app_confirm_dialog_cancel')));
-    await tester.pumpAndSettle();
-    expect(find.text('Tạm ngưng vật tư?'), findsNothing);
-  });
+  testWidgets(
+    'Owner sees affected templates and can cancel before confirming deletion',
+    (tester) async {
+      const warning =
+          'Vật tư đang nằm trong mẫu Starter. Xóa sẽ tạm ngưng mẫu và yêu cầu cập nhật vật tư thay thế.';
+      final repository = _InventoryRepository(
+        product: _product().copyWith(
+          canDelete: true,
+          deletionConfirmationToken: 'impact-token',
+          deletionConfirmationMessage: warning,
+        ),
+        history: _history(),
+      );
+      await openForm(
+        tester,
+        const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
+        repository,
+      );
+      final remove = find.text('Xóa vật tư');
+      await tester.scrollUntilVisible(
+        remove,
+        250,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(remove);
+      await tester.pumpAndSettle();
+      expect(find.text(warning), findsOneWidget);
+      expect(repository.deletedProductId, isNull);
+      await tester.tap(find.byKey(const Key('app_confirm_dialog_cancel')));
+      await tester.pumpAndSettle();
+      expect(repository.deletedProductId, isNull);
+      await tester.tap(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('app_confirm_dialog_confirm')));
+      await tester.pumpAndSettle();
+      expect(repository.deletedProductId, 'product-1');
+      expect(repository.deletionToken, 'impact-token');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'products with operational references expose pause and hide deletion',
+    (tester) async {
+      await openForm(
+        tester,
+        const InventoryDetailPage(farmId: 'farm-1', productId: 'product-1'),
+        _InventoryRepository(product: _product(), history: _history()),
+      );
+      expect(find.text('Xóa vật tư'), findsNothing);
+      final pause = find.widgetWithText(OutlinedButton, 'Tạm ngưng vật tư');
+      await tester.scrollUntilVisible(
+        pause,
+        250,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(pause);
+      await tester.pumpAndSettle();
+      expect(find.text('Tạm ngưng vật tư?'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('app_confirm_dialog_cancel')));
+      await tester.pumpAndSettle();
+      expect(find.text('Tạm ngưng vật tư?'), findsNothing);
+    },
+  );
 
   testWidgets(
     'supplier detail deletes only unreferenced entries after confirmation',
@@ -1879,6 +2041,111 @@ void main() {
       expect(find.text('Nhập kho', skipOffstage: false), findsOneWidget);
     });
 
+    testWidgets('create form validates category and unit selections inline', (
+      tester,
+    ) async {
+      final repository = _InventoryRepository(
+        product: _product(),
+        history: _history(),
+      );
+      await openForm(
+        tester,
+        const InventoryProductFormPage.create(farmId: 'farm-1'),
+        repository,
+        chooseManufacturer: false,
+      );
+
+      Iterable<Color> chipBorders(String label) => tester
+          .widgetList<AnimatedContainer>(
+            find.descendant(
+              of: find.byWidgetPredicate(
+                (widget) => widget is InventoryField && widget.label == label,
+              ),
+              matching: find.byType(AnimatedContainer),
+            ),
+          )
+          .map(
+            (chip) => ((chip.decoration! as BoxDecoration).border! as Border)
+                .top
+                .color,
+          );
+
+      expect(find.text('Vui lòng chọn danh mục vật tư'), findsNothing);
+      expect(find.text('Vui lòng chọn đơn vị'), findsNothing);
+      expect(chipBorders('Danh mục *'), everyElement(AppColors.line));
+      expect(chipBorders('Đơn vị *'), everyElement(AppColors.line));
+
+      await enterField(tester, 'Tên vật tư', 'Bản nháp');
+      await enterField(tester, 'Tên vật tư', '');
+      expect(find.text('Tên vật tư không được để trống'), findsNothing);
+      expect(find.text('Vui lòng chọn nhà sản xuất'), findsNothing);
+
+      await submitForm(tester, 'Thêm vào kho');
+
+      expect(find.text('Tên vật tư không được để trống'), findsOneWidget);
+      expect(find.text('Vui lòng chọn nhà sản xuất'), findsOneWidget);
+      expect(find.text('Vui lòng chọn danh mục vật tư'), findsOneWidget);
+      expect(find.text('Vui lòng chọn đơn vị'), findsOneWidget);
+      expect(chipBorders('Danh mục *'), everyElement(AppColors.error));
+      expect(chipBorders('Đơn vị *'), everyElement(AppColors.error));
+      expect(repository.createdProduct, isNull);
+
+      await enterField(tester, 'Tên vật tư', '   ');
+      expect(find.text('Tên vật tư không được để trống'), findsOneWidget);
+      await enterField(tester, 'Tên vật tư', 'Vật tư hợp lệ');
+      expect(find.text('Tên vật tư không được để trống'), findsNothing);
+      await enterField(tester, 'Tên vật tư', '');
+      expect(find.text('Tên vật tư không được để trống'), findsOneWidget);
+      await enterField(tester, 'Tên vật tư', 'Vật tư hợp lệ');
+
+      await tester.ensureVisible(find.text('Thức ăn'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thức ăn'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Vui lòng chọn danh mục vật tư'), findsNothing);
+      expect(chipBorders('Danh mục *'), isNot(contains(AppColors.error)));
+      expect(find.text('Vui lòng chọn đơn vị'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('kg').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('kg').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Vui lòng chọn đơn vị'), findsNothing);
+      expect(chipBorders('Đơn vị *'), isNot(contains(AppColors.error)));
+
+      final manufacturer = find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) =>
+              widget is InventoryField && widget.label == 'Nhà sản xuất *',
+        ),
+        matching: find.byType(DropdownButtonFormField<String>),
+      );
+      await tester.ensureVisible(manufacturer);
+      await tester.pumpAndSettle();
+      await tester.tap(manufacturer);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nhà cung cấp B'));
+      await tester.pumpAndSettle();
+      expect(find.text('Vui lòng chọn nhà sản xuất'), findsNothing);
+
+      await fillRequiredLabelFacts(tester);
+      await enterField(tester, 'Ngưỡng cảnh báo', '0');
+      expect(find.text('Vui lòng chọn loại sản phẩm'), findsNothing);
+      expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsNothing);
+      expect(find.text('Vui lòng nhập thành phần / hoạt chất'), findsNothing);
+      expect(find.text('Vui lòng nhập hướng dẫn sử dụng'), findsNothing);
+      expect(find.text('Vui lòng xác nhận có chứa kháng sinh'), findsNothing);
+      expect(
+        tester
+            .widgetList<InputDecorator>(find.byType(InputDecorator))
+            .every((field) => field.decoration.errorText == null),
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('create form renders product business fields', (tester) async {
       configureMobileViewport(tester);
       await tester.pumpWidget(
@@ -2007,6 +2274,10 @@ void main() {
         final dropdown = find.byType(
           DropdownButtonFormField<domain.InventoryConversionUnit>,
         );
+        expect(conversionDropdown(tester).items!.map((item) => item.value), [
+          domain.InventoryConversionUnit.ml,
+          domain.InventoryConversionUnit.l,
+        ]);
         await tester.ensureVisible(dropdown);
         await tester.pumpAndSettle();
         await tester.tap(dropdown);
@@ -2020,9 +2291,9 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(dropdown);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('g').last);
+        await tester.tap(find.text('lít').last);
         await tester.pumpAndSettle();
-        expect(thresholdUnit(tester), 'g');
+        expect(thresholdUnit(tester), 'lít');
         await tester.ensureVisible(find.text('kg').first);
         await tester.pumpAndSettle();
         await tester.tap(find.text('kg').first);
@@ -2050,6 +2321,56 @@ void main() {
       },
     );
 
+    testWidgets(
+      'switching from a pack in grams to a bottle clears the incompatible conversion',
+      (tester) async {
+        final repository = _InventoryRepository(
+          product: _product(),
+          history: _history(),
+        );
+        await openForm(
+          tester,
+          const InventoryProductFormPage.create(farmId: 'farm-1'),
+          repository,
+        );
+        await Scrollable.ensureVisible(
+          tester.element(find.text('gói')),
+          alignment: .5,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('gói'));
+        await tester.pumpAndSettle();
+        final dropdown = find.byType(
+          DropdownButtonFormField<domain.InventoryConversionUnit>,
+        );
+        expect(conversionDropdown(tester).items!.length, 5);
+        await tester.ensureVisible(dropdown);
+        await tester.tap(dropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('g').last);
+        await tester.pumpAndSettle();
+        expect(thresholdUnit(tester), 'g');
+        await Scrollable.ensureVisible(
+          tester.element(find.text('chai')),
+          alignment: .5,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('chai'));
+        await tester.pumpAndSettle();
+        expect(thresholdUnit(tester), 'đơn vị quy đổi');
+        final field = tester
+            .widget<DropdownButtonFormField<domain.InventoryConversionUnit>>(
+              dropdown,
+            );
+        expect(field.initialValue, isNull);
+        expect(conversionDropdown(tester).items!.map((item) => item.value), [
+          domain.InventoryConversionUnit.ml,
+          domain.InventoryConversionUnit.l,
+        ]);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('creates a product and returns to the previous route', (
       tester,
     ) async {
@@ -2068,6 +2389,42 @@ void main() {
       await tester.ensureVisible(find.text('kg'));
       await tester.tap(find.text('kg'));
       await enterField(tester, 'Ngưỡng cảnh báo', '100,5');
+      final threshold = find.byKey(
+        const ValueKey('inventory-threshold-quantity'),
+      );
+      expect(tester.testTextInput.setClientArgs!['inputType'], {
+        'name': 'TextInputType.number',
+        'signed': false,
+        'decimal': true,
+      });
+      expect(
+        tester.testTextInput.setClientArgs!['inputAction'],
+        'TextInputAction.done',
+      );
+      for (final invalid in [
+        'abc',
+        '10kg',
+        '-5',
+        '1e3',
+        '1.2.3',
+        '1,2.3',
+        '1.2345',
+      ]) {
+        await tester.enterText(threshold, invalid);
+        await tester.pump();
+        expect(
+          tester.widget<TextFormField>(threshold).controller!.text,
+          '100,5',
+        );
+      }
+      for (final valid in ['', '0', '0.125', '100,5']) {
+        await tester.enterText(threshold, valid);
+        await tester.pump();
+        expect(tester.widget<TextFormField>(threshold).controller!.text, valid);
+      }
+      FocusManager.instance.primaryFocus?.unfocus();
+      tester.testTextInput.hide();
+      await tester.pumpAndSettle();
       await fillRequiredLabelFacts(tester);
       await submitForm(tester, 'Thêm vào kho');
 
@@ -2388,7 +2745,14 @@ final class _InventoryRepository implements InventoryRepository {
   Future<void> deleteProduct({
     required String farmId,
     required String productId,
-  }) async {}
+    String? confirmationToken,
+  }) async {
+    deletedProductId = productId;
+    deletionToken = confirmationToken;
+  }
+
+  String? deletedProductId;
+  String? deletionToken;
 
   Map<String, Object?>? stockOutPayload;
   @override
@@ -2601,6 +2965,22 @@ final class _InventoryRepository implements InventoryRepository {
       currentStock: product.currentStock,
       idempotentReplay: false,
     );
+  }
+}
+
+final class _LabelRepository implements InventoryLabelRepository {
+  final result = Completer<InventoryLabelResult>();
+  var calls = 0;
+  List<InventoryLabelImage> images = [];
+
+  @override
+  Future<InventoryLabelResult> scan({
+    required String farmId,
+    required List<InventoryLabelImage> images,
+  }) {
+    calls++;
+    this.images = images;
+    return result.future;
   }
 }
 

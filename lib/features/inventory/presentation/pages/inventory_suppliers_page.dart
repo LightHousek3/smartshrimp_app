@@ -215,6 +215,9 @@ class _InventorySuppliersPageState
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: inventoryTextButtonTextStyle,
+                  ),
                   onPressed: () => setState(() {
                     _status = 'all';
                     _role = 'all';
@@ -266,6 +269,9 @@ class _InventorySuppliersPageState
                       textAlign: TextAlign.center,
                     ),
                     TextButton(
+                      style: TextButton.styleFrom(
+                        textStyle: inventoryTextButtonTextStyle,
+                      ),
                       onPressed: () => ref.invalidate(
                         supplierListControllerProvider(widget.farmId),
                       ),
