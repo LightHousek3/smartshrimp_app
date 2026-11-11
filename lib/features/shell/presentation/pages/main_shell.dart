@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -77,6 +78,9 @@ class MainShell extends ConsumerWidget {
     final items = isOwner ? _ownerItems : _technicianItems;
     final location = GoRouterState.of(context).uri.path;
     final taskScreen = !isOwner && location.startsWith('/tasks');
+    final diseaseCaseScreen =
+        isOwner && location.startsWith(AppRoutes.diseaseCases);
+    final compactIcons = taskScreen || diseaseCaseScreen;
     final unreadNotifications = ref.watch(
       notificationListProvider((
         readStatus: NotificationReadStatus.unread,
@@ -107,6 +111,9 @@ class MainShell extends ConsumerWidget {
         ),
         child: SafeArea(
           top: false,
+          minimum: diseaseCaseScreen
+              ? const EdgeInsets.symmetric(horizontal: 4)
+              : EdgeInsets.zero,
           child: SizedBox(
             height: isOwner || taskScreen ? 66 : 64,
             child: Row(
@@ -151,28 +158,38 @@ class MainShell extends ConsumerWidget {
                                     if (isOwner ||
                                         taskScreen ||
                                         item.path == '/tasks')
-                                      AppSvgIcon(
-                                        switch (item.path) {
-                                          '/' =>
-                                            taskScreen
-                                                ? AppSvgIconName.homeCompact
-                                                : AppSvgIconName.home,
-                                          '/farms' => AppSvgIconName.farm,
-                                          '/seasons' => AppSvgIconName.shrimp,
-                                          '/tasks' => AppSvgIconName.tasks,
-                                          '/notifications' =>
-                                            taskScreen
-                                                ? AppSvgIconName.bellOutline
-                                                : AppSvgIconName.notifications,
-                                          _ =>
-                                            taskScreen
-                                                ? AppSvgIconName.person
-                                                : AppSvgIconName.account,
-                                        },
-                                        color: selected
-                                            ? AppColors.ocean
-                                            : AppColors.inkMuted,
-                                        size: 22,
+                                      SizedBox.square(
+                                        dimension: diseaseCaseScreen ? 24 : 22,
+                                        child: Center(
+                                          child: AppSvgIcon(
+                                            switch (item.path) {
+                                              '/' =>
+                                                compactIcons
+                                                    ? AppSvgIconName.homeCompact
+                                                    : AppSvgIconName.home,
+                                              '/farms' =>
+                                                diseaseCaseScreen
+                                                    ? AppSvgIconName.farmCompact
+                                                    : AppSvgIconName.farm,
+                                              '/seasons' =>
+                                                AppSvgIconName.shrimp,
+                                              '/tasks' => AppSvgIconName.tasks,
+                                              '/notifications' =>
+                                                compactIcons
+                                                    ? AppSvgIconName.bellOutline
+                                                    : AppSvgIconName
+                                                          .notifications,
+                                              _ =>
+                                                compactIcons
+                                                    ? AppSvgIconName.person
+                                                    : AppSvgIconName.account,
+                                            },
+                                            color: selected
+                                                ? AppColors.ocean
+                                                : AppColors.inkMuted,
+                                            size: 22,
+                                          ),
+                                        ),
                                       )
                                     else
                                       Icon(
@@ -187,8 +204,8 @@ class MainShell extends ConsumerWidget {
                                     if (isNotificationTab &&
                                         notificationBadgeText != null)
                                       Positioned(
-                                        top: -7,
-                                        right: -12,
+                                        top: diseaseCaseScreen ? -4 : -7,
+                                        right: diseaseCaseScreen ? -6 : -12,
                                         child: Semantics(
                                           label: notificationBadgeText == '!'
                                               ? 'Không thể tải số thông báo chưa đọc'
@@ -197,9 +214,13 @@ class MainShell extends ConsumerWidget {
                                             key: const Key(
                                               'notif_tab_unread_badge',
                                             ),
-                                            constraints: const BoxConstraints(
-                                              minWidth: 18,
-                                              minHeight: 18,
+                                            constraints: BoxConstraints(
+                                              minWidth: diseaseCaseScreen
+                                                  ? 16
+                                                  : 18,
+                                              minHeight: diseaseCaseScreen
+                                                  ? 16
+                                                  : 18,
                                             ),
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 4,
@@ -209,14 +230,19 @@ class MainShell extends ConsumerWidget {
                                               color: AppColors.error,
                                               borderRadius:
                                                   BorderRadius.circular(99),
-                                              border: Border.all(
-                                                color: Colors.white,
-                                                width: 1.5,
-                                              ),
+                                              border: diseaseCaseScreen
+                                                  ? null
+                                                  : Border.all(
+                                                      color: Colors.white,
+                                                      width: 1.5,
+                                                    ),
                                             ),
                                             child: Text(
                                               notificationBadgeText,
-                                              style: const TextStyle(
+                                              style: TextStyle(
+                                                fontFamily: diseaseCaseScreen
+                                                    ? 'PlusJakartaSans'
+                                                    : null,
                                                 color: Colors.white,
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.w800,
@@ -234,10 +260,15 @@ class MainShell extends ConsumerWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
+                                    fontFamily: diseaseCaseScreen
+                                        ? 'PlusJakartaSans'
+                                        : null,
                                     color: selected
                                         ? AppColors.ocean
                                         : AppColors.inkMuted,
                                     fontSize: 10,
+                                    height: diseaseCaseScreen ? 1.5 : null,
+                                    letterSpacing: diseaseCaseScreen ? 0 : null,
                                     fontWeight: selected
                                         ? FontWeight.w700
                                         : FontWeight.w600,

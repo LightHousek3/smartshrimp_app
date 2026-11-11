@@ -63,6 +63,10 @@ import 'package:smartshrimp_app/features/task/presentation/pages/assigned_task_d
 import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_list_page.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_detail_page.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/pages/owner_disease_case_detail_page.dart'
+    as owner_case;
+import 'package:smartshrimp_app/features/disease_case/presentation/pages/owner_disease_case_list_page.dart'
+    as owner_case;
 
 abstract final class AppRoutes {
   static const splash = '/splash';
@@ -75,6 +79,7 @@ abstract final class AppRoutes {
   static const tasks = '/tasks';
   static const personnel = '/personnel';
   static const approvals = '/approvals';
+  static const diseaseCases = '/disease-cases';
   static const notifications = '/notifications';
   static const account = '/account';
   static const profileEdit = '/account/edit';
@@ -142,6 +147,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               location.startsWith(AppRoutes.personnel)) &&
           account?.role != AccountRole.farmOwner) {
         return AppRoutes.home;
+      }
+      if (location == AppRoutes.diseaseCases ||
+          location.startsWith('${AppRoutes.diseaseCases}/')) {
+        if (account?.role != AccountRole.farmOwner ||
+            account?.status != AccountStatus.active) {
+          return AppRoutes.home;
+        }
+        if (location == AppRoutes.diseaseCases &&
+            state.uri.queryParameters['seasonId']?.trim().isNotEmpty != true) {
+          return AppRoutes.farms;
+        }
       }
       if (location == AppRoutes.tasks ||
           location.startsWith('${AppRoutes.tasks}/')) {
@@ -655,6 +671,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     ],
                   ),
                 ],
+              ),
+              GoRoute(
+                path: AppRoutes.diseaseCases,
+                builder: (_, state) {
+                  final seasonId = state.uri.queryParameters['seasonId'];
+                  return owner_case.DiseaseCaseListPage(
+                    key: ValueKey(seasonId),
+                    seasonId: seasonId!,
+                    subtitle: state.extra is String
+                        ? state.extra as String
+                        : null,
+                  );
+                },
+              ),
+              GoRoute(
+                path: '${AppRoutes.diseaseCases}/:caseId',
+                builder: (_, state) => owner_case.DiseaseCaseDetailPage(
+                  caseId: state.pathParameters['caseId']!,
+                  subtitle: state.extra is String
+                      ? state.extra as String
+                      : null,
+                ),
               ),
             ],
           ),

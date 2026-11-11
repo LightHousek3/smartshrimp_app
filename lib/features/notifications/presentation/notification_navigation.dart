@@ -50,6 +50,7 @@ bool notificationNeedsReferenceContext(
   return switch (notificationReferenceType(notification)) {
     'product' => role == AccountRole.farmOwner,
     'season' || 'aquaculture_season' => role == AccountRole.farmOwner,
+    'disease_case' => role != null && role != AccountRole.farmOwner,
     'pond' ||
     'water_log' ||
     'water_quality_log' ||
@@ -57,8 +58,7 @@ bool notificationNeedsReferenceContext(
     'operation_execution' ||
     'protocol' ||
     'production_protocol' ||
-    'treatment_protocol' ||
-    'disease_case' => role != null,
+    'treatment_protocol' => role != null,
     _ => false,
   };
 }
@@ -135,7 +135,9 @@ String? notificationDestination(
                   : null
             : seasonDestination();
       case 'disease_case':
-        return role == AccountRole.technician && seasonId != null
+        return owner
+            ? '${AppRoutes.diseaseCases}/$encodedId'
+            : role == AccountRole.technician && seasonId != null
             ? '${AppRoutes.seasons}/$seasonId/disease-cases/$encodedId'
             : seasonDestination();
       case 'task':
@@ -176,7 +178,9 @@ String notificationActionLabel(
   'protocol' || 'production_protocol' || 'treatment_protocol' =>
     role == AccountRole.farmOwner ? 'Xem phác đồ' : 'Xem vụ nuôi',
   'disease_case' =>
-    role == AccountRole.technician ? 'Xem ca bệnh' : 'Xem vụ nuôi',
+    role == AccountRole.technician || role == AccountRole.farmOwner
+        ? 'Xem ca bệnh'
+        : 'Xem vụ nuôi',
   'account' when role != AccountRole.farmOwner => 'Xem tài khoản',
   _ => NotificationVisuals.actionLabel(notification.type),
 };

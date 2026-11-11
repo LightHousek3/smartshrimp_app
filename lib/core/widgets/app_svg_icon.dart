@@ -45,6 +45,9 @@ enum AppSvgIconName {
   homeCompact,
   bellOutline,
   chevronCompact,
+  camera,
+  message,
+  refresh,
 }
 
 class AppSvgIcon extends StatelessWidget {
