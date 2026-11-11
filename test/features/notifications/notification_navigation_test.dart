@@ -192,20 +192,28 @@ void main() {
       );
     });
   }
-  test('protocol and disease notifications use the existing season screen', () {
-    for (final reference in ['protocol', 'disease_case']) {
-      final n = notice(reference);
-      expect(
-        notificationDestination(
-          n,
-          AccountRole.technician,
-          referenceContext: context,
-        ),
-        '/seasons/season',
-      );
-      expect(notificationActionLabel(n, AccountRole.technician), 'Xem vụ nuôi');
-    }
-  });
+  test(
+    'protocol notifications open the season and disease notifications open the case',
+    () {
+      for (final reference in ['protocol', 'disease_case']) {
+        final n = notice(reference);
+        expect(
+          notificationDestination(
+            n,
+            AccountRole.technician,
+            referenceContext: context,
+          ),
+          reference == 'disease_case'
+              ? '/seasons/season/disease-cases/resource'
+              : '/seasons/season',
+        );
+        expect(
+          notificationActionLabel(n, AccountRole.technician),
+          reference == 'disease_case' ? 'Xem ca bệnh' : 'Xem vụ nuôi',
+        );
+      }
+    },
+  );
   test(
     'personnel activation preserves both detail and missing-reference fallback',
     () {

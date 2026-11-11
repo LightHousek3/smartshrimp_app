@@ -89,7 +89,7 @@ abstract final class AppNoticeService {
             (level == AppNoticeLevel.danger || level == AppNoticeLevel.warning
                 ? const Duration(seconds: 5)
                 : const Duration(milliseconds: 3200)),
-        content: _AppNoticeCard(
+        content: AppNoticeCard(
           title: title ?? appNoticeDefaultTitle(level),
           message: message,
           level: level,
@@ -144,20 +144,21 @@ abstract final class AppNoticeService {
   }
 }
 
-class _AppNoticeCard extends StatelessWidget {
-  const _AppNoticeCard({
+class AppNoticeCard extends StatelessWidget {
+  const AppNoticeCard({
     required this.title,
     required this.message,
     required this.level,
-    required this.actionLabel,
-    required this.onActionPressed,
+    this.actionLabel,
+    this.onActionPressed,
+    super.key,
   });
 
   final String title;
   final String message;
   final AppNoticeLevel level;
   final String? actionLabel;
-  final VoidCallback onActionPressed;
+  final VoidCallback? onActionPressed;
 
   @override
   Widget build(BuildContext context) {
