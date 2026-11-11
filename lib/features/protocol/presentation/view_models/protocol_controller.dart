@@ -3,6 +3,8 @@ import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/view_models/owner_disease_case_controller.dart'
+    as owner_case;
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/protocol/data/protocol_api_service.dart';
@@ -206,6 +208,10 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
       ref.invalidate(protocolDetailProvider(id));
       ref.invalidate(protocolDayProvider);
       ref.invalidate(seasonDetailControllerProvider(detail.card.seasonId));
+      if (detail.card.diseaseCaseId case final caseId?) {
+        ref.invalidate(owner_case.diseaseCaseDetailProvider(caseId));
+        ref.invalidate(owner_case.diseaseCaseListProvider(detail.card.seasonId));
+      }
       ref.invalidate(ownerDashboardProvider);
       return true;
     }

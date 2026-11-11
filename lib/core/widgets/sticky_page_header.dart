@@ -12,6 +12,7 @@ class StickyPageHeader extends StatelessWidget {
     this.onBack,
     this.showBack = true,
     this.trailing,
+    this.backButton,
     this.bottom,
     this.bottomHeight = 0,
     this.height = 76,
@@ -28,6 +29,7 @@ class StickyPageHeader extends StatelessWidget {
   final VoidCallback? onBack;
   final bool showBack;
   final Widget? trailing;
+  final Widget? backButton;
   final Widget? bottom;
   final double bottomHeight;
   final double height;
@@ -46,6 +48,7 @@ class StickyPageHeader extends StatelessWidget {
       onBack: onBack,
       showBack: showBack,
       trailing: trailing,
+      backButton: backButton,
       bottom: bottom,
       bottomHeight: bottomHeight,
       height: height,
@@ -116,6 +119,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onBack,
     required this.showBack,
     required this.trailing,
+    required this.backButton,
     required this.bottom,
     required this.bottomHeight,
     required this.height,
@@ -131,6 +135,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback? onBack;
   final bool showBack;
   final Widget? trailing;
+  final Widget? backButton;
   final Widget? bottom;
   final double bottomHeight;
   final double height;
@@ -163,6 +168,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
             onBack: onBack,
             showBack: showBack,
             trailing: trailing,
+            backButton: backButton,
             titleSize: titleSize,
             backgroundColor: backgroundColor,
             titleStyle: titleStyle,
@@ -183,6 +189,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
       onBack != oldDelegate.onBack ||
       showBack != oldDelegate.showBack ||
       trailing != oldDelegate.trailing ||
+      backButton != oldDelegate.backButton ||
       bottom != oldDelegate.bottom ||
       bottomHeight != oldDelegate.bottomHeight ||
       height != oldDelegate.height ||

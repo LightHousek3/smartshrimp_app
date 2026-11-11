@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
@@ -406,14 +407,14 @@ class _SeasonDetailContent extends ConsumerWidget {
     iconForeground: AppColors.error,
     title: 'Ca bệnh',
     subtitle: 'Theo dõi chẩn đoán và diễn tiến xử lý',
-    badges: const <Widget>[
-      _FeatureBadge(
-        label: 'Không có ca mở',
-        background: Color(0xFFE2F6F3),
-        foreground: Color(0xFF0F9B8E),
-      ),
-    ],
-    onTap: () => _comingSoon(context, 'Ca bệnh'),
+    badges: const [],
+    onTap: () => context.push(
+      Uri(
+        path: AppRoutes.diseaseCases,
+        queryParameters: {'seasonId': season.id},
+      ).toString(),
+      extra: '${season.pond.name} · ${season.name}',
+    ),
   );
 
   Widget _personnel(BuildContext context, WidgetRef ref, bool loading) {
@@ -500,14 +501,6 @@ class _SeasonDetailContent extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void _comingSoon(BuildContext context, String feature) {
-    AppNoticeService.info(
-      context,
-      'Dữ liệu cho mục này chưa được API vụ nuôi cung cấp.',
-      title: feature,
     );
   }
 

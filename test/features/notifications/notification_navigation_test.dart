@@ -193,27 +193,29 @@ void main() {
     });
   }
   test(
-    'protocol notifications open the season and disease notifications open the case',
+    'technician disease notifications open their season case',
     () {
-      for (final reference in ['protocol', 'disease_case']) {
-        final n = notice(reference);
-        expect(
-          notificationDestination(
-            n,
-            AccountRole.technician,
-            referenceContext: context,
-          ),
-          reference == 'disease_case'
-              ? '/seasons/season/disease-cases/resource'
-              : '/seasons/season',
-        );
-        expect(
-          notificationActionLabel(n, AccountRole.technician),
-          reference == 'disease_case' ? 'Xem ca bệnh' : 'Xem vụ nuôi',
-        );
-      }
+      final n = notice('disease_case');
+      expect(
+        notificationDestination(
+          n,
+          AccountRole.technician,
+          referenceContext: context,
+        ),
+        '/seasons/season/disease-cases/resource',
+      );
+      expect(notificationActionLabel(n, AccountRole.technician), 'Xem ca bệnh');
     },
   );
+  test('owner disease notification opens the case directly', () {
+    final n = notice('disease_case');
+    expect(notificationNeedsReferenceContext(n, AccountRole.farmOwner), isFalse);
+    expect(
+      notificationDestination(n, AccountRole.farmOwner),
+      '/disease-cases/resource',
+    );
+    expect(notificationActionLabel(n, AccountRole.farmOwner), 'Xem ca bệnh');
+  });
   test(
     'personnel activation preserves both detail and missing-reference fallback',
     () {
