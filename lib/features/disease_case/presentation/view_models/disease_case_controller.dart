@@ -25,6 +25,7 @@ final caseEvidenceStorageProvider = Provider<CloudinaryImageStorage>(
   ),
 );
 
+/// Require a technician session and propagate session expiry through the shared auth state.
 Future<T> _authorized<T>(
   Ref ref,
   Future<T> Function(DiseaseCaseRepository) action,
@@ -94,7 +95,9 @@ final diseaseCaseMutationProvider =
       DiseaseCaseMutation.new,
     );
 
+/// Serialize case writes and refresh details after success or an authorization/state conflict.
 class DiseaseCaseMutation extends AsyncNotifier<void> {
+  /// Upload validated case evidence using the configured technician storage provider.
   Future<String> uploadEvidence(Uint8List bytes, String fileName) async {
     final account = ref.read(authControllerProvider).value;
     if (account?.role != AccountRole.technician) {
@@ -107,6 +110,8 @@ class DiseaseCaseMutation extends AsyncNotifier<void> {
 
   @override
   Future<void> build() async {}
+
+  /// Prevent overlapping submissions and avoid provider updates after disposal.
   Future<DiseaseCase> _run(
     Future<DiseaseCase> Function(DiseaseCaseRepository) action,
   ) async {
@@ -135,6 +140,7 @@ class DiseaseCaseMutation extends AsyncNotifier<void> {
     }
   }
 
+  /// Create a technician case through the shared mutation lock and refresh its providers.
   Future<DiseaseCase> create(
     String seasonId,
     String title,
@@ -154,14 +160,23 @@ class DiseaseCaseMutation extends AsyncNotifier<void> {
       relatedCaseId: relatedCaseId,
     ),
   );
+
+  /// Send a case response through the repository without changing clinical state locally.
   Future<DiseaseCase> respond(
     String seasonId,
     DiseaseCase item,
     CaseResponseType type,
     String message, {
     List<String> attachments = const [],
+    String? replyToResponseId,
   }) => _run(
-    (repo) =>
-        repo.respond(seasonId, item, type, message, attachments: attachments),
+    (repo) => repo.respond(
+      seasonId,
+      item,
+      type,
+      message,
+      attachments: attachments,
+      replyToResponseId: replyToResponseId,
+    ),
   );
 }

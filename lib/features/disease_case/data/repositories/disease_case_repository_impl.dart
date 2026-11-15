@@ -2,6 +2,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import '../../domain/domain.dart';
 import '../services/disease_case_api_service.dart';
 
+/// Validate technician inputs while leaving clinical transitions to the backend.
 class DiseaseCaseRepositoryImpl implements DiseaseCaseRepository {
   DiseaseCaseRepositoryImpl(this._api);
   final DiseaseCaseApiService _api;
@@ -56,6 +57,7 @@ class DiseaseCaseRepositoryImpl implements DiseaseCaseRepository {
     CaseResponseType type,
     String message, {
     List<String> attachments = const [],
+    String? replyToResponseId,
   }) {
     _validate(message, DiseaseCaseRules.textLimit);
     DiseaseCaseRules.validateAttachments(attachments);
@@ -66,10 +68,18 @@ class DiseaseCaseRepositoryImpl implements DiseaseCaseRepository {
         statusCode: 403,
       );
     }
+    // A reply may reference only an entry included in this case's loaded conversation.
+    if (replyToResponseId != null &&
+        !item.responses.any((response) => response.id == replyToResponseId)) {
+      throw const ApiException(
+        'Tin nhắn được trả lời không thuộc ca bệnh này.',
+        statusCode: 400,
+      );
+    }
     return _api.respond(seasonId, item.id, {
       'responseType': type.apiValue,
       'message': message.trim(),
-      'expectedUpdatedAt': item.updatedAt.toUtc().toIso8601String(),
+      'replyToResponseId': ?replyToResponseId,
       if (attachments.isNotEmpty) 'attachments': attachments,
     });
   }

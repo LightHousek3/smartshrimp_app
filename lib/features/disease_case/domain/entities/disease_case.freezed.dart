@@ -293,7 +293,7 @@ as List<Map<String, dynamic>>,
 /// @nodoc
 mixin _$CaseResponse {
 
- String get id; String get authorId;@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType get responseType; String get message; DateTime get createdAt; Map<String, dynamic>? get author;@JsonKey(fromJson: _responseAttachmentUrls) List<String> get attachments;
+ String get id; String get authorId;@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType get responseType; String get message; String? get replyToResponseId;@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? get careAction; DateTime get createdAt; Map<String, dynamic>? get author;@JsonKey(fromJson: _responseAttachmentUrls) List<String> get attachments;
 /// Create a copy of CaseResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -306,16 +306,16 @@ $CaseResponseCopyWith<CaseResponse> get copyWith => _$CaseResponseCopyWithImpl<C
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CaseResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.message, message) || other.message == message)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.author, author)&&const DeepCollectionEquality().equals(other.attachments, attachments));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CaseResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.message, message) || other.message == message)&&(identical(other.replyToResponseId, replyToResponseId) || other.replyToResponseId == replyToResponseId)&&(identical(other.careAction, careAction) || other.careAction == careAction)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.author, author)&&const DeepCollectionEquality().equals(other.attachments, attachments));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,authorId,responseType,message,createdAt,const DeepCollectionEquality().hash(author),const DeepCollectionEquality().hash(attachments));
+int get hashCode => Object.hash(runtimeType,id,authorId,responseType,message,replyToResponseId,careAction,createdAt,const DeepCollectionEquality().hash(author),const DeepCollectionEquality().hash(attachments));
 
 @override
 String toString() {
-  return 'CaseResponse(id: $id, authorId: $authorId, responseType: $responseType, message: $message, createdAt: $createdAt, author: $author, attachments: $attachments)';
+  return 'CaseResponse(id: $id, authorId: $authorId, responseType: $responseType, message: $message, replyToResponseId: $replyToResponseId, careAction: $careAction, createdAt: $createdAt, author: $author, attachments: $attachments)';
 }
 
 
@@ -326,7 +326,7 @@ abstract mixin class $CaseResponseCopyWith<$Res>  {
   factory $CaseResponseCopyWith(CaseResponse value, $Res Function(CaseResponse) _then) = _$CaseResponseCopyWithImpl;
 @useResult
 $Res call({
- String id, String authorId,@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType responseType, String message, DateTime createdAt, Map<String, dynamic>? author,@JsonKey(fromJson: _responseAttachmentUrls) List<String> attachments
+ String id, String authorId,@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType responseType, String message, String? replyToResponseId,@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? careAction, DateTime createdAt, Map<String, dynamic>? author,@JsonKey(fromJson: _responseAttachmentUrls) List<String> attachments
 });
 
 
@@ -343,13 +343,15 @@ class _$CaseResponseCopyWithImpl<$Res>
 
 /// Create a copy of CaseResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? responseType = null,Object? message = null,Object? createdAt = null,Object? author = freezed,Object? attachments = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? responseType = null,Object? message = null,Object? replyToResponseId = freezed,Object? careAction = freezed,Object? createdAt = null,Object? author = freezed,Object? attachments = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
 as String,responseType: null == responseType ? _self.responseType : responseType // ignore: cast_nullable_to_non_nullable
 as CaseResponseType,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,replyToResponseId: freezed == replyToResponseId ? _self.replyToResponseId : replyToResponseId // ignore: cast_nullable_to_non_nullable
+as String?,careAction: freezed == careAction ? _self.careAction : careAction // ignore: cast_nullable_to_non_nullable
+as CaseCareAction?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,author: freezed == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<String>,
@@ -437,10 +439,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  String? replyToResponseId, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CaseResponse() when $default != null:
-return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.createdAt,_that.author,_that.attachments);case _:
+return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.replyToResponseId,_that.careAction,_that.createdAt,_that.author,_that.attachments);case _:
   return orElse();
 
 }
@@ -458,10 +460,10 @@ return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  String? replyToResponseId, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)  $default,) {final _that = this;
 switch (_that) {
 case _CaseResponse():
-return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.createdAt,_that.author,_that.attachments);case _:
+return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.replyToResponseId,_that.careAction,_that.createdAt,_that.author,_that.attachments);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -478,10 +480,10 @@ return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown)  CaseResponseType responseType,  String message,  String? replyToResponseId, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction,  DateTime createdAt,  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls)  List<String> attachments)?  $default,) {final _that = this;
 switch (_that) {
 case _CaseResponse() when $default != null:
-return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.createdAt,_that.author,_that.attachments);case _:
+return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.replyToResponseId,_that.careAction,_that.createdAt,_that.author,_that.attachments);case _:
   return null;
 
 }
@@ -492,14 +494,16 @@ return $default(_that.id,_that.authorId,_that.responseType,_that.message,_that.c
 /// @nodoc
 @JsonSerializable()
 
-class _CaseResponse implements CaseResponse {
-  const _CaseResponse({required this.id, required this.authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown) required this.responseType, required this.message, required this.createdAt, final  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls) final  List<String> attachments = const []}): _author = author,_attachments = attachments;
+class _CaseResponse extends CaseResponse {
+  const _CaseResponse({required this.id, required this.authorId, @JsonKey(unknownEnumValue: CaseResponseType.unknown) required this.responseType, required this.message, this.replyToResponseId, @JsonKey(unknownEnumValue: CaseCareAction.unknown) this.careAction, required this.createdAt, final  Map<String, dynamic>? author, @JsonKey(fromJson: _responseAttachmentUrls) final  List<String> attachments = const []}): _author = author,_attachments = attachments,super._();
   factory _CaseResponse.fromJson(Map<String, dynamic> json) => _$CaseResponseFromJson(json);
 
 @override final  String id;
 @override final  String authorId;
 @override@JsonKey(unknownEnumValue: CaseResponseType.unknown) final  CaseResponseType responseType;
 @override final  String message;
+@override final  String? replyToResponseId;
+@override@JsonKey(unknownEnumValue: CaseCareAction.unknown) final  CaseCareAction? careAction;
 @override final  DateTime createdAt;
  final  Map<String, dynamic>? _author;
 @override Map<String, dynamic>? get author {
@@ -531,16 +535,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CaseResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.message, message) || other.message == message)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._author, _author)&&const DeepCollectionEquality().equals(other._attachments, _attachments));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CaseResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.message, message) || other.message == message)&&(identical(other.replyToResponseId, replyToResponseId) || other.replyToResponseId == replyToResponseId)&&(identical(other.careAction, careAction) || other.careAction == careAction)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._author, _author)&&const DeepCollectionEquality().equals(other._attachments, _attachments));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,authorId,responseType,message,createdAt,const DeepCollectionEquality().hash(_author),const DeepCollectionEquality().hash(_attachments));
+int get hashCode => Object.hash(runtimeType,id,authorId,responseType,message,replyToResponseId,careAction,createdAt,const DeepCollectionEquality().hash(_author),const DeepCollectionEquality().hash(_attachments));
 
 @override
 String toString() {
-  return 'CaseResponse(id: $id, authorId: $authorId, responseType: $responseType, message: $message, createdAt: $createdAt, author: $author, attachments: $attachments)';
+  return 'CaseResponse(id: $id, authorId: $authorId, responseType: $responseType, message: $message, replyToResponseId: $replyToResponseId, careAction: $careAction, createdAt: $createdAt, author: $author, attachments: $attachments)';
 }
 
 
@@ -551,7 +555,7 @@ abstract mixin class _$CaseResponseCopyWith<$Res> implements $CaseResponseCopyWi
   factory _$CaseResponseCopyWith(_CaseResponse value, $Res Function(_CaseResponse) _then) = __$CaseResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String authorId,@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType responseType, String message, DateTime createdAt, Map<String, dynamic>? author,@JsonKey(fromJson: _responseAttachmentUrls) List<String> attachments
+ String id, String authorId,@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType responseType, String message, String? replyToResponseId,@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? careAction, DateTime createdAt, Map<String, dynamic>? author,@JsonKey(fromJson: _responseAttachmentUrls) List<String> attachments
 });
 
 
@@ -568,13 +572,15 @@ class __$CaseResponseCopyWithImpl<$Res>
 
 /// Create a copy of CaseResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? authorId = null,Object? responseType = null,Object? message = null,Object? createdAt = null,Object? author = freezed,Object? attachments = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? authorId = null,Object? responseType = null,Object? message = null,Object? replyToResponseId = freezed,Object? careAction = freezed,Object? createdAt = null,Object? author = freezed,Object? attachments = null,}) {
   return _then(_CaseResponse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
 as String,responseType: null == responseType ? _self.responseType : responseType // ignore: cast_nullable_to_non_nullable
 as CaseResponseType,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,replyToResponseId: freezed == replyToResponseId ? _self.replyToResponseId : replyToResponseId // ignore: cast_nullable_to_non_nullable
+as String?,careAction: freezed == careAction ? _self.careAction : careAction // ignore: cast_nullable_to_non_nullable
+as CaseCareAction?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,author: freezed == author ? _self._author : author // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<String>,
@@ -588,7 +594,7 @@ as List<String>,
 /// @nodoc
 mixin _$DiseaseCase {
 
- String get id; String get seasonId; String get title;@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus get status;@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity get severity; DateTime get createdAt; DateTime get updatedAt; String? get description; String? get resolutionSummary; DateTime? get resolvedAt; String? get reportedBy; String? get expertId; String? get relatedCaseId; Map<String, dynamic>? get expert; Map<String, dynamic>? get reporter;@JsonKey(name: '_count') Map<String, dynamic> get counts; bool get canRespond; Map<String, dynamic> get caseSnapshot; List<Map<String, dynamic>> get attachments; List<CaseResponse> get responses; List<Map<String, dynamic>> get statusHistory;
+ String get id; String get seasonId; String get title;@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus get status;@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity get severity; DateTime get createdAt; DateTime get updatedAt; String? get description; String? get resolutionSummary; DateTime? get resolvedAt; String? get reportedBy; String? get expertId; String? get relatedCaseId; Map<String, dynamic>? get expert; Map<String, dynamic>? get reporter;@JsonKey(name: '_count') Map<String, dynamic> get counts; bool get canRespond; bool get productionPaused; Map<String, dynamic> get caseSnapshot; List<Map<String, dynamic>> get attachments; List<CaseResponse> get responses; List<Map<String, dynamic>> get statusHistory;
 /// Create a copy of DiseaseCase
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -601,16 +607,16 @@ $DiseaseCaseCopyWith<DiseaseCase> get copyWith => _$DiseaseCaseCopyWithImpl<Dise
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCase&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.reportedBy, reportedBy) || other.reportedBy == reportedBy)&&(identical(other.expertId, expertId) || other.expertId == expertId)&&(identical(other.relatedCaseId, relatedCaseId) || other.relatedCaseId == relatedCaseId)&&const DeepCollectionEquality().equals(other.expert, expert)&&const DeepCollectionEquality().equals(other.reporter, reporter)&&const DeepCollectionEquality().equals(other.counts, counts)&&(identical(other.canRespond, canRespond) || other.canRespond == canRespond)&&const DeepCollectionEquality().equals(other.caseSnapshot, caseSnapshot)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.responses, responses)&&const DeepCollectionEquality().equals(other.statusHistory, statusHistory));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCase&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.reportedBy, reportedBy) || other.reportedBy == reportedBy)&&(identical(other.expertId, expertId) || other.expertId == expertId)&&(identical(other.relatedCaseId, relatedCaseId) || other.relatedCaseId == relatedCaseId)&&const DeepCollectionEquality().equals(other.expert, expert)&&const DeepCollectionEquality().equals(other.reporter, reporter)&&const DeepCollectionEquality().equals(other.counts, counts)&&(identical(other.canRespond, canRespond) || other.canRespond == canRespond)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused)&&const DeepCollectionEquality().equals(other.caseSnapshot, caseSnapshot)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.responses, responses)&&const DeepCollectionEquality().equals(other.statusHistory, statusHistory));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,seasonId,title,status,severity,createdAt,updatedAt,description,resolutionSummary,resolvedAt,reportedBy,expertId,relatedCaseId,const DeepCollectionEquality().hash(expert),const DeepCollectionEquality().hash(reporter),const DeepCollectionEquality().hash(counts),canRespond,const DeepCollectionEquality().hash(caseSnapshot),const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(responses),const DeepCollectionEquality().hash(statusHistory)]);
+int get hashCode => Object.hashAll([runtimeType,id,seasonId,title,status,severity,createdAt,updatedAt,description,resolutionSummary,resolvedAt,reportedBy,expertId,relatedCaseId,const DeepCollectionEquality().hash(expert),const DeepCollectionEquality().hash(reporter),const DeepCollectionEquality().hash(counts),canRespond,productionPaused,const DeepCollectionEquality().hash(caseSnapshot),const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(responses),const DeepCollectionEquality().hash(statusHistory)]);
 
 @override
 String toString() {
-  return 'DiseaseCase(id: $id, seasonId: $seasonId, title: $title, status: $status, severity: $severity, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, resolutionSummary: $resolutionSummary, resolvedAt: $resolvedAt, reportedBy: $reportedBy, expertId: $expertId, relatedCaseId: $relatedCaseId, expert: $expert, reporter: $reporter, counts: $counts, canRespond: $canRespond, caseSnapshot: $caseSnapshot, attachments: $attachments, responses: $responses, statusHistory: $statusHistory)';
+  return 'DiseaseCase(id: $id, seasonId: $seasonId, title: $title, status: $status, severity: $severity, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, resolutionSummary: $resolutionSummary, resolvedAt: $resolvedAt, reportedBy: $reportedBy, expertId: $expertId, relatedCaseId: $relatedCaseId, expert: $expert, reporter: $reporter, counts: $counts, canRespond: $canRespond, productionPaused: $productionPaused, caseSnapshot: $caseSnapshot, attachments: $attachments, responses: $responses, statusHistory: $statusHistory)';
 }
 
 
@@ -621,7 +627,7 @@ abstract mixin class $DiseaseCaseCopyWith<$Res>  {
   factory $DiseaseCaseCopyWith(DiseaseCase value, $Res Function(DiseaseCase) _then) = _$DiseaseCaseCopyWithImpl;
 @useResult
 $Res call({
- String id, String seasonId, String title,@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus status,@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity severity, DateTime createdAt, DateTime updatedAt, String? description, String? resolutionSummary, DateTime? resolvedAt, String? reportedBy, String? expertId, String? relatedCaseId, Map<String, dynamic>? expert, Map<String, dynamic>? reporter,@JsonKey(name: '_count') Map<String, dynamic> counts, bool canRespond, Map<String, dynamic> caseSnapshot, List<Map<String, dynamic>> attachments, List<CaseResponse> responses, List<Map<String, dynamic>> statusHistory
+ String id, String seasonId, String title,@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus status,@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity severity, DateTime createdAt, DateTime updatedAt, String? description, String? resolutionSummary, DateTime? resolvedAt, String? reportedBy, String? expertId, String? relatedCaseId, Map<String, dynamic>? expert, Map<String, dynamic>? reporter,@JsonKey(name: '_count') Map<String, dynamic> counts, bool canRespond, bool productionPaused, Map<String, dynamic> caseSnapshot, List<Map<String, dynamic>> attachments, List<CaseResponse> responses, List<Map<String, dynamic>> statusHistory
 });
 
 
@@ -638,7 +644,7 @@ class _$DiseaseCaseCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCase
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? title = null,Object? status = null,Object? severity = null,Object? createdAt = null,Object? updatedAt = null,Object? description = freezed,Object? resolutionSummary = freezed,Object? resolvedAt = freezed,Object? reportedBy = freezed,Object? expertId = freezed,Object? relatedCaseId = freezed,Object? expert = freezed,Object? reporter = freezed,Object? counts = null,Object? canRespond = null,Object? caseSnapshot = null,Object? attachments = null,Object? responses = null,Object? statusHistory = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? title = null,Object? status = null,Object? severity = null,Object? createdAt = null,Object? updatedAt = null,Object? description = freezed,Object? resolutionSummary = freezed,Object? resolvedAt = freezed,Object? reportedBy = freezed,Object? expertId = freezed,Object? relatedCaseId = freezed,Object? expert = freezed,Object? reporter = freezed,Object? counts = null,Object? canRespond = null,Object? productionPaused = null,Object? caseSnapshot = null,Object? attachments = null,Object? responses = null,Object? statusHistory = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -657,6 +663,7 @@ as String?,expert: freezed == expert ? _self.expert : expert // ignore: cast_nul
 as Map<String, dynamic>?,reporter: freezed == reporter ? _self.reporter : reporter // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,counts: null == counts ? _self.counts : counts // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,canRespond: null == canRespond ? _self.canRespond : canRespond // ignore: cast_nullable_to_non_nullable
+as bool,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
 as bool,caseSnapshot: null == caseSnapshot ? _self.caseSnapshot : caseSnapshot // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,responses: null == responses ? _self.responses : responses // ignore: cast_nullable_to_non_nullable
@@ -746,10 +753,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  bool productionPaused,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DiseaseCase() when $default != null:
-return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
+return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.productionPaused,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
   return orElse();
 
 }
@@ -767,10 +774,10 @@ return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  bool productionPaused,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCase():
-return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
+return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.productionPaused,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -787,10 +794,10 @@ return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId,  String title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus status, @JsonKey(unknownEnumValue: CaseSeverity.unknown)  CaseSeverity severity,  DateTime createdAt,  DateTime updatedAt,  String? description,  String? resolutionSummary,  DateTime? resolvedAt,  String? reportedBy,  String? expertId,  String? relatedCaseId,  Map<String, dynamic>? expert,  Map<String, dynamic>? reporter, @JsonKey(name: '_count')  Map<String, dynamic> counts,  bool canRespond,  bool productionPaused,  Map<String, dynamic> caseSnapshot,  List<Map<String, dynamic>> attachments,  List<CaseResponse> responses,  List<Map<String, dynamic>> statusHistory)?  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCase() when $default != null:
-return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
+return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,_that.createdAt,_that.updatedAt,_that.description,_that.resolutionSummary,_that.resolvedAt,_that.reportedBy,_that.expertId,_that.relatedCaseId,_that.expert,_that.reporter,_that.counts,_that.canRespond,_that.productionPaused,_that.caseSnapshot,_that.attachments,_that.responses,_that.statusHistory);case _:
   return null;
 
 }
@@ -802,7 +809,7 @@ return $default(_that.id,_that.seasonId,_that.title,_that.status,_that.severity,
 @JsonSerializable()
 
 class _DiseaseCase extends DiseaseCase {
-  const _DiseaseCase({required this.id, required this.seasonId, required this.title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) required this.status, @JsonKey(unknownEnumValue: CaseSeverity.unknown) required this.severity, required this.createdAt, required this.updatedAt, this.description, this.resolutionSummary, this.resolvedAt, this.reportedBy, this.expertId, this.relatedCaseId, final  Map<String, dynamic>? expert, final  Map<String, dynamic>? reporter, @JsonKey(name: '_count') final  Map<String, dynamic> counts = const {}, this.canRespond = false, final  Map<String, dynamic> caseSnapshot = const {}, final  List<Map<String, dynamic>> attachments = const [], final  List<CaseResponse> responses = const [], final  List<Map<String, dynamic>> statusHistory = const []}): _expert = expert,_reporter = reporter,_counts = counts,_caseSnapshot = caseSnapshot,_attachments = attachments,_responses = responses,_statusHistory = statusHistory,super._();
+  const _DiseaseCase({required this.id, required this.seasonId, required this.title, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) required this.status, @JsonKey(unknownEnumValue: CaseSeverity.unknown) required this.severity, required this.createdAt, required this.updatedAt, this.description, this.resolutionSummary, this.resolvedAt, this.reportedBy, this.expertId, this.relatedCaseId, final  Map<String, dynamic>? expert, final  Map<String, dynamic>? reporter, @JsonKey(name: '_count') final  Map<String, dynamic> counts = const {}, this.canRespond = false, this.productionPaused = false, final  Map<String, dynamic> caseSnapshot = const {}, final  List<Map<String, dynamic>> attachments = const [], final  List<CaseResponse> responses = const [], final  List<Map<String, dynamic>> statusHistory = const []}): _expert = expert,_reporter = reporter,_counts = counts,_caseSnapshot = caseSnapshot,_attachments = attachments,_responses = responses,_statusHistory = statusHistory,super._();
   factory _DiseaseCase.fromJson(Map<String, dynamic> json) => _$DiseaseCaseFromJson(json);
 
 @override final  String id;
@@ -844,6 +851,7 @@ class _DiseaseCase extends DiseaseCase {
 }
 
 @override@JsonKey() final  bool canRespond;
+@override@JsonKey() final  bool productionPaused;
  final  Map<String, dynamic> _caseSnapshot;
 @override@JsonKey() Map<String, dynamic> get caseSnapshot {
   if (_caseSnapshot is EqualUnmodifiableMapView) return _caseSnapshot;
@@ -886,16 +894,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCase&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.reportedBy, reportedBy) || other.reportedBy == reportedBy)&&(identical(other.expertId, expertId) || other.expertId == expertId)&&(identical(other.relatedCaseId, relatedCaseId) || other.relatedCaseId == relatedCaseId)&&const DeepCollectionEquality().equals(other._expert, _expert)&&const DeepCollectionEquality().equals(other._reporter, _reporter)&&const DeepCollectionEquality().equals(other._counts, _counts)&&(identical(other.canRespond, canRespond) || other.canRespond == canRespond)&&const DeepCollectionEquality().equals(other._caseSnapshot, _caseSnapshot)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._responses, _responses)&&const DeepCollectionEquality().equals(other._statusHistory, _statusHistory));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCase&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.reportedBy, reportedBy) || other.reportedBy == reportedBy)&&(identical(other.expertId, expertId) || other.expertId == expertId)&&(identical(other.relatedCaseId, relatedCaseId) || other.relatedCaseId == relatedCaseId)&&const DeepCollectionEquality().equals(other._expert, _expert)&&const DeepCollectionEquality().equals(other._reporter, _reporter)&&const DeepCollectionEquality().equals(other._counts, _counts)&&(identical(other.canRespond, canRespond) || other.canRespond == canRespond)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused)&&const DeepCollectionEquality().equals(other._caseSnapshot, _caseSnapshot)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._responses, _responses)&&const DeepCollectionEquality().equals(other._statusHistory, _statusHistory));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,seasonId,title,status,severity,createdAt,updatedAt,description,resolutionSummary,resolvedAt,reportedBy,expertId,relatedCaseId,const DeepCollectionEquality().hash(_expert),const DeepCollectionEquality().hash(_reporter),const DeepCollectionEquality().hash(_counts),canRespond,const DeepCollectionEquality().hash(_caseSnapshot),const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_responses),const DeepCollectionEquality().hash(_statusHistory)]);
+int get hashCode => Object.hashAll([runtimeType,id,seasonId,title,status,severity,createdAt,updatedAt,description,resolutionSummary,resolvedAt,reportedBy,expertId,relatedCaseId,const DeepCollectionEquality().hash(_expert),const DeepCollectionEquality().hash(_reporter),const DeepCollectionEquality().hash(_counts),canRespond,productionPaused,const DeepCollectionEquality().hash(_caseSnapshot),const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_responses),const DeepCollectionEquality().hash(_statusHistory)]);
 
 @override
 String toString() {
-  return 'DiseaseCase(id: $id, seasonId: $seasonId, title: $title, status: $status, severity: $severity, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, resolutionSummary: $resolutionSummary, resolvedAt: $resolvedAt, reportedBy: $reportedBy, expertId: $expertId, relatedCaseId: $relatedCaseId, expert: $expert, reporter: $reporter, counts: $counts, canRespond: $canRespond, caseSnapshot: $caseSnapshot, attachments: $attachments, responses: $responses, statusHistory: $statusHistory)';
+  return 'DiseaseCase(id: $id, seasonId: $seasonId, title: $title, status: $status, severity: $severity, createdAt: $createdAt, updatedAt: $updatedAt, description: $description, resolutionSummary: $resolutionSummary, resolvedAt: $resolvedAt, reportedBy: $reportedBy, expertId: $expertId, relatedCaseId: $relatedCaseId, expert: $expert, reporter: $reporter, counts: $counts, canRespond: $canRespond, productionPaused: $productionPaused, caseSnapshot: $caseSnapshot, attachments: $attachments, responses: $responses, statusHistory: $statusHistory)';
 }
 
 
@@ -906,7 +914,7 @@ abstract mixin class _$DiseaseCaseCopyWith<$Res> implements $DiseaseCaseCopyWith
   factory _$DiseaseCaseCopyWith(_DiseaseCase value, $Res Function(_DiseaseCase) _then) = __$DiseaseCaseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String seasonId, String title,@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus status,@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity severity, DateTime createdAt, DateTime updatedAt, String? description, String? resolutionSummary, DateTime? resolvedAt, String? reportedBy, String? expertId, String? relatedCaseId, Map<String, dynamic>? expert, Map<String, dynamic>? reporter,@JsonKey(name: '_count') Map<String, dynamic> counts, bool canRespond, Map<String, dynamic> caseSnapshot, List<Map<String, dynamic>> attachments, List<CaseResponse> responses, List<Map<String, dynamic>> statusHistory
+ String id, String seasonId, String title,@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus status,@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity severity, DateTime createdAt, DateTime updatedAt, String? description, String? resolutionSummary, DateTime? resolvedAt, String? reportedBy, String? expertId, String? relatedCaseId, Map<String, dynamic>? expert, Map<String, dynamic>? reporter,@JsonKey(name: '_count') Map<String, dynamic> counts, bool canRespond, bool productionPaused, Map<String, dynamic> caseSnapshot, List<Map<String, dynamic>> attachments, List<CaseResponse> responses, List<Map<String, dynamic>> statusHistory
 });
 
 
@@ -923,7 +931,7 @@ class __$DiseaseCaseCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCase
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? title = null,Object? status = null,Object? severity = null,Object? createdAt = null,Object? updatedAt = null,Object? description = freezed,Object? resolutionSummary = freezed,Object? resolvedAt = freezed,Object? reportedBy = freezed,Object? expertId = freezed,Object? relatedCaseId = freezed,Object? expert = freezed,Object? reporter = freezed,Object? counts = null,Object? canRespond = null,Object? caseSnapshot = null,Object? attachments = null,Object? responses = null,Object? statusHistory = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? title = null,Object? status = null,Object? severity = null,Object? createdAt = null,Object? updatedAt = null,Object? description = freezed,Object? resolutionSummary = freezed,Object? resolvedAt = freezed,Object? reportedBy = freezed,Object? expertId = freezed,Object? relatedCaseId = freezed,Object? expert = freezed,Object? reporter = freezed,Object? counts = null,Object? canRespond = null,Object? productionPaused = null,Object? caseSnapshot = null,Object? attachments = null,Object? responses = null,Object? statusHistory = null,}) {
   return _then(_DiseaseCase(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -942,6 +950,7 @@ as String?,expert: freezed == expert ? _self._expert : expert // ignore: cast_nu
 as Map<String, dynamic>?,reporter: freezed == reporter ? _self._reporter : reporter // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,counts: null == counts ? _self._counts : counts // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,canRespond: null == canRespond ? _self.canRespond : canRespond // ignore: cast_nullable_to_non_nullable
+as bool,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
 as bool,caseSnapshot: null == caseSnapshot ? _self._caseSnapshot : caseSnapshot // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,responses: null == responses ? _self._responses : responses // ignore: cast_nullable_to_non_nullable

@@ -8,7 +8,7 @@ part of 'inventory_compliance.dart';
 
 _InventoryCompliance _$InventoryComplianceFromJson(Map<String, dynamic> json) =>
     _InventoryCompliance(
-      regulatoryType: json['regulatoryType'] as String? ?? 'unclassified',
+      regulatoryType: json['regulatoryType'] as String?,
       registrationNumber: json['registrationNumber'] as String?,
       ingredientsText: json['ingredientsText'] as String?,
       containsAntibiotic: json['containsAntibiotic'] as bool?,
@@ -19,12 +19,10 @@ _InventoryCompliance _$InventoryComplianceFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const <String>[],
-      complianceStatus: json['complianceStatus'] as String? ?? 'draft',
       checkedBy: json['checkedBy'] as String?,
       checkedAt: json['checkedAt'] == null
           ? null
           : DateTime.parse(json['checkedAt'] as String),
-      reviewNote: json['reviewNote'] as String?,
     );
 
 Map<String, dynamic> _$InventoryComplianceToJson(
@@ -37,8 +35,6 @@ Map<String, dynamic> _$InventoryComplianceToJson(
   'usageInstructions': instance.usageInstructions,
   'withdrawalDays': instance.withdrawalDays,
   'evidenceUrls': instance.evidenceUrls,
-  'complianceStatus': instance.complianceStatus,
   'checkedBy': instance.checkedBy,
   'checkedAt': instance.checkedAt?.toIso8601String(),
-  'reviewNote': instance.reviewNote,
 };

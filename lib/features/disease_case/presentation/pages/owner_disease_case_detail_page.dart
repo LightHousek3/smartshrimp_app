@@ -10,7 +10,9 @@ import '../../domain/entities/owner_disease_case.dart';
 import '../view_models/owner_disease_case_controller.dart';
 import '../widgets/disease_case_detail_sections.dart';
 import '../widgets/disease_case_ui.dart';
+import '../widgets/case_care_notice.dart';
 
+/// Display the server-provided case timeline and submitted treatment versions for the Owner.
 class DiseaseCaseDetailPage extends ConsumerWidget {
   const DiseaseCaseDetailPage({required this.caseId, this.subtitle, super.key});
 
@@ -56,6 +58,7 @@ class DiseaseCaseDetailPage extends ConsumerWidget {
             ),
             sliver: SliverList.list(
               children: [
+                if (detail.productionPaused) const CaseCareNotice(),
                 _CaseSummary(detail: detail),
                 const SizedBox(height: 16),
                 _CaseResponsibilities(detail: detail),

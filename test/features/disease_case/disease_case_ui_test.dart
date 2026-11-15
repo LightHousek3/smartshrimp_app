@@ -9,6 +9,38 @@ import 'disease_case_test.dart' show CaseFixtureRepository, fixture, showCase;
 
 void main() {
   setUpAll(loadAppFonts);
+  testWidgets(
+    'ordinary conversation has no request selector and repeated replies stay NORMAL',
+    (tester) async {
+      final request = CaseResponse(
+        id: 'request-1',
+        authorId: 'expert',
+        responseType: CaseResponseType.requestInfo,
+        message: 'Đo lại pH',
+        createdAt: DateTime.utc(2026, 11, 13),
+      );
+      final repo = CaseFixtureRepository()
+        ..item = fixture.copyWith(
+          status: DiseaseCaseStatus.monitoring,
+          responses: [request],
+        );
+      await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
+      expect(
+        find.byType(DropdownButtonFormField<CaseResponseType>),
+        findsNothing,
+      );
+      for (final text in ['pH đo lại là 7,8', 'Tôm ăn tốt hơn']) {
+        await tester.enterText(find.byType(TextFormField).first, text);
+        await tester.tap(find.byKey(const ValueKey('case-send-response')));
+        await tester.pumpAndSettle();
+        expect(repo.sentType, CaseResponseType.normal);
+        expect(repo.sentReplyToResponseId, isNull);
+        expect(repo.sentMessage, text);
+        expect(repo.item.status, DiseaseCaseStatus.monitoring);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final width in [320.0, 390.0]) {
     testWidgets(
@@ -167,13 +199,13 @@ void main() {
       expect(find.text('12.4'), findsOneWidget);
       expect(find.text('8.6'), findsOneWidget);
       expect(find.text('Cần chú ý'), findsOneWidget);
-      expect(find.text('Kết quả điều trị'), findsOneWidget);
+      expect(find.text('Trao đổi với chuyên gia'), findsOneWidget);
       tester.view.viewInsets = const FakeViewPadding(bottom: 260);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField), 'Tôm bắt mồi tốt hơn');
       await tester.tap(find.byKey(const ValueKey('case-send-response')));
       await tester.pumpAndSettle();
-      expect(repo.sentType, CaseResponseType.treatmentResult);
+      expect(repo.sentType, CaseResponseType.normal);
       expect(repo.sentMessage, 'Tôm bắt mồi tốt hơn');
       expect(
         tester

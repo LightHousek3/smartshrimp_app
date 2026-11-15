@@ -8,6 +8,53 @@ abstract final class InventoryRules {
   static const maxImageBytes = 5 * 1024 * 1024;
   static const maxOcrTotalBytes = 5 * 1024 * 1024;
 
+  static String? _receiptPrefix(String? type) => switch (type) {
+    'feed' => '01-',
+    'environment' => '02-',
+    'dual_purpose' => '03-',
+    _ => null,
+  };
+
+  /// Choose registration guidance by regulatory type, using the medicine label's own number.
+  static String registrationHint(String? type) {
+    final prefix = _receiptPrefix(type);
+    if (prefix != null) {
+      return 'Dạng ${prefix}XXXXXX: 6 chữ số từ 000001 đến 999999, ví dụ ${prefix}123456. Nhập đúng mã trên nhãn/hồ sơ sản phẩm.';
+    }
+    if (type == 'medicine') {
+      return 'Nhập nguyên số đăng ký lưu hành thuốc thú y trên nhãn/hồ sơ, tối đa 100 ký tự; không dùng mã tiếp nhận 01-/02-/03- của thức ăn hoặc sản phẩm môi trường.';
+    }
+    return 'Chọn loại sản phẩm để xem định dạng mã phù hợp. Không suy mã chỉ từ nhóm vật tư.';
+  }
+
+  static String registrationPlaceholder(String? type) {
+    final prefix = _receiptPrefix(type);
+    return prefix != null ? '${prefix}123456' : 'Nhập số trên nhãn/hồ sơ';
+  }
+
+  /// Validate required registration input without treating a medicine number as a feed receipt.
+  static String? registrationNumberError(String? type, String? value) {
+    final registration = value?.trim() ?? '';
+    if (registration.isEmpty) {
+      return type == 'medicine'
+          ? 'Vui lòng nhập số đăng ký lưu hành thuốc thú y'
+          : 'Vui lòng nhập mã số tiếp nhận';
+    }
+    if (registration.length > 100) {
+      return 'Mã tiếp nhận/số ĐKLH tối đa 100 ký tự';
+    }
+    final prefix = _receiptPrefix(type);
+    if (prefix != null &&
+        (!RegExp('^$prefix[0-9]{6}\$').hasMatch(registration) ||
+            registration.endsWith('-000000'))) {
+      return registrationHint(type);
+    }
+    if (type == 'medicine' && RegExp(r'^(01|02|03)-').hasMatch(registration)) {
+      return registrationHint(type);
+    }
+    return null;
+  }
+
   /// Raw offsets allow deleting a chip without rewriting the text being edited.
   /// Preserve numeric/element locants, brackets and explicitly quoted names.
   static List<({String text, int start, int end, bool terminated})>
@@ -190,6 +237,7 @@ abstract final class InventoryRules {
   static bool isPackaged(InventoryProductUnit unit) =>
       unit == InventoryProductUnit.pack || unit == InventoryProductUnit.bottle;
 
+  /// Restrict package conversions to the mass or volume units supported by the container.
   static List<InventoryConversionUnit> conversionUnits(
     InventoryProductUnit unit,
   ) => switch (unit) {
@@ -215,6 +263,7 @@ abstract final class InventoryRules {
     return number != null && number.isFinite ? number : null;
   }
 
+  /// Keep movement quantities positive; stock thresholds may use zero and lower precision.
   static String? quantityError(String? value, {bool allowZero = false}) {
     if (!allowZero) {
       try {

@@ -132,8 +132,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == AppRoutes.splash || isAuthRoute) return AppRoutes.home;
       final account = authState.value;
+      final ownerCaseRoute =
+          location == AppRoutes.diseaseCases ||
+          location.startsWith('${AppRoutes.diseaseCases}/');
       if (location.contains('/disease-cases') &&
-          account?.role != AccountRole.technician) {
+          !ownerCaseRoute &&
+          (account?.role != AccountRole.technician ||
+              account?.status != AccountStatus.active)) {
         return AppRoutes.home;
       }
       if ((location.contains('/rag') || location.contains('/ai-diagnoses')) &&
@@ -148,8 +153,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           account?.role != AccountRole.farmOwner) {
         return AppRoutes.home;
       }
-      if (location == AppRoutes.diseaseCases ||
-          location.startsWith('${AppRoutes.diseaseCases}/')) {
+      if (ownerCaseRoute) {
         if (account?.role != AccountRole.farmOwner ||
             account?.status != AccountStatus.active) {
           return AppRoutes.home;

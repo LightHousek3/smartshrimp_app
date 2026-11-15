@@ -51,7 +51,6 @@ extension InventoryUnitPresentation on InventoryProductUnit {
     InventoryProductUnit.ml => 'ml',
     InventoryProductUnit.pack => 'gói',
     InventoryProductUnit.bottle => 'chai',
-    InventoryProductUnit.pcs => 'cái',
     InventoryProductUnit.unknown => '?',
   };
 }

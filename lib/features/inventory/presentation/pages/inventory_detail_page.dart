@@ -467,14 +467,6 @@ class _DetailContent extends StatelessWidget {
                 label: 'Nhà cung cấp',
                 value: '${product.manufacturer['name'] ?? 'Chưa cập nhật'}',
               ),
-              _ProductInfoRow(
-                label: 'Hồ sơ',
-                value: switch (product.compliance?.complianceStatus) {
-                  'reviewed' => 'Đủ thông tin',
-                  'blocked' => 'Đang chặn sử dụng',
-                  _ => product.readOnly ? 'Chưa đủ thông tin' : 'Bản nháp',
-                },
-              ),
               if (product.compliance?.registrationNumber != null)
                 _ProductInfoRow(
                   label: 'Mã số tiếp nhận',
@@ -485,19 +477,6 @@ class _DetailContent extends StatelessWidget {
                   label: 'Thời gian ngừng',
                   value:
                       '${formatInventoryQuantity(product.compliance!.withdrawalDays!)} ngày',
-                ),
-              if (product.compliance?.reviewNote != null)
-                Text(
-                  product.compliance!.reviewNote!.startsWith(
-                        'AUTO_SUBSTANCE_BLOCK:',
-                      )
-                      ? 'Phát hiện chất cấm trong sản phẩm.'
-                      : product.compliance!.reviewNote!,
-                  style: TextStyle(
-                    color: product.compliance?.complianceStatus == 'blocked'
-                        ? Colors.red.shade800
-                        : AppColors.ink,
-                  ),
                 ),
             ],
           ),
@@ -517,9 +496,7 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 16),
         if (!product.readOnly && product.isArchived && available.isNotEmpty)
           OutlinedButton.icon(
-            onPressed: product.compliance?.complianceStatus == 'blocked'
-                ? null
-                : () => _chooseStockOut(context, available),
+            onPressed: () => _chooseStockOut(context, available),
             icon: const Icon(Icons.assignment_return_outlined),
             label: const Text('Xuất kho'),
           ),
@@ -553,9 +530,7 @@ class _DetailContent extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed:
-                        available.isEmpty ||
-                            product.compliance?.complianceStatus == 'blocked'
+                    onPressed: available.isEmpty
                         ? null
                         : () => _chooseStockOut(context, available),
                     icon: const InventorySvgIcon(

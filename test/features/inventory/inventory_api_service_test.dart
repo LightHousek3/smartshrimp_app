@@ -80,10 +80,7 @@ void main() {
                     'manufacturer': null,
                     'requiresManufacturer': true,
                     'readOnly': false,
-                    'compliance': {
-                      'regulatoryType': 'unclassified',
-                      'complianceStatus': 'draft',
-                    },
+                    'compliance': {'regulatoryType': 'feed'},
                   },
                 ],
                 meta: {
@@ -110,7 +107,7 @@ void main() {
       });
       expect(page.items.single.manufacturerId, isEmpty);
       expect(page.items.single.readOnly, isFalse);
-      expect(page.items.single.compliance?.complianceStatus, 'draft');
+      expect(page.items.single.compliance?.regulatoryType, 'feed');
     },
   );
   test('archiving uses its distinct action endpoint', () async {

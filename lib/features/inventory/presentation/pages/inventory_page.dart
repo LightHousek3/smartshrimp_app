@@ -358,10 +358,6 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
         );
 }
 
-// ---------------------------------------------------------------------------
-// Product Card
-// ---------------------------------------------------------------------------
-
 class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product, required this.onTap});
 
@@ -396,7 +392,6 @@ class _ProductCard extends StatelessWidget {
                 isLowStock: product.isLowStock,
               ),
               const SizedBox(width: 12),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,25 +417,6 @@ class _ProductCard extends StatelessWidget {
                         if (product.isLowStock) const LowStockBadge(),
                         if (product.isArchived)
                           const InventoryLabelBadge(label: 'Ngừng sử dụng'),
-                        if (product.compliance?.complianceStatus != 'reviewed')
-                          InventoryLabelBadge(
-                            label: product.readOnly
-                                ? 'Chưa đối chiếu hồ sơ'
-                                : product.compliance?.complianceStatus ==
-                                      'blocked'
-                                ? 'Hồ sơ bị chặn'
-                                : 'Hồ sơ nháp',
-                            foreground:
-                                product.compliance?.complianceStatus ==
-                                    'blocked'
-                                ? AppColors.error
-                                : const Color(0xFFD97706),
-                            background:
-                                product.compliance?.complianceStatus ==
-                                    'blocked'
-                                ? const Color(0xFFFBE6EA)
-                                : const Color(0xFFFFF1DC),
-                          ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -495,10 +471,6 @@ class _ProductCard extends StatelessWidget {
   );
 }
 
-// ---------------------------------------------------------------------------
-// History FAB
-// ---------------------------------------------------------------------------
-
 class _HistoryButton extends StatelessWidget {
   const _HistoryButton({required this.onPressed});
 
@@ -526,10 +498,6 @@ class _HistoryButton extends StatelessWidget {
     ),
   );
 }
-
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
 
 class _InventoryLoadError extends StatelessWidget {
   const _InventoryLoadError({required this.message, required this.onRetry});

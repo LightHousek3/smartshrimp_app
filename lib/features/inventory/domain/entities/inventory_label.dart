@@ -31,6 +31,7 @@ abstract class InventoryLabelResult with _$InventoryLabelResult {
   factory InventoryLabelResult.fromJson(Map<String, dynamic> json) =>
       _$InventoryLabelResultFromJson(json);
 
+  /// Require evidence for extracted label facts before presenting them as editable suggestions.
   static InventoryLabelResult parse(Map<String, dynamic> json) {
     try {
       const fields = [
@@ -58,7 +59,6 @@ abstract class InventoryLabelResult with _$InventoryLabelResult {
       final result = InventoryLabelResult.fromJson(json);
       if (result.regulatoryType != null &&
           !const {
-            'unclassified',
             'feed',
             'environment',
             'dual_purpose',

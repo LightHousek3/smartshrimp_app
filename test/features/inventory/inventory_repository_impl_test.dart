@@ -194,7 +194,7 @@ void main() {
   );
 
   test(
-    'locked product sends only threshold, description and version token',
+    'locked product sends only threshold and version token',
     () async {
       final locked = inventoryTestProduct.copyWith(metadataLocked: true);
       await repository.updateProduct(
@@ -211,7 +211,6 @@ void main() {
       );
       expect(remote.lastData, {
         'minAlertQuantity': 0.0,
-        'description': 'New note',
         'expectedUpdatedAt': '2026-10-01T00:00:00.000Z',
       });
     },

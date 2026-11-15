@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
+import 'case_care_action.dart';
 
 part 'owner_disease_case.freezed.dart';
 part 'owner_disease_case.g.dart';
@@ -33,6 +34,8 @@ enum DiseaseCaseSeverity {
 }
 
 enum DiseaseCaseResponseType {
+  @JsonValue('NORMAL')
+  normal,
   @JsonValue('REQUEST_INFO')
   requestInfo,
   @JsonValue('PROVIDE_INFO')
@@ -105,6 +108,7 @@ abstract class DiseaseCasePage with _$DiseaseCasePage {
   ) => _parse(() => DiseaseCasePage.fromJson({...?meta, 'items': items}));
 }
 
+/// Owner-visible case history and submitted treatment versions from one detail response.
 @freezed
 abstract class DiseaseCaseDetail with _$DiseaseCaseDetail {
   @JsonSerializable(checked: true)
@@ -121,6 +125,7 @@ abstract class DiseaseCaseDetail with _$DiseaseCaseDetail {
     required List<DiseaseCaseEvent> timeline,
     DiseaseCaseSnapshot? snapshot,
     String? resolutionSummary,
+    @Default(false) bool productionPaused,
   }) = _DiseaseCaseDetail;
 
   factory DiseaseCaseDetail.fromJson(Map<String, dynamic> json) =>
@@ -181,6 +186,7 @@ abstract class DiseaseCaseProtocol with _$DiseaseCaseProtocol {
       _$DiseaseCaseProtocolFromJson(json);
 }
 
+/// Preserve the server's distinction between clinical state changes and conversation.
 @Freezed(unionKey: 'kind')
 sealed class DiseaseCaseEvent with _$DiseaseCaseEvent {
   @JsonSerializable(checked: true)
@@ -202,6 +208,8 @@ sealed class DiseaseCaseEvent with _$DiseaseCaseEvent {
     required AccountRole authorRole,
     @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)
     required DiseaseCaseResponseType responseType,
+    @JsonKey(unknownEnumValue: CaseCareAction.unknown)
+    CaseCareAction? careAction,
     @JsonKey(fromJson: _requiredText) required String message,
   }) = DiseaseCaseResponse;
 

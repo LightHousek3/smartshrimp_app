@@ -57,7 +57,6 @@ String _unit(String value) => switch (value) {
   'ML' => 'mL',
   'PACK' => 'gói',
   'BOTTLE' => 'chai',
-  'PCS' => 'cái',
   _ => value,
 };
 

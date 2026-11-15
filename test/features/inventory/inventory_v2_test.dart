@@ -3,14 +3,65 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_com
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 
 void main() {
-  test('Owner draft writes exclude server review identity and conclusions', () {
+  test(
+    'registration format follows legal type, serial bounds and label guidance',
+    () {
+      for (final entry in {
+        'feed': '01',
+        'environment': '02',
+        'dual_purpose': '03',
+      }.entries) {
+        for (final serial in ['000001', '123456', '999999']) {
+          expect(
+            InventoryRules.registrationNumberError(
+              entry.key,
+              ' ${entry.value}-$serial ',
+            ),
+            isNull,
+          );
+        }
+        for (final serial in [
+          '000000',
+          '0000',
+          '1234567',
+          '12a456',
+          '１２３４５６',
+          '123 456',
+        ]) {
+          expect(
+            InventoryRules.registrationNumberError(
+              entry.key,
+              '${entry.value}-$serial',
+            ),
+            contains('${entry.value}-123456'),
+          );
+        }
+      }
+      expect(
+        InventoryRules.registrationNumberError('environment', '01-123456'),
+        contains('02-123456'),
+      );
+      expect(
+        InventoryRules.registrationNumberError('medicine', '01-123456'),
+        contains('đăng ký lưu hành thuốc thú y'),
+      );
+      expect(
+        InventoryRules.registrationNumberError('medicine', 'VN-TYT-1234'),
+        isNull,
+      );
+      expect(InventoryRules.registrationNumberError('feed', ''), isNotNull);
+      expect(
+        InventoryRules.registrationHint(null),
+        contains('Chọn loại sản phẩm'),
+      );
+    },
+  );
+  test('Owner input excludes server declaration identity and time', () {
     final record = InventoryCompliance(
       regulatoryType: 'medicine',
       registrationNumber: 'REG-1',
-      complianceStatus: 'reviewed',
       checkedBy: 'expert',
       checkedAt: DateTime.utc(2026, 10, 21),
-      reviewNote: 'Expert evidence',
       withdrawalDays: 7,
     );
     final body = record.toDraftJson();

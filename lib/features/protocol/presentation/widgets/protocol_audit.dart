@@ -30,9 +30,14 @@ class ProtocolAudit extends StatelessWidget {
         _AuditRow(
           'Mốc tính ngày',
           detail.card.protocolType == ProtocolType.treatment
-              ? 'Ngày Chủ trại phê duyệt'
+              ? 'Ngày bắt đầu do Chuyên gia chỉ định'
               : 'Ngày thả giống của vụ',
         ),
+        if (detail.card.protocolType == ProtocolType.treatment)
+          _AuditRow(
+            'Bắt đầu điều trị',
+            protocolDate(detail.treatmentStartAt, year: true, time: true),
+          ),
         if (detail.reviewedAt != null)
           _AuditRow(
             detail.card.status == ProtocolStatus.rejected

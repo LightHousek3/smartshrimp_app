@@ -18,11 +18,14 @@ const protocolAmberPanel = Color(0xFFFBF0DC);
 String protocolStatusLabel(ProtocolStatus status) => switch (status) {
   ProtocolStatus.draft => 'Bản nháp',
   ProtocolStatus.pendingApproval => 'Chờ duyệt',
-  ProtocolStatus.approved => 'Đang có hiệu lực',
+  ProtocolStatus.approved => 'Đã duyệt',
+  ProtocolStatus.active => 'Đang có hiệu lực',
+  ProtocolStatus.paused => 'Tạm hoãn',
+  ProtocolStatus.completed => 'Đã kết thúc',
   ProtocolStatus.rejected => 'Đã từ chối',
-  ProtocolStatus.superseded => 'Hết hiệu lực',
+  ProtocolStatus.superseded => 'Đã thay thế',
   ProtocolStatus.cancelled => 'Đã hủy',
-  ProtocolStatus.aborted => 'Dừng khẩn cấp',
+  ProtocolStatus.aborted => 'Đã dừng điều trị',
   ProtocolStatus.unknown => 'Chưa xác định',
 };
 
@@ -33,7 +36,6 @@ String protocolNumber(num number) => number
 String protocolUnit(String unit) => switch (unit) {
   'PACK' => 'gói',
   'BOTTLE' => 'chai',
-  'PCS' => 'cái',
   _ => unit.toLowerCase(),
 };
 DateTime vietnamTime(DateTime value) =>
@@ -99,7 +101,10 @@ class ProtocolBadge extends StatelessWidget {
   factory ProtocolBadge.status(ProtocolStatus status, {bool dot = false}) {
     final (color, background) = switch (status) {
       ProtocolStatus.pendingApproval => (protocolAmber, protocolAmberPanel),
-      ProtocolStatus.approved => (protocolTeal, protocolTealPanel),
+      ProtocolStatus.approved ||
+      ProtocolStatus.active ||
+      ProtocolStatus.completed => (protocolTeal, protocolTealPanel),
+      ProtocolStatus.paused => (protocolAmber, protocolAmberPanel),
       ProtocolStatus.rejected ||
       ProtocolStatus.aborted => (protocolRose, protocolRosePanel),
       _ => (const Color(0xFF64748B), protocolPanel),

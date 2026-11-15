@@ -2,11 +2,80 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_audit.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_decision.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_materials.dart';
 import 'protocol_fixtures.dart';
 import 'protocol_pages_test.dart' as harness;
 
+class _AnchoredTreatmentRepository extends ProtocolFixtureRepository {
+  _AnchoredTreatmentRepository() : super(type: 'TREATMENT');
+  @override
+  Future<ProtocolDetail> detail(String id) async => (await super.detail(
+    id,
+  )).copyWith(treatmentStartAt: DateTime.parse('2027-11-29T17:00:00Z'));
+}
+
 void main() {
+  testWidgets('a waiting treatment keeps approval and rejection available', (
+    tester,
+  ) async {
+    final repo = _AnchoredTreatmentRepository();
+    await harness.open(tester, repository: repo, size: const Size(320, 900));
+    await harness.scrollTo(tester, 'Phê duyệt phác đồ');
+    expect(
+      tester
+          .widget<GradientButton>(
+            find.widgetWithText(GradientButton, 'Phê duyệt phác đồ'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.text('Từ chối và nêu lý do'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('protocol_rejection_reason')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'treatment confirmation uses the Expert anchor instead of the approval date',
+    (tester) async {
+      await harness.open(
+        tester,
+        repository: _AnchoredTreatmentRepository(),
+        size: const Size(320, 900),
+      );
+      await harness.scrollTo(tester, 'Phê duyệt phác đồ');
+      await tester.tap(find.text('Phê duyệt phác đồ'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(ProtocolDecision),
+          matching: find.textContaining('00:00 30/11/2027'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(ProtocolAudit),
+          matching: find.text('Ngày bắt đầu do Chuyên gia chỉ định'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(ProtocolAudit),
+          matching: find.text('00:00 30/11/2027'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Ngày Chủ trại phê duyệt'), findsNothing);
+      expect(
+        find.textContaining('Ngày duyệt hôm nay trở thành ngày 1'),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'V2: 1000 preserved items render in bounded pages without catalog requests',
     (tester) async {

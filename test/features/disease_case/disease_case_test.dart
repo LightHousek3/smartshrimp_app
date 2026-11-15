@@ -48,6 +48,7 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
   String? selectedAi;
   CaseResponseType? sentType;
   String? sentMessage;
+  String? sentReplyToResponseId;
   DateTime? sentVersion;
   Object? mutationFailure;
   bool? lastResolved;
@@ -111,10 +112,12 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
     CaseResponseType type,
     String message, {
     List<String> attachments = const [],
+    String? replyToResponseId,
   }) async {
     mutations++;
     sentType = type;
     sentMessage = message;
+    sentReplyToResponseId = replyToResponseId;
     sentVersion = value.updatedAt;
     if (mutationFailure != null) throw mutationFailure!;
     if (failure != null) throw failure!;
@@ -443,7 +446,6 @@ void main() {
       expect(requests[3].data, {
         'responseType': 'EMERGENCY_ALERT',
         'message': 'Khẩn cấp',
-        'expectedUpdatedAt': '2026-10-30T01:00:00.123Z',
       });
       dio.close();
     },

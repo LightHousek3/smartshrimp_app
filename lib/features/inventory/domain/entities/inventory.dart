@@ -33,8 +33,6 @@ enum InventoryProductUnit {
   pack,
   @JsonValue('BOTTLE')
   bottle,
-  @JsonValue('PCS')
-  pcs,
   unknown,
 }
 
@@ -138,6 +136,7 @@ abstract class InventoryLot with _$InventoryLot {
   factory InventoryLot.fromJson(Map<String, dynamic> json) =>
       _$InventoryLotFromJson(json);
 
+  /// Reject incomplete lot quantities, dates and identifiers at the API boundary.
   static InventoryLot parse(Map<String, dynamic> json) {
     if (!_hasString(json, 'id') ||
         !_hasString(json, 'productId') ||
@@ -163,6 +162,7 @@ abstract class InventoryProduct with _$InventoryProduct {
 
   bool get isArchived => status == 'INACTIVE';
 
+  /// Prefer the image list while retaining the single-image fallback for older products.
   List<String> get effectiveImageUrls {
     final photos = imageUrls
         .map((url) => url.trim())
@@ -212,6 +212,7 @@ abstract class InventoryProduct with _$InventoryProduct {
   factory InventoryProduct.fromJson(Map<String, dynamic> json) =>
       _$InventoryProductFromJson(json);
 
+  /// Validate product totals and nested lots before accepting a catalog response.
   static InventoryProduct parse(Map<String, dynamic> json) {
     final legacyRead = json['schemaVersion'] == 1 && json['readOnly'] == true;
     final pendingManufacturer =
@@ -261,6 +262,7 @@ abstract class InventorySummary with _$InventorySummary {
   factory InventorySummary.fromJson(Map<String, dynamic> json) =>
       _$InventorySummaryFromJson(json);
 
+  /// Require numeric stock summary fields rather than silently displaying missing totals as zero.
   static InventorySummary parse(Map<String, dynamic> json) {
     if (json['totalProducts'] is! int ||
         json['lowStockCount'] is! int ||
@@ -284,6 +286,7 @@ abstract class InventoryProductPage with _$InventoryProductPage {
     required InventorySummary summary,
   }) = _InventoryProductPage;
 
+  /// Validate product rows and pagination metadata together before replacing the loaded page.
   static InventoryProductPage parse(Object? data, Map<String, dynamic>? meta) {
     if (data is! List<dynamic> ||
         meta == null ||
@@ -384,6 +387,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
   factory InventoryTransaction.fromJson(Map<String, dynamic> json) =>
       _$InventoryTransactionFromJson(json);
 
+  /// Require movement identities, quantities and references before decoding inventory history.
   static InventoryTransaction parse(Map<String, dynamic> json) {
     if (!_hasString(json, 'id') ||
         !_hasString(json, 'transactionGroupId') ||
@@ -415,6 +419,7 @@ abstract class InventoryHistorySummary with _$InventoryHistorySummary {
   factory InventoryHistorySummary.fromJson(Map<String, dynamic> json) =>
       _$InventoryHistorySummaryFromJson(json);
 
+  /// Reject history summaries with missing numeric totals before rendering movement statistics.
   static InventoryHistorySummary parse(Map<String, dynamic> json) {
     if (json['totalInboundValue'] is! num ||
         json['totalOutboundValue'] is! num) {
@@ -439,6 +444,7 @@ abstract class InventoryHistoryPage with _$InventoryHistoryPage {
     List<InventoryTransactionSeason> filterSeasons,
   }) = _InventoryHistoryPage;
 
+  /// Validate history rows, filters and summary metadata as one page response.
   static InventoryHistoryPage parse(Object? data, Map<String, dynamic>? meta) {
     if (data is! List<dynamic> ||
         meta == null ||
@@ -507,6 +513,7 @@ abstract class InventoryStockResult with _$InventoryStockResult {
     required bool idempotentReplay,
   }) = _InventoryStockResult;
 
+  /// Validate the committed movement and returned stock before accepting a write or retry result.
   static InventoryStockResult parse(Map<String, dynamic> json) {
     final transaction = json['transaction'];
     final balance = json['balance'];
