@@ -349,9 +349,8 @@ class _InventoryProductFormPageState
           .where(_hasPhoto)
           .map((image) => image.url!)
           .toList(growable: false);
-      final InventoryProduct savedProduct;
       if (_isEdit) {
-        savedProduct = await notifier.updateProduct(
+        await notifier.updateProduct(
           product: _product!,
           name: _nameController.text,
           category: category,
@@ -368,7 +367,7 @@ class _InventoryProductFormPageState
           imageUrls: imageUrls,
         );
       } else {
-        savedProduct = await notifier.create(
+        await notifier.create(
           name: _nameController.text,
           category: category,
           manufacturerId: _manufacturerId!,
@@ -385,14 +384,7 @@ class _InventoryProductFormPageState
         );
       }
       if (!mounted) return;
-      AppNoticeService.success(
-        context,
-        switch (savedProduct.compliance?.complianceStatus) {
-          'reviewed' => 'Đã lưu vật tư. Hồ sơ đủ thông tin để sử dụng.',
-          'blocked' => 'Đã lưu vật tư. Hồ sơ vẫn đang bị chặn sử dụng.',
-          _ => 'Đã lưu bản nháp. Bổ sung đủ thông tin bắt buộc để sử dụng.',
-        },
-      );
+      AppNoticeService.success(context, 'Đã lưu vật tư.');
       context.pop();
     } on FormatException catch (error) {
       if (!mounted) return;
@@ -463,7 +455,7 @@ class _InventoryProductFormPageState
             padding: const EdgeInsets.all(16),
             children: [
               const Text(
-                'Vật tư đã có đơn hoặc giao dịch. Chỉ được sửa ngưỡng cảnh báo và mô tả.',
+                'Vật tư đã có lịch sử kho, vận hành hoặc phác đồ gửi duyệt. Hồ sơ được khóa, anh/chị có thể sửa ngưỡng cảnh báo tồn kho.',
               ),
               const SizedBox(height: 16),
               _buildThresholdField(),
@@ -472,7 +464,7 @@ class _InventoryProductFormPageState
                 label: 'Mô tả (tùy chọn)',
                 child: TextFormField(
                   controller: _descriptionController,
-                  enabled: !_saving,
+                  enabled: false,
                   maxLength: InventoryRules.maxDescriptionLength,
                   minLines: 2,
                   maxLines: 4,
@@ -1133,11 +1125,7 @@ class _UnitSelector extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: InventoryProductUnit.values
-              .where(
-                (item) =>
-                    item != InventoryProductUnit.unknown &&
-                    item != InventoryProductUnit.pcs,
-              )
+              .where((item) => item != InventoryProductUnit.unknown)
               .map(
                 (unit) => _SelectionChip(
                   label: unit.label,

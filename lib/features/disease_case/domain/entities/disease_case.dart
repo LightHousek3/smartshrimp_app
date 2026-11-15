@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'case_care_action.dart';
 
 part 'disease_case.freezed.dart';
 part 'disease_case.g.dart';
@@ -74,6 +75,8 @@ enum CaseSeverity {
 }
 
 enum CaseResponseType {
+  @JsonValue('NORMAL')
+  normal,
   @JsonValue('PROVIDE_INFO')
   provideInfo,
   @JsonValue('MONITORING_RESULT')
@@ -93,6 +96,7 @@ enum CaseResponseType {
   unknown;
 
   String get apiValue => switch (this) {
+    normal => 'NORMAL',
     provideInfo => 'PROVIDE_INFO',
     monitoringResult => 'MONITORING_RESULT',
     treatmentResult => 'TREATMENT_RESULT',
@@ -104,6 +108,7 @@ enum CaseResponseType {
     unknown => 'UNKNOWN',
   };
   String get label => switch (this) {
+    normal => 'Trao đổi',
     provideInfo => 'Cung cấp thông tin',
     monitoringResult => 'Kết quả theo dõi',
     treatmentResult => 'Kết quả điều trị',
@@ -114,12 +119,7 @@ enum CaseResponseType {
     resolution => 'Kết luận',
     unknown => 'Phản hồi',
   };
-  static const technicianTypes = [
-    provideInfo,
-    monitoringResult,
-    treatmentResult,
-    emergencyAlert,
-  ];
+  static const technicianTypes = [normal, emergencyAlert];
 }
 
 T _parse<T>(T Function() decode) {
@@ -130,7 +130,7 @@ T _parse<T>(T Function() decode) {
   }
 }
 
-// Expert replies store attachment objects; older technician replies store URLs.
+/// Accept current attachment objects and historical URL entries from case responses.
 List<String> _responseAttachmentUrls(Object? value) {
   if (value == null) return const [];
   if (value is! List) throw const InvalidResponseException();
@@ -145,12 +145,18 @@ List<String> _responseAttachmentUrls(Object? value) {
 
 @freezed
 abstract class CaseResponse with _$CaseResponse {
+  const CaseResponse._();
   const factory CaseResponse({
     required String id,
     required String authorId,
     @JsonKey(unknownEnumValue: CaseResponseType.unknown)
     required CaseResponseType responseType,
     required String message,
+    String? replyToResponseId,
+
+    /// Present only when the server links this entry to a persisted care decision.
+    @JsonKey(unknownEnumValue: CaseCareAction.unknown)
+    CaseCareAction? careAction,
     required DateTime createdAt,
     Map<String, dynamic>? author,
     @JsonKey(fromJson: _responseAttachmentUrls)
@@ -190,6 +196,9 @@ abstract class DiseaseCase with _$DiseaseCase {
     Map<String, dynamic>? reporter,
     @JsonKey(name: '_count') @Default({}) Map<String, dynamic> counts,
     @Default(false) bool canRespond,
+
+    /// Supplied by the server; the case status alone does not determine suspension.
+    @Default(false) bool productionPaused,
     @Default({}) Map<String, dynamic> caseSnapshot,
     @Default([]) List<Map<String, dynamic>> attachments,
     @Default([]) List<CaseResponse> responses,

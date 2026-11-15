@@ -20,6 +20,12 @@ enum ProtocolStatus {
   pendingApproval,
   @JsonValue('APPROVED')
   approved,
+  @JsonValue('ACTIVE')
+  active,
+  @JsonValue('PAUSED')
+  paused,
+  @JsonValue('COMPLETED')
+  completed,
   @JsonValue('REJECTED')
   rejected,
   @JsonValue('SUPERSEDED')
@@ -71,6 +77,7 @@ abstract class ProtocolCardData with _$ProtocolCardData {
   factory ProtocolCardData.fromJson(Map<String, dynamic> json) =>
       _$ProtocolCardDataFromJson(json);
 
+  /// Require protocol identity labels and a positive version before rendering a card.
   static ProtocolCardData parse(Map<String, dynamic> json) => _parse(() {
     final value = ProtocolCardData.fromJson(json);
     _strings([
@@ -129,10 +136,8 @@ abstract class ProtocolMaterialProfile with _$ProtocolMaterialProfile {
     String? usageInstructions,
     @JsonKey(fromJson: _optionalDecimalString) String? withdrawalDays,
     @Default([]) List<String> evidenceUrls,
-    String? complianceStatus,
     String? checkedBy,
     DateTime? checkedAt,
-    String? reviewNote,
   }) = _ProtocolMaterialProfile;
   factory ProtocolMaterialProfile.fromJson(Map<String, dynamic> json) =>
       _$ProtocolMaterialProfileFromJson(json);
@@ -222,6 +227,8 @@ abstract class ProtocolMaterialOption with _$ProtocolMaterialOption {
   }) = _ProtocolMaterialOption;
   factory ProtocolMaterialOption.fromJson(Map<String, dynamic> json) =>
       _$ProtocolMaterialOptionFromJson(json);
+
+  /// Require a catalog identity and display label before offering a material for Owner selection.
   static ProtocolMaterialOption parse(Map<String, dynamic> json) => _parse(() {
     final value = ProtocolMaterialOption.fromJson(json);
     _strings([value.id, value.name, value.unit, value.manufacturerName]);
@@ -239,6 +246,7 @@ abstract class ProtocolDetail with _$ProtocolDetail {
     String? anchorDate,
     required int durationDays,
     DateTime? reviewedAt,
+    DateTime? treatmentStartAt,
     String? reviewerName,
     String? rejectionReason,
     DateTime? supersededAt,
@@ -253,6 +261,7 @@ abstract class ProtocolDetail with _$ProtocolDetail {
   factory ProtocolDetail.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDetailFromJson(json);
 
+  /// Validate material rules and day markers before enabling review of a pending protocol version.
   static ProtocolDetail parse(Map<String, dynamic> json) => _parse(() {
     final card = ProtocolCardData.parse(json);
     final value = ProtocolDetail.fromJson({...json, 'card': json});
@@ -365,6 +374,7 @@ abstract class ProtocolDay with _$ProtocolDay {
   factory ProtocolDay.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDayFromJson(json);
 
+  /// Validate the requested day and its schedule rows before presenting execution details.
   static ProtocolDay parse(Map<String, dynamic> json) => _parse(() {
     final value = ProtocolDay.fromJson(json);
     if (value.day < 1) throw const InvalidResponseException();
@@ -403,6 +413,7 @@ abstract class ProtocolPage with _$ProtocolPage {
     required int treatmentCount,
   }) = _ProtocolPage;
 
+  /// Validate cards and protocol-type counts together with their pagination metadata.
   static ProtocolPage parse(List<Object?> data, Map<String, dynamic>? meta) =>
       _parse(() {
         if (meta == null ||
@@ -442,6 +453,8 @@ abstract class ProtocolInventoryEntry with _$ProtocolInventoryEntry {
   }) = _ProtocolInventoryEntry;
   factory ProtocolInventoryEntry.fromJson(Map<String, dynamic> json) =>
       _$ProtocolInventoryEntryFromJson(json);
+
+  /// Require positive usage quantities and traceable lot and performer labels for execution history.
   static ProtocolInventoryEntry parse(Map<String, dynamic> json) => _parse(() {
     final value = ProtocolInventoryEntry.fromJson(json);
     _strings([

@@ -345,6 +345,7 @@ class CaseTimeline extends StatelessWidget {
   );
 }
 
+/// Preserve server event order and distinguish audited decisions from ordinary replies.
 class _TimelineEntry extends StatelessWidget {
   const _TimelineEntry({
     required this.event,
@@ -382,11 +383,24 @@ class _TimelineEntry extends StatelessWidget {
           ],
         ),
       ),
-      DiseaseCaseResponse(:final responseType, :final authorRole) => (
-        AppSvgIconName.message,
-        authorRole == AccountRole.expert ? casePurple : caseBlue,
-        _ResponseHeading(type: responseType, role: authorRole),
-      ),
+      DiseaseCaseResponse(
+        :final responseType,
+        :final authorRole,
+        :final careAction,
+      ) =>
+        (
+          AppSvgIconName.message,
+          careAction?.isDecision == true
+              ? caseAmber
+              : authorRole == AccountRole.expert
+              ? casePurple
+              : caseBlue,
+          _ResponseHeading(
+            type: responseType,
+            role: authorRole,
+            careDecision: careAction?.isDecision ?? false,
+          ),
+        ),
     };
     final message = event.message;
     return Stack(
@@ -461,33 +475,53 @@ class _TimelineEntry extends StatelessWidget {
 }
 
 class _ResponseHeading extends StatelessWidget {
-  const _ResponseHeading({required this.type, required this.role});
+  const _ResponseHeading({
+    required this.type,
+    required this.role,
+    this.careDecision = false,
+  });
 
   final DiseaseCaseResponseType type;
   final AccountRole role;
+  final bool careDecision;
 
   @override
   Widget build(BuildContext context) {
-    final (label, tone) = switch (type) {
-      DiseaseCaseResponseType.requestInfo => ('Yêu cầu bổ sung', caseAmber),
-      DiseaseCaseResponseType.provideInfo => ('Bổ sung thông tin', caseBlue),
-      DiseaseCaseResponseType.monitoringResult => (
-        'Kết quả theo dõi',
-        caseTeal,
-      ),
-      DiseaseCaseResponseType.treatmentResult => ('Kết quả điều trị', caseTeal),
-      DiseaseCaseResponseType.emergencyAlert => ('Cảnh báo khẩn cấp', caseRose),
-      DiseaseCaseResponseType.expertAssessment => (
-        'Đánh giá chuyên gia',
-        casePurple,
-      ),
-      DiseaseCaseResponseType.expertInstruction => (
-        'Chỉ dẫn chuyên gia',
-        casePurple,
-      ),
-      DiseaseCaseResponseType.resolution => ('Kết luận', caseTeal),
-      DiseaseCaseResponseType.unknown => ('Phản hồi', caseNeutral),
-    };
+    final (label, tone) = careDecision
+        ? ('Quyết định chăm sóc', caseAmber)
+        : switch (type) {
+            DiseaseCaseResponseType.normal => ('Trao đổi', caseBlue),
+            DiseaseCaseResponseType.requestInfo => (
+              'Yêu cầu bổ sung',
+              caseAmber,
+            ),
+            DiseaseCaseResponseType.provideInfo => (
+              'Bổ sung thông tin',
+              caseBlue,
+            ),
+            DiseaseCaseResponseType.monitoringResult => (
+              'Kết quả theo dõi',
+              caseTeal,
+            ),
+            DiseaseCaseResponseType.treatmentResult => (
+              'Kết quả điều trị',
+              caseTeal,
+            ),
+            DiseaseCaseResponseType.emergencyAlert => (
+              'Cảnh báo khẩn cấp',
+              caseRose,
+            ),
+            DiseaseCaseResponseType.expertAssessment => (
+              'Đánh giá chuyên gia',
+              casePurple,
+            ),
+            DiseaseCaseResponseType.expertInstruction => (
+              'Chỉ dẫn chuyên gia',
+              casePurple,
+            ),
+            DiseaseCaseResponseType.resolution => ('Kết luận', caseTeal),
+            DiseaseCaseResponseType.unknown => ('Phản hồi', caseNeutral),
+          };
     final roleLabel = switch (role) {
       AccountRole.technician => 'KTV',
       AccountRole.expert => 'Chuyên gia',

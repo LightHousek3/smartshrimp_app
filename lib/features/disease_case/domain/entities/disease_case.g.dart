@@ -37,6 +37,12 @@ _CaseResponse _$CaseResponseFromJson(Map<String, dynamic> json) =>
         unknownValue: CaseResponseType.unknown,
       ),
       message: json['message'] as String,
+      replyToResponseId: json['replyToResponseId'] as String?,
+      careAction: $enumDecodeNullable(
+        _$CaseCareActionEnumMap,
+        json['careAction'],
+        unknownValue: CaseCareAction.unknown,
+      ),
       createdAt: DateTime.parse(json['createdAt'] as String),
       author: json['author'] as Map<String, dynamic>?,
       attachments: json['attachments'] == null
@@ -50,12 +56,15 @@ Map<String, dynamic> _$CaseResponseToJson(_CaseResponse instance) =>
       'authorId': instance.authorId,
       'responseType': _$CaseResponseTypeEnumMap[instance.responseType]!,
       'message': instance.message,
+      'replyToResponseId': instance.replyToResponseId,
+      'careAction': _$CaseCareActionEnumMap[instance.careAction],
       'createdAt': instance.createdAt.toIso8601String(),
       'author': instance.author,
       'attachments': instance.attachments,
     };
 
 const _$CaseResponseTypeEnumMap = {
+  CaseResponseType.normal: 'NORMAL',
   CaseResponseType.provideInfo: 'PROVIDE_INFO',
   CaseResponseType.monitoringResult: 'MONITORING_RESULT',
   CaseResponseType.treatmentResult: 'TREATMENT_RESULT',
@@ -65,6 +74,13 @@ const _$CaseResponseTypeEnumMap = {
   CaseResponseType.instruction: 'EXPERT_INSTRUCTION',
   CaseResponseType.resolution: 'RESOLUTION',
   CaseResponseType.unknown: 'unknown',
+};
+
+const _$CaseCareActionEnumMap = {
+  CaseCareAction.monitor: 'MONITOR',
+  CaseCareAction.resumeProduction: 'RESUME_PRODUCTION',
+  CaseCareAction.closeWithoutProduction: 'CLOSE_WITHOUT_PRODUCTION',
+  CaseCareAction.unknown: 'unknown',
 };
 
 _DiseaseCase _$DiseaseCaseFromJson(Map<String, dynamic> json) => _DiseaseCase(
@@ -95,6 +111,7 @@ _DiseaseCase _$DiseaseCaseFromJson(Map<String, dynamic> json) => _DiseaseCase(
   reporter: json['reporter'] as Map<String, dynamic>?,
   counts: json['_count'] as Map<String, dynamic>? ?? const {},
   canRespond: json['canRespond'] as bool? ?? false,
+  productionPaused: json['productionPaused'] as bool? ?? false,
   caseSnapshot: json['caseSnapshot'] as Map<String, dynamic>? ?? const {},
   attachments:
       (json['attachments'] as List<dynamic>?)
@@ -132,6 +149,7 @@ Map<String, dynamic> _$DiseaseCaseToJson(_DiseaseCase instance) =>
       'reporter': instance.reporter,
       '_count': instance.counts,
       'canRespond': instance.canRespond,
+      'productionPaused': instance.productionPaused,
       'caseSnapshot': instance.caseSnapshot,
       'attachments': instance.attachments,
       'responses': instance.responses,

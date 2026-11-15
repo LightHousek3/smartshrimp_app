@@ -5,6 +5,28 @@ import 'protocol_fixtures.dart';
 
 void main() {
   test(
+    'treatment approval retains the Expert anchor and canonical lifecycle states',
+    () {
+      final detail = ProtocolDetail.parse({
+        ...detailJson(type: 'TREATMENT', status: 'APPROVED'),
+        'canReview': false,
+        'treatmentStartAt': '2027-11-29T17:00:00Z',
+      });
+      expect(detail.card.status, ProtocolStatus.approved);
+      expect(detail.treatmentStartAt, DateTime.parse('2027-11-29T17:00:00Z'));
+      for (final entry in {
+        'ACTIVE': ProtocolStatus.active,
+        'PAUSED': ProtocolStatus.paused,
+        'COMPLETED': ProtocolStatus.completed,
+      }.entries) {
+        expect(
+          ProtocolCardData.parse(cardJson(status: entry.key)).status,
+          entry.value,
+        );
+      }
+    },
+  );
+  test(
     'V2: preserves proposal/manufacturer/evidence and numeric strings with independent anchors',
     () {
       final detail = ProtocolDetail.parse({
@@ -25,7 +47,7 @@ void main() {
       expect(material.doseAnchorDay, 1);
       final option = ProtocolMaterialOption.parse(materialOptionJson());
       expect(option.material!.productCompliance!.withdrawalDays, '0.000');
-      expect(option.material!.productCompliance!.complianceStatus, 'reviewed');
+      expect(option.material!.productCompliance!.regulatoryType, 'feed');
       expect(ProtocolDetail.parse(detailJson()).contentVersion, 1);
     },
   );

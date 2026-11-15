@@ -586,7 +586,7 @@ as int,
 /// @nodoc
 mixin _$DiseaseCaseDetail {
 
- DiseaseCaseCard get card;@JsonKey(fromJson: _requiredText) String get seasonName;@JsonKey(fromJson: _requiredText) String get pondName;@JsonKey(fromJson: _requiredText) String get farmName;@JsonKey(fromJson: _requiredText) String get reporterName; DateTime get createdAt; DateTime get updatedAt; List<DiseaseCaseAttachment> get attachments; List<DiseaseCaseProtocol> get protocols; List<DiseaseCaseEvent> get timeline; DiseaseCaseSnapshot? get snapshot; String? get resolutionSummary;
+ DiseaseCaseCard get card;@JsonKey(fromJson: _requiredText) String get seasonName;@JsonKey(fromJson: _requiredText) String get pondName;@JsonKey(fromJson: _requiredText) String get farmName;@JsonKey(fromJson: _requiredText) String get reporterName; DateTime get createdAt; DateTime get updatedAt; List<DiseaseCaseAttachment> get attachments; List<DiseaseCaseProtocol> get protocols; List<DiseaseCaseEvent> get timeline; DiseaseCaseSnapshot? get snapshot; String? get resolutionSummary; bool get productionPaused;
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -599,16 +599,16 @@ $DiseaseCaseDetailCopyWith<DiseaseCaseDetail> get copyWith => _$DiseaseCaseDetai
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.protocols, protocols)&&const DeepCollectionEquality().equals(other.timeline, timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.protocols, protocols)&&const DeepCollectionEquality().equals(other.timeline, timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(protocols),const DeepCollectionEquality().hash(timeline),snapshot,resolutionSummary);
+int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(protocols),const DeepCollectionEquality().hash(timeline),snapshot,resolutionSummary,productionPaused);
 
 @override
 String toString() {
-  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary)';
+  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
 }
 
 
@@ -619,7 +619,7 @@ abstract mixin class $DiseaseCaseDetailCopyWith<$Res>  {
   factory $DiseaseCaseDetailCopyWith(DiseaseCaseDetail value, $Res Function(DiseaseCaseDetail) _then) = _$DiseaseCaseDetailCopyWithImpl;
 @useResult
 $Res call({
- DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary
+ DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary, bool productionPaused
 });
 
 
@@ -636,7 +636,7 @@ class _$DiseaseCaseDetailCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
   return _then(_self.copyWith(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseCard,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
@@ -650,7 +650,8 @@ as List<DiseaseCaseAttachment>,protocols: null == protocols ? _self.protocols : 
 as List<DiseaseCaseProtocol>,timeline: null == timeline ? _self.timeline : timeline // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseEvent>,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseSnapshot?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of DiseaseCaseDetail
@@ -756,10 +757,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail() when $default != null:
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
   return orElse();
 
 }
@@ -777,10 +778,10 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail():
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -797,10 +798,10 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)?  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail() when $default != null:
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
   return null;
 
 }
@@ -812,7 +813,7 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 
 @JsonSerializable(checked: true)
 class _DiseaseCaseDetail implements DiseaseCaseDetail {
-  const _DiseaseCaseDetail({required this.card, @JsonKey(fromJson: _requiredText) required this.seasonName, @JsonKey(fromJson: _requiredText) required this.pondName, @JsonKey(fromJson: _requiredText) required this.farmName, @JsonKey(fromJson: _requiredText) required this.reporterName, required this.createdAt, required this.updatedAt, required final  List<DiseaseCaseAttachment> attachments, required final  List<DiseaseCaseProtocol> protocols, required final  List<DiseaseCaseEvent> timeline, this.snapshot, this.resolutionSummary}): _attachments = attachments,_protocols = protocols,_timeline = timeline;
+  const _DiseaseCaseDetail({required this.card, @JsonKey(fromJson: _requiredText) required this.seasonName, @JsonKey(fromJson: _requiredText) required this.pondName, @JsonKey(fromJson: _requiredText) required this.farmName, @JsonKey(fromJson: _requiredText) required this.reporterName, required this.createdAt, required this.updatedAt, required final  List<DiseaseCaseAttachment> attachments, required final  List<DiseaseCaseProtocol> protocols, required final  List<DiseaseCaseEvent> timeline, this.snapshot, this.resolutionSummary, this.productionPaused = false}): _attachments = attachments,_protocols = protocols,_timeline = timeline;
   factory _DiseaseCaseDetail.fromJson(Map<String, dynamic> json) => _$DiseaseCaseDetailFromJson(json);
 
 @override final  DiseaseCaseCard card;
@@ -845,6 +846,7 @@ class _DiseaseCaseDetail implements DiseaseCaseDetail {
 
 @override final  DiseaseCaseSnapshot? snapshot;
 @override final  String? resolutionSummary;
+@override@JsonKey() final  bool productionPaused;
 
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
@@ -859,16 +861,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._protocols, _protocols)&&const DeepCollectionEquality().equals(other._timeline, _timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._protocols, _protocols)&&const DeepCollectionEquality().equals(other._timeline, _timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_protocols),const DeepCollectionEquality().hash(_timeline),snapshot,resolutionSummary);
+int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_protocols),const DeepCollectionEquality().hash(_timeline),snapshot,resolutionSummary,productionPaused);
 
 @override
 String toString() {
-  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary)';
+  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
 }
 
 
@@ -879,7 +881,7 @@ abstract mixin class _$DiseaseCaseDetailCopyWith<$Res> implements $DiseaseCaseDe
   factory _$DiseaseCaseDetailCopyWith(_DiseaseCaseDetail value, $Res Function(_DiseaseCaseDetail) _then) = __$DiseaseCaseDetailCopyWithImpl;
 @override @useResult
 $Res call({
- DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary
+ DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary, bool productionPaused
 });
 
 
@@ -896,7 +898,7 @@ class __$DiseaseCaseDetailCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
   return _then(_DiseaseCaseDetail(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseCard,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
@@ -910,7 +912,8 @@ as List<DiseaseCaseAttachment>,protocols: null == protocols ? _self._protocols :
 as List<DiseaseCaseProtocol>,timeline: null == timeline ? _self._timeline : timeline // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseEvent>,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseSnapshot?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1948,11 +1951,11 @@ return response(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(fromJson: _requiredText)  String message)?  response,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)?  response,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange() when status != null:
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse() when response != null:
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.message);case _:
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);case _:
   return orElse();
 
 }
@@ -1970,11 +1973,11 @@ return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)  status,required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(fromJson: _requiredText)  String message)  response,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)  status,required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)  response,}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange():
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse():
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.message);}
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1988,11 +1991,11 @@ return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(fromJson: _requiredText)  String message)?  response,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)?  response,}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange() when status != null:
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse() when response != null:
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.message);case _:
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);case _:
   return null;
 
 }
@@ -2085,13 +2088,14 @@ as String?,
 
 @JsonSerializable(checked: true)
 class DiseaseCaseResponse implements DiseaseCaseEvent {
-  const DiseaseCaseResponse({required this.at, @JsonKey(fromJson: _requiredText) required this.authorName, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) required this.responseType, @JsonKey(fromJson: _requiredText) required this.message, final  String? $type}): $type = $type ?? 'response';
+  const DiseaseCaseResponse({required this.at, @JsonKey(fromJson: _requiredText) required this.authorName, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) required this.responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown) this.careAction, @JsonKey(fromJson: _requiredText) required this.message, final  String? $type}): $type = $type ?? 'response';
   factory DiseaseCaseResponse.fromJson(Map<String, dynamic> json) => _$DiseaseCaseResponseFromJson(json);
 
 @override final  DateTime at;
 @override@JsonKey(fromJson: _requiredText) final  String authorName;
 @JsonKey(unknownEnumValue: AccountRole.unknown) final  AccountRole authorRole;
 @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) final  DiseaseCaseResponseType responseType;
+@JsonKey(unknownEnumValue: CaseCareAction.unknown) final  CaseCareAction? careAction;
 @override@JsonKey(fromJson: _requiredText) final  String message;
 
 @JsonKey(name: 'kind')
@@ -2111,16 +2115,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseResponse&&(identical(other.at, at) || other.at == at)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.authorRole, authorRole) || other.authorRole == authorRole)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseResponse&&(identical(other.at, at) || other.at == at)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.authorRole, authorRole) || other.authorRole == authorRole)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.careAction, careAction) || other.careAction == careAction)&&(identical(other.message, message) || other.message == message));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,at,authorName,authorRole,responseType,message);
+int get hashCode => Object.hash(runtimeType,at,authorName,authorRole,responseType,careAction,message);
 
 @override
 String toString() {
-  return 'DiseaseCaseEvent.response(at: $at, authorName: $authorName, authorRole: $authorRole, responseType: $responseType, message: $message)';
+  return 'DiseaseCaseEvent.response(at: $at, authorName: $authorName, authorRole: $authorRole, responseType: $responseType, careAction: $careAction, message: $message)';
 }
 
 
@@ -2131,7 +2135,7 @@ abstract mixin class $DiseaseCaseResponseCopyWith<$Res> implements $DiseaseCaseE
   factory $DiseaseCaseResponseCopyWith(DiseaseCaseResponse value, $Res Function(DiseaseCaseResponse) _then) = _$DiseaseCaseResponseCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime at,@JsonKey(fromJson: _requiredText) String authorName,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole authorRole,@JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) DiseaseCaseResponseType responseType,@JsonKey(fromJson: _requiredText) String message
+ DateTime at,@JsonKey(fromJson: _requiredText) String authorName,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole authorRole,@JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) DiseaseCaseResponseType responseType,@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? careAction,@JsonKey(fromJson: _requiredText) String message
 });
 
 
@@ -2148,13 +2152,14 @@ class _$DiseaseCaseResponseCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? at = null,Object? authorName = null,Object? authorRole = null,Object? responseType = null,Object? message = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? at = null,Object? authorName = null,Object? authorRole = null,Object? responseType = null,Object? careAction = freezed,Object? message = null,}) {
   return _then(DiseaseCaseResponse(
 at: null == at ? _self.at : at // ignore: cast_nullable_to_non_nullable
 as DateTime,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
 as String,authorRole: null == authorRole ? _self.authorRole : authorRole // ignore: cast_nullable_to_non_nullable
 as AccountRole,responseType: null == responseType ? _self.responseType : responseType // ignore: cast_nullable_to_non_nullable
-as DiseaseCaseResponseType,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as DiseaseCaseResponseType,careAction: freezed == careAction ? _self.careAction : careAction // ignore: cast_nullable_to_non_nullable
+as CaseCareAction?,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

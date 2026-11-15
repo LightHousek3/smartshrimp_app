@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InventoryCompliance {
 
- String get regulatoryType; String? get registrationNumber; String? get ingredientsText; bool? get containsAntibiotic; String? get usageInstructions; double? get withdrawalDays; List<String> get evidenceUrls; String get complianceStatus; String? get checkedBy; DateTime? get checkedAt; String? get reviewNote;
+ String? get regulatoryType; String? get registrationNumber; String? get ingredientsText; bool? get containsAntibiotic; String? get usageInstructions; double? get withdrawalDays; List<String> get evidenceUrls; String? get checkedBy; DateTime? get checkedAt;
 /// Create a copy of InventoryCompliance
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $InventoryComplianceCopyWith<InventoryCompliance> get copyWith => _$InventoryCom
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryCompliance&&(identical(other.regulatoryType, regulatoryType) || other.regulatoryType == regulatoryType)&&(identical(other.registrationNumber, registrationNumber) || other.registrationNumber == registrationNumber)&&(identical(other.ingredientsText, ingredientsText) || other.ingredientsText == ingredientsText)&&(identical(other.containsAntibiotic, containsAntibiotic) || other.containsAntibiotic == containsAntibiotic)&&(identical(other.usageInstructions, usageInstructions) || other.usageInstructions == usageInstructions)&&(identical(other.withdrawalDays, withdrawalDays) || other.withdrawalDays == withdrawalDays)&&const DeepCollectionEquality().equals(other.evidenceUrls, evidenceUrls)&&(identical(other.complianceStatus, complianceStatus) || other.complianceStatus == complianceStatus)&&(identical(other.checkedBy, checkedBy) || other.checkedBy == checkedBy)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt)&&(identical(other.reviewNote, reviewNote) || other.reviewNote == reviewNote));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryCompliance&&(identical(other.regulatoryType, regulatoryType) || other.regulatoryType == regulatoryType)&&(identical(other.registrationNumber, registrationNumber) || other.registrationNumber == registrationNumber)&&(identical(other.ingredientsText, ingredientsText) || other.ingredientsText == ingredientsText)&&(identical(other.containsAntibiotic, containsAntibiotic) || other.containsAntibiotic == containsAntibiotic)&&(identical(other.usageInstructions, usageInstructions) || other.usageInstructions == usageInstructions)&&(identical(other.withdrawalDays, withdrawalDays) || other.withdrawalDays == withdrawalDays)&&const DeepCollectionEquality().equals(other.evidenceUrls, evidenceUrls)&&(identical(other.checkedBy, checkedBy) || other.checkedBy == checkedBy)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,regulatoryType,registrationNumber,ingredientsText,containsAntibiotic,usageInstructions,withdrawalDays,const DeepCollectionEquality().hash(evidenceUrls),complianceStatus,checkedBy,checkedAt,reviewNote);
+int get hashCode => Object.hash(runtimeType,regulatoryType,registrationNumber,ingredientsText,containsAntibiotic,usageInstructions,withdrawalDays,const DeepCollectionEquality().hash(evidenceUrls),checkedBy,checkedAt);
 
 @override
 String toString() {
-  return 'InventoryCompliance(regulatoryType: $regulatoryType, registrationNumber: $registrationNumber, ingredientsText: $ingredientsText, containsAntibiotic: $containsAntibiotic, usageInstructions: $usageInstructions, withdrawalDays: $withdrawalDays, evidenceUrls: $evidenceUrls, complianceStatus: $complianceStatus, checkedBy: $checkedBy, checkedAt: $checkedAt, reviewNote: $reviewNote)';
+  return 'InventoryCompliance(regulatoryType: $regulatoryType, registrationNumber: $registrationNumber, ingredientsText: $ingredientsText, containsAntibiotic: $containsAntibiotic, usageInstructions: $usageInstructions, withdrawalDays: $withdrawalDays, evidenceUrls: $evidenceUrls, checkedBy: $checkedBy, checkedAt: $checkedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $InventoryComplianceCopyWith<$Res>  {
   factory $InventoryComplianceCopyWith(InventoryCompliance value, $Res Function(InventoryCompliance) _then) = _$InventoryComplianceCopyWithImpl;
 @useResult
 $Res call({
- String regulatoryType, String? registrationNumber, String? ingredientsText, bool? containsAntibiotic, String? usageInstructions, double? withdrawalDays, List<String> evidenceUrls, String complianceStatus, String? checkedBy, DateTime? checkedAt, String? reviewNote
+ String? regulatoryType, String? registrationNumber, String? ingredientsText, bool? containsAntibiotic, String? usageInstructions, double? withdrawalDays, List<String> evidenceUrls, String? checkedBy, DateTime? checkedAt
 });
 
 
@@ -65,20 +65,18 @@ class _$InventoryComplianceCopyWithImpl<$Res>
 
 /// Create a copy of InventoryCompliance
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? regulatoryType = null,Object? registrationNumber = freezed,Object? ingredientsText = freezed,Object? containsAntibiotic = freezed,Object? usageInstructions = freezed,Object? withdrawalDays = freezed,Object? evidenceUrls = null,Object? complianceStatus = null,Object? checkedBy = freezed,Object? checkedAt = freezed,Object? reviewNote = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? regulatoryType = freezed,Object? registrationNumber = freezed,Object? ingredientsText = freezed,Object? containsAntibiotic = freezed,Object? usageInstructions = freezed,Object? withdrawalDays = freezed,Object? evidenceUrls = null,Object? checkedBy = freezed,Object? checkedAt = freezed,}) {
   return _then(_self.copyWith(
-regulatoryType: null == regulatoryType ? _self.regulatoryType : regulatoryType // ignore: cast_nullable_to_non_nullable
-as String,registrationNumber: freezed == registrationNumber ? _self.registrationNumber : registrationNumber // ignore: cast_nullable_to_non_nullable
+regulatoryType: freezed == regulatoryType ? _self.regulatoryType : regulatoryType // ignore: cast_nullable_to_non_nullable
+as String?,registrationNumber: freezed == registrationNumber ? _self.registrationNumber : registrationNumber // ignore: cast_nullable_to_non_nullable
 as String?,ingredientsText: freezed == ingredientsText ? _self.ingredientsText : ingredientsText // ignore: cast_nullable_to_non_nullable
 as String?,containsAntibiotic: freezed == containsAntibiotic ? _self.containsAntibiotic : containsAntibiotic // ignore: cast_nullable_to_non_nullable
 as bool?,usageInstructions: freezed == usageInstructions ? _self.usageInstructions : usageInstructions // ignore: cast_nullable_to_non_nullable
 as String?,withdrawalDays: freezed == withdrawalDays ? _self.withdrawalDays : withdrawalDays // ignore: cast_nullable_to_non_nullable
 as double?,evidenceUrls: null == evidenceUrls ? _self.evidenceUrls : evidenceUrls // ignore: cast_nullable_to_non_nullable
-as List<String>,complianceStatus: null == complianceStatus ? _self.complianceStatus : complianceStatus // ignore: cast_nullable_to_non_nullable
-as String,checkedBy: freezed == checkedBy ? _self.checkedBy : checkedBy // ignore: cast_nullable_to_non_nullable
+as List<String>,checkedBy: freezed == checkedBy ? _self.checkedBy : checkedBy // ignore: cast_nullable_to_non_nullable
 as String?,checkedAt: freezed == checkedAt ? _self.checkedAt : checkedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,reviewNote: freezed == reviewNote ? _self.reviewNote : reviewNote // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,
   ));
 }
 
@@ -163,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String complianceStatus,  String? checkedBy,  DateTime? checkedAt,  String? reviewNote)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String? checkedBy,  DateTime? checkedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryCompliance() when $default != null:
-return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.complianceStatus,_that.checkedBy,_that.checkedAt,_that.reviewNote);case _:
+return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.checkedBy,_that.checkedAt);case _:
   return orElse();
 
 }
@@ -184,10 +182,10 @@ return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsT
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String complianceStatus,  String? checkedBy,  DateTime? checkedAt,  String? reviewNote)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String? checkedBy,  DateTime? checkedAt)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryCompliance():
-return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.complianceStatus,_that.checkedBy,_that.checkedAt,_that.reviewNote);case _:
+return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.checkedBy,_that.checkedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +202,10 @@ return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsT
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String complianceStatus,  String? checkedBy,  DateTime? checkedAt,  String? reviewNote)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? regulatoryType,  String? registrationNumber,  String? ingredientsText,  bool? containsAntibiotic,  String? usageInstructions,  double? withdrawalDays,  List<String> evidenceUrls,  String? checkedBy,  DateTime? checkedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryCompliance() when $default != null:
-return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.complianceStatus,_that.checkedBy,_that.checkedAt,_that.reviewNote);case _:
+return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsText,_that.containsAntibiotic,_that.usageInstructions,_that.withdrawalDays,_that.evidenceUrls,_that.checkedBy,_that.checkedAt);case _:
   return null;
 
 }
@@ -219,10 +217,10 @@ return $default(_that.regulatoryType,_that.registrationNumber,_that.ingredientsT
 @JsonSerializable()
 
 class _InventoryCompliance extends InventoryCompliance {
-  const _InventoryCompliance({this.regulatoryType = 'unclassified', this.registrationNumber, this.ingredientsText, this.containsAntibiotic, this.usageInstructions, this.withdrawalDays, final  List<String> evidenceUrls = const <String>[], this.complianceStatus = 'draft', this.checkedBy, this.checkedAt, this.reviewNote}): _evidenceUrls = evidenceUrls,super._();
+  const _InventoryCompliance({this.regulatoryType, this.registrationNumber, this.ingredientsText, this.containsAntibiotic, this.usageInstructions, this.withdrawalDays, final  List<String> evidenceUrls = const <String>[], this.checkedBy, this.checkedAt}): _evidenceUrls = evidenceUrls,super._();
   factory _InventoryCompliance.fromJson(Map<String, dynamic> json) => _$InventoryComplianceFromJson(json);
 
-@override@JsonKey() final  String regulatoryType;
+@override final  String? regulatoryType;
 @override final  String? registrationNumber;
 @override final  String? ingredientsText;
 @override final  bool? containsAntibiotic;
@@ -235,10 +233,8 @@ class _InventoryCompliance extends InventoryCompliance {
   return EqualUnmodifiableListView(_evidenceUrls);
 }
 
-@override@JsonKey() final  String complianceStatus;
 @override final  String? checkedBy;
 @override final  DateTime? checkedAt;
-@override final  String? reviewNote;
 
 /// Create a copy of InventoryCompliance
 /// with the given fields replaced by the non-null parameter values.
@@ -253,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryCompliance&&(identical(other.regulatoryType, regulatoryType) || other.regulatoryType == regulatoryType)&&(identical(other.registrationNumber, registrationNumber) || other.registrationNumber == registrationNumber)&&(identical(other.ingredientsText, ingredientsText) || other.ingredientsText == ingredientsText)&&(identical(other.containsAntibiotic, containsAntibiotic) || other.containsAntibiotic == containsAntibiotic)&&(identical(other.usageInstructions, usageInstructions) || other.usageInstructions == usageInstructions)&&(identical(other.withdrawalDays, withdrawalDays) || other.withdrawalDays == withdrawalDays)&&const DeepCollectionEquality().equals(other._evidenceUrls, _evidenceUrls)&&(identical(other.complianceStatus, complianceStatus) || other.complianceStatus == complianceStatus)&&(identical(other.checkedBy, checkedBy) || other.checkedBy == checkedBy)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt)&&(identical(other.reviewNote, reviewNote) || other.reviewNote == reviewNote));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryCompliance&&(identical(other.regulatoryType, regulatoryType) || other.regulatoryType == regulatoryType)&&(identical(other.registrationNumber, registrationNumber) || other.registrationNumber == registrationNumber)&&(identical(other.ingredientsText, ingredientsText) || other.ingredientsText == ingredientsText)&&(identical(other.containsAntibiotic, containsAntibiotic) || other.containsAntibiotic == containsAntibiotic)&&(identical(other.usageInstructions, usageInstructions) || other.usageInstructions == usageInstructions)&&(identical(other.withdrawalDays, withdrawalDays) || other.withdrawalDays == withdrawalDays)&&const DeepCollectionEquality().equals(other._evidenceUrls, _evidenceUrls)&&(identical(other.checkedBy, checkedBy) || other.checkedBy == checkedBy)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,regulatoryType,registrationNumber,ingredientsText,containsAntibiotic,usageInstructions,withdrawalDays,const DeepCollectionEquality().hash(_evidenceUrls),complianceStatus,checkedBy,checkedAt,reviewNote);
+int get hashCode => Object.hash(runtimeType,regulatoryType,registrationNumber,ingredientsText,containsAntibiotic,usageInstructions,withdrawalDays,const DeepCollectionEquality().hash(_evidenceUrls),checkedBy,checkedAt);
 
 @override
 String toString() {
-  return 'InventoryCompliance(regulatoryType: $regulatoryType, registrationNumber: $registrationNumber, ingredientsText: $ingredientsText, containsAntibiotic: $containsAntibiotic, usageInstructions: $usageInstructions, withdrawalDays: $withdrawalDays, evidenceUrls: $evidenceUrls, complianceStatus: $complianceStatus, checkedBy: $checkedBy, checkedAt: $checkedAt, reviewNote: $reviewNote)';
+  return 'InventoryCompliance(regulatoryType: $regulatoryType, registrationNumber: $registrationNumber, ingredientsText: $ingredientsText, containsAntibiotic: $containsAntibiotic, usageInstructions: $usageInstructions, withdrawalDays: $withdrawalDays, evidenceUrls: $evidenceUrls, checkedBy: $checkedBy, checkedAt: $checkedAt)';
 }
 
 
@@ -273,7 +269,7 @@ abstract mixin class _$InventoryComplianceCopyWith<$Res> implements $InventoryCo
   factory _$InventoryComplianceCopyWith(_InventoryCompliance value, $Res Function(_InventoryCompliance) _then) = __$InventoryComplianceCopyWithImpl;
 @override @useResult
 $Res call({
- String regulatoryType, String? registrationNumber, String? ingredientsText, bool? containsAntibiotic, String? usageInstructions, double? withdrawalDays, List<String> evidenceUrls, String complianceStatus, String? checkedBy, DateTime? checkedAt, String? reviewNote
+ String? regulatoryType, String? registrationNumber, String? ingredientsText, bool? containsAntibiotic, String? usageInstructions, double? withdrawalDays, List<String> evidenceUrls, String? checkedBy, DateTime? checkedAt
 });
 
 
@@ -290,20 +286,18 @@ class __$InventoryComplianceCopyWithImpl<$Res>
 
 /// Create a copy of InventoryCompliance
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? regulatoryType = null,Object? registrationNumber = freezed,Object? ingredientsText = freezed,Object? containsAntibiotic = freezed,Object? usageInstructions = freezed,Object? withdrawalDays = freezed,Object? evidenceUrls = null,Object? complianceStatus = null,Object? checkedBy = freezed,Object? checkedAt = freezed,Object? reviewNote = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? regulatoryType = freezed,Object? registrationNumber = freezed,Object? ingredientsText = freezed,Object? containsAntibiotic = freezed,Object? usageInstructions = freezed,Object? withdrawalDays = freezed,Object? evidenceUrls = null,Object? checkedBy = freezed,Object? checkedAt = freezed,}) {
   return _then(_InventoryCompliance(
-regulatoryType: null == regulatoryType ? _self.regulatoryType : regulatoryType // ignore: cast_nullable_to_non_nullable
-as String,registrationNumber: freezed == registrationNumber ? _self.registrationNumber : registrationNumber // ignore: cast_nullable_to_non_nullable
+regulatoryType: freezed == regulatoryType ? _self.regulatoryType : regulatoryType // ignore: cast_nullable_to_non_nullable
+as String?,registrationNumber: freezed == registrationNumber ? _self.registrationNumber : registrationNumber // ignore: cast_nullable_to_non_nullable
 as String?,ingredientsText: freezed == ingredientsText ? _self.ingredientsText : ingredientsText // ignore: cast_nullable_to_non_nullable
 as String?,containsAntibiotic: freezed == containsAntibiotic ? _self.containsAntibiotic : containsAntibiotic // ignore: cast_nullable_to_non_nullable
 as bool?,usageInstructions: freezed == usageInstructions ? _self.usageInstructions : usageInstructions // ignore: cast_nullable_to_non_nullable
 as String?,withdrawalDays: freezed == withdrawalDays ? _self.withdrawalDays : withdrawalDays // ignore: cast_nullable_to_non_nullable
 as double?,evidenceUrls: null == evidenceUrls ? _self._evidenceUrls : evidenceUrls // ignore: cast_nullable_to_non_nullable
-as List<String>,complianceStatus: null == complianceStatus ? _self.complianceStatus : complianceStatus // ignore: cast_nullable_to_non_nullable
-as String,checkedBy: freezed == checkedBy ? _self.checkedBy : checkedBy // ignore: cast_nullable_to_non_nullable
+as List<String>,checkedBy: freezed == checkedBy ? _self.checkedBy : checkedBy // ignore: cast_nullable_to_non_nullable
 as String?,checkedAt: freezed == checkedAt ? _self.checkedAt : checkedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,reviewNote: freezed == reviewNote ? _self.reviewNote : reviewNote // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,
   ));
 }
 

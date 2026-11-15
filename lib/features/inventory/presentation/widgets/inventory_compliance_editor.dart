@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_compliance.dart';
+import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ingredient_editor.dart';
 
-/// Keep optional photos and label facts together for completeness checks.
+/// Edit label facts and evidence links using the shared material declaration rules.
 class InventoryComplianceEditor extends StatelessWidget {
   const InventoryComplianceEditor({
     required this.value,
@@ -94,20 +95,31 @@ class InventoryComplianceEditor extends StatelessWidget {
           labelSize: 12,
           spacing: 6,
           child: DropdownButtonFormField<String>(
-            initialValue: value.regulatoryType,
+            initialValue:
+                const {
+                  'feed',
+                  'environment',
+                  'dual_purpose',
+                  'medicine',
+                }.contains(value.regulatoryType)
+                ? value.regulatoryType
+                : null,
             isExpanded: true,
             icon: _dropdownIcon,
             style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
             decoration: inventoryInputDecoration(),
+            hint: const Text('Chọn loại sản phẩm'),
             validator: (type) =>
-                enabled && (type == null || type == 'unclassified')
+                enabled &&
+                    !const {
+                      'feed',
+                      'environment',
+                      'dual_purpose',
+                      'medicine',
+                    }.contains(type)
                 ? 'Vui lòng chọn loại sản phẩm'
                 : null,
             items: const [
-              DropdownMenuItem(
-                value: 'unclassified',
-                child: Text('Chọn loại sản phẩm'),
-              ),
               DropdownMenuItem(value: 'feed', child: Text('Thức ăn thủy sản')),
               DropdownMenuItem(
                 value: 'environment',
@@ -120,19 +132,26 @@ class InventoryComplianceEditor extends StatelessWidget {
               DropdownMenuItem(value: 'medicine', child: Text('Thuốc thú y')),
             ],
             onChanged: enabled
-                ? (type) => onChanged(value.copyWith(regulatoryType: type!))
+                ? (type) => onChanged(value.copyWith(regulatoryType: type))
                 : null,
           ),
         ),
         _text(
-          'Mã số tiếp nhận *',
+          value.regulatoryType == 'medicine'
+              ? 'Số đăng ký lưu hành thuốc thú y *'
+              : 'Mã số tiếp nhận *',
           value.registrationNumber,
           (text) =>
               onChanged(value.copyWith(registrationNumber: _nullable(text))),
-          hint: 'Nhập mã số',
+          hint: InventoryRules.registrationPlaceholder(value.regulatoryType),
+          helperText: InventoryRules.registrationHint(value.regulatoryType),
+          validator: (text) => InventoryRules.registrationNumberError(
+            value.regulatoryType,
+            text,
+          ),
           maxLength: 100,
         ),
-        if (value.regulatoryType == 'unclassified') ...[
+        if (value.regulatoryType == null) ...[
           const SizedBox(height: 6),
           const Text(
             'Chưa đủ căn cứ xác định loại sản phẩm.',
@@ -244,6 +263,8 @@ class InventoryComplianceEditor extends StatelessWidget {
     String? text,
     ValueChanged<String> changed, {
     String? hint,
+    String? helperText,
+    String? Function(String?)? validator,
     int maxLength = 50000,
     bool multiline = false,
   }) => Padding(
@@ -259,13 +280,21 @@ class InventoryComplianceEditor extends StatelessWidget {
         minLines: multiline ? 4 : 1,
         maxLines: multiline ? 8 : 1,
         style: inventoryInputTextStyle,
-        decoration: inventoryInputDecoration(
-          hintText: hint,
-        ).copyWith(counterText: ''),
+        decoration: inventoryInputDecoration(hintText: hint).copyWith(
+          counterText: '',
+          helperText: helperText,
+          helperMaxLines: 5,
+          errorMaxLines: 5,
+        ),
         onChanged: changed,
-        validator: (text) => enabled && (text == null || text.trim().isEmpty)
-            ? 'Vui lòng nhập ${label.replaceAll(' *', '').toLowerCase()}'
-            : null,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (text) {
+          if (!enabled) return null;
+          if (validator != null) return validator(text);
+          return text == null || text.trim().isEmpty
+              ? 'Vui lòng nhập ${label.replaceAll(' *', '').toLowerCase()}'
+              : null;
+        },
       ),
     ),
   );

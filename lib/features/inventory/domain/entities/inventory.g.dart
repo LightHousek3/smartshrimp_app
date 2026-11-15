@@ -152,7 +152,6 @@ const _$InventoryProductUnitEnumMap = {
   InventoryProductUnit.ml: 'ML',
   InventoryProductUnit.pack: 'PACK',
   InventoryProductUnit.bottle: 'BOTTLE',
-  InventoryProductUnit.pcs: 'PCS',
   InventoryProductUnit.unknown: 'unknown',
 };
 

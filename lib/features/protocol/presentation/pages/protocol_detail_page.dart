@@ -170,7 +170,7 @@ class _DetailContent extends ConsumerWidget {
                 padding: EdgeInsets.all(14),
                 radius: 12,
                 child: Text(
-                  'Phác đồ điều trị chưa được duyệt nên chưa có ngày bắt đầu và chưa thể tạo lịch vận hành. Các cữ dưới đây là kế hoạch dự kiến để Chủ trại xem trước.',
+                  'Chưa có mốc bắt đầu điều trị hợp lệ. Chuyên gia cần đặt mốc và Chủ trại duyệt trước mốc đó; các cữ dưới đây là kế hoạch để đối chiếu.',
                   style: TextStyle(
                     fontSize: 10,
                     height: 1.625,

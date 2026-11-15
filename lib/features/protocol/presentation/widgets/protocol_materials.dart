@@ -29,6 +29,9 @@ class _ProtocolMaterialsState extends State<ProtocolMaterials> {
     final rows = widget.detail.materialReviews;
     final canChoose =
         widget.onSelectionsChanged != null && widget.detail.canReview;
+    final dayLabel = widget.detail.card.protocolType == ProtocolType.treatment
+        ? 'Ngày điều trị'
+        : 'DOC';
     return ProtocolSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,11 +44,11 @@ class _ProtocolMaterialsState extends State<ProtocolMaterials> {
             Text(
               'Khởi tạo từ mẫu phiên bản $version; nội dung phác đồ được lưu độc lập.',
             ),
-          if (canChoose)
+          if (canChoose && rows.any((row) => row.requiresResolution))
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Đề xuất chưa phải vật tư được phép thực thi. Chọn catalog đủ hồ sơ của trang trại trước khi duyệt. Hệ thống không tự tạo sản phẩm hoặc nhà sản xuất.',
+                'Chọn vật tư catalog phù hợp của trang trại cho các đề xuất chưa được liên kết trước khi duyệt.',
               ),
             ),
           ...rows.skip(_page * _pageSize).take(_pageSize).map((row) {
@@ -56,7 +59,7 @@ class _ProtocolMaterialsState extends State<ProtocolMaterials> {
               tilePadding: EdgeInsets.zero,
               title: Text(row.name),
               subtitle: Text(
-                'DOC ${row.firstDay}–${row.lastDay} · ${row.mealNumber == null ? 'Môi trường' : 'Cữ ${row.mealNumber}'} · ${row.plannedTime?.substring(0, 5) ?? 'Chưa đặt giờ'}',
+                '$dayLabel ${row.firstDay}–${row.lastDay} · ${row.mealNumber == null ? 'Môi trường' : 'Cữ ${row.mealNumber}'} · ${row.plannedTime?.substring(0, 5) ?? 'Chưa đặt giờ'}',
               ),
               children: [
                 Column(
@@ -66,10 +69,10 @@ class _ProtocolMaterialsState extends State<ProtocolMaterials> {
                       '${row.doseValue} ${protocolUnit(row.doseUnit)} · ${_basis(row.doseBasis)} / lần',
                     ),
                     Text(
-                      'Lặp mỗi ${row.repeatIntervalDays} ngày, mốc DOC ${row.recurrenceAnchorDay}.',
+                      'Lặp mỗi ${row.repeatIntervalDays} ngày, mốc $dayLabel ${row.recurrenceAnchorDay}.',
                     ),
                     Text(
-                      'Tăng ${row.dailyDoseIncrement} ${protocolUnit(row.doseUnit)}/ngày, liều gốc tại DOC ${row.doseAnchorDay}.',
+                      'Tăng ${row.dailyDoseIncrement} ${protocolUnit(row.doseUnit)}/ngày, liều gốc tại $dayLabel ${row.doseAnchorDay}.',
                     ),
                     if (row.proposed case final proposed?)
                       _MaterialEvidence(
@@ -198,9 +201,7 @@ class _MaterialEvidence extends StatelessWidget {
             Text(
               'Quy đổi: $quantity ${material.conversionUnit ?? ''} / ${material.unit}',
             ),
-          Text(
-            'Hồ sơ: ${profile?.complianceStatus ?? 'Chưa được kiểm duyệt'} · ${profile?.regulatoryType ?? 'Chưa phân loại'}',
-          ),
+          Text('Loại hồ sơ: ${profile?.regulatoryType ?? 'Chưa xác định'}'),
           if (profile?.registrationNumber case final number?)
             Text('Số tiếp nhận/ĐKLH: $number'),
           if (profile?.ingredientsText case final ingredients?)
@@ -217,8 +218,9 @@ class _MaterialEvidence extends StatelessWidget {
           if (profile?.withdrawalDays case final days?)
             Text('Ngừng thuốc: $days ngày'),
           if (profile?.checkedAt case final checked?)
-            Text('Đối chiếu: ${protocolDate(checked, year: true, time: true)}'),
-          if (profile?.reviewNote case final note?) Text(note),
+            Text(
+              'Xác nhận dữ liệu: ${protocolDate(checked, year: true, time: true)}',
+            ),
           if (material.recommendationReason case final reason?)
             Text('Lý do: $reason'),
           for (final evidence in profile?.evidenceUrls ?? <String>[])

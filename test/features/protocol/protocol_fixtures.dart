@@ -281,11 +281,9 @@ Map<String, dynamic> materialOptionJson() => {
       'usageInstructions': 'Theo nhãn',
       'containsAntibiotic': false,
       'withdrawalDays': '0.000',
-      'complianceStatus': 'reviewed',
       'evidenceUrls': ['https://example.test/catalog'],
       'checkedBy': 'owner',
       'checkedAt': '2026-10-30T00:00:00Z',
-      'reviewNote': 'Đã đối chiếu hồ sơ',
     },
   },
 };

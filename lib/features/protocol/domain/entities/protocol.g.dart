@@ -75,6 +75,9 @@ const _$ProtocolStatusEnumMap = {
   ProtocolStatus.draft: 'DRAFT',
   ProtocolStatus.pendingApproval: 'PENDING_APPROVAL',
   ProtocolStatus.approved: 'APPROVED',
+  ProtocolStatus.active: 'ACTIVE',
+  ProtocolStatus.paused: 'PAUSED',
+  ProtocolStatus.completed: 'COMPLETED',
   ProtocolStatus.rejected: 'REJECTED',
   ProtocolStatus.superseded: 'SUPERSEDED',
   ProtocolStatus.cancelled: 'CANCELLED',
@@ -170,13 +173,11 @@ _ProtocolMaterialProfile _$ProtocolMaterialProfileFromJson(
       (v) =>
           (v as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
     ),
-    complianceStatus: $checkedConvert('complianceStatus', (v) => v as String?),
     checkedBy: $checkedConvert('checkedBy', (v) => v as String?),
     checkedAt: $checkedConvert(
       'checkedAt',
       (v) => v == null ? null : DateTime.parse(v as String),
     ),
-    reviewNote: $checkedConvert('reviewNote', (v) => v as String?),
   );
   return val;
 });
@@ -191,10 +192,8 @@ Map<String, dynamic> _$ProtocolMaterialProfileToJson(
   'usageInstructions': instance.usageInstructions,
   'withdrawalDays': instance.withdrawalDays,
   'evidenceUrls': instance.evidenceUrls,
-  'complianceStatus': instance.complianceStatus,
   'checkedBy': instance.checkedBy,
   'checkedAt': instance.checkedAt?.toIso8601String(),
-  'reviewNote': instance.reviewNote,
 };
 
 _ProtocolManufacturer _$ProtocolManufacturerFromJson(
@@ -373,6 +372,10 @@ _ProtocolDetail _$ProtocolDetailFromJson(
       'reviewedAt',
       (v) => v == null ? null : DateTime.parse(v as String),
     ),
+    treatmentStartAt: $checkedConvert(
+      'treatmentStartAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
     reviewerName: $checkedConvert('reviewerName', (v) => v as String?),
     rejectionReason: $checkedConvert('rejectionReason', (v) => v as String?),
     supersededAt: $checkedConvert(
@@ -423,6 +426,7 @@ Map<String, dynamic> _$ProtocolDetailToJson(_ProtocolDetail instance) =>
       'anchorDate': instance.anchorDate,
       'durationDays': instance.durationDays,
       'reviewedAt': instance.reviewedAt?.toIso8601String(),
+      'treatmentStartAt': instance.treatmentStartAt?.toIso8601String(),
       'reviewerName': instance.reviewerName,
       'rejectionReason': instance.rejectionReason,
       'supersededAt': instance.supersededAt?.toIso8601String(),

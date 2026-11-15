@@ -124,7 +124,6 @@ final class InventoryRepositoryImpl implements InventoryRepository {
               imageUrls: imageUrls,
             ),
           'minAlertQuantity': minAlertQuantity,
-          if (product.metadataLocked) 'description': _nullableText(description),
           'expectedUpdatedAt': product.updatedAt.toUtc().toIso8601String(),
         });
   }
@@ -337,7 +336,6 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     InventoryProductUnit.ml => 'ML',
     InventoryProductUnit.pack => 'PACK',
     InventoryProductUnit.bottle => 'BOTTLE',
-    InventoryProductUnit.pcs => 'PCS',
     InventoryProductUnit.unknown => throw ArgumentError.value(value),
   };
 

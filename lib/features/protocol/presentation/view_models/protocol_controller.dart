@@ -38,6 +38,7 @@ final protocolRepositoryProvider = Provider<ProtocolRepository>(
   (ref) => ProtocolApiService(ref.watch(apiClientProvider)),
 );
 
+/// Watch identity changes and reject non-Owner or inactive sessions.
 void _watchOwner(Ref ref) {
   final account = ref.watch(
     authControllerProvider.select(
@@ -50,6 +51,7 @@ void _watchOwner(Ref ref) {
   }
 }
 
+/// Propagate session expiry without converting ordinary request failures into logout.
 Future<T> _session<T>(Ref ref, Future<T> Function() action) async {
   try {
     return await action();
@@ -115,6 +117,7 @@ class ProtocolListController extends AsyncNotifier<ProtocolPage> {
         ),
   );
 
+  /// Append unique versions while preventing overlapping requests for the next page.
   Future<void> loadMore() async {
     final current = state.value;
     if (_loadingMore || current == null || !current.hasNextPage) return;
@@ -153,6 +156,7 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
     return null;
   }
 
+  /// Submit the displayed revision and refresh the case and season affected by the decision.
   Future<bool> submit(
     ProtocolDetail detail, {
     required bool approve,
@@ -177,9 +181,9 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
     if (!approve &&
         (reason == null ||
             reason.trim().isEmpty ||
-            reason.trim().length > 2000)) {
+            reason.trim().length > 500)) {
       state = AsyncError(
-        const ApiException('Vui lòng nhập lý do từ chối (tối đa 2000 ký tự).'),
+        const ApiException('Vui lòng nhập lý do từ chối (tối đa 500 ký tự).'),
         StackTrace.current,
       );
       return false;
@@ -210,7 +214,9 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
       ref.invalidate(seasonDetailControllerProvider(detail.card.seasonId));
       if (detail.card.diseaseCaseId case final caseId?) {
         ref.invalidate(owner_case.diseaseCaseDetailProvider(caseId));
-        ref.invalidate(owner_case.diseaseCaseListProvider(detail.card.seasonId));
+        ref.invalidate(
+          owner_case.diseaseCaseListProvider(detail.card.seasonId),
+        );
       }
       ref.invalidate(ownerDashboardProvider);
       return true;

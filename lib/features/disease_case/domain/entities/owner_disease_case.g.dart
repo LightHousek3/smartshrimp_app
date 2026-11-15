@@ -136,6 +136,10 @@ _DiseaseCaseDetail _$DiseaseCaseDetailFromJson(
       'resolutionSummary',
       (v) => v as String?,
     ),
+    productionPaused: $checkedConvert(
+      'productionPaused',
+      (v) => v as bool? ?? false,
+    ),
   );
   return val;
 });
@@ -154,6 +158,7 @@ Map<String, dynamic> _$DiseaseCaseDetailToJson(_DiseaseCaseDetail instance) =>
       'timeline': instance.timeline,
       'snapshot': instance.snapshot,
       'resolutionSummary': instance.resolutionSummary,
+      'productionPaused': instance.productionPaused,
     };
 
 _DiseaseCaseSnapshot _$DiseaseCaseSnapshotFromJson(Map<String, dynamic> json) =>
@@ -262,6 +267,9 @@ const _$ProtocolStatusEnumMap = {
   ProtocolStatus.draft: 'DRAFT',
   ProtocolStatus.pendingApproval: 'PENDING_APPROVAL',
   ProtocolStatus.approved: 'APPROVED',
+  ProtocolStatus.active: 'ACTIVE',
+  ProtocolStatus.paused: 'PAUSED',
+  ProtocolStatus.completed: 'COMPLETED',
   ProtocolStatus.rejected: 'REJECTED',
   ProtocolStatus.superseded: 'SUPERSEDED',
   ProtocolStatus.cancelled: 'CANCELLED',
@@ -329,6 +337,14 @@ DiseaseCaseResponse _$DiseaseCaseResponseFromJson(Map<String, dynamic> json) =>
             unknownValue: DiseaseCaseResponseType.unknown,
           ),
         ),
+        careAction: $checkedConvert(
+          'careAction',
+          (v) => $enumDecodeNullable(
+            _$CaseCareActionEnumMap,
+            v,
+            unknownValue: CaseCareAction.unknown,
+          ),
+        ),
         message: $checkedConvert('message', (v) => _requiredText(v)),
         $type: $checkedConvert('kind', (v) => v as String?),
       );
@@ -342,6 +358,7 @@ Map<String, dynamic> _$DiseaseCaseResponseToJson(
   'authorName': instance.authorName,
   'authorRole': _$AccountRoleEnumMap[instance.authorRole]!,
   'responseType': _$DiseaseCaseResponseTypeEnumMap[instance.responseType]!,
+  'careAction': _$CaseCareActionEnumMap[instance.careAction],
   'message': instance.message,
   'kind': instance.$type,
 };
@@ -355,6 +372,7 @@ const _$AccountRoleEnumMap = {
 };
 
 const _$DiseaseCaseResponseTypeEnumMap = {
+  DiseaseCaseResponseType.normal: 'NORMAL',
   DiseaseCaseResponseType.requestInfo: 'REQUEST_INFO',
   DiseaseCaseResponseType.provideInfo: 'PROVIDE_INFO',
   DiseaseCaseResponseType.monitoringResult: 'MONITORING_RESULT',
@@ -364,4 +382,11 @@ const _$DiseaseCaseResponseTypeEnumMap = {
   DiseaseCaseResponseType.expertInstruction: 'EXPERT_INSTRUCTION',
   DiseaseCaseResponseType.resolution: 'RESOLUTION',
   DiseaseCaseResponseType.unknown: 'unknown',
+};
+
+const _$CaseCareActionEnumMap = {
+  CaseCareAction.monitor: 'MONITOR',
+  CaseCareAction.resumeProduction: 'RESUME_PRODUCTION',
+  CaseCareAction.closeWithoutProduction: 'CLOSE_WITHOUT_PRODUCTION',
+  CaseCareAction.unknown: 'unknown',
 };

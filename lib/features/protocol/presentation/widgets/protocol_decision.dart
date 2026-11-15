@@ -10,6 +10,7 @@ import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_
 
 enum _DecisionMode { initial, approve, reject }
 
+/// Confirm the Owner's decision without replacing the Expert's prescription or start time.
 class ProtocolDecision extends ConsumerStatefulWidget {
   const ProtocolDecision({required this.detail, super.key});
   final ProtocolDetail detail;
@@ -25,6 +26,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   @override
   void didUpdateWidget(covariant ProtocolDecision oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // A refreshed revision invalidates the previous material choices and confirmation step.
     if (oldWidget.detail.updatedAt != widget.detail.updatedAt) {
       _materialSelections = {};
       _mode = _DecisionMode.initial;
@@ -148,7 +150,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                   const SizedBox(height: 4),
                   Text(
                     widget.detail.card.protocolType == ProtocolType.treatment
-                        ? 'Phiên bản sẽ bị khóa. Ngày duyệt hôm nay trở thành ngày 1 điều trị.'
+                        ? 'Phiên bản sẽ bị khóa. Điều trị bắt đầu theo mốc Expert đã đặt${widget.detail.treatmentStartAt == null ? '' : ': ${protocolDate(widget.detail.treatmentStartAt, year: true, time: true)}'}. Duyệt không đồng nghĩa bắt đầu điều trị ngay.'
                         : 'Phiên bản sẽ bị khóa. Lịch được sinh cuốn theo ngày thả giống, không tạo cứng toàn bộ mùa vụ.',
                     style: const TextStyle(
                       fontSize: 10,
@@ -179,11 +181,14 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                           ),
                           isLoading: busy,
                           onPressed:
-                              widget.detail.materialReviews.any(
-                                (m) =>
-                                    m.requiresResolution &&
-                                    !_materialSelections.containsKey(m.itemId),
-                              )
+                              busy ||
+                                  widget.detail.materialReviews.any(
+                                    (m) =>
+                                        m.requiresResolution &&
+                                        !_materialSelections.containsKey(
+                                          m.itemId,
+                                        ),
+                                  )
                               ? null
                               : () => _submit(true),
                         ),
@@ -219,13 +224,13 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                       enabled: !busy,
                       minLines: 3,
                       maxLines: 5,
-                      maxLength: 2000,
+                      maxLength: 500,
                       style: const TextStyle(fontSize: 13, height: 1.6),
                       validator: (value) =>
                           value == null || value.trim().isEmpty
                           ? 'Vui lòng nhập lý do từ chối.'
-                          : value.trim().length > 2000
-                          ? 'Tối đa 2000 ký tự.'
+                          : value.trim().length > 500
+                          ? 'Tối đa 500 ký tự.'
                           : null,
                       decoration: InputDecoration(
                         hintText:
@@ -314,7 +319,7 @@ class _Ghost extends StatelessWidget {
     style: OutlinedButton.styleFrom(
       backgroundColor: Colors.white,
       foregroundColor: AppColors.inkSoft,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       minimumSize: const Size(0, 47),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       side: const BorderSide(color: AppColors.line, width: 1.25),

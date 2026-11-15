@@ -9,7 +9,9 @@ import '../../domain/domain.dart';
 import '../view_models/disease_case_controller.dart';
 import '../widgets/case_ui.dart';
 import '../widgets/case_evidence_picker.dart';
+import '../widgets/case_care_notice.dart';
 
+/// Show observations, evidence and conversation for the technician's selected case.
 class DiseaseCaseDetailPage extends ConsumerStatefulWidget {
   const DiseaseCaseDetailPage({
     super.key,
@@ -32,8 +34,6 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
   bool _historyExpanded = false;
   final _message = TextEditingController();
   final _form = GlobalKey<FormState>();
-  CaseResponseType _type = CaseResponseType.provideInfo;
-  bool _initialType = false;
   List<String> _evidence = [];
   bool _uploading = false;
   @override
@@ -94,7 +94,7 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
           .respond(
             widget.seasonId,
             item,
-            _type,
+            CaseResponseType.normal,
             _message.text,
             attachments: _evidence,
           );
@@ -182,14 +182,6 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
     final item = state.value;
     final sending = ref.watch(diseaseCaseMutationProvider).isLoading;
     final busy = sending || _uploading || item == null || state.hasError;
-    if (item != null && !_initialType) {
-      _initialType = true;
-      _type = switch (item.status) {
-        DiseaseCaseStatus.inTreatment => CaseResponseType.treatmentResult,
-        DiseaseCaseStatus.monitoring => CaseResponseType.monitoringResult,
-        _ => CaseResponseType.provideInfo,
-      };
-    }
     return CaseFrame(
       title: item?.title ?? 'Chi tiết ca bệnh',
       subtitle: item == null ? null : caseContext(item.caseSnapshot),
@@ -234,6 +226,7 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
             padding: const EdgeInsets.fromLTRB(3, 5, 3, 20),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
+              if (item.productionPaused) const CaseCareNotice(),
               CaseSurface(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,42 +421,12 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: DropdownButtonFormField<CaseResponseType>(
-                  key: ValueKey(_type),
-                  initialValue: _type,
-                  isExpanded: true,
-                  decoration: caseInput('').copyWith(
-                    fillColor: const Color(0xFFF0F3F8),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                  ),
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkSoft,
-                  ),
-                  items: [
-                    for (final type in CaseResponseType.technicianTypes.where(
-                      (v) => v != CaseResponseType.emergencyAlert,
-                    ))
-                      DropdownMenuItem(
-                        value: type,
-                        child: Text(
-                          type.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: busy
-                      ? null
-                      : (value) => setState(() => _type = value!),
+              const Expanded(
+                child: Text(
+                  'Trao đổi với chuyên gia',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
-              const SizedBox(width: 10),
               Tooltip(
                 message: 'Gửi cảnh báo khẩn cho chuyên gia',
                 child: OutlinedButton.icon(
@@ -496,14 +459,8 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
             textCapitalization: TextCapitalization.sentences,
             keyboardType: TextInputType.multiline,
             style: const TextStyle(fontSize: 14, height: 1.5),
-            decoration:
-                caseInput(switch (_type) {
-                  CaseResponseType.monitoringResult =>
-                    'Ghi nhận diễn biến và kết quả theo dõi…',
-                  CaseResponseType.treatmentResult =>
-                    'Ghi nhận đáp ứng và diễn biến điều trị…',
-                  _ => 'Nhập thông tin cần gửi cho chuyên gia…',
-                }).copyWith(
+            decoration: caseInput('Nhập thông tin cần gửi cho chuyên gia…')
+                .copyWith(
                   hintStyle: const TextStyle(
                     fontSize: 13,
                     height: 1.5,
@@ -709,12 +666,15 @@ class _ResponseBubble extends StatelessWidget {
   final Widget Function(List<String>) attachmentBuilder;
   @override
   Widget build(BuildContext context) {
-    final mine = CaseResponseType.technicianTypes.contains(
-      response.responseType,
-    );
+    final mine = response.author?['role'] == 'TECHNICIAN';
     final author = response.author?['fullName'];
     final type = response.responseType;
-    final color = type == CaseResponseType.emergencyAlert
+    // Decision styling comes from audit metadata, never from the message's wording.
+    final isCare = response.careAction?.isDecision ?? false;
+    final careVisual = appNoticeVisualFor(AppNoticeLevel.warning);
+    final color = isCare
+        ? careVisual.foreground
+        : type == CaseResponseType.emergencyAlert
         ? caseRose
         : type == CaseResponseType.instruction
         ? caseViolet
@@ -728,10 +688,18 @@ class _ResponseBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: mine ? const Color(0xFFE5F2FF) : Colors.white,
+              color: isCare
+                  ? careVisual.background
+                  : mine
+                  ? const Color(0xFFE5F2FF)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(17),
               border: Border.all(
-                color: mine ? const Color(0xFFCDE5FB) : AppColors.line,
+                color: isCare
+                    ? careVisual.border
+                    : mine
+                    ? const Color(0xFFCDE5FB)
+                    : AppColors.line,
               ),
             ),
             child: Column(
@@ -755,7 +723,7 @@ class _ResponseBubble extends StatelessWidget {
                       ),
                     ),
                     CaseBadge(
-                      type.label,
+                      isCare ? 'Quyết định chăm sóc' : type.label,
                       color: color,
                       background: color.withValues(alpha: .09),
                     ),

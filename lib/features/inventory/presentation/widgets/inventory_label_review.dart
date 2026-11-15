@@ -17,6 +17,7 @@ const inventoryLabelFieldNames = {
   'withdrawalDays': 'Thời gian ngừng (ngày)',
 };
 
+/// Expose only label fields that the review form can apply to the product draft.
 Map<String, Object?> inventoryLabelValues(InventoryLabelResult result) => {
   'name': result.name,
   'regulatoryType': result.regulatoryType,
@@ -51,7 +52,6 @@ class _InventoryLabelReviewState extends State<InventoryLabelReview> {
     'environment' => 'Xử lý môi trường',
     'dual_purpose' => 'Thức ăn và xử lý môi trường',
     'medicine' => 'Thuốc thú y',
-    'unclassified' => 'Chưa phân loại',
     _ => value.toString(),
   };
 

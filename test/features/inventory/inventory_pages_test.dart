@@ -270,7 +270,7 @@ void main() {
     }
 
     await select('Loại sản phẩm *', 'Thức ăn thủy sản');
-    await enterField(tester, 'Mã số tiếp nhận', 'REG-1');
+    await enterField(tester, 'Mã số tiếp nhận', '01-123456');
     await enterField(tester, 'Thành phần / hoạt chất', 'Thành phần theo nhãn');
     await enterField(tester, 'Hướng dẫn sử dụng', 'Hướng dẫn theo nhãn');
     await select('Có chứa kháng sinh? *', 'Không có kháng sinh');
@@ -612,7 +612,7 @@ void main() {
       final inventory = _InventoryRepository(
         product: _product().copyWith(
           compliance: _product().compliance!.copyWith(
-            registrationNumber: 'REG-OLD',
+            registrationNumber: '01-123457',
             evidenceUrls: ['https://example.com/evidence.pdf'],
           ),
         ),
@@ -638,7 +638,7 @@ void main() {
       await submitForm(tester, 'Lưu thay đổi');
       expect(
         inventory.updatedCompliance,
-        containsPair('registrationNumber', 'REG-OLD'),
+        containsPair('registrationNumber', '01-123457'),
       );
       expect(
         inventory.updatedCompliance,
@@ -1693,9 +1693,7 @@ void main() {
   });
 
   group('Inventory UI', () {
-    testWidgets('used product only permits threshold and description edits', (
-      tester,
-    ) async {
+    testWidgets('used product only permits threshold edits', (tester) async {
       final repository = _InventoryRepository(
         product: _product().copyWith(
           manufacturerId: '',
@@ -1718,11 +1716,16 @@ void main() {
       expect(find.text('Tên vật tư *'), findsNothing);
       expect(find.text('Loại sản phẩm *'), findsNothing);
       await enterField(tester, 'Ngưỡng cảnh báo', '25');
-      await enterField(tester, 'Mô tả', 'Mô tả mới');
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is TextFormField && widget.enabled == false,
+        ),
+        findsOneWidget,
+      );
       await submitForm(tester, 'Lưu thay đổi');
       expect(repository.updateCalls, 1);
       expect(repository.product.minAlertQuantity, 25);
-      expect(repository.product.description, 'Mô tả mới');
+      expect(repository.product.description, _product().description);
       expect(tester.takeException(), isNull);
     });
     testWidgets(
@@ -2589,7 +2592,7 @@ domain.InventoryProduct _product() {
     manufacturer: {'id': 'supplier', 'name': 'Nhà cung cấp A'},
     compliance: const domain.InventoryCompliance(
       regulatoryType: 'feed',
-      registrationNumber: 'REG-1',
+      registrationNumber: '01-123456',
       ingredientsText: 'Thành phần',
       usageInstructions: 'Theo nhãn',
       containsAntibiotic: false,
