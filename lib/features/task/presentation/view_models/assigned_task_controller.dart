@@ -1,4 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:smartshrimp_app/core/config/app_config.dart';
+import 'package:smartshrimp_app/core/network/cloudinary_image_storage.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
@@ -8,10 +12,20 @@ import 'package:smartshrimp_app/features/task/data/repositories/task_repository_
 import 'package:smartshrimp_app/features/task/data/services/task_api_service.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/domain/repositories/task_repository.dart';
+import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
+
+final taskImagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 
 final assignedTaskRepositoryProvider = Provider<AssignedTaskRepository>(
-  (ref) =>
-      AssignedTaskRepositoryImpl(TaskApiService(ref.watch(apiClientProvider))),
+  (ref) => AssignedTaskRepositoryImpl(
+    TaskApiService(ref.watch(apiClientProvider)),
+    evidenceStorage: CloudinaryImageStorage(
+      ref.watch(cloudinaryDioProvider),
+      folder: AppConfig.cloudinaryTaskEvidenceFolder,
+      validateBytes: TaskRules.validateEvidenceImage,
+      label: 'ảnh minh chứng',
+    ),
+  ),
 );
 
 Future<T> _authorized<T>(
@@ -95,13 +109,22 @@ final class AssignedTaskMutationController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<TaskItem> advance(TaskItem task) async {
+  Future<String> uploadEvidence(Uint8List bytes, String fileName) =>
+      _authorized(ref, (repo) => repo.uploadEvidence(bytes, fileName));
+
+  Future<TaskItem> advance(
+    TaskItem task, {
+    List<String> evidenceUrls = const [],
+  }) async {
     if (state.isLoading) {
       throw const ApiException('Thao tác trước đang được xử lý.');
     }
     state = const AsyncLoading();
     try {
-      final updated = await _authorized(ref, (repo) => repo.advance(task));
+      final updated = await _authorized(
+        ref,
+        (repo) => repo.advance(task, evidenceUrls: evidenceUrls),
+      );
       if (ref.mounted) {
         state = const AsyncData(null);
         ref.invalidate(assignedTaskListProvider);

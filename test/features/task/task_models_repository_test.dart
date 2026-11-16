@@ -57,6 +57,34 @@ class CaptureTaskRemote implements TaskRemoteDataSource {
 
 void main() {
   test(
+    'N/A/B: evidence parses, is immutable and rejects malformed response values',
+    () {
+      expect(TaskItem.fromJson(jsonTask()).evidenceUrls, isEmpty);
+      final task = TaskItem.fromJson({
+        ...jsonTask(),
+        'evidenceUrls': ['https://images.test/one.jpg'],
+      });
+      expect(task.evidenceUrls, ['https://images.test/one.jpg']);
+      expect(
+        () => task.evidenceUrls.add('https://images.test/two.jpg'),
+        throwsUnsupportedError,
+      );
+      for (final invalid in [
+        null,
+        'https://images.test/one.jpg',
+        [1],
+        ['http://images.test/one.jpg'],
+        ['https://images.test/one.jpg', 'https://images.test/one.jpg'],
+        List.generate(6, (index) => 'https://images.test/$index.jpg'),
+      ]) {
+        expect(
+          () => TaskItem.fromJson({...jsonTask(), 'evidenceUrls': invalid}),
+          throwsA(isA<InvalidResponseException>()),
+        );
+      }
+    },
+  );
+  test(
     'N/A/B: counts map every database status and reject incomplete or invalid totals',
     () {
       final json = {

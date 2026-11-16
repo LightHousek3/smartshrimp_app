@@ -151,7 +151,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       setState(
         () => _error = farmId == null
             ? 'Vui lòng chọn trang trại.'
-            : 'Vui lòng chọn nhân sự.',
+            : TaskRules.assigneeError(assignedTo, hasSeason: _seasonId != null),
       );
       return;
     }
@@ -498,8 +498,10 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
             FormField<String>(
               key: ValueKey('assignee-$_farmId-$_seasonId'),
               initialValue: assignedTo,
-              validator: (_) =>
-                  assignedTo == null ? 'Vui lòng chọn nhân sự.' : null,
+              validator: (_) => TaskRules.assigneeError(
+                assignedTo,
+                hasSeason: _seasonId != null,
+              ),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               builder: (field) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -518,7 +520,9 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                               },
                       ),
                     ),
-                  if (field.hasError) AppFieldError(field.errorText!),
+                  // An unassigned season already has a visible assignment warning below.
+                  if (field.hasError && _seasonId == null)
+                    AppFieldError(field.errorText!),
                 ],
               ),
             ),
@@ -526,7 +530,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
               Text(
                 _seasonId == null
                     ? 'Chưa có kỹ thuật viên đang hoạt động.'
-                    : 'Vụ nuôi chưa có kỹ thuật viên đang phụ trách. Vui lòng phân công trước khi giao nhiệm vụ.',
+                    : TaskRules.missingSeasonTechnicianMessage,
                 style: const TextStyle(fontSize: 12, color: AppColors.error),
               ),
             if (_error != null)

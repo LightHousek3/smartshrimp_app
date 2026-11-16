@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/network/cloudinary_image_storage.dart';
 import 'package:smartshrimp_app/features/task/data/services/task_api_service.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/domain/repositories/task_repository.dart';
@@ -64,8 +66,22 @@ final class TaskRepositoryImpl implements TaskRepository {
 }
 
 final class AssignedTaskRepositoryImpl implements AssignedTaskRepository {
-  AssignedTaskRepositoryImpl(this._remote);
+  AssignedTaskRepositoryImpl(
+    this._remote, {
+    CloudinaryImageStorage? evidenceStorage,
+  }) : _evidenceStorage = evidenceStorage;
   final AssignedTaskRemoteDataSource _remote;
+  final CloudinaryImageStorage? _evidenceStorage;
+
+  @override
+  Future<String> uploadEvidence(Uint8List bytes, String fileName) {
+    TaskRules.validateEvidenceImage(bytes);
+    final storage = _evidenceStorage;
+    if (storage == null) {
+      throw const ApiException('Ứng dụng chưa được cấu hình dịch vụ tải ảnh.');
+    }
+    return storage.upload(bytes: bytes, fileName: fileName);
+  }
 
   @override
   Future<TaskPage> list(TaskGroup group, {int page = 1}) =>
@@ -75,7 +91,16 @@ final class AssignedTaskRepositoryImpl implements AssignedTaskRepository {
   Future<TaskItem> detail(String id) => _remote.assignedDetail(id);
 
   @override
-  Future<TaskItem> advance(TaskItem task) {
+  Future<TaskItem> advance(
+    TaskItem task, {
+    List<String> evidenceUrls = const [],
+  }) {
+    TaskRules.validateEvidenceUrls(evidenceUrls);
+    if (task.status != TaskStatus.inProgress && evidenceUrls.isNotEmpty) {
+      throw const ApiException(
+        'Chỉ được gửi ảnh minh chứng khi hoàn thành nhiệm vụ.',
+      );
+    }
     final next = switch (task.status) {
       TaskStatus.pending => TaskStatus.inProgress,
       TaskStatus.inProgress => TaskStatus.completed,
@@ -86,6 +111,6 @@ final class AssignedTaskRepositoryImpl implements AssignedTaskRepository {
         'Nhiệm vụ đã hoàn thành hoặc đã hủy, không thể thay đổi.',
       );
     }
-    return _remote.updateStatus(task.id, next);
+    return _remote.updateStatus(task.id, next, evidenceUrls: evidenceUrls);
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 
 abstract interface class TaskRepository {
@@ -13,5 +14,9 @@ enum TaskGroup { todo, ended }
 abstract interface class AssignedTaskRepository {
   Future<TaskPage> list(TaskGroup group, {int page = 1});
   Future<TaskItem> detail(String id);
-  Future<TaskItem> advance(TaskItem task);
+  Future<TaskItem> advance(
+    TaskItem task, {
+    List<String> evidenceUrls = const [],
+  });
+  Future<String> uploadEvidence(Uint8List bytes, String fileName);
 }

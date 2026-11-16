@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -159,14 +160,8 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
 
   void viewLocalImage(int index) {
     final images = ref.read(aiDiagnosisDraftProvider(widget.seasonId)).images;
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-      ),
+    showAppImageViewer(
+      context,
       builder: (_) =>
           AiDiagnosisImageViewer(initialIndex: index, images: images),
     );

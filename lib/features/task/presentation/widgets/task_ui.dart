@@ -27,38 +27,27 @@ class TaskHeader extends StatelessWidget {
     required this.title,
     required this.onBack,
     this.trailing,
-    this.insetTop = false,
     super.key,
   });
   final String title;
   final VoidCallback onBack;
   final Widget? trailing;
-  final bool insetTop;
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: insetTop ? AppColors.backgroundTop : Colors.transparent,
-    child: Padding(
-      padding: insetTop
-          ? const EdgeInsets.only(top: 28, bottom: 12)
-          : EdgeInsets.zero,
-      child: PageHeaderBar(
-        title: title,
-        height: insetTop ? 36 : 76,
-        titleStyle: taskHeadingStyle(),
-        trailing: trailing,
-        backButton: AppCircleButton(
-          icon: Icons.arrow_back,
-          tooltip: 'Quay lại',
-          onPressed: onBack,
-          size: 36,
-          backgroundColor: Colors.transparent,
-          iconWidget: Center(
-            child: AppSvgIcon(
-              insetTop ? AppSvgIconName.arrowBack : AppSvgIconName.back,
-              size: 20,
-              color: AppColors.inkSoft,
-            ),
-          ),
+  Widget build(BuildContext context) => PageHeaderBar(
+    title: title,
+    titleStyle: taskHeadingStyle(),
+    trailing: trailing,
+    backButton: AppCircleButton(
+      icon: Icons.arrow_back,
+      tooltip: 'Quay lại',
+      onPressed: onBack,
+      size: 36,
+      backgroundColor: Colors.transparent,
+      iconWidget: Center(
+        child: AppSvgIcon(
+          AppSvgIconName.back,
+          size: 20,
+          color: AppColors.inkSoft,
         ),
       ),
     ),
@@ -96,10 +85,17 @@ String taskDeadlineInput(DateTime value) {
 };
 
 class TaskBadge extends StatelessWidget {
-  const TaskBadge(this.label, this.colors, {this.dot = false, super.key});
+  const TaskBadge(
+    this.label,
+    this.colors, {
+    this.dot = false,
+    this.fontSize = 11,
+    super.key,
+  });
   final String label;
   final (Color, Color) colors;
   final bool dot;
+  final double fontSize;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -122,7 +118,7 @@ class TaskBadge extends StatelessWidget {
           label,
           style: TextStyle(
             color: colors.$2,
-            fontSize: 11,
+            fontSize: fontSize,
             height: 1,
             fontWeight: FontWeight.w600,
           ),
@@ -199,6 +195,23 @@ class TaskPanel extends StatelessWidget {
   );
 }
 
+/// Flat card used by the task detail design; list and form cards keep their styling.
+class TaskDetailPanel extends StatelessWidget {
+  const TaskDetailPanel({required this.child, super.key});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.line, width: 8 / 9),
+    ),
+    child: child,
+  );
+}
+
 class TaskLoadError extends StatelessWidget {
   const TaskLoadError(this.error, this.retry, {super.key});
   final Object error;
@@ -222,7 +235,7 @@ class TaskEmpty extends StatelessWidget {
   final bool canCreate;
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: const _TaskDashedBorder(),
+    painter: const TaskDashedBorder(),
     child: SizedBox(
       width: double.infinity,
       height: 184,
@@ -261,18 +274,20 @@ class TaskEmpty extends StatelessWidget {
   );
 }
 
-class _TaskDashedBorder extends CustomPainter {
-  const _TaskDashedBorder();
+class TaskDashedBorder extends CustomPainter {
+  const TaskDashedBorder({this.radius = 16, this.strokeWidth = 1.2});
+  final double radius;
+  final double strokeWidth;
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path()
       ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(16)),
+        RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)),
       );
     final paint = Paint()
       ..color = AppColors.line
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = strokeWidth;
     for (final metric in path.computeMetrics()) {
       for (double start = 0; start < metric.length; start += 5) {
         canvas.drawPath(metric.extractPath(start, start + 3), paint);
@@ -281,5 +296,6 @@ class _TaskDashedBorder extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant TaskDashedBorder oldDelegate) =>
+      oldDelegate.radius != radius || oldDelegate.strokeWidth != strokeWidth;
 }
