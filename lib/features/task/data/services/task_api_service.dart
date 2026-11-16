@@ -14,7 +14,11 @@ abstract interface class TaskRemoteDataSource {
 abstract interface class AssignedTaskRemoteDataSource {
   Future<TaskPage> listAssigned(String group, int page);
   Future<TaskItem> assignedDetail(String id);
-  Future<TaskItem> updateStatus(String id, TaskStatus status);
+  Future<TaskItem> updateStatus(
+    String id,
+    TaskStatus status, {
+    List<String> evidenceUrls = const [],
+  });
 }
 
 final class TaskApiService
@@ -56,14 +60,20 @@ final class TaskApiService
   );
 
   @override
-  Future<TaskItem> updateStatus(String id, TaskStatus status) async =>
-      _assignedDetail(
-        (await _client.patch(
-          '/me/tasks/$id/status',
-          authenticated: true,
-          data: {'status': taskStatusApiValue(status)},
-        )).requireMapData(),
-      );
+  Future<TaskItem> updateStatus(
+    String id,
+    TaskStatus status, {
+    List<String> evidenceUrls = const [],
+  }) async => _assignedDetail(
+    (await _client.patch(
+      '/me/tasks/$id/status',
+      authenticated: true,
+      data: {
+        'status': taskStatusApiValue(status),
+        if (status == TaskStatus.completed) 'evidenceUrls': evidenceUrls,
+      },
+    )).requireMapData(),
+  );
 
   @override
   Future<TaskPage> list(TaskStatus status, int page) async {

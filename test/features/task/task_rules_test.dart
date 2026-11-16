@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
@@ -8,6 +9,59 @@ import 'task_fixtures.dart';
 import 'task_models_repository_test.dart' show CaptureTaskRemote;
 
 void main() {
+  test(
+    'N/A: automatic season assignment and manual staff selection have distinct validation',
+    () {
+      const warning =
+          'Vụ nuôi chưa có kỹ thuật viên đang phụ trách. Vui lòng phân công trước khi giao nhiệm vụ.';
+      expect(TaskRules.assigneeError(null, hasSeason: true), warning);
+      expect(
+        TaskRules.assigneeError(null, hasSeason: false),
+        'Vui lòng chọn nhân sự.',
+      );
+      expect(TaskRules.assigneeError('technician', hasSeason: true), isNull);
+      expect(TaskRules.assigneeError('technician', hasSeason: false), isNull);
+    },
+  );
+  test('N/A/B: evidence count, URLs, signatures and five MB boundary', () {
+    final urls = List.generate(5, (index) => 'https://images.test/$index.jpg');
+    TaskRules.validateEvidenceUrls([]);
+    TaskRules.validateEvidenceUrls(urls);
+    for (final invalid in [
+      [...urls, 'https://images.test/6.jpg'],
+      [urls.first, urls.first],
+      ['http://images.test/a.jpg'],
+      ['data:image/png;base64,AA'],
+      ['https://images.test/${'a' * 2048}'],
+    ]) {
+      expect(
+        () => TaskRules.validateEvidenceUrls(invalid),
+        throwsA(isA<ApiException>()),
+      );
+    }
+    for (final valid in [
+      [0xff, 0xd8, 0xff],
+      [137, 80, 78, 71, 13, 10, 26, 10],
+      [82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80],
+    ]) {
+      TaskRules.validateEvidenceImage(Uint8List.fromList(valid));
+    }
+    final maximum = Uint8List(TaskRules.maxEvidenceImageBytes)
+      ..setAll(0, [0xff, 0xd8, 0xff]);
+    TaskRules.validateEvidenceImage(maximum);
+    for (final bytes in [
+      Uint8List(0),
+      Uint8List.fromList([0xff, 0xd8]),
+      Uint8List.fromList([1, 2, 3]),
+      Uint8List(TaskRules.maxEvidenceImageBytes + 1)
+        ..setAll(0, [0xff, 0xd8, 0xff]),
+    ]) {
+      expect(
+        () => TaskRules.validateEvidenceImage(bytes),
+        throwsA(isA<ApiException>()),
+      );
+    }
+  });
   final now = DateTime(2026, 10, 19, 10, 5);
   TaskInput draft(DateTime dueAt) => TaskInput(
     title: 'Kiểm tra',

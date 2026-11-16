@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import '../../domain/entities/ai_diagnosis.dart';
 import '../view_models/ai_diagnosis_controller.dart';
@@ -74,14 +75,8 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
           .read(aiDiagnosisDetailProvider(diagnosisKey).notifier)
           .imagesForViewing();
       if (!mounted) return;
-      await showModalBottomSheet<void>(
-        context: context,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-        ),
+      await showAppImageViewer(
+        context,
         builder: (_) => AiDiagnosisImageViewer(
           initialIndex: index,
           diagnosisKey: diagnosisKey,

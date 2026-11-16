@@ -46,6 +46,10 @@ enum AppSvgIconName {
   bellOutline,
   chevronCompact,
   camera,
+  cameraSmall,
+  closeSmall,
+  checkSmall,
+  checkMark,
   message,
   refresh,
 }
@@ -72,6 +76,10 @@ class AppSvgIcon extends StatelessWidget {
     AppSvgIconName.homeCompact => 'home-compact',
     AppSvgIconName.bellOutline => 'bell-outline',
     AppSvgIconName.chevronCompact => 'chevron-compact',
+    AppSvgIconName.cameraSmall => 'camera-small',
+    AppSvgIconName.closeSmall => 'close-small',
+    AppSvgIconName.checkSmall => 'check-small',
+    AppSvgIconName.checkMark => 'check-mark',
     _ => icon.name,
   };
 

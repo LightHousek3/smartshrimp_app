@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +62,16 @@ class AssignedTaskFixtureRepository implements AssignedTaskRepository {
   Completer<TaskItem>? mutation;
   Completer<TaskPage>? nextPage;
   int advances = 0;
+  int uploads = 0;
+  Completer<String>? pendingUpload;
+  @override
+  Future<String> uploadEvidence(Uint8List bytes, String fileName) async {
+    uploads++;
+    if (failure != null) throw failure!;
+    if (pendingUpload != null) return pendingUpload!.future;
+    return 'https://images.test/evidence-$uploads.jpg';
+  }
+
   final lists = <TaskGroup>[];
   @override
   Future<TaskPage> list(TaskGroup group, {int page = 1}) async {
@@ -100,7 +111,10 @@ class AssignedTaskFixtureRepository implements AssignedTaskRepository {
   }
 
   @override
-  Future<TaskItem> advance(TaskItem task) async {
+  Future<TaskItem> advance(
+    TaskItem task, {
+    List<String> evidenceUrls = const [],
+  }) async {
     advances++;
     if (failure != null) throw failure!;
     if (mutation != null) return mutation!.future;
@@ -110,6 +124,7 @@ class AssignedTaskFixtureRepository implements AssignedTaskRepository {
           : TaskStatus.completed,
       startedAt: task.startedAt ?? DateTime.now(),
       completedAt: task.status == TaskStatus.inProgress ? DateTime.now() : null,
+      evidenceUrls: evidenceUrls,
     );
   }
 }
@@ -162,10 +177,15 @@ void main() {
       await repo.detail('task');
       await repo.advance(pendingTask);
       await repo.advance(progressTask);
+      await repo.advance(
+        progressTask,
+        evidenceUrls: ['https://images.test/proof.jpg'],
+      );
       expect(requests.map((r) => '${r.method} ${r.path}'), [
         'GET /me/tasks',
         'GET /me/tasks/task',
         'PATCH /me/tasks/pending/status',
+        'PATCH /me/tasks/progress/status',
         'PATCH /me/tasks/progress/status',
       ]);
       expect(requests.first.queryParameters, {
@@ -174,7 +194,11 @@ void main() {
         'limit': 20,
       });
       expect(requests[2].data, {'status': 'IN_PROGRESS'});
-      expect(requests[3].data, {'status': 'COMPLETED'});
+      expect(requests[3].data, {'status': 'COMPLETED', 'evidenceUrls': []});
+      expect(requests[4].data, {
+        'status': 'COMPLETED',
+        'evidenceUrls': ['https://images.test/proof.jpg'],
+      });
       expect(
         requests.map((r) => r.headers['Authorization']),
         everyElement('Bearer access-token'),

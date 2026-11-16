@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis_image.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/repositories/ai_diagnosis_repository.dart';
@@ -516,6 +517,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(find.byType(AiDiagnosisImageViewer), findsOneWidget);
+    expect(find.byType(AppImageViewer), findsOneWidget);
     expect(find.text('Ảnh 1/1'), findsOneWidget);
     await tester.tap(find.byTooltip('Đóng'));
     await tester.pumpAndSettle();

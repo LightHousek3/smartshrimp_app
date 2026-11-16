@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
 
 part 'task_models.freezed.dart';
 part 'task_models.g.dart';
@@ -68,6 +69,7 @@ abstract class TaskItem with _$TaskItem {
     DateTime? createdAt,
     TaskChoice? pond,
     @Default(false) bool canOpenRelatedSeason,
+    @Default(<String>[]) List<String> evidenceUrls,
   }) = _TaskItem;
   factory TaskItem.fromJson(Map<String, dynamic> json) {
     for (final key in ['id', 'title', 'status', 'priority']) {
@@ -76,7 +78,12 @@ abstract class TaskItem with _$TaskItem {
       }
     }
     try {
-      return _$TaskItemFromJson(json);
+      final task = _$TaskItemFromJson(json);
+      if ((json.containsKey('evidenceUrls') && json['evidenceUrls'] == null) ||
+          !TaskRules.validEvidenceUrls(task.evidenceUrls)) {
+        throw const InvalidResponseException();
+      }
+      return task;
     } on InvalidResponseException {
       rethrow;
     } catch (_) {

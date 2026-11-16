@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import '../../domain/entities/ai_diagnosis_image.dart';
 import '../view_models/ai_diagnosis_controller.dart';
 import 'ai_diagnosis_ui.dart';
@@ -196,7 +197,6 @@ class AiDiagnosisImageViewer extends ConsumerStatefulWidget {
 
 class _AiDiagnosisImageViewerState
     extends ConsumerState<AiDiagnosisImageViewer> {
-  late int index = widget.initialIndex;
   bool refreshing = false;
   String? refreshError;
   Future<void> refreshImages() async {
@@ -239,101 +239,22 @@ class _AiDiagnosisImageViewerState
             fit: fit,
             onRetry: refreshImages,
           );
-    return SafeArea(
-      top: false,
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.78,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Ảnh ${index + 1}/$count',
-                      style: AiDiagnosisStyle.heading(fontSize: 16),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Đóng',
-                    onPressed: () => Navigator.pop(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AiDiagnosisStyle.muted,
-                    ),
-                    icon: const AiIcon('close'),
-                  ),
-                ],
+    return AppImageViewer(
+      initialIndex: widget.initialIndex,
+      itemCount: count,
+      imageBuilder: photo,
+      selectionColor: AiDiagnosisStyle.purple,
+      titleStyle: AiDiagnosisStyle.heading(fontSize: 16),
+      closeIcon: const AiIcon('close'),
+      footer: refreshError == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                refreshError!,
+                style: const TextStyle(color: AppColors.error),
               ),
             ),
-            const Divider(height: 1, color: AiDiagnosisStyle.muted),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: SizedBox.expand(
-                    child: count > index
-                        ? InteractiveViewer(
-                            maxScale: 4,
-                            child: photo(index, BoxFit.contain),
-                          )
-                        : const Center(child: Text('Không tải được ảnh.')),
-                  ),
-                ),
-              ),
-            ),
-            if (refreshError != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  refreshError!,
-                  style: const TextStyle(color: AppColors.error),
-                ),
-              ),
-            if (count > 0)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: SizedBox(
-                  height: 66,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: count,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) => Semantics(
-                      button: true,
-                      selected: i == index,
-                      label: 'Xem ảnh ${i + 1} trong thư viện',
-                      child: GestureDetector(
-                        onTap: () => setState(() => index = i),
-                        child: Container(
-                          width: 64,
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: i == index
-                                  ? AiDiagnosisStyle.purple
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                          child: Opacity(
-                            opacity: i == index ? 1 : 0.6,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: photo(i, BoxFit.cover),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -59,6 +59,11 @@ _TaskItem _$TaskItemFromJson(Map<String, dynamic> json) => _TaskItem(
       ? null
       : TaskChoice.fromJson(json['pond'] as Map<String, dynamic>),
   canOpenRelatedSeason: json['canOpenRelatedSeason'] as bool? ?? false,
+  evidenceUrls:
+      (json['evidenceUrls'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
 );
 
 Map<String, dynamic> _$TaskItemToJson(_TaskItem instance) => <String, dynamic>{
@@ -82,6 +87,7 @@ Map<String, dynamic> _$TaskItemToJson(_TaskItem instance) => <String, dynamic>{
   'createdAt': instance.createdAt?.toIso8601String(),
   'pond': instance.pond,
   'canOpenRelatedSeason': instance.canOpenRelatedSeason,
+  'evidenceUrls': instance.evidenceUrls,
 };
 
 const _$TaskPriorityEnumMap = {

@@ -8,6 +8,8 @@ import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/app_select_field.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -18,6 +20,7 @@ import 'package:smartshrimp_app/features/home/presentation/widgets/owner_overvie
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_detail_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_detail_view.dart';
+import 'package:smartshrimp_app/features/task/presentation/widgets/task_evidence_panel.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_list_view.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
@@ -51,6 +54,18 @@ class _LongTaskOptionsRepository extends TaskFixtureRepository {
       );
 }
 
+class _UnassignedSeasonRepository extends TaskFixtureRepository {
+  @override
+  Future<TaskOptions> options(String? farmId) async {
+    final options = await super.options(farmId);
+    return options.copyWith(
+      seasons: [
+        for (final season in options.seasons) season.copyWith(technician: null),
+      ],
+    );
+  }
+}
+
 class _UrgentAlertDashboardRepository extends DashboardFixtureRepository {
   _UrgentAlertDashboardRepository(this.count, {required this.withSeason});
   final int count;
@@ -81,10 +96,11 @@ Future<ProviderContainer> openTasks(
   WidgetTester tester,
   TaskFixtureRepository repo, {
   String path = '/tasks',
+  double width = 402,
   DashboardFixtureRepository? dashboard,
 }) async {
   await loadAppFonts();
-  tester.view.physicalSize = const Size(402, 874);
+  tester.view.physicalSize = Size(width, 874);
   tester.view.devicePixelRatio = 1;
   tester.view.padding = const FakeViewPadding(top: 24);
   final container = ProviderContainer(
@@ -119,7 +135,209 @@ Future<ProviderContainer> openTasks(
   return container;
 }
 
+Future<void> _chooseFutureDeadline(WidgetTester tester) async {
+  await tester.ensureVisible(find.byKey(const Key('task_deadline')));
+  await tester.tap(find.byKey(const Key('task_deadline')));
+  await tester.pumpAndSettle();
+  tester
+      .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
+      .onDateChanged(DateTime(2099, 1, 1));
+  await tester.pump();
+  await tester.tap(find.text('OK').last);
+  await tester.pumpAndSettle();
+  await tester.tap(find.byIcon(Icons.keyboard_outlined));
+  await tester.pumpAndSettle();
+  final timeFields = find.descendant(
+    of: find.byType(TimePickerDialog),
+    matching: find.byType(TextField),
+  );
+  await tester.enterText(timeFields.at(0), '08');
+  await tester.enterText(timeFields.at(1), '00');
+  await tester.tap(find.text('AM'));
+  await tester.pump();
+  await tester.tap(find.text('OK').last);
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  testWidgets('B: owner detail wraps long content at 320px and 150% text', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final repo = TaskFixtureRepository();
+    repo.tasks['progress'] = progressTask.copyWith(
+      title: 'Kiểm tra và xử lý chất lượng nước tại ao nuôi trong ca chiều',
+      assigner: const TaskChoice(
+        id: 'owner1',
+        name: 'Nguyễn Hoàng Minh Phương',
+      ),
+      assignee: const TaskChoice(id: 'tech1', name: 'Trần Nguyễn Hoàng Anh'),
+      farm: const TaskChoice(id: 'farm1', name: 'Trang trại nuôi tôm Đông Hải'),
+      season: const TaskChoice(id: 'season1', name: 'Vụ nuôi Đông Xuân 2026'),
+    );
+    final container = await openTasks(
+      tester,
+      repo,
+      path: '/tasks/progress',
+      width: 320,
+    );
+    expect(
+      tester.widget<Text>(find.text(repo.tasks['progress']!.title)).maxLines,
+      isNull,
+    );
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byType(SmartShrimpApp),
+      matchesGoldenFile('goldens/task_large_text_top.png'),
+    );
+    await tester.drag(find.byType(ListView).first, const Offset(0, -2500));
+    await tester.pumpAndSettle();
+    expect(find.text('Hủy nhiệm vụ').hitTestable(), findsOneWidget);
+    expect(
+      tester
+          .getTopLeft(
+            find.bySemanticsLabel(taskTimestamp(progressTask.createdAt)),
+          )
+          .dy,
+      tester
+          .getTopLeft(
+            find.bySemanticsLabel(taskTimestamp(progressTask.startedAt)),
+          )
+          .dy,
+    );
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byType(SmartShrimpApp),
+      matchesGoldenFile('goldens/task_large_text_bottom.png'),
+    );
+
+    repo.tasks['cancelled'] = cancelledTask.copyWith(
+      cancellationReason:
+          'Chủ trại thay đổi kế hoạch kiểm tra chất lượng nước '
+          'sau khi đã trao đổi lại với kỹ thuật viên phụ trách.',
+    );
+    container.read(appRouterProvider).go('/tasks/cancelled');
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.textContaining('Lý do hủy:'), 150);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final task in [
+    pendingTask,
+    progressTask,
+    completedTask,
+    cancelledTask,
+  ]) {
+    testWidgets(
+      'N: ${task.status.name} detail restores the round status badge and assignment milestone',
+      (tester) async {
+        await openTasks(
+          tester,
+          TaskFixtureRepository(),
+          path: '/tasks/${task.id}',
+        );
+        final statusBadge = find.widgetWithText(
+          TaskBadge,
+          taskStatusLabel(task.status),
+        );
+        final badge = tester.widget<TaskBadge>(statusBadge);
+        expect(badge.label, taskStatusLabel(task.status));
+        expect(badge.dot, isTrue);
+        expect(badge.colors, statusColors(task.status));
+        final statusHeight = tester.getSize(statusBadge).height;
+        for (final element in find.byType(TaskBadge).evaluate()) {
+          expect(
+            tester.getSize(find.byWidget(element.widget)).height,
+            statusHeight,
+          );
+        }
+        expect(
+          find.descendant(
+            of: find.byType(TaskTimeline),
+            matching: find.text('Được giao'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(TaskTimeline),
+            matching: find.text('Chờ làm'),
+          ),
+          findsNothing,
+        );
+        if (task.status == TaskStatus.cancelled) {
+          expect(
+            find.bySemanticsLabel(taskTimestamp(task.cancelledAt)),
+            findsOneWidget,
+          );
+          expect(find.text('Nguyễn Văn Đạt'), findsOneWidget);
+          expect(find.textContaining('Nguyễn Văn Đạt ·'), findsNothing);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('Visual: Figma 376:2071 owner detail', (tester) async {
+    final repo = TaskFixtureRepository();
+    repo.tasks['progress'] = progressTask.copyWith(
+      title: 'Kiểm tra quạt nước Ao B1 — KTV khác phụ trách',
+      description:
+          'Dữ liệu mẫu để kiểm tra trạng thái, hạn xử lý và tiến trình nhiệm vụ. Đối chiếu các mốc thời gian trong phần chi tiết.',
+      priority: TaskPriority.normal,
+      assignee: taskSecondTechnician,
+      pond: const TaskChoice(id: 'pond', name: 'Ao B1'),
+      season: const TaskChoice(id: 'season', name: 'Vụ Thu 2025'),
+      createdAt: DateTime(2026, 11, 14, 0, 48),
+      startedAt: DateTime(2026, 11, 16, 12, 48),
+      // Keep this fixture open and not overdue independently of the test date.
+      dueAt: DateTime(2099, 11, 17, 6, 48),
+    );
+    await openTasks(tester, repo, path: '/tasks/progress');
+    await expectLater(
+      find.byType(SmartShrimpApp),
+      matchesGoldenFile('goldens/figma_376_2071.png'),
+    );
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('N: owner sees saved evidence and cannot add or remove photos', (
+    tester,
+  ) async {
+    final repo = TaskFixtureRepository();
+    repo.tasks['completed'] = completedTask.copyWith(
+      evidenceUrls: ['https://images.test/evidence.jpg'],
+    );
+    await openTasks(tester, repo, path: '/tasks/completed');
+    await tester.scrollUntilVisible(find.byType(TaskEvidencePanel), 100);
+    expect(find.text('1/5 ảnh'), findsOneWidget);
+    expect(find.text('Minh chứng 1'), findsOneWidget);
+    expect(find.text('Chụp ảnh'), findsNothing);
+    expect(find.text('Chọn từ thư viện'), findsNothing);
+    expect(find.byTooltip('Bỏ ảnh minh chứng 1'), findsNothing);
+    expect(find.text('Đánh dấu hoàn thành'), findsNothing);
+    await tester.tap(find.text('Minh chứng 1'));
+    await tester.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    expect(find.byType(AppImageViewer), findsOneWidget);
+    expect(find.text('Ảnh 1/1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Đóng'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('N: owner sees the completed-without-evidence message', (
+    tester,
+  ) async {
+    await openTasks(tester, TaskFixtureRepository(), path: '/tasks/completed');
+    await tester.scrollUntilVisible(find.byType(TaskEvidencePanel), 100);
+    expect(find.text('0/5 ảnh'), findsOneWidget);
+    expect(
+      find.text('Nhiệm vụ đã hoàn thành không kèm ảnh minh chứng.'),
+      findsOneWidget,
+    );
+    expect(find.text('Chụp ảnh'), findsNothing);
+  });
   testWidgets('N/B: owner overdue deadline is red and retains assignee', (
     tester,
   ) async {
@@ -562,6 +780,20 @@ void main() {
         await tester.pumpAndSettle();
         final mutable = id == 'pending' || id == 'progress';
         expect(find.byType(TaskDetailView), findsOneWidget);
+        final header = find.byType(PageHeaderBar);
+        final headerCenter = tester.getCenter(header).dy;
+        expect(tester.getSize(header).height, 76);
+        expect(
+          tester.getCenter(find.text('Chi tiết nhiệm vụ')).dy,
+          headerCenter,
+        );
+        expect(tester.getCenter(find.byTooltip('Quay lại')).dy, headerCenter);
+        if (mutable) {
+          expect(
+            tester.getCenter(find.byTooltip('Chỉnh sửa nhiệm vụ')).dy,
+            headerCenter,
+          );
+        }
         expect(find.text('Người giao'), findsOneWidget);
         expect(
           find.byTooltip('Chỉnh sửa nhiệm vụ'),
@@ -623,7 +855,7 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text(taskTimestamp(cancelledTask.cancelledAt)),
+          find.bySemanticsLabel(taskTimestamp(cancelledTask.cancelledAt)),
           findsOneWidget,
         );
         expect(find.text('Hủy nhiệm vụ'), findsNothing);
@@ -631,6 +863,69 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'A/N: an unassigned season blocks creation without asking for manual staff selection',
+    (tester) async {
+      final repo = _UnassignedSeasonRepository();
+      final container = await openTasks(tester, repo, path: '/tasks/create');
+      await tester.enterText(
+        find.byKey(const Key('task_title')),
+        'Kiểm tra ao chưa có KTV',
+      );
+      await _chooseFutureDeadline(tester);
+      await tester.ensureVisible(find.text('Vụ nuôi liên quan'));
+      await tester.tap(find.byType(DropdownButton<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ao A3 · ${taskSeason.name}').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.tap(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.pumpAndSettle();
+      const warning =
+          'Vụ nuôi chưa có kỹ thuật viên đang phụ trách. Vui lòng phân công trước khi giao nhiệm vụ.';
+      expect(find.text(warning), findsOneWidget);
+      expect(find.text('Vui lòng chọn nhân sự.'), findsNothing);
+      expect(find.text('Vui lòng nhập tiêu đề nhiệm vụ.'), findsNothing);
+      expect(find.text('Vui lòng chọn hạn hoàn thành.'), findsNothing);
+      expect(repo.saved, isNull);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .path,
+        '/tasks/create',
+      );
+      await expectLater(
+        find.byType(SmartShrimpApp),
+        matchesGoldenFile('goldens/task_unassigned_season.png'),
+      );
+
+      await tester.ensureVisible(find.text('Vụ nuôi liên quan'));
+      await tester.tap(find.byType(DropdownButton<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('— Không gắn với vụ nuôi —').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.tap(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Vui lòng chọn nhân sự.'), findsOneWidget);
+      expect(find.text(warning), findsNothing);
+      expect(repo.saved, isNull);
+
+      await tester.ensureVisible(find.text(taskTechnician.name));
+      await tester.tap(find.text(taskTechnician.name));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.tap(find.text('Tạo & giao nhiệm vụ').last);
+      await tester.pumpAndSettle();
+      expect(repo.saved?.assignedTo, taskTechnician.id);
+      expect(repo.saved?.seasonId, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'N/A: create validates, auto-selects season KTV and returns to refreshed list',
@@ -642,26 +937,7 @@ void main() {
         matchesGoldenFile('goldens/task_create.png'),
       );
       await tester.enterText(find.byType(AppTextField).first, 'Nhiệm vụ mới');
-      await tester.tap(find.byKey(const Key('task_deadline')));
-      await tester.pumpAndSettle();
-      tester
-          .widget<CalendarDatePicker>(find.byType(CalendarDatePicker))
-          .onDateChanged(DateTime(2099, 1, 1));
-      await tester.pump();
-      await tester.tap(find.text('OK').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.keyboard_outlined));
-      await tester.pumpAndSettle();
-      final timeFields = find.descendant(
-        of: find.byType(TimePickerDialog),
-        matching: find.byType(TextField),
-      );
-      await tester.enterText(timeFields.at(0), '08');
-      await tester.enterText(timeFields.at(1), '00');
-      await tester.tap(find.text('AM'));
-      await tester.pump();
-      await tester.tap(find.text('OK').last);
-      await tester.pumpAndSettle();
+      await _chooseFutureDeadline(tester);
       await tester.tap(find.byType(DropdownButton<String>).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(taskFarm.name).last);

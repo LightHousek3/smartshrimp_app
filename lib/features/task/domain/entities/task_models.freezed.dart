@@ -281,7 +281,7 @@ as String,
 /// @nodoc
 mixin _$TaskItem {
 
- String get id; String get title;@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority get priority;@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus get status; TaskChoice? get assignee; DateTime? get dueAt; String? get description; String? get farmId; String? get seasonId; String? get assignedTo; TaskChoice? get season; TaskChoice? get farm; DateTime? get startedAt; DateTime? get completedAt; String? get cancellationReason; DateTime? get cancelledAt; TaskChoice? get assigner; DateTime? get createdAt; TaskChoice? get pond; bool get canOpenRelatedSeason;
+ String get id; String get title;@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority get priority;@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus get status; TaskChoice? get assignee; DateTime? get dueAt; String? get description; String? get farmId; String? get seasonId; String? get assignedTo; TaskChoice? get season; TaskChoice? get farm; DateTime? get startedAt; DateTime? get completedAt; String? get cancellationReason; DateTime? get cancelledAt; TaskChoice? get assigner; DateTime? get createdAt; TaskChoice? get pond; bool get canOpenRelatedSeason; List<String> get evidenceUrls;
 /// Create a copy of TaskItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -294,16 +294,16 @@ $TaskItemCopyWith<TaskItem> get copyWith => _$TaskItemCopyWithImpl<TaskItem>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignee, assignee) || other.assignee == assignee)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.assignedTo, assignedTo) || other.assignedTo == assignedTo)&&(identical(other.season, season) || other.season == season)&&(identical(other.farm, farm) || other.farm == farm)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt)&&(identical(other.assigner, assigner) || other.assigner == assigner)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.canOpenRelatedSeason, canOpenRelatedSeason) || other.canOpenRelatedSeason == canOpenRelatedSeason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignee, assignee) || other.assignee == assignee)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.assignedTo, assignedTo) || other.assignedTo == assignedTo)&&(identical(other.season, season) || other.season == season)&&(identical(other.farm, farm) || other.farm == farm)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt)&&(identical(other.assigner, assigner) || other.assigner == assigner)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.canOpenRelatedSeason, canOpenRelatedSeason) || other.canOpenRelatedSeason == canOpenRelatedSeason)&&const DeepCollectionEquality().equals(other.evidenceUrls, evidenceUrls));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,priority,status,assignee,dueAt,description,farmId,seasonId,assignedTo,season,farm,startedAt,completedAt,cancellationReason,cancelledAt,assigner,createdAt,pond,canOpenRelatedSeason]);
+int get hashCode => Object.hashAll([runtimeType,id,title,priority,status,assignee,dueAt,description,farmId,seasonId,assignedTo,season,farm,startedAt,completedAt,cancellationReason,cancelledAt,assigner,createdAt,pond,canOpenRelatedSeason,const DeepCollectionEquality().hash(evidenceUrls)]);
 
 @override
 String toString() {
-  return 'TaskItem(id: $id, title: $title, priority: $priority, status: $status, assignee: $assignee, dueAt: $dueAt, description: $description, farmId: $farmId, seasonId: $seasonId, assignedTo: $assignedTo, season: $season, farm: $farm, startedAt: $startedAt, completedAt: $completedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt, assigner: $assigner, createdAt: $createdAt, pond: $pond, canOpenRelatedSeason: $canOpenRelatedSeason)';
+  return 'TaskItem(id: $id, title: $title, priority: $priority, status: $status, assignee: $assignee, dueAt: $dueAt, description: $description, farmId: $farmId, seasonId: $seasonId, assignedTo: $assignedTo, season: $season, farm: $farm, startedAt: $startedAt, completedAt: $completedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt, assigner: $assigner, createdAt: $createdAt, pond: $pond, canOpenRelatedSeason: $canOpenRelatedSeason, evidenceUrls: $evidenceUrls)';
 }
 
 
@@ -314,7 +314,7 @@ abstract mixin class $TaskItemCopyWith<$Res>  {
   factory $TaskItemCopyWith(TaskItem value, $Res Function(TaskItem) _then) = _$TaskItemCopyWithImpl;
 @useResult
 $Res call({
- String id, String title,@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority priority,@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus status, TaskChoice? assignee, DateTime? dueAt, String? description, String? farmId, String? seasonId, String? assignedTo, TaskChoice? season, TaskChoice? farm, DateTime? startedAt, DateTime? completedAt, String? cancellationReason, DateTime? cancelledAt, TaskChoice? assigner, DateTime? createdAt, TaskChoice? pond, bool canOpenRelatedSeason
+ String id, String title,@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority priority,@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus status, TaskChoice? assignee, DateTime? dueAt, String? description, String? farmId, String? seasonId, String? assignedTo, TaskChoice? season, TaskChoice? farm, DateTime? startedAt, DateTime? completedAt, String? cancellationReason, DateTime? cancelledAt, TaskChoice? assigner, DateTime? createdAt, TaskChoice? pond, bool canOpenRelatedSeason, List<String> evidenceUrls
 });
 
 
@@ -331,7 +331,7 @@ class _$TaskItemCopyWithImpl<$Res>
 
 /// Create a copy of TaskItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? priority = null,Object? status = null,Object? assignee = freezed,Object? dueAt = freezed,Object? description = freezed,Object? farmId = freezed,Object? seasonId = freezed,Object? assignedTo = freezed,Object? season = freezed,Object? farm = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,Object? assigner = freezed,Object? createdAt = freezed,Object? pond = freezed,Object? canOpenRelatedSeason = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? priority = null,Object? status = null,Object? assignee = freezed,Object? dueAt = freezed,Object? description = freezed,Object? farmId = freezed,Object? seasonId = freezed,Object? assignedTo = freezed,Object? season = freezed,Object? farm = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,Object? assigner = freezed,Object? createdAt = freezed,Object? pond = freezed,Object? canOpenRelatedSeason = null,Object? evidenceUrls = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -353,7 +353,8 @@ as DateTime?,assigner: freezed == assigner ? _self.assigner : assigner // ignore
 as TaskChoice?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,pond: freezed == pond ? _self.pond : pond // ignore: cast_nullable_to_non_nullable
 as TaskChoice?,canOpenRelatedSeason: null == canOpenRelatedSeason ? _self.canOpenRelatedSeason : canOpenRelatedSeason // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,evidenceUrls: null == evidenceUrls ? _self.evidenceUrls : evidenceUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 /// Create a copy of TaskItem
@@ -498,10 +499,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason,  List<String> evidenceUrls)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TaskItem() when $default != null:
-return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason);case _:
+return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason,_that.evidenceUrls);case _:
   return orElse();
 
 }
@@ -519,10 +520,10 @@ return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason,  List<String> evidenceUrls)  $default,) {final _that = this;
 switch (_that) {
 case _TaskItem():
-return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason);case _:
+return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason,_that.evidenceUrls);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -539,10 +540,10 @@ return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(unknownEnumValue: TaskPriority.unknown)  TaskPriority priority, @JsonKey(unknownEnumValue: TaskStatus.unknown)  TaskStatus status,  TaskChoice? assignee,  DateTime? dueAt,  String? description,  String? farmId,  String? seasonId,  String? assignedTo,  TaskChoice? season,  TaskChoice? farm,  DateTime? startedAt,  DateTime? completedAt,  String? cancellationReason,  DateTime? cancelledAt,  TaskChoice? assigner,  DateTime? createdAt,  TaskChoice? pond,  bool canOpenRelatedSeason,  List<String> evidenceUrls)?  $default,) {final _that = this;
 switch (_that) {
 case _TaskItem() when $default != null:
-return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason);case _:
+return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,_that.dueAt,_that.description,_that.farmId,_that.seasonId,_that.assignedTo,_that.season,_that.farm,_that.startedAt,_that.completedAt,_that.cancellationReason,_that.cancelledAt,_that.assigner,_that.createdAt,_that.pond,_that.canOpenRelatedSeason,_that.evidenceUrls);case _:
   return null;
 
 }
@@ -554,7 +555,7 @@ return $default(_that.id,_that.title,_that.priority,_that.status,_that.assignee,
 @JsonSerializable()
 
 class _TaskItem extends TaskItem {
-  const _TaskItem({required this.id, required this.title, @JsonKey(unknownEnumValue: TaskPriority.unknown) required this.priority, @JsonKey(unknownEnumValue: TaskStatus.unknown) required this.status, this.assignee, this.dueAt, this.description, this.farmId, this.seasonId, this.assignedTo, this.season, this.farm, this.startedAt, this.completedAt, this.cancellationReason, this.cancelledAt, this.assigner, this.createdAt, this.pond, this.canOpenRelatedSeason = false}): super._();
+  const _TaskItem({required this.id, required this.title, @JsonKey(unknownEnumValue: TaskPriority.unknown) required this.priority, @JsonKey(unknownEnumValue: TaskStatus.unknown) required this.status, this.assignee, this.dueAt, this.description, this.farmId, this.seasonId, this.assignedTo, this.season, this.farm, this.startedAt, this.completedAt, this.cancellationReason, this.cancelledAt, this.assigner, this.createdAt, this.pond, this.canOpenRelatedSeason = false, final  List<String> evidenceUrls = const <String>[]}): _evidenceUrls = evidenceUrls,super._();
   factory _TaskItem.fromJson(Map<String, dynamic> json) => _$TaskItemFromJson(json);
 
 @override final  String id;
@@ -577,6 +578,13 @@ class _TaskItem extends TaskItem {
 @override final  DateTime? createdAt;
 @override final  TaskChoice? pond;
 @override@JsonKey() final  bool canOpenRelatedSeason;
+ final  List<String> _evidenceUrls;
+@override@JsonKey() List<String> get evidenceUrls {
+  if (_evidenceUrls is EqualUnmodifiableListView) return _evidenceUrls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_evidenceUrls);
+}
+
 
 /// Create a copy of TaskItem
 /// with the given fields replaced by the non-null parameter values.
@@ -591,16 +599,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignee, assignee) || other.assignee == assignee)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.assignedTo, assignedTo) || other.assignedTo == assignedTo)&&(identical(other.season, season) || other.season == season)&&(identical(other.farm, farm) || other.farm == farm)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt)&&(identical(other.assigner, assigner) || other.assigner == assigner)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.canOpenRelatedSeason, canOpenRelatedSeason) || other.canOpenRelatedSeason == canOpenRelatedSeason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskItem&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignee, assignee) || other.assignee == assignee)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.assignedTo, assignedTo) || other.assignedTo == assignedTo)&&(identical(other.season, season) || other.season == season)&&(identical(other.farm, farm) || other.farm == farm)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt)&&(identical(other.assigner, assigner) || other.assigner == assigner)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.canOpenRelatedSeason, canOpenRelatedSeason) || other.canOpenRelatedSeason == canOpenRelatedSeason)&&const DeepCollectionEquality().equals(other._evidenceUrls, _evidenceUrls));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,priority,status,assignee,dueAt,description,farmId,seasonId,assignedTo,season,farm,startedAt,completedAt,cancellationReason,cancelledAt,assigner,createdAt,pond,canOpenRelatedSeason]);
+int get hashCode => Object.hashAll([runtimeType,id,title,priority,status,assignee,dueAt,description,farmId,seasonId,assignedTo,season,farm,startedAt,completedAt,cancellationReason,cancelledAt,assigner,createdAt,pond,canOpenRelatedSeason,const DeepCollectionEquality().hash(_evidenceUrls)]);
 
 @override
 String toString() {
-  return 'TaskItem(id: $id, title: $title, priority: $priority, status: $status, assignee: $assignee, dueAt: $dueAt, description: $description, farmId: $farmId, seasonId: $seasonId, assignedTo: $assignedTo, season: $season, farm: $farm, startedAt: $startedAt, completedAt: $completedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt, assigner: $assigner, createdAt: $createdAt, pond: $pond, canOpenRelatedSeason: $canOpenRelatedSeason)';
+  return 'TaskItem(id: $id, title: $title, priority: $priority, status: $status, assignee: $assignee, dueAt: $dueAt, description: $description, farmId: $farmId, seasonId: $seasonId, assignedTo: $assignedTo, season: $season, farm: $farm, startedAt: $startedAt, completedAt: $completedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt, assigner: $assigner, createdAt: $createdAt, pond: $pond, canOpenRelatedSeason: $canOpenRelatedSeason, evidenceUrls: $evidenceUrls)';
 }
 
 
@@ -611,7 +619,7 @@ abstract mixin class _$TaskItemCopyWith<$Res> implements $TaskItemCopyWith<$Res>
   factory _$TaskItemCopyWith(_TaskItem value, $Res Function(_TaskItem) _then) = __$TaskItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title,@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority priority,@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus status, TaskChoice? assignee, DateTime? dueAt, String? description, String? farmId, String? seasonId, String? assignedTo, TaskChoice? season, TaskChoice? farm, DateTime? startedAt, DateTime? completedAt, String? cancellationReason, DateTime? cancelledAt, TaskChoice? assigner, DateTime? createdAt, TaskChoice? pond, bool canOpenRelatedSeason
+ String id, String title,@JsonKey(unknownEnumValue: TaskPriority.unknown) TaskPriority priority,@JsonKey(unknownEnumValue: TaskStatus.unknown) TaskStatus status, TaskChoice? assignee, DateTime? dueAt, String? description, String? farmId, String? seasonId, String? assignedTo, TaskChoice? season, TaskChoice? farm, DateTime? startedAt, DateTime? completedAt, String? cancellationReason, DateTime? cancelledAt, TaskChoice? assigner, DateTime? createdAt, TaskChoice? pond, bool canOpenRelatedSeason, List<String> evidenceUrls
 });
 
 
@@ -628,7 +636,7 @@ class __$TaskItemCopyWithImpl<$Res>
 
 /// Create a copy of TaskItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? priority = null,Object? status = null,Object? assignee = freezed,Object? dueAt = freezed,Object? description = freezed,Object? farmId = freezed,Object? seasonId = freezed,Object? assignedTo = freezed,Object? season = freezed,Object? farm = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,Object? assigner = freezed,Object? createdAt = freezed,Object? pond = freezed,Object? canOpenRelatedSeason = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? priority = null,Object? status = null,Object? assignee = freezed,Object? dueAt = freezed,Object? description = freezed,Object? farmId = freezed,Object? seasonId = freezed,Object? assignedTo = freezed,Object? season = freezed,Object? farm = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,Object? assigner = freezed,Object? createdAt = freezed,Object? pond = freezed,Object? canOpenRelatedSeason = null,Object? evidenceUrls = null,}) {
   return _then(_TaskItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -650,7 +658,8 @@ as DateTime?,assigner: freezed == assigner ? _self.assigner : assigner // ignore
 as TaskChoice?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,pond: freezed == pond ? _self.pond : pond // ignore: cast_nullable_to_non_nullable
 as TaskChoice?,canOpenRelatedSeason: null == canOpenRelatedSeason ? _self.canOpenRelatedSeason : canOpenRelatedSeason // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,evidenceUrls: null == evidenceUrls ? _self._evidenceUrls : evidenceUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

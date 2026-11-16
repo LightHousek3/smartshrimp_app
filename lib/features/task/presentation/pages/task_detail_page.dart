@@ -11,6 +11,7 @@ import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_detail_view.dart';
+import 'package:smartshrimp_app/features/task/presentation/widgets/task_evidence_panel.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 
 class TaskDetailPage extends ConsumerWidget {
@@ -55,7 +56,7 @@ class TaskDetailPage extends ConsumerWidget {
               iconWidget: const Center(
                 child: AppSvgIcon(
                   AppSvgIconName.edit,
-                  size: 18,
+                  size: 17,
                   color: AppColors.inkSoft,
                 ),
               ),
@@ -75,13 +76,23 @@ class TaskDetailPage extends ConsumerWidget {
             )
           : null,
       actions: (task) => [
+        if (task.status == TaskStatus.inProgress ||
+            task.status == TaskStatus.completed ||
+            task.evidenceUrls.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          TaskEvidencePanel(urls: task.evidenceUrls, status: task.status),
+        ],
         if (task.canEdit) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           OutlinedButton(
             onPressed: busy ? null : () => _cancel(context, task),
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppColors.inkSoft,
+              textStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                letterSpacing: 0,
+              ),
               side: const BorderSide(color: AppColors.line, width: .8),
               minimumSize: const Size.fromHeight(47),
               shape: RoundedRectangleBorder(
