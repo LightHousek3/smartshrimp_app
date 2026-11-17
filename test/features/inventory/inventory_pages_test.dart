@@ -205,7 +205,7 @@ void main() {
               of: find.byWidgetPredicate(
                 (widget) =>
                     widget is InventoryField &&
-                    widget.label == 'Ngưỡng cảnh báo tồn kho tối thiểu *',
+                    widget.label == 'Ngưỡng cảnh báo tồn dùng được tối thiểu *',
               ),
               matching: find.byType(EditableText),
             )
@@ -1215,6 +1215,9 @@ void main() {
         250,
         scrollable: find.byType(Scrollable).last,
       );
+      await tester.drag(find.byType(Scrollable).last, const Offset(0, -100));
+      await tester.pumpAndSettle();
+      expect(pause.hitTestable(), findsOneWidget);
       await tester.tap(pause);
       await tester.pumpAndSettle();
       expect(find.text('Tạm ngưng vật tư?'), findsOneWidget);
@@ -2037,7 +2040,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Thức ăn CP 9004'), findsWidgets);
-      expect(find.text('TỒN KHO HIỆN TẠI'), findsOneWidget);
+      expect(find.text('TỒN DÙNG ĐƯỢC'), findsOneWidget);
       expect(find.text('Tồn kho theo lô'), findsOneWidget);
       expect(find.text('Lô LOT-001'), findsOneWidget);
       expect(find.text('80 kg'), findsWidgets);

@@ -389,8 +389,10 @@ class _DetailContent extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _StatCell(
-                      label: 'TỒN KHO HIỆN TẠI',
-                      value: formatInventoryQuantity(product.currentStock),
+                      label: 'TỒN DÙNG ĐƯỢC',
+                      value: product.usableStock == null
+                          ? 'Chưa xác định'
+                          : formatInventoryQuantity(product.usableStock!),
                       caption: product.unit.label,
                       color: product.isLowStock
                           ? AppColors.error
@@ -418,6 +420,12 @@ class _DetailContent extends StatelessWidget {
                 ],
               ),
               const Divider(height: 20, color: AppColors.line),
+              Text(
+                'Tồn trên sổ: ${formatInventoryQuantity(product.currentStock)} ${product.unit.label}. '
+                'Tồn dùng được không tính hàng thiếu hạn hoặc hết hạn.',
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
               Text.rich(
                 TextSpan(
                   text: 'Đơn vị: ',

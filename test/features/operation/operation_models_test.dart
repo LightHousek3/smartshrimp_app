@@ -59,7 +59,6 @@ void main() {
         'mealNumber': 2,
         'plannedTime': '09:00',
         'instructions': 'Rải đều quanh quạt nước',
-        'recommendedProductName': 'Thức ăn CP',
         'protocol': protocolJson,
       };
 
@@ -68,7 +67,6 @@ void main() {
       expect(item.mealNumber, 2);
       expect(item.plannedTime, '09:00');
       expect(item.instructions, 'Rải đều quanh quạt nước');
-      expect(item.recommendedProductName, 'Thức ăn CP');
       expect(item.protocol, isNotNull);
       expect(item.protocol!.title, 'Quy trình nuôi tôm thẻ');
       expect(item.protocol!.allowedVariancePct, 10.0);

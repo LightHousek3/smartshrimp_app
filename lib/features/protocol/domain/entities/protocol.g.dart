@@ -357,6 +357,20 @@ Map<String, dynamic> _$ProtocolMaterialOptionToJson(
   'material': instance.material,
 };
 
+_ProtocolTemplateSource _$ProtocolTemplateSourceFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolTemplateSource', json, ($checkedConvert) {
+  final val = _ProtocolTemplateSource(
+    name: $checkedConvert('name', (v) => v as String),
+    version: $checkedConvert('version', (v) => (v as num).toInt()),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$ProtocolTemplateSourceToJson(
+  _ProtocolTemplateSource instance,
+) => <String, dynamic>{'name': instance.name, 'version': instance.version};
+
 _ProtocolDetail _$ProtocolDetailFromJson(
   Map<String, dynamic> json,
 ) => $checkedCreate('_ProtocolDetail', json, ($checkedConvert) {
@@ -395,13 +409,11 @@ _ProtocolDetail _$ProtocolDetailFromJson(
           .toList(),
     ),
     canReview: $checkedConvert('canReview', (v) => v as bool),
-    contentVersion: $checkedConvert(
-      'contentVersion',
-      (v) => (v as num?)?.toInt() ?? 1,
-    ),
-    sourceTemplateVersionNo: $checkedConvert(
-      'sourceTemplateVersionNo',
-      (v) => (v as num?)?.toInt(),
+    sourceTemplateSnapshot: $checkedConvert(
+      'sourceTemplateSnapshot',
+      (v) => v == null
+          ? null
+          : ProtocolTemplateSource.fromJson(v as Map<String, dynamic>),
     ),
     scheduleMessage: $checkedConvert('scheduleMessage', (v) => v as String?),
     materialReviews: $checkedConvert(
@@ -433,8 +445,7 @@ Map<String, dynamic> _$ProtocolDetailToJson(_ProtocolDetail instance) =>
       'dayMarkers': instance.dayMarkers,
       'history': instance.history,
       'canReview': instance.canReview,
-      'contentVersion': instance.contentVersion,
-      'sourceTemplateVersionNo': instance.sourceTemplateVersionNo,
+      'sourceTemplateSnapshot': instance.sourceTemplateSnapshot,
       'scheduleMessage': instance.scheduleMessage,
       'materialReviews': instance.materialReviews,
     };

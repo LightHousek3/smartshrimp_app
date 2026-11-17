@@ -212,7 +212,7 @@ return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_
 
 class _InventoryHistoryFilters extends InventoryHistoryFilters {
   const _InventoryHistoryFilters({this.search = '', this.fromDate, this.toDate, this.transactionType, this.productId, this.seasonId}): super._();
-  
+
 
 @override@JsonKey() final  String search;
 @override final  DateTime? fromDate;
@@ -590,7 +590,7 @@ as DateTime,
 mixin _$InventoryProduct {
 
  String get id; String get farmId; String get name; bool get readOnly; String get manufacturerId; Map<String, dynamic> get manufacturer; InventoryCompliance? get compliance; bool get metadataLocked; bool get canDelete; String? get deletionConfirmationToken; String? get deletionConfirmationMessage; String get status;@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory get category;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unit; double? get conversionQuantity;@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? get conversionUnit;// In conversionUnit for PACK/BOTTLE; otherwise in unit.
- double get minAlertQuantity; String? get description; String? get imageUrl; List<String> get imageUrls; DateTime get createdAt; DateTime get updatedAt; double get currentStock; double get inventoryValue; int get activeLotCount; bool get isLowStock; List<InventoryLot> get lots; int? get plannedUseCount; bool? get canArchive;
+ double get minAlertQuantity; String? get description; String? get imageUrl; List<String> get imageUrls; DateTime get createdAt; DateTime get updatedAt; double get currentStock; double? get usableStock; double get inventoryValue; int get activeLotCount; bool get isLowStock; List<InventoryLot> get lots; int? get plannedUseCount; bool? get canArchive;
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -603,16 +603,16 @@ $InventoryProductCopyWith<InventoryProduct> get copyWith => _$InventoryProductCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other.manufacturer, manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.deletionConfirmationToken, deletionConfirmationToken) || other.deletionConfirmationToken == deletionConfirmationToken)&&(identical(other.deletionConfirmationMessage, deletionConfirmationMessage) || other.deletionConfirmationMessage == deletionConfirmationMessage)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other.lots, lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other.manufacturer, manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.deletionConfirmationToken, deletionConfirmationToken) || other.deletionConfirmationToken == deletionConfirmationToken)&&(identical(other.deletionConfirmationMessage, deletionConfirmationMessage) || other.deletionConfirmationMessage == deletionConfirmationMessage)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.usableStock, usableStock) || other.usableStock == usableStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other.lots, lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(manufacturer),compliance,metadataLocked,canDelete,deletionConfirmationToken,deletionConfirmationMessage,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(imageUrls),createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(lots),plannedUseCount,canArchive]);
+int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(manufacturer),compliance,metadataLocked,canDelete,deletionConfirmationToken,deletionConfirmationMessage,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(imageUrls),createdAt,updatedAt,currentStock,usableStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(lots),plannedUseCount,canArchive]);
 
 @override
 String toString() {
-  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, deletionConfirmationToken: $deletionConfirmationToken, deletionConfirmationMessage: $deletionConfirmationMessage, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
+  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, deletionConfirmationToken: $deletionConfirmationToken, deletionConfirmationMessage: $deletionConfirmationMessage, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, usableStock: $usableStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
 }
 
 
@@ -623,7 +623,7 @@ abstract mixin class $InventoryProductCopyWith<$Res>  {
   factory $InventoryProductCopyWith(InventoryProduct value, $Res Function(InventoryProduct) _then) = _$InventoryProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String? deletionConfirmationToken, String? deletionConfirmationMessage, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
+ String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String? deletionConfirmationToken, String? deletionConfirmationMessage, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double? usableStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
 });
 
 
@@ -640,7 +640,7 @@ class _$InventoryProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? deletionConfirmationToken = freezed,Object? deletionConfirmationMessage = freezed,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? deletionConfirmationToken = freezed,Object? deletionConfirmationMessage = freezed,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? usableStock = freezed,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
@@ -665,7 +665,8 @@ as String?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore:
 as List<String>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,currentStock: null == currentStock ? _self.currentStock : currentStock // ignore: cast_nullable_to_non_nullable
-as double,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
+as double,usableStock: freezed == usableStock ? _self.usableStock : usableStock // ignore: cast_nullable_to_non_nullable
+as double?,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
 as double,activeLotCount: null == activeLotCount ? _self.activeLotCount : activeLotCount // ignore: cast_nullable_to_non_nullable
 as int,isLowStock: null == isLowStock ? _self.isLowStock : isLowStock // ignore: cast_nullable_to_non_nullable
 as bool,lots: null == lots ? _self.lots : lots // ignore: cast_nullable_to_non_nullable
@@ -768,10 +769,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double? usableStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryProduct() when $default != null:
-return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.usableStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   return orElse();
 
 }
@@ -789,10 +790,10 @@ return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufactur
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double? usableStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProduct():
-return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.usableStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -809,10 +810,10 @@ return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufactur
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String farmId,  String name,  bool readOnly,  String manufacturerId,  Map<String, dynamic> manufacturer,  InventoryCompliance? compliance,  bool metadataLocked,  bool canDelete,  String? deletionConfirmationToken,  String? deletionConfirmationMessage,  String status, @JsonKey(unknownEnumValue: InventoryProductCategory.unknown)  InventoryProductCategory category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unit,  double? conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown)  InventoryConversionUnit? conversionUnit,  double minAlertQuantity,  String? description,  String? imageUrl,  List<String> imageUrls,  DateTime createdAt,  DateTime updatedAt,  double currentStock,  double? usableStock,  double inventoryValue,  int activeLotCount,  bool isLowStock,  List<InventoryLot> lots,  int? plannedUseCount,  bool? canArchive)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryProduct() when $default != null:
-return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
+return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufacturerId,_that.manufacturer,_that.compliance,_that.metadataLocked,_that.canDelete,_that.deletionConfirmationToken,_that.deletionConfirmationMessage,_that.status,_that.category,_that.unit,_that.conversionQuantity,_that.conversionUnit,_that.minAlertQuantity,_that.description,_that.imageUrl,_that.imageUrls,_that.createdAt,_that.updatedAt,_that.currentStock,_that.usableStock,_that.inventoryValue,_that.activeLotCount,_that.isLowStock,_that.lots,_that.plannedUseCount,_that.canArchive);case _:
   return null;
 
 }
@@ -824,7 +825,7 @@ return $default(_that.id,_that.farmId,_that.name,_that.readOnly,_that.manufactur
 @JsonSerializable()
 
 class _InventoryProduct extends InventoryProduct {
-  const _InventoryProduct({required this.id, required this.farmId, required this.name, this.readOnly = false, this.manufacturerId = '', final  Map<String, dynamic> manufacturer = const <String, dynamic>{}, this.compliance, this.metadataLocked = false, this.canDelete = false, this.deletionConfirmationToken, this.deletionConfirmationMessage, this.status = 'ACTIVE', @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit, this.conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) this.conversionUnit, required this.minAlertQuantity, this.description, this.imageUrl, final  List<String> imageUrls = const <String>[], required this.createdAt, required this.updatedAt, required this.currentStock, required this.inventoryValue, required this.activeLotCount, required this.isLowStock, final  List<InventoryLot> lots = const <InventoryLot>[], this.plannedUseCount, this.canArchive}): _manufacturer = manufacturer,_imageUrls = imageUrls,_lots = lots,super._();
+  const _InventoryProduct({required this.id, required this.farmId, required this.name, this.readOnly = false, this.manufacturerId = '', final  Map<String, dynamic> manufacturer = const <String, dynamic>{}, this.compliance, this.metadataLocked = false, this.canDelete = false, this.deletionConfirmationToken, this.deletionConfirmationMessage, this.status = 'ACTIVE', @JsonKey(unknownEnumValue: InventoryProductCategory.unknown) required this.category, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unit, this.conversionQuantity, @JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) this.conversionUnit, required this.minAlertQuantity, this.description, this.imageUrl, final  List<String> imageUrls = const <String>[], required this.createdAt, required this.updatedAt, required this.currentStock, this.usableStock, required this.inventoryValue, required this.activeLotCount, required this.isLowStock, final  List<InventoryLot> lots = const <InventoryLot>[], this.plannedUseCount, this.canArchive}): _manufacturer = manufacturer,_imageUrls = imageUrls,_lots = lots,super._();
   factory _InventoryProduct.fromJson(Map<String, dynamic> json) => _$InventoryProductFromJson(json);
 
 @override final  String id;
@@ -863,6 +864,7 @@ class _InventoryProduct extends InventoryProduct {
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
 @override final  double currentStock;
+@override final  double? usableStock;
 @override final  double inventoryValue;
 @override final  int activeLotCount;
 @override final  bool isLowStock;
@@ -889,16 +891,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other._manufacturer, _manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.deletionConfirmationToken, deletionConfirmationToken) || other.deletionConfirmationToken == deletionConfirmationToken)&&(identical(other.deletionConfirmationMessage, deletionConfirmationMessage) || other.deletionConfirmationMessage == deletionConfirmationMessage)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other._lots, _lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryProduct&&(identical(other.id, id) || other.id == id)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.name, name) || other.name == name)&&(identical(other.readOnly, readOnly) || other.readOnly == readOnly)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&const DeepCollectionEquality().equals(other._manufacturer, _manufacturer)&&(identical(other.compliance, compliance) || other.compliance == compliance)&&(identical(other.metadataLocked, metadataLocked) || other.metadataLocked == metadataLocked)&&(identical(other.canDelete, canDelete) || other.canDelete == canDelete)&&(identical(other.deletionConfirmationToken, deletionConfirmationToken) || other.deletionConfirmationToken == deletionConfirmationToken)&&(identical(other.deletionConfirmationMessage, deletionConfirmationMessage) || other.deletionConfirmationMessage == deletionConfirmationMessage)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.description, description) || other.description == description)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.currentStock, currentStock) || other.currentStock == currentStock)&&(identical(other.usableStock, usableStock) || other.usableStock == usableStock)&&(identical(other.inventoryValue, inventoryValue) || other.inventoryValue == inventoryValue)&&(identical(other.activeLotCount, activeLotCount) || other.activeLotCount == activeLotCount)&&(identical(other.isLowStock, isLowStock) || other.isLowStock == isLowStock)&&const DeepCollectionEquality().equals(other._lots, _lots)&&(identical(other.plannedUseCount, plannedUseCount) || other.plannedUseCount == plannedUseCount)&&(identical(other.canArchive, canArchive) || other.canArchive == canArchive));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(_manufacturer),compliance,metadataLocked,canDelete,deletionConfirmationToken,deletionConfirmationMessage,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(_imageUrls),createdAt,updatedAt,currentStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(_lots),plannedUseCount,canArchive]);
+int get hashCode => Object.hashAll([runtimeType,id,farmId,name,readOnly,manufacturerId,const DeepCollectionEquality().hash(_manufacturer),compliance,metadataLocked,canDelete,deletionConfirmationToken,deletionConfirmationMessage,status,category,unit,conversionQuantity,conversionUnit,minAlertQuantity,description,imageUrl,const DeepCollectionEquality().hash(_imageUrls),createdAt,updatedAt,currentStock,usableStock,inventoryValue,activeLotCount,isLowStock,const DeepCollectionEquality().hash(_lots),plannedUseCount,canArchive]);
 
 @override
 String toString() {
-  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, deletionConfirmationToken: $deletionConfirmationToken, deletionConfirmationMessage: $deletionConfirmationMessage, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
+  return 'InventoryProduct(id: $id, farmId: $farmId, name: $name, readOnly: $readOnly, manufacturerId: $manufacturerId, manufacturer: $manufacturer, compliance: $compliance, metadataLocked: $metadataLocked, canDelete: $canDelete, deletionConfirmationToken: $deletionConfirmationToken, deletionConfirmationMessage: $deletionConfirmationMessage, status: $status, category: $category, unit: $unit, conversionQuantity: $conversionQuantity, conversionUnit: $conversionUnit, minAlertQuantity: $minAlertQuantity, description: $description, imageUrl: $imageUrl, imageUrls: $imageUrls, createdAt: $createdAt, updatedAt: $updatedAt, currentStock: $currentStock, usableStock: $usableStock, inventoryValue: $inventoryValue, activeLotCount: $activeLotCount, isLowStock: $isLowStock, lots: $lots, plannedUseCount: $plannedUseCount, canArchive: $canArchive)';
 }
 
 
@@ -909,7 +911,7 @@ abstract mixin class _$InventoryProductCopyWith<$Res> implements $InventoryProdu
   factory _$InventoryProductCopyWith(_InventoryProduct value, $Res Function(_InventoryProduct) _then) = __$InventoryProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String? deletionConfirmationToken, String? deletionConfirmationMessage, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
+ String id, String farmId, String name, bool readOnly, String manufacturerId, Map<String, dynamic> manufacturer, InventoryCompliance? compliance, bool metadataLocked, bool canDelete, String? deletionConfirmationToken, String? deletionConfirmationMessage, String status,@JsonKey(unknownEnumValue: InventoryProductCategory.unknown) InventoryProductCategory category,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unit, double? conversionQuantity,@JsonKey(unknownEnumValue: InventoryConversionUnit.unknown) InventoryConversionUnit? conversionUnit, double minAlertQuantity, String? description, String? imageUrl, List<String> imageUrls, DateTime createdAt, DateTime updatedAt, double currentStock, double? usableStock, double inventoryValue, int activeLotCount, bool isLowStock, List<InventoryLot> lots, int? plannedUseCount, bool? canArchive
 });
 
 
@@ -926,7 +928,7 @@ class __$InventoryProductCopyWithImpl<$Res>
 
 /// Create a copy of InventoryProduct
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? deletionConfirmationToken = freezed,Object? deletionConfirmationMessage = freezed,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? farmId = null,Object? name = null,Object? readOnly = null,Object? manufacturerId = null,Object? manufacturer = null,Object? compliance = freezed,Object? metadataLocked = null,Object? canDelete = null,Object? deletionConfirmationToken = freezed,Object? deletionConfirmationMessage = freezed,Object? status = null,Object? category = null,Object? unit = null,Object? conversionQuantity = freezed,Object? conversionUnit = freezed,Object? minAlertQuantity = null,Object? description = freezed,Object? imageUrl = freezed,Object? imageUrls = null,Object? createdAt = null,Object? updatedAt = null,Object? currentStock = null,Object? usableStock = freezed,Object? inventoryValue = null,Object? activeLotCount = null,Object? isLowStock = null,Object? lots = null,Object? plannedUseCount = freezed,Object? canArchive = freezed,}) {
   return _then(_InventoryProduct(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
@@ -951,7 +953,8 @@ as String?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore
 as List<String>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,currentStock: null == currentStock ? _self.currentStock : currentStock // ignore: cast_nullable_to_non_nullable
-as double,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
+as double,usableStock: freezed == usableStock ? _self.usableStock : usableStock // ignore: cast_nullable_to_non_nullable
+as double?,inventoryValue: null == inventoryValue ? _self.inventoryValue : inventoryValue // ignore: cast_nullable_to_non_nullable
 as double,activeLotCount: null == activeLotCount ? _self.activeLotCount : activeLotCount // ignore: cast_nullable_to_non_nullable
 as int,isLowStock: null == isLowStock ? _self.isLowStock : isLowStock // ignore: cast_nullable_to_non_nullable
 as bool,lots: null == lots ? _self._lots : lots // ignore: cast_nullable_to_non_nullable
@@ -1314,7 +1317,7 @@ as InventorySummary,
 @override
 @pragma('vm:prefer-inline')
 $InventorySummaryCopyWith<$Res> get summary {
-  
+
   return $InventorySummaryCopyWith<$Res>(_self.summary, (value) {
     return _then(_self.copyWith(summary: value));
   });
@@ -1457,7 +1460,7 @@ return $default(_that.readOnly,_that.items,_that.page,_that.limit,_that.totalRes
 
 class _InventoryProductPage implements InventoryProductPage {
   const _InventoryProductPage({this.readOnly = false, required final  List<InventoryProduct> items, required this.page, required this.limit, required this.totalResults, required this.totalPages, required this.hasNextPage, required this.summary}): _items = items;
-  
+
 
 @override@JsonKey() final  bool readOnly;
  final  List<InventoryProduct> _items;
@@ -1540,7 +1543,7 @@ as InventorySummary,
 @override
 @pragma('vm:prefer-inline')
 $InventorySummaryCopyWith<$Res> get summary {
-  
+
   return $InventorySummaryCopyWith<$Res>(_self.summary, (value) {
     return _then(_self.copyWith(summary: value));
   });
@@ -2439,7 +2442,7 @@ as InventoryTransactionPerformer,
 @override
 @pragma('vm:prefer-inline')
 $InventoryTransactionProductCopyWith<$Res> get product {
-  
+
   return $InventoryTransactionProductCopyWith<$Res>(_self.product, (value) {
     return _then(_self.copyWith(product: value));
   });
@@ -2448,7 +2451,7 @@ $InventoryTransactionProductCopyWith<$Res> get product {
 @override
 @pragma('vm:prefer-inline')
 $InventoryLotCopyWith<$Res> get inventoryBalance {
-  
+
   return $InventoryLotCopyWith<$Res>(_self.inventoryBalance, (value) {
     return _then(_self.copyWith(inventoryBalance: value));
   });
@@ -2469,7 +2472,7 @@ $InventoryTransactionSeasonCopyWith<$Res>? get season {
 @override
 @pragma('vm:prefer-inline')
 $InventoryTransactionPerformerCopyWith<$Res> get performer {
-  
+
   return $InventoryTransactionPerformerCopyWith<$Res>(_self.performer, (value) {
     return _then(_self.copyWith(performer: value));
   });
@@ -2712,7 +2715,7 @@ as InventoryTransactionPerformer,
 @override
 @pragma('vm:prefer-inline')
 $InventoryTransactionProductCopyWith<$Res> get product {
-  
+
   return $InventoryTransactionProductCopyWith<$Res>(_self.product, (value) {
     return _then(_self.copyWith(product: value));
   });
@@ -2721,7 +2724,7 @@ $InventoryTransactionProductCopyWith<$Res> get product {
 @override
 @pragma('vm:prefer-inline')
 $InventoryLotCopyWith<$Res> get inventoryBalance {
-  
+
   return $InventoryLotCopyWith<$Res>(_self.inventoryBalance, (value) {
     return _then(_self.copyWith(inventoryBalance: value));
   });
@@ -2742,7 +2745,7 @@ $InventoryTransactionSeasonCopyWith<$Res>? get season {
 @override
 @pragma('vm:prefer-inline')
 $InventoryTransactionPerformerCopyWith<$Res> get performer {
-  
+
   return $InventoryTransactionPerformerCopyWith<$Res>(_self.performer, (value) {
     return _then(_self.copyWith(performer: value));
   });
@@ -3084,7 +3087,7 @@ as List<InventoryTransactionSeason>,
 @override
 @pragma('vm:prefer-inline')
 $InventoryHistorySummaryCopyWith<$Res> get summary {
-  
+
   return $InventoryHistorySummaryCopyWith<$Res>(_self.summary, (value) {
     return _then(_self.copyWith(summary: value));
   });
@@ -3227,7 +3230,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 class _InventoryHistoryPage implements InventoryHistoryPage {
   const _InventoryHistoryPage({required final  List<InventoryTransaction> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.summary, final  List<InventoryTransactionProduct> filterProducts = const <InventoryTransactionProduct>[], final  List<InventoryTransactionSeason> filterSeasons = const <InventoryTransactionSeason>[]}): _items = items,_filterProducts = filterProducts,_filterSeasons = filterSeasons;
-  
+
 
  final  List<InventoryTransaction> _items;
 @override List<InventoryTransaction> get items {
@@ -3322,7 +3325,7 @@ as List<InventoryTransactionSeason>,
 @override
 @pragma('vm:prefer-inline')
 $InventoryHistorySummaryCopyWith<$Res> get summary {
-  
+
   return $InventoryHistorySummaryCopyWith<$Res>(_self.summary, (value) {
     return _then(_self.copyWith(summary: value));
   });
@@ -3394,7 +3397,7 @@ as bool,
 @override
 @pragma('vm:prefer-inline')
 $InventoryLotCopyWith<$Res> get balance {
-  
+
   return $InventoryLotCopyWith<$Res>(_self.balance, (value) {
     return _then(_self.copyWith(balance: value));
   });
@@ -3537,7 +3540,7 @@ return $default(_that.transactionId,_that.balance,_that.currentStock,_that.idemp
 
 class _InventoryStockResult implements InventoryStockResult {
   const _InventoryStockResult({required this.transactionId, required this.balance, required this.currentStock, required this.idempotentReplay});
-  
+
 
 @override final  String transactionId;
 @override final  InventoryLot balance;
@@ -3606,7 +3609,7 @@ as bool,
 @override
 @pragma('vm:prefer-inline')
 $InventoryLotCopyWith<$Res> get balance {
-  
+
   return $InventoryLotCopyWith<$Res>(_self.balance, (value) {
     return _then(_self.copyWith(balance: value));
   });

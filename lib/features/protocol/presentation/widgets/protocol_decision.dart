@@ -49,16 +49,14 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.detail.contentVersion == 2) ...[
-            ProtocolMaterials(
-              key: ValueKey(widget.detail.updatedAt),
-              detail: widget.detail,
-              busy: busy,
-              onSelectionsChanged: (value) =>
-                  setState(() => _materialSelections = value),
-            ),
-            const SizedBox(height: 16),
-          ],
+          ProtocolMaterials(
+            key: ValueKey(widget.detail.updatedAt),
+            detail: widget.detail,
+            busy: busy,
+            onSelectionsChanged: (value) =>
+                setState(() => _materialSelections = value),
+          ),
+          const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

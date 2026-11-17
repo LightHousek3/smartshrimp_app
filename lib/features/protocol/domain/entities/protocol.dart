@@ -238,6 +238,17 @@ abstract class ProtocolMaterialOption with _$ProtocolMaterialOption {
 }
 
 @freezed
+abstract class ProtocolTemplateSource with _$ProtocolTemplateSource {
+  @JsonSerializable(checked: true)
+  const factory ProtocolTemplateSource({
+    required String name,
+    required int version,
+  }) = _ProtocolTemplateSource;
+  factory ProtocolTemplateSource.fromJson(Map<String, dynamic> json) =>
+      _$ProtocolTemplateSourceFromJson(json);
+}
+
+@freezed
 abstract class ProtocolDetail with _$ProtocolDetail {
   @JsonSerializable(checked: true)
   const factory ProtocolDetail({
@@ -253,51 +264,63 @@ abstract class ProtocolDetail with _$ProtocolDetail {
     required List<ProtocolDayMarker> dayMarkers,
     required List<ProtocolHistory> history,
     required bool canReview,
-    @Default(1) int contentVersion,
-    int? sourceTemplateVersionNo,
+    ProtocolTemplateSource? sourceTemplateSnapshot,
     String? scheduleMessage,
     @Default([]) List<ProtocolMaterialReview> materialReviews,
   }) = _ProtocolDetail;
   factory ProtocolDetail.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDetailFromJson(json);
 
-  /// Validate material rules and day markers before enabling review of a pending protocol version.
+  /// Validate source metadata, material rules and day markers before enabling Owner review.
   static ProtocolDetail parse(Map<String, dynamic> json) => _parse(() {
     final card = ProtocolCardData.parse(json);
+    // Generated numeric converters must not truncate a fractional source revision.
+    final rawSource = json['sourceTemplateSnapshot'];
+    if (rawSource != null &&
+        (rawSource is! Map<String, dynamic> || rawSource['version'] is! int)) {
+      throw const InvalidResponseException();
+    }
     final value = ProtocolDetail.fromJson({...json, 'card': json});
-    if (value.contentVersion == 2) {
-      if (value.materialReviews.isEmpty ||
-          value.materialReviews.length > 1000 ||
-          value.materialReviews.map((m) => m.itemId).toSet().length !=
-              value.materialReviews.length) {
+    final source = value.sourceTemplateSnapshot;
+    if (source != null &&
+        (source.name.trim().isEmpty ||
+            source.name.length > 500 ||
+            source.version < 1 ||
+            source.version > 2147483647 ||
+            card.protocolType == ProtocolType.treatment)) {
+      throw const InvalidResponseException();
+    }
+    if (value.materialReviews.isEmpty ||
+        value.materialReviews.length > 1000 ||
+        value.materialReviews.map((m) => m.itemId).toSet().length !=
+            value.materialReviews.length) {
+      throw const InvalidResponseException();
+    }
+    for (final material in value.materialReviews) {
+      _strings([
+        material.itemId,
+        material.name,
+        material.operationType,
+        material.doseBasis,
+        material.doseUnit,
+      ]);
+      final dose = double.tryParse(material.doseValue);
+      final increment = double.tryParse(material.dailyDoseIncrement);
+      if (dose == null ||
+          !dose.isFinite ||
+          dose <= 0 ||
+          increment == null ||
+          !increment.isFinite ||
+          increment < 0 ||
+          material.firstDay < 1 ||
+          material.lastDay < material.firstDay ||
+          material.repeatIntervalDays < 1 ||
+          material.repeatIntervalDays > 30 ||
+          material.recurrenceAnchorDay < 1 ||
+          material.recurrenceAnchorDay > material.firstDay ||
+          material.doseAnchorDay < 1 ||
+          material.doseAnchorDay > material.firstDay) {
         throw const InvalidResponseException();
-      }
-      for (final material in value.materialReviews) {
-        _strings([
-          material.itemId,
-          material.name,
-          material.operationType,
-          material.doseBasis,
-          material.doseUnit,
-        ]);
-        final dose = double.tryParse(material.doseValue);
-        final increment = double.tryParse(material.dailyDoseIncrement);
-        if (dose == null ||
-            !dose.isFinite ||
-            dose <= 0 ||
-            increment == null ||
-            !increment.isFinite ||
-            increment < 0 ||
-            material.firstDay < 1 ||
-            material.lastDay < material.firstDay ||
-            material.repeatIntervalDays < 1 ||
-            material.repeatIntervalDays > 30 ||
-            material.recurrenceAnchorDay < 1 ||
-            material.recurrenceAnchorDay > material.firstDay ||
-            material.doseAnchorDay < 1 ||
-            material.doseAnchorDay > material.firstDay) {
-          throw const InvalidResponseException();
-        }
       }
     }
     if (value.durationDays < 0 ||
@@ -324,7 +347,6 @@ abstract class ProtocolDetail with _$ProtocolDetail {
       card: card,
       canReview:
           value.canReview &&
-          [1, 2].contains(value.contentVersion) &&
           card.status == ProtocolStatus.pendingApproval &&
           card.protocolType != ProtocolType.unknown,
     );

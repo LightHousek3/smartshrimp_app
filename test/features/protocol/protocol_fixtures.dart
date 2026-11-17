@@ -38,6 +38,16 @@ Map<String, dynamic> detailJson({
       ? null
       : '2026-06-28',
   'canReview': status == 'PENDING_APPROVAL',
+  'materialReviews': [
+    {
+      ...materialReviewJson(),
+      'productId': 'catalog-1',
+      'requiresResolution': false,
+      'resolutionMessage': null,
+      'firstDay': 1,
+      'lastDay': type == 'TREATMENT' ? 7 : 90,
+    },
+  ],
   'reviewedAt': status == 'APPROVED' ? '2026-06-20T08:10:00Z' : null,
   'reviewerName': status == 'APPROVED' ? 'Nguyễn Văn Đạt' : null,
   'dayMarkers': status == 'APPROVED'
@@ -120,7 +130,6 @@ class ProtocolFixtureRepository implements ProtocolRepository {
   final bool v2;
   int materialOptionsCalls = 0;
   Map<String, String> selectedMaterials = {};
-  int reviewedContentVersion = 1;
   int listCalls = 0;
   int detailCalls = 0;
   int reviewCalls = 0;
@@ -173,9 +182,7 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     if (readError != null) throw readError!;
     return ProtocolDetail.parse({
       ...detailJson(type: type, status: status),
-      'id': id,
-      if (v2) 'contentVersion': 2,
-      if (v2) 'materialReviews': [materialReviewJson()],
+      'id': id,      if (v2) 'materialReviews': [materialReviewJson()],
       if (anchorDate != null) 'anchorDate': anchorDate,
       if (status == 'REJECTED') 'rejectionReason': rejectionReason,
     });
@@ -216,12 +223,10 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     required DateTime updatedAt,
     required bool approve,
     String? reason,
-    int contentVersion = 1,
     Map<String, String> materialSelections = const {},
   }) async {
     reviewCalls++;
     selectedMaterials = materialSelections;
-    reviewedContentVersion = contentVersion;
     approved = approve;
     rejectionReason = reason;
     version = updatedAt;

@@ -165,7 +165,6 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
   }) async {
     if (state.isLoading || !detail.canReview) return false;
     if (approve &&
-        detail.contentVersion == 2 &&
         detail.materialReviews.any(
           (m) =>
               m.requiresResolution && !materialSelections.containsKey(m.itemId),
@@ -199,7 +198,6 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
               updatedAt: detail.updatedAt,
               approve: approve,
               reason: reason,
-              contentVersion: detail.contentVersion,
               materialSelections: materialSelections,
             ),
       );

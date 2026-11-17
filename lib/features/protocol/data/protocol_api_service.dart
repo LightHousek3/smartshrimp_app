@@ -83,7 +83,6 @@ final class ProtocolApiService implements ProtocolRepository {
     required DateTime updatedAt,
     required bool approve,
     String? reason,
-    int contentVersion = 1,
     Map<String, String> materialSelections = const {},
   }) async {
     await _client.post(
@@ -93,8 +92,7 @@ final class ProtocolApiService implements ProtocolRepository {
         'decision': approve ? 'APPROVE' : 'REJECT',
         'updatedAt': updatedAt.toUtc().toIso8601String(),
         if (!approve) 'reason': reason?.trim(),
-        if (contentVersion == 2) 'contentVersion': 2,
-        if (approve && contentVersion == 2)
+        if (approve)
           'materialSelections': materialSelections.entries
               .map((entry) => {'itemId': entry.key, 'productId': entry.value})
               .toList(),

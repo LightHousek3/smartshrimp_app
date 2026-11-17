@@ -114,6 +114,10 @@ String? notificationDestination(
       case 'season':
       case 'aquaculture_season':
         return owner ? seasonDestination() : '${AppRoutes.seasons}/$encodedId';
+      case 'biomass_sampling':
+        return role == AccountRole.technician
+            ? '${AppRoutes.seasons}/$encodedId/shrimp-health'
+            : null;
       case 'water_log':
       case 'water_quality_log':
         return role == AccountRole.technician && seasonId != null
@@ -166,6 +170,7 @@ String notificationActionLabel(
   AppNotification notification,
   AccountRole? role,
 ) => switch (notificationReferenceType(notification)) {
+  'biomass_sampling' => 'Cập nhật mẫu sinh khối',
   'pond' => role == AccountRole.farmOwner ? 'Xem ao' : 'Xem vụ nuôi',
   'farm'
       when notification.type != NotificationType.inventoryLow &&

@@ -29,7 +29,8 @@ import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_list_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_detail_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_stats_page.dart';
-import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_detail_page.dart';
+import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/presentation/pages/pond_detail_page.dart';
@@ -758,8 +759,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 routes: <RouteBase>[
                   GoRoute(
                     path: ':notificationId',
-                    builder: (_, state) => NotificationDetailPage(
+                    parentNavigatorKey: rootNavigatorKey,
+                    pageBuilder: (_, state) => NotificationDetailSheetPage(
+                      key: ValueKey(
+                        'notification-sheet/${state.pathParameters['notificationId']}',
+                      ),
                       notificationId: state.pathParameters['notificationId']!,
+                      notification:
+                          state.extra is AppNotification &&
+                              (state.extra! as AppNotification).id ==
+                                  state.pathParameters['notificationId']
+                          ? state.extra! as AppNotification
+                          : null,
                     ),
                   ),
                 ],

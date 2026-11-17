@@ -24,6 +24,21 @@ const context = {
 };
 
 void main() {
+  test(
+    'biomass sampling opens the existing health log for the Technician only',
+    () {
+      final reminder = notice('biomass_sampling', id: 'season');
+      expect(
+        notificationDestination(reminder, AccountRole.technician),
+        '/seasons/season/shrimp-health',
+      );
+      expect(notificationDestination(reminder, AccountRole.farmOwner), isNull);
+      expect(
+        notificationActionLabel(reminder, AccountRole.technician),
+        'Cập nhật mẫu sinh khối',
+      );
+    },
+  );
   for (final reference in [
     'protocol',
     'production_protocol',
@@ -192,24 +207,24 @@ void main() {
       );
     });
   }
-  test(
-    'technician disease notifications open their season case',
-    () {
-      final n = notice('disease_case');
-      expect(
-        notificationDestination(
-          n,
-          AccountRole.technician,
-          referenceContext: context,
-        ),
-        '/seasons/season/disease-cases/resource',
-      );
-      expect(notificationActionLabel(n, AccountRole.technician), 'Xem ca bệnh');
-    },
-  );
+  test('technician disease notifications open their season case', () {
+    final n = notice('disease_case');
+    expect(
+      notificationDestination(
+        n,
+        AccountRole.technician,
+        referenceContext: context,
+      ),
+      '/seasons/season/disease-cases/resource',
+    );
+    expect(notificationActionLabel(n, AccountRole.technician), 'Xem ca bệnh');
+  });
   test('owner disease notification opens the case directly', () {
     final n = notice('disease_case');
-    expect(notificationNeedsReferenceContext(n, AccountRole.farmOwner), isFalse);
+    expect(
+      notificationNeedsReferenceContext(n, AccountRole.farmOwner),
+      isFalse,
+    );
     expect(
       notificationDestination(n, AccountRole.farmOwner),
       '/disease-cases/resource',

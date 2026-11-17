@@ -4,6 +4,36 @@ import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart'
 import 'protocol_fixtures.dart';
 
 void main() {
+  test('template source retains only its saved name and version', () {
+    final detail = ProtocolDetail.parse({
+      ...detailJson(),
+      'sourceTemplateSnapshot': {'name': 'Nguồn đã chọn', 'version': 3},
+    });
+    expect(detail.sourceTemplateSnapshot?.name, 'Nguồn đã chọn');
+    expect(detail.sourceTemplateSnapshot?.version, 3);
+    expect(ProtocolDetail.parse(detailJson()).sourceTemplateSnapshot, isNull);
+    for (final source in [
+      {'name': '', 'version': 1},
+      {'name': 'Nguồn', 'version': 0},
+      {'name': 'Nguồn', 'version': 1.5},
+      {'name': 'Nguồn'},
+    ]) {
+      expect(
+        () => ProtocolDetail.parse({
+          ...detailJson(),
+          'sourceTemplateSnapshot': source,
+        }),
+        throwsA(isA<InvalidResponseException>()),
+      );
+    }
+    expect(
+      () => ProtocolDetail.parse({
+        ...detailJson(type: 'TREATMENT'),
+        'sourceTemplateSnapshot': {'name': 'Nguồn', 'version': 1},
+      }),
+      throwsA(isA<InvalidResponseException>()),
+    );
+  });
   test(
     'treatment approval retains the Expert anchor and canonical lifecycle states',
     () {
@@ -31,11 +61,9 @@ void main() {
     () {
       final detail = ProtocolDetail.parse({
         ...detailJson(),
-        'contentVersion': 2,
         'materialReviews': [materialReviewJson()],
       });
       final material = detail.materialReviews.single;
-      expect(detail.contentVersion, 2);
       expect(material.proposed!.description, 'Mô tả gốc');
       expect(material.proposed!.manufacturer!.name, 'Nhà sản xuất đề xuất');
       expect(material.proposed!.productCompliance!.evidenceUrls, [
@@ -48,7 +76,7 @@ void main() {
       final option = ProtocolMaterialOption.parse(materialOptionJson());
       expect(option.material!.productCompliance!.withdrawalDays, '0.000');
       expect(option.material!.productCompliance!.regulatoryType, 'feed');
-      expect(ProtocolDetail.parse(detailJson()).contentVersion, 1);
+      expect(ProtocolDetail.parse(detailJson()).materialReviews, isNotEmpty);
     },
   );
   test(
@@ -70,7 +98,6 @@ void main() {
         expect(
           () => ProtocolDetail.parse({
             ...detailJson(),
-            'contentVersion': 2,
             'materialReviews': materials,
           }),
           throwsA(isA<InvalidResponseException>()),
