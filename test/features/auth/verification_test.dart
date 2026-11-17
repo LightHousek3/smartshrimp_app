@@ -23,7 +23,9 @@ import 'package:smartshrimp_app/features/auth/presentation/widgets/auth_widgets.
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/profile/domain/profile_rules.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../../support/load_app_fonts.dart';
+import '../../support/disabled_push_repository.dart';
 
 class _Remote implements VerificationRemoteDataSource {
   int requests = 0;
@@ -420,6 +422,9 @@ void main() {
       final remote = _Remote()..pending = Completer<void>();
       final container = ProviderContainer(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           verificationRemoteDataSourceProvider.overrideWithValue(remote),
         ],
       );
@@ -461,6 +466,9 @@ void main() {
       final remote = _Remote();
       final container = ProviderContainer(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           verificationRemoteDataSourceProvider.overrideWithValue(remote),
         ],
       );
@@ -506,7 +514,12 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [authRepositoryProvider.overrideWithValue(_Auth())],
+          overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
+            authRepositoryProvider.overrideWithValue(_Auth()),
+          ],
           child: MaterialApp(theme: AppTheme.light, home: const LoginPage()),
         ),
       );
@@ -530,6 +543,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             verificationRemoteDataSourceProvider.overrideWithValue(remote),
           ],
           child: MaterialApp(
@@ -584,6 +600,9 @@ Future<ProviderContainer> _openVerification(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        pushRepositoryProvider.overrideWithValue(
+          const DisabledPushRepository(),
+        ),
         verificationRemoteDataSourceProvider.overrideWithValue(remote),
         authRepositoryProvider.overrideWithValue(_Auth()),
       ],

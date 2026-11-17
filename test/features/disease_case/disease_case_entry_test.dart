@@ -19,12 +19,14 @@ import 'package:smartshrimp_app/features/home/presentation/view_models/technicia
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import '../home/technician_dashboard_fixtures.dart';
 import 'disease_case_test.dart' show CaseFixtureRepository;
 import '../ai_diagnosis/ai_diagnosis_fixtures.dart'
     show DiagnosisFixtureRepository, summaryJson;
 import '../../support/load_app_fonts.dart';
+import '../../support/disabled_push_repository.dart';
 
 void main() {
   setUpAll(loadAppFonts);
@@ -45,6 +47,9 @@ void main() {
           ..options = CaseCreationOptions(aiDiagnoses: [summaryJson()]);
         final container = ProviderContainer(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             authRepositoryProvider.overrideWithValue(
               const DashboardFixtureAuth(role: AccountRole.technician),
             ),

@@ -1,5 +1,7 @@
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import '../home/owner_dashboard_fixtures.dart';
+import '../home/technician_dashboard_fixtures.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -26,7 +28,9 @@ import 'package:smartshrimp_app/features/season/presentation/pages/season_detail
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/task/presentation/pages/task_list_page.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../task/task_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 void main() {
   testWidgets('owner can filter personnel and open details', (tester) async {
@@ -41,6 +45,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -184,10 +191,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
           authRepositoryProvider.overrideWithValue(_TechnicianAuthRepository()),
+          technicianDashboardRepositoryProvider.overrideWithValue(
+            TechnicianFixtureRepository(),
+          ),
           profileRepositoryProvider.overrideWithValue(
             _FakeProfileRepository(AccountRole.technician),
           ),
@@ -198,7 +211,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nhân sự'), findsNothing);
-    expect(find.text('Nhiệm vụ'), findsOneWidget);
+    final navigation = find.byWidget(
+      tester.widget<Scaffold>(find.byType(Scaffold).first).bottomNavigationBar!,
+    );
+    expect(
+      find.descendant(of: navigation, matching: find.text('Nhiệm vụ')),
+      findsOneWidget,
+    );
     expect(find.text('Thông báo'), findsOneWidget);
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
@@ -211,6 +230,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           taskRepositoryProvider.overrideWithValue(TaskFixtureRepository()),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),

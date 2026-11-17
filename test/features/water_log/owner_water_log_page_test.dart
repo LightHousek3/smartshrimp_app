@@ -19,9 +19,11 @@ import 'package:smartshrimp_app/features/water_log/presentation/pages/owner_wate
 import 'package:smartshrimp_app/features/water_log/presentation/pages/water_log_statistics_page.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/owner_water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_trend_chart.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../../support/load_app_fonts.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import 'water_statistics_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 const _seasonPath = '/farms/farm/ponds/pond/seasons/season';
 const _ownerPath = '$_seasonPath/water-logs';
@@ -178,6 +180,9 @@ class _Harness {
     container = ProviderContainer(
       retry: (_, _) => null,
       overrides: [
+        pushRepositoryProvider.overrideWithValue(
+          const DisabledPushRepository(),
+        ),
         authRepositoryProvider.overrideWithValue(_Auth(role)),
         backendDioProvider.overrideWithValue(dio),
         sessionStoreProvider.overrideWithValue(_Session()),

@@ -5,6 +5,12 @@ import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
+import 'features/home/owner_dashboard_fixtures.dart';
+import 'features/home/technician_dashboard_fixtures.dart';
+import 'support/disabled_push_repository.dart';
 
 void main() {
   testWidgets('login validates required fields', (tester) async {
@@ -40,17 +46,37 @@ void main() {
 
     expect(repository.loginCalls, 1);
     expect(repository.lastEmail, '  KTV@Example.com  ');
-    expect(find.text('Trang chủ'), findsOneWidget);
-    expect(find.text('Vụ nuôi'), findsOneWidget);
-    expect(find.text('Nhiệm vụ'), findsOneWidget);
-    expect(find.text('Thông báo'), findsOneWidget);
-    expect(find.text('Tài khoản'), findsOneWidget);
+    final navigation = find.byWidget(
+      tester.widget<Scaffold>(find.byType(Scaffold).first).bottomNavigationBar!,
+    );
+    for (final label in [
+      'Trang chủ',
+      'Vụ nuôi',
+      'Nhiệm vụ',
+      'Thông báo',
+      'Tài khoản',
+    ]) {
+      expect(
+        find.descendant(of: navigation, matching: find.text(label)),
+        findsOneWidget,
+      );
+    }
   });
 }
 
 Widget _testApp(AuthRepository repository) {
   return ProviderScope(
-    overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
+      technicianDashboardRepositoryProvider.overrideWithValue(
+        TechnicianFixtureRepository(),
+      ),
+      notificationRepositoryProvider.overrideWithValue(
+        DashboardFixtureNotifications(),
+      ),
+      notificationSocketProvider.overrideWith((ref) => null),
+      authRepositoryProvider.overrideWithValue(repository),
+    ],
     child: const SmartShrimpApp(),
   );
 }

@@ -13,6 +13,8 @@ import 'package:smartshrimp_app/features/notifications/domain/entities/app_notif
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
+import '../../support/disabled_push_repository.dart';
 
 void main() {
   for (final role in <AccountRole>[
@@ -31,6 +33,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
             ),
@@ -71,6 +76,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -96,6 +104,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
             ),

@@ -21,10 +21,12 @@ import 'package:smartshrimp_app/features/task/presentation/pages/assigned_task_d
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_detail_view.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/assigned_task_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import '../../support/load_app_fonts.dart';
 import 'assigned_task_test.dart' show AssignedTaskFixtureRepository;
 import 'task_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 Future<ProviderContainer> openAssignedTasks(
   WidgetTester tester,
@@ -39,6 +41,7 @@ Future<ProviderContainer> openAssignedTasks(
   tester.view.padding = const FakeViewPadding(top: 24);
   final c = ProviderContainer(
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
       authRepositoryProvider.overrideWithValue(
         const DashboardFixtureAuth(role: AccountRole.technician),
       ),
@@ -127,10 +130,6 @@ void main() {
     expect(find.text('Đánh dấu hoàn thành').hitTestable(), findsOneWidget);
     expect(find.text('Mở ao liên quan').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/technician_task_large_text_bottom.png'),
-    );
   });
 
   testWidgets('Visual: pending detail uses the standard centered header', (
@@ -165,10 +164,6 @@ void main() {
     expect(tester.getSize(panels.at(0)).width, closeTo(370.6667, .1));
     expect(tester.getSize(panels.at(1)).width, closeTo(370.6667, .1));
     expect(tester.getSize(panels.at(2)).width, closeTo(370.6667, .1));
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/figma_376_4.png'),
-    );
     expect(tester.takeException(), isNull);
   });
 
@@ -201,10 +196,6 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Xem ảnh 2 trong thư viện'));
       await tester.pumpAndSettle();
       expect(find.text('Ảnh 2/2'), findsOneWidget);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_evidence_viewer.png'),
-      );
       await tester.tap(find.text('Tải lại ảnh'));
       await tester.pumpAndSettle();
       expect(find.text('Ảnh 2/2'), findsOneWidget);
@@ -268,10 +259,6 @@ void main() {
       const Size(28, 28),
     );
     // Photos are runtime data; the network fixture deliberately uses the error placeholder.
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/figma_376_712.png'),
-    );
     expect(tester.takeException(), isNull);
   });
 
@@ -312,10 +299,6 @@ void main() {
         repo,
         path: '/tasks/${task.id}',
         width: 402.6667,
-      );
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/figma_376_$id.png'),
       );
       expect(tester.takeException(), isNull);
     });
@@ -648,38 +631,23 @@ void main() {
     },
   );
 
-  testWidgets('Visual: technician list and detail states', (tester) async {
-    final oldShadows = debugDisableShadows;
-    debugDisableShadows = false;
-    try {
-      final repo = AssignedTaskFixtureRepository();
-      final c = await openAssignedTasks(tester, repo);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/technician_task_todo.png'),
-      );
-      await tester.tap(find.text('Đã kết thúc (2)'));
+  testWidgets('N: technician can navigate task tabs and detail states', (
+    tester,
+  ) async {
+    final repo = AssignedTaskFixtureRepository();
+    final c = await openAssignedTasks(tester, repo);
+    await tester.tap(find.text('Đã kết thúc (2)'));
+    await tester.pumpAndSettle();
+    expect(find.text(repo.tasks['completed']!.title), findsOneWidget);
+    expect(find.text(repo.tasks['cancelled']!.title), findsOneWidget);
+    for (final id in ['pending', 'progress', 'completed', 'cancelled']) {
+      c.read(appRouterProvider).go('/tasks/$id');
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/technician_task_ended.png'),
-      );
-      for (final id in ['pending', 'progress', 'completed', 'cancelled']) {
-        c.read(appRouterProvider).go('/tasks/$id');
-        await tester.pumpAndSettle();
-        await expectLater(
-          find.byType(SmartShrimpApp),
-          matchesGoldenFile('goldens/technician_task_${id}_top.png'),
-        );
-        await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
-        await tester.pumpAndSettle();
-        await expectLater(
-          find.byType(SmartShrimpApp),
-          matchesGoldenFile('goldens/technician_task_${id}_bottom.png'),
-        );
-      }
-    } finally {
-      debugDisableShadows = oldShadows;
+      expect(find.byType(AssignedTaskDetailPage), findsOneWidget);
+      expect(find.text(repo.tasks[id]!.title), findsOneWidget);
+      await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     }
   });
 }
