@@ -12,7 +12,7 @@ abstract final class PersonnelVisuals {
 
   static String roleBadgeLabel(AccountRole role) => switch (role) {
     AccountRole.technician => 'KTV',
-    AccountRole.expert => 'Expert',
+    AccountRole.expert => 'Chuyên gia',
     _ => 'Nhân sự',
   };
 

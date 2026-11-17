@@ -46,6 +46,7 @@ class InventoryProductFormPage extends ConsumerStatefulWidget {
 class _InventoryProductFormPageState
     extends ConsumerState<InventoryProductFormPage> {
   final _formKey = GlobalKey<FormState>();
+  final _photoSectionKey = GlobalKey();
   int? _selectedPhotoIndex;
   final _nameController = TextEditingController();
   final _thresholdController = TextEditingController();
@@ -72,6 +73,10 @@ class _InventoryProductFormPageState
     growable: true,
   );
   int get _imageCount => _images.where(_hasPhoto).length;
+  String? get _photoError =>
+      _submitted && _product?.metadataLocked != true && _imageCount == 0
+      ? InventoryRules.requiredProductImageMessage
+      : null;
 
   bool get _isEdit => widget.productId != null;
 
@@ -273,6 +278,17 @@ class _InventoryProductFormPageState
         context,
         'Vui lòng chọn nhà sản xuất đang hoạt động.',
       );
+      return;
+    }
+    if (_product?.metadataLocked != true && _imageCount == 0) {
+      final photoContext = _photoSectionKey.currentContext;
+      if (photoContext != null) {
+        await Scrollable.ensureVisible(
+          photoContext,
+          duration: const Duration(milliseconds: 250),
+          alignment: 0.2,
+        );
+      }
       return;
     }
     if (_imageCount > InventoryRules.maxProductImages) {
@@ -729,8 +745,17 @@ class _InventoryProductFormPageState
   );
 
   Widget _buildPhotoSection() => Column(
+    key: _photoSectionKey,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      if (_photoError case final error?) ...[
+        Text(
+          error,
+          key: const Key('inventory-image-error'),
+          style: const TextStyle(color: AppColors.error, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+      ],
       if (_imageCount > 0) ...[
         _buildPhotoPreview(),
         const SizedBox(height: 16),

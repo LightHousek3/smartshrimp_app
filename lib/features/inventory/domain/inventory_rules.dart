@@ -5,6 +5,8 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 /// Keep client validation aligned with inventory API limits and SQL precision.
 abstract final class InventoryRules {
   static const maxProductImages = 3;
+  static const requiredProductImageMessage =
+      'Vui lòng thêm ít nhất 1 ảnh nhãn vật tư trước khi lưu.';
   static const maxImageBytes = 5 * 1024 * 1024;
   static const maxOcrTotalBytes = 5 * 1024 * 1024;
 

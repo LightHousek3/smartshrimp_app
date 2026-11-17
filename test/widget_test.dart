@@ -13,6 +13,19 @@ import 'features/home/technician_dashboard_fixtures.dart';
 import 'support/disabled_push_repository.dart';
 
 void main() {
+  testWidgets('app uses Vietnamese Material dialogs and text actions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(_FakeAuthRepository()));
+    await tester.pumpAndSettle();
+    final context = tester.element(find.byType(Scaffold).first);
+    final localizations = MaterialLocalizations.of(context);
+    expect(Localizations.localeOf(context), const Locale('vi', 'VN'));
+    expect(localizations.cancelButtonLabel, 'Huỷ');
+    expect(localizations.copyButtonLabel, 'Sao chép');
+    expect(localizations.pasteButtonLabel, 'Dán');
+  });
+
   testWidgets('login validates required fields', (tester) async {
     final repository = _FakeAuthRepository();
     await tester.pumpWidget(_testApp(repository));

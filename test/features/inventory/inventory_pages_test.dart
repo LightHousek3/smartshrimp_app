@@ -18,6 +18,7 @@ import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_form_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -229,6 +230,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(field.first, value);
     await tester.pump();
+  }
+
+  Future<void> addLabelPhoto(WidgetTester tester) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Thêm ảnh'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Thêm ảnh'));
+    await tester.pumpAndSettle();
   }
 
   Future<void> submitForm(WidgetTester tester, String label) async {
@@ -571,6 +582,8 @@ void main() {
         inventory,
         suppliers: suppliers,
         chooseManufacturer: false,
+        picker: _FileImagePicker(fileCount: 1),
+        storage: _ImageStorage(),
       );
       final field = find.descendant(
         of: find.byWidgetPredicate(
@@ -600,6 +613,7 @@ void main() {
       await tester.tap(find.text('kg'));
       await enterField(tester, 'Ngưỡng cảnh báo', '0');
       await fillRequiredLabelFacts(tester);
+      await addLabelPhoto(tester);
       await submitForm(tester, 'Thêm vào kho');
       expect(inventory.createdManufacturerId, 'maker-both');
       expect(tester.takeException(), isNull);
@@ -611,6 +625,7 @@ void main() {
     (tester) async {
       final inventory = _InventoryRepository(
         product: _product().copyWith(
+          imageUrls: ['https://example.com/label.jpg'],
           compliance: _product().compliance!.copyWith(
             registrationNumber: '01-123457',
             evidenceUrls: ['https://example.com/evidence.pdf'],
@@ -1672,28 +1687,34 @@ void main() {
     },
   );
 
-  testWidgets('removing an existing product photo saves null', (tester) async {
-    final repository = _InventoryRepository(
-      product: _product().copyWith(imageUrl: 'https://example.com/photo.jpg'),
-      history: _history(),
-    );
-    await openForm(
-      tester,
-      const InventoryProductFormPage.edit(
-        farmId: 'farm-1',
-        productId: 'product-1',
-      ),
-      repository,
-    );
-    await tester.ensureVisible(find.byTooltip('Gỡ ảnh 1'));
-    await tester.tap(find.byTooltip('Gỡ ảnh 1'));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Gỡ ảnh 1'), findsNothing);
-    await submitForm(tester, 'Lưu thay đổi');
-    expect(repository.updateCalls, 1);
-    expect(repository.updatedImageUrls, isEmpty);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'removing the last product photo blocks saving and shows an image error',
+    (tester) async {
+      final repository = _InventoryRepository(
+        product: _product().copyWith(imageUrl: 'https://example.com/photo.jpg'),
+        history: _history(),
+      );
+      await openForm(
+        tester,
+        const InventoryProductFormPage.edit(
+          farmId: 'farm-1',
+          productId: 'product-1',
+        ),
+        repository,
+      );
+      await tester.ensureVisible(find.byTooltip('Gỡ ảnh 1'));
+      await tester.tap(find.byTooltip('Gỡ ảnh 1'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Gỡ ảnh 1'), findsNothing);
+      await submitForm(tester, 'Lưu thay đổi');
+      expect(repository.updateCalls, 0);
+      expect(
+        find.text(InventoryRules.requiredProductImageMessage),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   group('Inventory UI', () {
     testWidgets('used product only permits threshold edits', (tester) async {
@@ -2268,6 +2289,8 @@ void main() {
           tester,
           const InventoryProductFormPage.create(farmId: 'farm-1'),
           repository,
+          picker: _FileImagePicker(fileCount: 1),
+          storage: _ImageStorage(),
         );
         await enterField(tester, 'Tên vật tư', 'Chế phẩm 1500');
         await tester.ensureVisible(find.text('Thức ăn'));
@@ -2317,6 +2340,7 @@ void main() {
         await tester.tap(find.text('ml').last);
         await tester.pumpAndSettle();
         await fillRequiredLabelFacts(tester);
+        await addLabelPhoto(tester);
         await submitForm(tester, 'Thêm vào kho');
         expect(repository.createdProduct?['minAlertQuantity'], 1000);
         expect(
@@ -2388,6 +2412,8 @@ void main() {
         tester,
         const InventoryProductFormPage.create(farmId: 'farm-1'),
         repository,
+        picker: _FileImagePicker(fileCount: 1),
+        storage: _ImageStorage(),
       );
       await enterField(tester, 'Tên vật tư', 'Thức ăn mới');
       await tester.ensureVisible(find.text('Thức ăn'));
@@ -2432,6 +2458,14 @@ void main() {
       tester.testTextInput.hide();
       await tester.pumpAndSettle();
       await fillRequiredLabelFacts(tester);
+      await submitForm(tester, 'Thêm vào kho');
+
+      expect(repository.createdProduct, isNull);
+      expect(
+        find.text(InventoryRules.requiredProductImageMessage),
+        findsOneWidget,
+      );
+      await addLabelPhoto(tester);
       await submitForm(tester, 'Thêm vào kho');
 
       expect(repository.createdProduct, <String, Object?>{
