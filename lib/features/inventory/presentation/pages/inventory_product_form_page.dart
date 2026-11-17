@@ -684,7 +684,7 @@ class _InventoryProductFormPageState
   }
 
   Widget _buildThresholdField() => InventoryField(
-    label: 'Ngưỡng cảnh báo tồn kho tối thiểu *',
+    label: 'Ngưỡng cảnh báo tồn dùng được tối thiểu *',
     labelSize: 12,
     spacing: 6,
     child: Row(

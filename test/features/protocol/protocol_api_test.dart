@@ -106,6 +106,7 @@ void main() {
       expect(requests.last.data, {
         'decision': 'APPROVE',
         'updatedAt': stamp.toIso8601String(),
+        'materialSelections': [],
       });
       await service.review(
         'p',
@@ -153,13 +154,11 @@ void main() {
         'p',
         updatedAt: stamp,
         approve: true,
-        contentVersion: 2,
         materialSelections: {'item-1': 'catalog-1'},
       );
       expect(requests.last.data, {
         'decision': 'APPROVE',
         'updatedAt': stamp.toIso8601String(),
-        'contentVersion': 2,
         'materialSelections': [
           {'itemId': 'item-1', 'productId': 'catalog-1'},
         ],
@@ -169,7 +168,6 @@ void main() {
         updatedAt: stamp,
         approve: false,
         reason: ' Cần sửa ',
-        contentVersion: 2,
         materialSelections: {'item-1': 'catalog-1'},
       );
       expect(

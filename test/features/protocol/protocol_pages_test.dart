@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../support/disabled_push_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,6 +92,7 @@ Future<ProviderContainer> open(
   addTearDown(tester.view.resetDevicePixelRatio);
   final container = ProviderContainer(
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
       protocolClockProvider.overrideWithValue(
         () => now ?? DateTime.parse('2026-06-28T03:00:00Z'),
       ),
@@ -306,6 +309,12 @@ void main() {
       await tester.tap(find.byTooltip('Ngày trước'));
       await tester.pumpAndSettle();
       expect(repo.days.last, 30);
+      await tester.scrollUntilVisible(
+        find.text('Lịch theo từng cữ'),
+        -350,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('25–30'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

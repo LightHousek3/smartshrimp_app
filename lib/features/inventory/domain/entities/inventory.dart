@@ -201,6 +201,7 @@ abstract class InventoryProduct with _$InventoryProduct {
     required DateTime createdAt,
     required DateTime updatedAt,
     required double currentStock,
+    double? usableStock,
     required double inventoryValue,
     required int activeLotCount,
     required bool isLowStock,
@@ -232,6 +233,12 @@ abstract class InventoryProduct with _$InventoryProduct {
         json['createdAt'] is! String ||
         json['updatedAt'] is! String ||
         json['currentStock'] is! num ||
+        (json['usableStock'] != null &&
+            (json['usableStock'] is! num ||
+                !(json['usableStock'] as num).isFinite ||
+                (json['usableStock'] as num) < 0 ||
+                (json['usableStock'] as num) >
+                    (json['currentStock'] as num))) ||
         json['inventoryValue'] is! num ||
         json['activeLotCount'] is! int ||
         json['isLowStock'] is! bool ||

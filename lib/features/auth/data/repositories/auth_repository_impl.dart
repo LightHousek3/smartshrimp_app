@@ -11,13 +11,16 @@ final class AuthRepositoryImpl implements AuthRepository {
     required AuthRemoteDataSource remoteDataSource,
     required SessionStore sessionStore,
     required DeviceIdStore deviceIdStore,
+    Future<void> Function()? unregisterPush,
   }) : _remoteDataSource = remoteDataSource,
        _sessionStore = sessionStore,
-       _deviceIdStore = deviceIdStore;
+       _deviceIdStore = deviceIdStore,
+       _unregisterPush = unregisterPush;
 
   final AuthRemoteDataSource _remoteDataSource;
   final SessionStore _sessionStore;
   final DeviceIdStore _deviceIdStore;
+  final Future<void> Function()? _unregisterPush;
 
   @override
   Future<AuthAccount> login({
@@ -57,6 +60,11 @@ final class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    try {
+      await _unregisterPush?.call();
+    } on Object {
+      // Push cleanup must not prevent session revocation and local logout.
+    }
     final refreshToken = _sessionStore.refreshToken;
     try {
       if (refreshToken != null && refreshToken.isNotEmpty) {

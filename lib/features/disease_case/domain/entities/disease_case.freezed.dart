@@ -293,7 +293,8 @@ as List<Map<String, dynamic>>,
 /// @nodoc
 mixin _$CaseResponse {
 
- String get id; String get authorId;@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType get responseType; String get message; String? get replyToResponseId;@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? get careAction; DateTime get createdAt; Map<String, dynamic>? get author;@JsonKey(fromJson: _responseAttachmentUrls) List<String> get attachments;
+ String get id; String get authorId;@JsonKey(unknownEnumValue: CaseResponseType.unknown) CaseResponseType get responseType; String get message; String? get replyToResponseId;/// Present only when the server links this entry to a persisted care decision.
+@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? get careAction; DateTime get createdAt; Map<String, dynamic>? get author;@JsonKey(fromJson: _responseAttachmentUrls) List<String> get attachments;
 /// Create a copy of CaseResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -503,6 +504,7 @@ class _CaseResponse extends CaseResponse {
 @override@JsonKey(unknownEnumValue: CaseResponseType.unknown) final  CaseResponseType responseType;
 @override final  String message;
 @override final  String? replyToResponseId;
+/// Present only when the server links this entry to a persisted care decision.
 @override@JsonKey(unknownEnumValue: CaseCareAction.unknown) final  CaseCareAction? careAction;
 @override final  DateTime createdAt;
  final  Map<String, dynamic>? _author;
@@ -594,7 +596,8 @@ as List<String>,
 /// @nodoc
 mixin _$DiseaseCase {
 
- String get id; String get seasonId; String get title;@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus get status;@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity get severity; DateTime get createdAt; DateTime get updatedAt; String? get description; String? get resolutionSummary; DateTime? get resolvedAt; String? get reportedBy; String? get expertId; String? get relatedCaseId; Map<String, dynamic>? get expert; Map<String, dynamic>? get reporter;@JsonKey(name: '_count') Map<String, dynamic> get counts; bool get canRespond; bool get productionPaused; Map<String, dynamic> get caseSnapshot; List<Map<String, dynamic>> get attachments; List<CaseResponse> get responses; List<Map<String, dynamic>> get statusHistory;
+ String get id; String get seasonId; String get title;@JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown) DiseaseCaseStatus get status;@JsonKey(unknownEnumValue: CaseSeverity.unknown) CaseSeverity get severity; DateTime get createdAt; DateTime get updatedAt; String? get description; String? get resolutionSummary; DateTime? get resolvedAt; String? get reportedBy; String? get expertId; String? get relatedCaseId; Map<String, dynamic>? get expert; Map<String, dynamic>? get reporter;@JsonKey(name: '_count') Map<String, dynamic> get counts; bool get canRespond;/// Supplied by the server; the case status alone does not determine suspension.
+ bool get productionPaused; Map<String, dynamic> get caseSnapshot; List<Map<String, dynamic>> get attachments; List<CaseResponse> get responses; List<Map<String, dynamic>> get statusHistory;
 /// Create a copy of DiseaseCase
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -851,6 +854,7 @@ class _DiseaseCase extends DiseaseCase {
 }
 
 @override@JsonKey() final  bool canRespond;
+/// Supplied by the server; the case status alone does not determine suspension.
 @override@JsonKey() final  bool productionPaused;
  final  Map<String, dynamic> _caseSnapshot;
 @override@JsonKey() Map<String, dynamic> get caseSnapshot {

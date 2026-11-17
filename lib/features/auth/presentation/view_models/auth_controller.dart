@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/auth/data/repositories/auth_repository_
 import 'package:smartshrimp_app/features/auth/data/services/auth_api_service.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthApiService(ref.watch(apiClientProvider));
@@ -14,6 +15,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     remoteDataSource: ref.watch(authRemoteDataSourceProvider),
     sessionStore: ref.watch(sessionStoreProvider),
     deviceIdStore: ref.watch(deviceIdStoreProvider),
+    unregisterPush: () => ref.read(pushRepositoryProvider).unregister(),
   );
 });
 
@@ -46,6 +48,11 @@ final class AuthController extends AsyncNotifier<AuthAccount?> {
   }
 
   Future<void> expireSession() async {
+    try {
+      await ref.read(pushRepositoryProvider).unregister();
+    } on Object {
+      // Session expiry must finish even if native push cleanup is unavailable.
+    }
     await ref.read(sessionStoreProvider).clear();
     state = const AsyncData<AuthAccount?>(null);
   }

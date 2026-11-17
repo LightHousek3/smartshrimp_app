@@ -13,5 +13,6 @@ void main() {
             defaultTargetPlatform == TargetPlatform.iOS),
   );
   WidgetsFlutterBinding.ensureInitialized();
+  // Optional push setup starts after authentication and cannot delay the first App frame.
   runApp(const ProviderScope(child: SmartShrimpApp()));
 }

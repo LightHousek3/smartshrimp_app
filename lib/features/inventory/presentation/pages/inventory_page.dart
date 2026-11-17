@@ -424,8 +424,9 @@ class _ProductCard extends StatelessWidget {
                       TextSpan(
                         children: <InlineSpan>[
                           TextSpan(
-                            text:
-                                '${formatInventoryQuantity(product.currentStock)} ${product.unit.label}',
+                            text: product.usableStock == null
+                                ? 'Chưa xác định tồn dùng được'
+                                : '${formatInventoryQuantity(product.usableStock!)} ${product.unit.label} dùng được',
                             style: TextStyle(
                               color: product.isLowStock
                                   ? AppColors.error
@@ -449,7 +450,7 @@ class _ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      '${product.activeLotCount} lô còn hàng · Giá trị tồn ${formatInventoryCompactMoney(product.inventoryValue)}',
+                      'Tồn sổ ${formatInventoryQuantity(product.currentStock)} ${product.unit.label} · ${product.activeLotCount} lô · ${formatInventoryCompactMoney(product.inventoryValue)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

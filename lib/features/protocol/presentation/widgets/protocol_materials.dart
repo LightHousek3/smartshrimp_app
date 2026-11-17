@@ -40,9 +40,9 @@ class _ProtocolMaterialsState extends State<ProtocolMaterials> {
             'Vật tư và căn cứ đề xuất (${rows.length} hạng mục)',
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          if (widget.detail.sourceTemplateVersionNo case final version?)
+          if (widget.detail.sourceTemplateSnapshot case final source?)
             Text(
-              'Khởi tạo từ mẫu phiên bản $version; nội dung phác đồ được lưu độc lập.',
+              'Khởi tạo từ ${source.name} · v${source.version}; nội dung phác đồ được lưu độc lập.',
             ),
           if (canChoose && rows.any((row) => row.requiresResolution))
             const Padding(

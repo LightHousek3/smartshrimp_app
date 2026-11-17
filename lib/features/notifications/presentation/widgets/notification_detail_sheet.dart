@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
@@ -9,29 +11,83 @@ import 'package:smartshrimp_app/features/notifications/presentation/widgets/noti
 Future<void> showNotificationDetailSheet({
   required BuildContext context,
   required AppNotification notification,
-}) => showModalBottomSheet<void>(
-  context: context,
-  useRootNavigator: true,
+}) {
+  final router = GoRouter.maybeOf(context);
+  if (router != null) {
+    return router.push<void>(
+      '/notifications/${Uri.encodeComponent(notification.id)}',
+      extra: notification,
+    );
+  }
+  return Navigator.of(context, rootNavigator: true).push<void>(
+    _detailRoute(
+      context,
+      notificationId: notification.id,
+      notification: notification,
+    ),
+  );
+}
+
+/// Router-backed links and list taps share one modal route, including Back and drag dismissal.
+class NotificationDetailSheetPage extends Page<void> {
+  const NotificationDetailSheetPage({
+    required this.notificationId,
+    this.notification,
+    super.key,
+  });
+
+  final String notificationId;
+  final AppNotification? notification;
+
+  @override
+  Route<void> createRoute(BuildContext context) => _detailRoute(
+    context,
+    notificationId: notificationId,
+    notification: notification,
+    settings: this,
+  );
+}
+
+ModalBottomSheetRoute<void> _detailRoute(
+  BuildContext context, {
+  required String notificationId,
+  AppNotification? notification,
+  RouteSettings? settings,
+}) => ModalBottomSheetRoute<void>(
+  settings: settings,
+  capturedThemes: InheritedTheme.capture(
+    from: context,
+    to: Navigator.of(context, rootNavigator: true).context,
+  ),
+  barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
   useSafeArea: true,
   isScrollControlled: true,
   backgroundColor: Colors.transparent,
-  barrierColor: const Color(0x990F1C2E),
+  modalBarrierColor: const Color(0x990F1C2E),
   constraints: BoxConstraints(
     maxWidth: 560,
     maxHeight: MediaQuery.sizeOf(context).height * 0.86,
   ),
-  builder: (_) => _NotificationDetailSheet(notification: notification),
+  builder: (_) => _NotificationDetailSheet(
+    notificationId: notificationId,
+    notification: notification,
+  ),
 );
 
 class _NotificationDetailSheet extends ConsumerWidget {
-  const _NotificationDetailSheet({required this.notification});
+  const _NotificationDetailSheet({
+    required this.notificationId,
+    this.notification,
+  });
 
-  final AppNotification notification;
+  final String notificationId;
+  final AppNotification? notification;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detailProvider = notificationDetailProvider(notification.id);
+    final detailProvider = notificationDetailProvider(notificationId);
     final detail = ref.watch(detailProvider);
+    final current = detail.asData?.value ?? notification;
     return Container(
       key: const Key('notification_detail_sheet'),
       width: double.infinity,
@@ -60,8 +116,14 @@ class _NotificationDetailSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text('Chưa thể cập nhật trạng thái đã đọc.'),
+                  Expanded(
+                    child: Text(
+                      current != null
+                          ? 'Chưa thể cập nhật trạng thái đã đọc.'
+                          : detail.error is AppException
+                          ? (detail.error! as AppException).message
+                          : 'Không thể tải chi tiết thông báo. Vui lòng thử lại.',
+                    ),
                   ),
                   TextButton(
                     key: const Key('retry_notification_read'),
@@ -71,12 +133,18 @@ class _NotificationDetailSheet extends ConsumerWidget {
                 ],
               ),
             ),
-          Flexible(
-            fit: FlexFit.loose,
-            child: _LoadedContent(
-              notification: detail.asData?.value ?? notification,
+          if (current != null)
+            Flexible(
+              fit: FlexFit.loose,
+              child: _LoadedContent(notification: current),
+            )
+          else if (detail.isLoading)
+            const SizedBox(
+              height: 160,
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.ocean),
+              ),
             ),
-          ),
         ],
       ),
     );

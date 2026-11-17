@@ -44,6 +44,14 @@ Future<void> openSheet(
         ),
       ),
       GoRoute(
+        path: '/notifications/:notificationId',
+        pageBuilder: (_, state) => NotificationDetailSheetPage(
+          key: state.pageKey,
+          notificationId: state.pathParameters['notificationId']!,
+          notification: shown,
+        ),
+      ),
+      GoRoute(
         path: '/protocols/:protocolId',
         builder: (_, state) => Scaffold(
           body: Text('Protocol ${state.pathParameters['protocolId']}'),

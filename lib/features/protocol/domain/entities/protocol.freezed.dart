@@ -2438,9 +2438,275 @@ $ProtocolMaterialSnapshotCopyWith<$Res>? get material {
 
 
 /// @nodoc
+mixin _$ProtocolTemplateSource {
+
+ String get name; int get version;
+/// Create a copy of ProtocolTemplateSource
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ProtocolTemplateSourceCopyWith<ProtocolTemplateSource> get copyWith => _$ProtocolTemplateSourceCopyWithImpl<ProtocolTemplateSource>(this as ProtocolTemplateSource, _$identity);
+
+  /// Serializes this ProtocolTemplateSource to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolTemplateSource&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,version);
+
+@override
+String toString() {
+  return 'ProtocolTemplateSource(name: $name, version: $version)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ProtocolTemplateSourceCopyWith<$Res>  {
+  factory $ProtocolTemplateSourceCopyWith(ProtocolTemplateSource value, $Res Function(ProtocolTemplateSource) _then) = _$ProtocolTemplateSourceCopyWithImpl;
+@useResult
+$Res call({
+ String name, int version
+});
+
+
+
+
+}
+/// @nodoc
+class _$ProtocolTemplateSourceCopyWithImpl<$Res>
+    implements $ProtocolTemplateSourceCopyWith<$Res> {
+  _$ProtocolTemplateSourceCopyWithImpl(this._self, this._then);
+
+  final ProtocolTemplateSource _self;
+  final $Res Function(ProtocolTemplateSource) _then;
+
+/// Create a copy of ProtocolTemplateSource
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? version = null,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ProtocolTemplateSource].
+extension ProtocolTemplateSourcePatterns on ProtocolTemplateSource {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ProtocolTemplateSource value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ProtocolTemplateSource value)  $default,){
+final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ProtocolTemplateSource value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int version)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource() when $default != null:
+return $default(_that.name,_that.version);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int version)  $default,) {final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource():
+return $default(_that.name,_that.version);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int version)?  $default,) {final _that = this;
+switch (_that) {
+case _ProtocolTemplateSource() when $default != null:
+return $default(_that.name,_that.version);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(checked: true)
+class _ProtocolTemplateSource implements ProtocolTemplateSource {
+  const _ProtocolTemplateSource({required this.name, required this.version});
+  factory _ProtocolTemplateSource.fromJson(Map<String, dynamic> json) => _$ProtocolTemplateSourceFromJson(json);
+
+@override final  String name;
+@override final  int version;
+
+/// Create a copy of ProtocolTemplateSource
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ProtocolTemplateSourceCopyWith<_ProtocolTemplateSource> get copyWith => __$ProtocolTemplateSourceCopyWithImpl<_ProtocolTemplateSource>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ProtocolTemplateSourceToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolTemplateSource&&(identical(other.name, name) || other.name == name)&&(identical(other.version, version) || other.version == version));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,version);
+
+@override
+String toString() {
+  return 'ProtocolTemplateSource(name: $name, version: $version)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ProtocolTemplateSourceCopyWith<$Res> implements $ProtocolTemplateSourceCopyWith<$Res> {
+  factory _$ProtocolTemplateSourceCopyWith(_ProtocolTemplateSource value, $Res Function(_ProtocolTemplateSource) _then) = __$ProtocolTemplateSourceCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, int version
+});
+
+
+
+
+}
+/// @nodoc
+class __$ProtocolTemplateSourceCopyWithImpl<$Res>
+    implements _$ProtocolTemplateSourceCopyWith<$Res> {
+  __$ProtocolTemplateSourceCopyWithImpl(this._self, this._then);
+
+  final _ProtocolTemplateSource _self;
+  final $Res Function(_ProtocolTemplateSource) _then;
+
+/// Create a copy of ProtocolTemplateSource
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? version = null,}) {
+  return _then(_ProtocolTemplateSource(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$ProtocolDetail {
 
- ProtocolCardData get card; DateTime get updatedAt; String? get anchorDate; int get durationDays; DateTime? get reviewedAt; DateTime? get treatmentStartAt; String? get reviewerName; String? get rejectionReason; DateTime? get supersededAt; List<ProtocolDayMarker> get dayMarkers; List<ProtocolHistory> get history; bool get canReview; int get contentVersion; int? get sourceTemplateVersionNo; String? get scheduleMessage; List<ProtocolMaterialReview> get materialReviews;
+ ProtocolCardData get card; DateTime get updatedAt; String? get anchorDate; int get durationDays; DateTime? get reviewedAt; DateTime? get treatmentStartAt; String? get reviewerName; String? get rejectionReason; DateTime? get supersededAt; List<ProtocolDayMarker> get dayMarkers; List<ProtocolHistory> get history; bool get canReview; ProtocolTemplateSource? get sourceTemplateSnapshot; String? get scheduleMessage; List<ProtocolMaterialReview> get materialReviews;
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2453,16 +2719,16 @@ $ProtocolDetailCopyWith<ProtocolDetail> get copyWith => _$ProtocolDetailCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other.dayMarkers, dayMarkers)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.contentVersion, contentVersion) || other.contentVersion == contentVersion)&&(identical(other.sourceTemplateVersionNo, sourceTemplateVersionNo) || other.sourceTemplateVersionNo == sourceTemplateVersionNo)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other.materialReviews, materialReviews));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other.dayMarkers, dayMarkers)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other.materialReviews, materialReviews));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(dayMarkers),const DeepCollectionEquality().hash(history),canReview,contentVersion,sourceTemplateVersionNo,scheduleMessage,const DeepCollectionEquality().hash(materialReviews));
+int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(dayMarkers),const DeepCollectionEquality().hash(history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(materialReviews));
 
 @override
 String toString() {
-  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, contentVersion: $contentVersion, sourceTemplateVersionNo: $sourceTemplateVersionNo, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
+  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
 }
 
 
@@ -2473,11 +2739,11 @@ abstract mixin class $ProtocolDetailCopyWith<$Res>  {
   factory $ProtocolDetailCopyWith(ProtocolDetail value, $Res Function(ProtocolDetail) _then) = _$ProtocolDetailCopyWithImpl;
 @useResult
 $Res call({
- ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, int contentVersion, int? sourceTemplateVersionNo, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
+ ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
 });
 
 
-$ProtocolCardDataCopyWith<$Res> get card;
+$ProtocolCardDataCopyWith<$Res> get card;$ProtocolTemplateSourceCopyWith<$Res>? get sourceTemplateSnapshot;
 
 }
 /// @nodoc
@@ -2490,7 +2756,7 @@ class _$ProtocolDetailCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? contentVersion = null,Object? sourceTemplateVersionNo = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
   return _then(_self.copyWith(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as ProtocolCardData,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -2504,9 +2770,8 @@ as String?,supersededAt: freezed == supersededAt ? _self.supersededAt : supersed
 as DateTime?,dayMarkers: null == dayMarkers ? _self.dayMarkers : dayMarkers // ignore: cast_nullable_to_non_nullable
 as List<ProtocolDayMarker>,history: null == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
 as List<ProtocolHistory>,canReview: null == canReview ? _self.canReview : canReview // ignore: cast_nullable_to_non_nullable
-as bool,contentVersion: null == contentVersion ? _self.contentVersion : contentVersion // ignore: cast_nullable_to_non_nullable
-as int,sourceTemplateVersionNo: freezed == sourceTemplateVersionNo ? _self.sourceTemplateVersionNo : sourceTemplateVersionNo // ignore: cast_nullable_to_non_nullable
-as int?,scheduleMessage: freezed == scheduleMessage ? _self.scheduleMessage : scheduleMessage // ignore: cast_nullable_to_non_nullable
+as bool,sourceTemplateSnapshot: freezed == sourceTemplateSnapshot ? _self.sourceTemplateSnapshot : sourceTemplateSnapshot // ignore: cast_nullable_to_non_nullable
+as ProtocolTemplateSource?,scheduleMessage: freezed == scheduleMessage ? _self.scheduleMessage : scheduleMessage // ignore: cast_nullable_to_non_nullable
 as String?,materialReviews: null == materialReviews ? _self.materialReviews : materialReviews // ignore: cast_nullable_to_non_nullable
 as List<ProtocolMaterialReview>,
   ));
@@ -2516,9 +2781,21 @@ as List<ProtocolMaterialReview>,
 @override
 @pragma('vm:prefer-inline')
 $ProtocolCardDataCopyWith<$Res> get card {
-  
+
   return $ProtocolCardDataCopyWith<$Res>(_self.card, (value) {
     return _then(_self.copyWith(card: value));
+  });
+}/// Create a copy of ProtocolDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ProtocolTemplateSourceCopyWith<$Res>? get sourceTemplateSnapshot {
+    if (_self.sourceTemplateSnapshot == null) {
+    return null;
+  }
+
+  return $ProtocolTemplateSourceCopyWith<$Res>(_self.sourceTemplateSnapshot!, (value) {
+    return _then(_self.copyWith(sourceTemplateSnapshot: value));
   });
 }
 }
@@ -2602,10 +2879,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  int contentVersion,  int? sourceTemplateVersionNo,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolDetail() when $default != null:
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.contentVersion,_that.sourceTemplateVersionNo,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   return orElse();
 
 }
@@ -2623,10 +2900,10 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  int contentVersion,  int? sourceTemplateVersionNo,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDetail():
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.contentVersion,_that.sourceTemplateVersionNo,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2643,10 +2920,10 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  int contentVersion,  int? sourceTemplateVersionNo,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDetail() when $default != null:
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.contentVersion,_that.sourceTemplateVersionNo,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   return null;
 
 }
@@ -2658,7 +2935,7 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 
 @JsonSerializable(checked: true)
 class _ProtocolDetail implements ProtocolDetail {
-  const _ProtocolDetail({required this.card, required this.updatedAt, this.anchorDate, required this.durationDays, this.reviewedAt, this.treatmentStartAt, this.reviewerName, this.rejectionReason, this.supersededAt, required final  List<ProtocolDayMarker> dayMarkers, required final  List<ProtocolHistory> history, required this.canReview, this.contentVersion = 1, this.sourceTemplateVersionNo, this.scheduleMessage, final  List<ProtocolMaterialReview> materialReviews = const []}): _dayMarkers = dayMarkers,_history = history,_materialReviews = materialReviews;
+  const _ProtocolDetail({required this.card, required this.updatedAt, this.anchorDate, required this.durationDays, this.reviewedAt, this.treatmentStartAt, this.reviewerName, this.rejectionReason, this.supersededAt, required final  List<ProtocolDayMarker> dayMarkers, required final  List<ProtocolHistory> history, required this.canReview, this.sourceTemplateSnapshot, this.scheduleMessage, final  List<ProtocolMaterialReview> materialReviews = const []}): _dayMarkers = dayMarkers,_history = history,_materialReviews = materialReviews;
   factory _ProtocolDetail.fromJson(Map<String, dynamic> json) => _$ProtocolDetailFromJson(json);
 
 @override final  ProtocolCardData card;
@@ -2685,8 +2962,7 @@ class _ProtocolDetail implements ProtocolDetail {
 }
 
 @override final  bool canReview;
-@override@JsonKey() final  int contentVersion;
-@override final  int? sourceTemplateVersionNo;
+@override final  ProtocolTemplateSource? sourceTemplateSnapshot;
 @override final  String? scheduleMessage;
  final  List<ProtocolMaterialReview> _materialReviews;
 @override@JsonKey() List<ProtocolMaterialReview> get materialReviews {
@@ -2709,16 +2985,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other._dayMarkers, _dayMarkers)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.contentVersion, contentVersion) || other.contentVersion == contentVersion)&&(identical(other.sourceTemplateVersionNo, sourceTemplateVersionNo) || other.sourceTemplateVersionNo == sourceTemplateVersionNo)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other._materialReviews, _materialReviews));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other._dayMarkers, _dayMarkers)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other._materialReviews, _materialReviews));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(_dayMarkers),const DeepCollectionEquality().hash(_history),canReview,contentVersion,sourceTemplateVersionNo,scheduleMessage,const DeepCollectionEquality().hash(_materialReviews));
+int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(_dayMarkers),const DeepCollectionEquality().hash(_history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(_materialReviews));
 
 @override
 String toString() {
-  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, contentVersion: $contentVersion, sourceTemplateVersionNo: $sourceTemplateVersionNo, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
+  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
 }
 
 
@@ -2729,11 +3005,11 @@ abstract mixin class _$ProtocolDetailCopyWith<$Res> implements $ProtocolDetailCo
   factory _$ProtocolDetailCopyWith(_ProtocolDetail value, $Res Function(_ProtocolDetail) _then) = __$ProtocolDetailCopyWithImpl;
 @override @useResult
 $Res call({
- ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, int contentVersion, int? sourceTemplateVersionNo, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
+ ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
 });
 
 
-@override $ProtocolCardDataCopyWith<$Res> get card;
+@override $ProtocolCardDataCopyWith<$Res> get card;@override $ProtocolTemplateSourceCopyWith<$Res>? get sourceTemplateSnapshot;
 
 }
 /// @nodoc
@@ -2746,7 +3022,7 @@ class __$ProtocolDetailCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? contentVersion = null,Object? sourceTemplateVersionNo = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
   return _then(_ProtocolDetail(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as ProtocolCardData,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -2760,9 +3036,8 @@ as String?,supersededAt: freezed == supersededAt ? _self.supersededAt : supersed
 as DateTime?,dayMarkers: null == dayMarkers ? _self._dayMarkers : dayMarkers // ignore: cast_nullable_to_non_nullable
 as List<ProtocolDayMarker>,history: null == history ? _self._history : history // ignore: cast_nullable_to_non_nullable
 as List<ProtocolHistory>,canReview: null == canReview ? _self.canReview : canReview // ignore: cast_nullable_to_non_nullable
-as bool,contentVersion: null == contentVersion ? _self.contentVersion : contentVersion // ignore: cast_nullable_to_non_nullable
-as int,sourceTemplateVersionNo: freezed == sourceTemplateVersionNo ? _self.sourceTemplateVersionNo : sourceTemplateVersionNo // ignore: cast_nullable_to_non_nullable
-as int?,scheduleMessage: freezed == scheduleMessage ? _self.scheduleMessage : scheduleMessage // ignore: cast_nullable_to_non_nullable
+as bool,sourceTemplateSnapshot: freezed == sourceTemplateSnapshot ? _self.sourceTemplateSnapshot : sourceTemplateSnapshot // ignore: cast_nullable_to_non_nullable
+as ProtocolTemplateSource?,scheduleMessage: freezed == scheduleMessage ? _self.scheduleMessage : scheduleMessage // ignore: cast_nullable_to_non_nullable
 as String?,materialReviews: null == materialReviews ? _self._materialReviews : materialReviews // ignore: cast_nullable_to_non_nullable
 as List<ProtocolMaterialReview>,
   ));
@@ -2773,9 +3048,21 @@ as List<ProtocolMaterialReview>,
 @override
 @pragma('vm:prefer-inline')
 $ProtocolCardDataCopyWith<$Res> get card {
-  
+
   return $ProtocolCardDataCopyWith<$Res>(_self.card, (value) {
     return _then(_self.copyWith(card: value));
+  });
+}/// Create a copy of ProtocolDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ProtocolTemplateSourceCopyWith<$Res>? get sourceTemplateSnapshot {
+    if (_self.sourceTemplateSnapshot == null) {
+    return null;
+  }
+
+  return $ProtocolTemplateSourceCopyWith<$Res>(_self.sourceTemplateSnapshot!, (value) {
+    return _then(_self.copyWith(sourceTemplateSnapshot: value));
   });
 }
 }
@@ -3581,7 +3868,7 @@ return $default(_that.items,_that.page,_that.hasNextPage,_that.productionCount,_
 
 class _ProtocolPage implements ProtocolPage {
   const _ProtocolPage({required final  List<ProtocolCardData> items, required this.page, required this.hasNextPage, required this.productionCount, required this.treatmentCount}): _items = items;
-  
+
 
  final  List<ProtocolCardData> _items;
 @override List<ProtocolCardData> get items {

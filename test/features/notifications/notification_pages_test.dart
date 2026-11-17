@@ -1,7 +1,11 @@
+import '../../support/disabled_push_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import 'dart:async';
 
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import '../home/owner_dashboard_fixtures.dart';
+import '../home/technician_dashboard_fixtures.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +46,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             authRepositoryProvider.overrideWithValue(
               const _AuthRepository(AccountRole.farmOwner),
             ),
@@ -85,6 +92,7 @@ void main() {
     WidgetTester tester,
     _NotificationRepository repository, {
     AccountRole role = AccountRole.farmOwner,
+    Stream<String> pushOpened = const Stream.empty(),
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -95,8 +103,14 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            DisabledPushRepository(openedNotificationIds: pushOpened),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
+          ),
+          technicianDashboardRepositoryProvider.overrideWithValue(
+            TechnicianFixtureRepository(),
           ),
           authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
           notificationRepositoryProvider.overrideWithValue(repository),
@@ -108,6 +122,101 @@ void main() {
     await tester.tap(find.text('Thông báo'));
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'push opens the shared bottom drawer over the notification list and closes back to the list',
+    (tester) async {
+      final opened = StreamController<String>.broadcast();
+      addTearDown(opened.close);
+      final repository = _NotificationRepository();
+      await openNotifications(tester, repository, pushOpened: opened.stream);
+      opened.add('notification-1');
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.byKey(const Key('notification_detail_sheet')),
+        findsOneWidget,
+      );
+      expect(repository.detailCalls, 1);
+      await tester.tap(find.byKey(const Key('close_notification_detail')));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      final router = ProviderScope.containerOf(
+        tester.element(find.byType(SmartShrimpApp)),
+      ).read(appRouterProvider);
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        AppRoutes.notifications,
+      );
+      expect(find.text('Thông báo'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'a second push replaces the current drawer instead of stacking detail pages',
+    (tester) async {
+      final opened = StreamController<String>.broadcast();
+      addTearDown(opened.close);
+      final repository = _NotificationRepository();
+      await openNotifications(tester, repository, pushOpened: opened.stream);
+      await tester.tap(find.text('Cảnh báo: NO2 vượt ngưỡng — Ao A3'));
+      await tester.pumpAndSettle();
+      opened.add('notification-2');
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('notification_detail_sheet')),
+          matching: find.text('Nhiệm vụ đã hoàn thành'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('close_notification_detail')));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'push drawer keeps loading and retry states inside the sheet with one detail request',
+    (tester) async {
+      final opened = StreamController<String>.broadcast();
+      addTearDown(opened.close);
+      final gate = Completer<void>();
+      final repository = _NotificationRepository(
+        readGate: gate.future,
+        failDetail: true,
+      );
+      await openNotifications(tester, repository, pushOpened: opened.stream);
+      opened.add('notification-1');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('notification_detail_sheet')),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(repository.detailCalls, 1);
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.text(const NetworkException().message), findsOneWidget);
+      repository.failDetail = false;
+      await tester.tap(find.byKey(const Key('retry_notification_read')));
+      await tester.pumpAndSettle();
+      expect(repository.detailCalls, 2);
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('notification_detail_sheet')),
+          matching: find.text('Cảnh báo: NO2 vượt ngưỡng — Ao A3'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   for (final role in [AccountRole.farmOwner, AccountRole.technician]) {
     for (final type in [
@@ -216,8 +325,14 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              pushRepositoryProvider.overrideWithValue(
+                const DisabledPushRepository(),
+              ),
               ownerDashboardRepositoryProvider.overrideWithValue(
                 DashboardFixtureRepository(),
+              ),
+              technicianDashboardRepositoryProvider.overrideWithValue(
+                TechnicianFixtureRepository(),
               ),
               authRepositoryProvider.overrideWithValue(
                 const _AuthRepository(AccountRole.farmOwner),
@@ -277,8 +392,14 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
+            ),
+            technicianDashboardRepositoryProvider.overrideWithValue(
+              TechnicianFixtureRepository(),
             ),
             authRepositoryProvider.overrideWithValue(
               const _AuthRepository(AccountRole.technician),
@@ -417,8 +538,14 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
+            ),
+            technicianDashboardRepositoryProvider.overrideWithValue(
+              TechnicianFixtureRepository(),
             ),
             authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
             notificationRepositoryProvider.overrideWithValue(repository),
@@ -529,8 +656,14 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              pushRepositoryProvider.overrideWithValue(
+                const DisabledPushRepository(),
+              ),
               ownerDashboardRepositoryProvider.overrideWithValue(
                 DashboardFixtureRepository(),
+              ),
+              technicianDashboardRepositoryProvider.overrideWithValue(
+                TechnicianFixtureRepository(),
               ),
               authRepositoryProvider.overrideWithValue(_AuthRepository(role)),
               notificationRepositoryProvider.overrideWithValue(repository),

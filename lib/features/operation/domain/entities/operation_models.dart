@@ -121,7 +121,6 @@ class OperationProtocolItem {
     this.mealNumber,
     this.plannedTime,
     this.instructions,
-    this.recommendedProductName,
     this.protocol,
   });
 
@@ -129,7 +128,6 @@ class OperationProtocolItem {
   final int? mealNumber;
   final String? plannedTime;
   final String? instructions;
-  final String? recommendedProductName;
   final OperationProtocol? protocol;
 
   factory OperationProtocolItem.fromJson(Map<String, dynamic> json) =>
@@ -138,7 +136,6 @@ class OperationProtocolItem {
         mealNumber: _asNullableInt(json['mealNumber']),
         plannedTime: json['plannedTime'] as String?,
         instructions: json['instructions'] as String?,
-        recommendedProductName: json['recommendedProductName'] as String?,
         protocol: json['protocol'] is Map<String, dynamic>
             ? OperationProtocol.fromJson(
                 json['protocol'] as Map<String, dynamic>,
@@ -229,10 +226,7 @@ class OperationSchedule {
   final String? seasonName;
   final String? pondName;
 
-  String get productName =>
-      product?.name ??
-      protocolItem?.recommendedProductName ??
-      'Sản phẩm vận hành';
+  String get productName => product?.name ?? 'Sản phẩm vận hành';
 
   String get doseBasisDescription => switch (doseBasisSnapshot.toUpperCase()) {
     'PERCENT_BIOMASS' => 'Theo % sinh khối',
@@ -241,9 +235,7 @@ class OperationSchedule {
     _ => 'Số lượng cố định',
   };
 
-  factory OperationSchedule.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory OperationSchedule.fromJson(Map<String, dynamic> json) {
     final season = json['season'] as Map<String, dynamic>?;
     final pond = season?['pond'] as Map<String, dynamic>?;
 
@@ -255,7 +247,8 @@ class OperationSchedule {
       scheduledAt: DateTime.parse(json['scheduledAt'] as String),
       plannedQuantity: _asDouble(json['plannedQuantity']),
       unit: json['unit'] as String? ?? '',
-      doseBasisSnapshot: json['doseBasisSnapshot'] as String? ?? 'FIXED_QUANTITY',
+      doseBasisSnapshot:
+          json['doseBasisSnapshot'] as String? ?? 'FIXED_QUANTITY',
       doseValueSnapshot: _asDouble(json['doseValueSnapshot']),
       calculationVersion: json['calculationVersion'] as String? ?? 'v1',
       status: OperationStatus.parse(json['status'] as String?),
@@ -275,7 +268,9 @@ class OperationSchedule {
             )
           : null,
       execution: json['execution'] is Map<String, dynamic>
-          ? OperationExecution.fromJson(json['execution'] as Map<String, dynamic>)
+          ? OperationExecution.fromJson(
+              json['execution'] as Map<String, dynamic>,
+            )
           : null,
       seasonName: (season?['name'] ?? json['seasonName']) as String?,
       pondName: (pond?['name'] ?? json['pondName']) as String?,
@@ -353,10 +348,7 @@ class OperationListResult {
           .map((e) {
             final sMap = e as Map<String, dynamic>;
             if (!sMap.containsKey('season') && season != null) {
-              return OperationSchedule.fromJson({
-                ...sMap,
-                'season': season,
-              });
+              return OperationSchedule.fromJson({...sMap, 'season': season});
             }
             return OperationSchedule.fromJson(sMap);
           })

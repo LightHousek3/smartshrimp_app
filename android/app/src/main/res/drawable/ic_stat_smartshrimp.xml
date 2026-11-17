@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Share the same monochrome brand mark between FCM and foreground notifications. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/ic_notification_mark"
+    android:gravity="center"
+    android:filter="true" />

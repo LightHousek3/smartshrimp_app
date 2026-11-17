@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/push_permission_card.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
@@ -125,6 +126,7 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
                       : null,
                 ),
               ),
+              const SliverToBoxAdapter(child: PushPermissionCard()),
               ...listState.when(
                 loading: () => const <Widget>[
                   SliverFillRemaining(

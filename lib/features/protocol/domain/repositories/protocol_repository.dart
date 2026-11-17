@@ -20,7 +20,6 @@ abstract interface class ProtocolRepository {
     required DateTime updatedAt,
     required bool approve,
     String? reason,
-    int contentVersion = 1,
     Map<String, String> materialSelections = const {},
   });
 }

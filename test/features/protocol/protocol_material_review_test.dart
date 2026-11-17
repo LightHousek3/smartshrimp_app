@@ -80,9 +80,7 @@ void main() {
     'V2: 1000 preserved items render in bounded pages without catalog requests',
     (tester) async {
       final detail = ProtocolDetail.parse({
-        ...detailJson(),
-        'contentVersion': 2,
-        'materialReviews': List.generate(
+        ...detailJson(),        'materialReviews': List.generate(
           1000,
           (index) => {
             ...materialReviewJson(),
@@ -168,7 +166,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.reviewCalls, 1);
       expect(repository.selectedMaterials, {'item-1': 'catalog-1'});
-      expect(repository.reviewedContentVersion, 2);
       expect(tester.takeException(), isNull);
     },
   );

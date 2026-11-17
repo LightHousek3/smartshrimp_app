@@ -105,7 +105,7 @@ class _DetailContent extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           _Header(detail),
-          if (detail.contentVersion == 2 && !detail.canReview) ...[
+          if (!detail.canReview) ...[
             const SizedBox(height: 16),
             ProtocolMaterials(detail: detail),
           ],

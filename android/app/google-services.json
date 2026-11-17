@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "50021332292",
+    "project_id": "smartshrimp-system",
+    "storage_bucket": "smartshrimp-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50021332292:android:2583b9b97d5a70462c9311",
+        "android_client_info": {
+          "package_name": "com.example.smartshrimp_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-vCcVPvpHwgZdJKShzrphSG31T_DergY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
