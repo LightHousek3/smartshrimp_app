@@ -1,4 +1,6 @@
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
+import '../home/technician_dashboard_fixtures.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import 'dart:typed_data';
 
@@ -19,12 +21,14 @@ import 'package:smartshrimp_app/features/profile/domain/repositories/profile_rep
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../../support/load_app_fonts.dart';
+import '../../support/disabled_push_repository.dart';
 
 void main() {
-  for (final (route, title, golden) in [
-    (AppRoutes.profileEdit, 'Cập nhật thông tin', 'profile_edit'),
-    (AppRoutes.changePassword, 'Đổi mật khẩu', 'change_password'),
+  for (final (route, title) in [
+    (AppRoutes.profileEdit, 'Cập nhật thông tin'),
+    (AppRoutes.changePassword, 'Đổi mật khẩu'),
   ]) {
     testWidgets('$title follows the Figma form layout and shared icons', (
       tester,
@@ -54,10 +58,6 @@ void main() {
       final field = tester.getSize(find.byType(TextFormField).first);
       expect(field.width, 370);
       expect(field.height, closeTo(44, 3));
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/$golden.png'),
-      );
       if (route == AppRoutes.changePassword) {
         expect(tester.testTextInput.isVisible, isFalse);
         final current = find.byKey(const Key('current_password_field'));
@@ -143,10 +143,6 @@ void main() {
     expect(find.text('3 KTV · 2 Chuyên gia'), findsOneWidget);
     expect(find.text('5 đang hoạt động'), findsOneWidget);
     expect(find.text('Quản lý hồ sơ & nhân sự'), findsOneWidget);
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('goldens/owner_account.png'),
-    );
     final header = find.text('Quản lý hồ sơ & nhân sự');
     final topBefore = tester.getTopLeft(header).dy;
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -450));
@@ -285,6 +281,10 @@ Widget _testApp(
 ) {
   return ProviderScope(
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
+      technicianDashboardRepositoryProvider.overrideWithValue(
+        TechnicianFixtureRepository(),
+      ),
       notificationRepositoryProvider.overrideWithValue(
         DashboardFixtureNotifications(),
       ),

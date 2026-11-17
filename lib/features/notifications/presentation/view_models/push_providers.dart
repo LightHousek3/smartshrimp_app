@@ -34,8 +34,9 @@ final class PushStatusController extends AsyncNotifier<PushPermission> {
   /// Resuming the App rechecks settings silently; only an explicit request asks permission again.
   Future<void> synchronize({bool requestPermission = false}) async {
     final accountId = ref.read(authControllerProvider).value?.id;
-    if (accountId == null) return;
+    if (accountId == null || state.isLoading) return;
     final request = ++_request;
+    state = const AsyncLoading<PushPermission>();
     final result = await AsyncValue.guard(
       () => ref
           .read(pushRepositoryProvider)

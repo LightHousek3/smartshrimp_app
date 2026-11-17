@@ -14,10 +14,12 @@ import 'package:smartshrimp_app/features/inventory/domain/repositories/inventory
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../../support/farm_context_repository.dart';
 import '../../support/load_app_fonts.dart';
 import '../inventory/inventory_test_data.dart';
 import 'owner_dashboard_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 const _names = {'farm1': 'Trang trại Cửa Lấp', 'farm2': 'Trang trại Đông Hải'};
 
@@ -34,6 +36,7 @@ Future<ProviderContainer> _open(
   final container = ProviderContainer(
     retry: (count, error) => null,
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
       authRepositoryProvider.overrideWithValue(const DashboardFixtureAuth()),
       farmRepositoryProvider.overrideWithValue(
         farms ?? FarmContextRepository(names: _names),

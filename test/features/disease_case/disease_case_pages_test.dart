@@ -18,8 +18,10 @@ import 'package:smartshrimp_app/features/disease_case/presentation/view_models/o
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 
 import '../home/owner_dashboard_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 const _case = DiseaseCaseCard(
   id: 'case-a3',
@@ -136,6 +138,7 @@ Future<void> _open(WidgetTester tester, _Cases repository, String route) async {
   addTearDown(tester.view.resetDevicePixelRatio);
   final container = ProviderContainer(
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
       authRepositoryProvider.overrideWithValue(DashboardFixtureAuth()),
       diseaseCaseRepositoryProvider.overrideWithValue(repository),
       ownerDashboardRepositoryProvider.overrideWithValue(

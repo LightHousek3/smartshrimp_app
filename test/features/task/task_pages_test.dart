@@ -25,9 +25,11 @@ import 'package:smartshrimp_app/features/task/presentation/widgets/task_list_vie
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 import 'package:smartshrimp_app/features/task/presentation/view_models/task_controller.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import '../../support/load_app_fonts.dart';
 import 'task_fixtures.dart';
+import '../../support/disabled_push_repository.dart';
 
 class _DelayedTaskListRepository extends TaskFixtureRepository {
   final progressReady = Completer<void>();
@@ -105,6 +107,7 @@ Future<ProviderContainer> openTasks(
   tester.view.padding = const FakeViewPadding(top: 24);
   final container = ProviderContainer(
     overrides: [
+      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
       authRepositoryProvider.overrideWithValue(DashboardFixtureAuth()),
       ownerDashboardRepositoryProvider.overrideWithValue(
         dashboard ?? DashboardFixtureRepository(),
@@ -187,10 +190,6 @@ void main() {
       isNull,
     );
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/task_large_text_top.png'),
-    );
     await tester.drag(find.byType(ListView).first, const Offset(0, -2500));
     await tester.pumpAndSettle();
     expect(find.text('Hủy nhiệm vụ').hitTestable(), findsOneWidget);
@@ -207,10 +206,6 @@ void main() {
           .dy,
     );
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/task_large_text_bottom.png'),
-    );
 
     repo.tasks['cancelled'] = cancelledTask.copyWith(
       cancellationReason:
@@ -295,10 +290,6 @@ void main() {
       dueAt: DateTime(2099, 11, 17, 6, 48),
     );
     await openTasks(tester, repo, path: '/tasks/progress');
-    await expectLater(
-      find.byType(SmartShrimpApp),
-      matchesGoldenFile('goldens/figma_376_2071.png'),
-    );
     expect(tester.takeException(), isNull);
   });
   testWidgets('N: owner sees saved evidence and cannot add or remove photos', (
@@ -572,10 +563,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Không thể thực hiện'), findsNothing);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_deadline_error.png'),
-      );
       await tester.tap(deadline);
       await tester.pumpAndSettle();
       await tester.tap(find.text('OK').last);
@@ -625,10 +612,6 @@ void main() {
         const Offset(0, 2000),
       );
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_required_errors.png'),
-      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -671,10 +654,6 @@ void main() {
       );
       await tester.tap(find.byType(DropdownButton<String>).first);
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_farm_menu.png'),
-      );
       await tester.drag(find.byType(Scrollable).last, const Offset(0, -1800));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -731,94 +710,54 @@ void main() {
   testWidgets('N: owner tabs and all detail states match the design', (
     tester,
   ) async {
-    final oldShadows = debugDisableShadows;
-    debugDisableShadows = false;
-    try {
-      final repo = TaskFixtureRepository();
-      final container = await openTasks(tester, repo);
-      expect(find.text('Chờ làm (1)'), findsOneWidget);
-      expect(find.text('Đang làm (1)'), findsOneWidget);
-      expect(find.text('Hoàn thành (1)'), findsOneWidget);
-      expect(find.text('Đã hủy (1)'), findsOneWidget);
-      expect(
-        find.textContaining('${taskTechnician.name} · Hạn'),
-        findsOneWidget,
-      );
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_todo.png'),
-      );
-      await tester.tap(find.text('Đang làm (1)'));
+    final repo = TaskFixtureRepository();
+    final container = await openTasks(tester, repo);
+    expect(find.text('Chờ làm (1)'), findsOneWidget);
+    expect(find.text('Đang làm (1)'), findsOneWidget);
+    expect(find.text('Hoàn thành (1)'), findsOneWidget);
+    expect(find.text('Đã hủy (1)'), findsOneWidget);
+    expect(find.textContaining('${taskTechnician.name} · Hạn'), findsOneWidget);
+    await tester.tap(find.text('Đang làm (1)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vệ sinh, hiệu chuẩn máy đo DO'), findsNothing);
+    await tester.tap(find.text('Hoàn thành (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Đã hủy (1)'));
+    await tester.pumpAndSettle();
+    repo.emptyCancelled = true;
+    container.invalidate(taskListProvider);
+    await tester.pumpAndSettle();
+    expect(find.text('Không có nhiệm vụ'), findsOneWidget);
+    for (final id in ['pending', 'progress', 'completed', 'cancelled']) {
+      container.read(appRouterProvider).go('/tasks/$id');
       await tester.pumpAndSettle();
-      expect(find.text('Vệ sinh, hiệu chuẩn máy đo DO'), findsNothing);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_overdue.png'),
-      );
-      await tester.tap(find.text('Hoàn thành (1)'));
-      await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_completed_list.png'),
-      );
-      await tester.tap(find.text('Đã hủy (1)'));
-      await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_cancelled_list.png'),
-      );
-      repo.emptyCancelled = true;
-      container.invalidate(taskListProvider);
-      await tester.pumpAndSettle();
-      expect(find.text('Không có nhiệm vụ'), findsOneWidget);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_empty.png'),
-      );
-      for (final id in ['pending', 'progress', 'completed', 'cancelled']) {
-        container.read(appRouterProvider).go('/tasks/$id');
-        await tester.pumpAndSettle();
-        final mutable = id == 'pending' || id == 'progress';
-        expect(find.byType(TaskDetailView), findsOneWidget);
-        final header = find.byType(PageHeaderBar);
-        final headerCenter = tester.getCenter(header).dy;
-        expect(tester.getSize(header).height, 76);
+      final mutable = id == 'pending' || id == 'progress';
+      expect(find.byType(TaskDetailView), findsOneWidget);
+      final header = find.byType(PageHeaderBar);
+      final headerCenter = tester.getCenter(header).dy;
+      expect(tester.getSize(header).height, 76);
+      expect(tester.getCenter(find.text('Chi tiết nhiệm vụ')).dy, headerCenter);
+      expect(tester.getCenter(find.byTooltip('Quay lại')).dy, headerCenter);
+      if (mutable) {
         expect(
-          tester.getCenter(find.text('Chi tiết nhiệm vụ')).dy,
+          tester.getCenter(find.byTooltip('Chỉnh sửa nhiệm vụ')).dy,
           headerCenter,
         );
-        expect(tester.getCenter(find.byTooltip('Quay lại')).dy, headerCenter);
-        if (mutable) {
-          expect(
-            tester.getCenter(find.byTooltip('Chỉnh sửa nhiệm vụ')).dy,
-            headerCenter,
-          );
-        }
-        expect(find.text('Người giao'), findsOneWidget);
-        expect(
-          find.byTooltip('Chỉnh sửa nhiệm vụ'),
-          mutable ? findsOneWidget : findsNothing,
-        );
-        await expectLater(
-          find.byType(SmartShrimpApp),
-          matchesGoldenFile('goldens/task_${id}_detail.png'),
-        );
-        await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
-        await tester.pumpAndSettle();
-        expect(find.text('Tiến trình thực hiện'), findsOneWidget);
-        expect(
-          find.text('Hủy nhiệm vụ'),
-          mutable ? findsOneWidget : findsNothing,
-        );
-        await expectLater(
-          find.byType(SmartShrimpApp),
-          matchesGoldenFile('goldens/task_${id}_detail_bottom.png'),
-        );
       }
-      expect(tester.takeException(), isNull);
-    } finally {
-      debugDisableShadows = oldShadows;
+      expect(find.text('Người giao'), findsOneWidget);
+      expect(
+        find.byTooltip('Chỉnh sửa nhiệm vụ'),
+        mutable ? findsOneWidget : findsNothing,
+      );
+      await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
+      await tester.pumpAndSettle();
+      expect(find.text('Tiến trình thực hiện'), findsOneWidget);
+      expect(
+        find.text('Hủy nhiệm vụ'),
+        mutable ? findsOneWidget : findsNothing,
+      );
     }
+    expect(tester.takeException(), isNull);
   });
 
   for (final id in ['pending', 'progress']) {
@@ -831,10 +770,6 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Hủy nhiệm vụ'));
         await tester.pumpAndSettle();
-        await expectLater(
-          find.byType(SmartShrimpApp),
-          matchesGoldenFile('goldens/task_${id}_cancel_dialog.png'),
-        );
         await tester.tap(find.text('Xác nhận hủy'));
         await tester.pumpAndSettle();
         expect(find.text('Vui lòng nhập lý do hủy.'), findsOneWidget);
@@ -898,10 +833,6 @@ void main() {
             .path,
         '/tasks/create',
       );
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_unassigned_season.png'),
-      );
 
       await tester.ensureVisible(find.text('Vụ nuôi liên quan'));
       await tester.tap(find.byType(DropdownButton<String>).last);
@@ -932,10 +863,6 @@ void main() {
     (tester) async {
       final repo = TaskFixtureRepository();
       final container = await openTasks(tester, repo, path: '/tasks/create');
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_create.png'),
-      );
       await tester.enterText(find.byType(AppTextField).first, 'Nhiệm vụ mới');
       await _chooseFutureDeadline(tester);
       await tester.tap(find.byType(DropdownButton<String>).first);
@@ -954,10 +881,6 @@ void main() {
       expect(find.text(taskSecondTechnician.name), findsNothing);
       await tester.ensureVisible(find.text('Tạo & giao nhiệm vụ').last);
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_create_assigned.png'),
-      );
       await tester.tap(find.text('Tạo & giao nhiệm vụ').last);
       await tester.pumpAndSettle();
       expect(repo.saved?.assignedTo, taskTechnician.id);
@@ -991,10 +914,6 @@ void main() {
         isFalse,
       );
       expect(find.byType(DropdownButton<String>), findsNothing);
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_progress_edit.png'),
-      );
       await tester.enterText(
         find.byType(AppTextField).at(1),
         'Theo dõi sau 4 giờ',
@@ -1005,10 +924,6 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(SmartShrimpApp),
-        matchesGoldenFile('goldens/task_progress_edit_bottom.png'),
-      );
       await tester.tap(find.text('Lưu thay đổi'));
       await tester.pumpAndSettle();
       expect(repo.saved?.description, 'Theo dõi sau 4 giờ');

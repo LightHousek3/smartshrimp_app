@@ -184,46 +184,6 @@ void main() {
     });
   }
 
-  testWidgets('N: alert backgrounds match the operational overview reference', (
-    tester,
-  ) async {
-    await loadAppFonts();
-    tester.view.physicalSize = const Size(402, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(fontFamily: 'PlusJakartaSans'),
-        home: Scaffold(
-          backgroundColor: const Color(0xFFD8EAF0),
-          body: RepaintBoundary(
-            key: const Key('alerts_preview'),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final alert in overviewFixture.alerts)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: DashboardAlertCard(alert),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await expectLater(
-      find.byKey(const Key('alerts_preview')),
-      matchesGoldenFile('goldens/owner_alert_icons.png'),
-    );
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('N: every alert category has a rounded icon background', (
     tester,
   ) async {

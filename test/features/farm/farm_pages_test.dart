@@ -25,6 +25,8 @@ import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_cont
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/repositories/season_repository.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
+import '../../support/disabled_push_repository.dart';
 
 void main() {
   testWidgets(
@@ -314,6 +316,9 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              pushRepositoryProvider.overrideWithValue(
+                const DisabledPushRepository(),
+              ),
               authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
             ],
             child: MaterialApp(
@@ -357,6 +362,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
             ),
@@ -424,6 +432,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -491,6 +502,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -532,6 +546,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            pushRepositoryProvider.overrideWithValue(
+              const DisabledPushRepository(),
+            ),
             ownerDashboardRepositoryProvider.overrideWithValue(
               DashboardFixtureRepository(),
             ),
@@ -579,6 +596,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -612,6 +632,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          pushRepositoryProvider.overrideWithValue(
+            const DisabledPushRepository(),
+          ),
           ownerDashboardRepositoryProvider.overrideWithValue(
             DashboardFixtureRepository(),
           ),
@@ -713,6 +736,9 @@ Future<_FakePondRepository> _pumpPondForm(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        pushRepositoryProvider.overrideWithValue(
+          const DisabledPushRepository(),
+        ),
         authRepositoryProvider.overrideWithValue(_OwnerAuthRepository()),
         pondRepositoryProvider.overrideWithValue(repository),
       ],

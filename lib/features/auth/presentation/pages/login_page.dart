@@ -92,7 +92,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: SizedBox(
                   width: 260,
                   child: Text(
-                    'Nền tảng vận hành & tư vấn kỹ thuật nuôi tôm thông minh',
+                    'Hệ thống vận hành & tư vấn kỹ thuật nuôi tôm thông minh',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
