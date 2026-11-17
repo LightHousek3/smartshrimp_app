@@ -49,17 +49,12 @@ final class CloudinaryInventoryImageStorage implements InventoryImageStorage {
       return url;
     } on DioException catch (error) {
       if (ErrorMapper.isNetworkFailure(error)) throw const NetworkException();
-      final body = error.response?.data;
-      final cloudinaryError = body is Map ? body['error'] : null;
-      final message = cloudinaryError is Map
-          ? cloudinaryError['message']
-          : null;
-      throw ApiException(
-        message is String && message.trim().isNotEmpty
-            ? 'Không thể tải ảnh vật tư: ${message.trim()}'
-            : 'Không thể tải ảnh vật tư. Vui lòng thử lại.',
-        statusCode: error.response?.statusCode,
-      );
+      final statusCode = error.response?.statusCode;
+      throw ApiException(switch (statusCode) {
+        413 => 'Ảnh vật tư phải có dung lượng từ 1 byte đến 5 MB.',
+        429 => 'Dịch vụ tải ảnh đang bận. Vui lòng thử lại sau.',
+        _ => 'Không thể tải ảnh vật tư lên. Vui lòng thử lại.',
+      }, statusCode: statusCode);
     }
   }
 }

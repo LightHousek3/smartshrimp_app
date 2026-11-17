@@ -85,45 +85,48 @@ void main() {
     );
   }
 
-  test('preserves Cloudinary rejection details for diagnosis', () async {
-    final dio = Dio()
-      ..interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (options, handler) {
-            handler.reject(
-              DioException(
-                requestOptions: options,
-                type: DioExceptionType.badResponse,
-                response: Response(
+  test(
+    'shows a Vietnamese error without exposing Cloudinary rejection text',
+    () async {
+      final dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              handler.reject(
+                DioException(
                   requestOptions: options,
-                  statusCode: 400,
-                  data: {
-                    'error': {'message': 'Upload preset not found'},
-                  },
+                  type: DioExceptionType.badResponse,
+                  response: Response(
+                    requestOptions: options,
+                    statusCode: 400,
+                    data: {
+                      'error': {'message': 'Upload preset not found'},
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
+        );
+      final storage = CloudinaryInventoryImageStorage(
+        dio,
+        cloudName: 'bmlju4ql',
+        uploadPreset: 'missing',
+      );
+      await expectLater(
+        storage.upload(bytes: imageBytes, fileName: 'product.jpg'),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (error) => error.message,
+                'message',
+                'Không thể tải ảnh vật tư lên. Vui lòng thử lại.',
+              )
+              .having((error) => error.statusCode, 'statusCode', 400),
         ),
       );
-    final storage = CloudinaryInventoryImageStorage(
-      dio,
-      cloudName: 'bmlju4ql',
-      uploadPreset: 'missing',
-    );
-    await expectLater(
-      storage.upload(bytes: imageBytes, fileName: 'product.jpg'),
-      throwsA(
-        isA<ApiException>()
-            .having(
-              (error) => error.message,
-              'message',
-              contains('Upload preset not found'),
-            )
-            .having((error) => error.statusCode, 'statusCode', 400),
-      ),
-    );
-  });
+    },
+  );
 
   test('maps a failed connection to a network error', () async {
     final dio = Dio()
