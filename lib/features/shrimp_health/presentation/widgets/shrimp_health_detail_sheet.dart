@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -22,24 +23,24 @@ class ShrimpHealthDetailSheet extends ConsumerStatefulWidget {
     required String seasonId,
     required ShrimpHealthLog log,
     VoidCallback? onVoided,
-  }) =>
-      showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => ShrimpHealthDetailSheet(
-          seasonId: seasonId,
-          log: log,
-          onVoided: onVoided,
-        ),
-      );
+  }) => showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => ShrimpHealthDetailSheet(
+      seasonId: seasonId,
+      log: log,
+      onVoided: onVoided,
+    ),
+  );
 
   @override
   ConsumerState<ShrimpHealthDetailSheet> createState() =>
       _ShrimpHealthDetailSheetState();
 }
 
-class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailSheet> {
+class _ShrimpHealthDetailSheetState
+    extends ConsumerState<ShrimpHealthDetailSheet> {
   final _reasonController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -98,7 +99,11 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
       );
     }
 
-    final (Color bg, Color text, String label) = switch (widget.log.healthStatus) {
+    final (
+      Color bg,
+      Color text,
+      String label,
+    ) = switch (widget.log.healthStatus) {
       HealthStatus.warning => (
         const Color(0xFFFBF0DC),
         const Color(0xFFD98314),
@@ -182,17 +187,16 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
   );
 
   Future<void> _submitVoid() async {
+    if (!ref.read(assignedSeasonCanWriteProvider(widget.seasonId))) return;
     if (!_formKey.currentState!.validate()) return;
 
     final reason = _reasonController.text.trim();
     setState(() => _isSubmitting = true);
 
     try {
-      await ref.read(shrimpHealthRepositoryProvider).voidLog(
-        widget.seasonId,
-        widget.log.id,
-        reason,
-      );
+      await ref
+          .read(shrimpHealthRepositoryProvider)
+          .voidLog(widget.seasonId, widget.log.id, reason);
 
       if (!mounted) return;
 
@@ -223,7 +227,9 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final log = widget.log;
-    final shortId = log.id.length >= 4 ? log.id.substring(0, 3).toUpperCase() : log.id;
+    final shortId = log.id.length >= 4
+        ? log.id.substring(0, 3).toUpperCase()
+        : log.id;
 
     return Container(
       decoration: const BoxDecoration(
@@ -292,21 +298,57 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
               // Metric Grid: 3 columns x 2 rows
               Row(
                 children: <Widget>[
-                  Expanded(child: _buildTile('Cỡ TB', _formatNumber(log.avgWeightG, fractionDigits: 1), 'g')),
+                  Expanded(
+                    child: _buildTile(
+                      'Cỡ TB',
+                      _formatNumber(log.avgWeightG, fractionDigits: 1),
+                      'g',
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildTile('Dài TB', _formatNumber(log.avgLengthCm, fractionDigits: 1), 'cm')),
+                  Expanded(
+                    child: _buildTile(
+                      'Dài TB',
+                      _formatNumber(log.avgLengthCm, fractionDigits: 1),
+                      'cm',
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildTile('Sinh khối', _formatNumber(log.estimatedBiomassKg, fractionDigits: 0), 'kg')),
+                  Expanded(
+                    child: _buildTile(
+                      'Sinh khối',
+                      _formatNumber(log.estimatedBiomassKg, fractionDigits: 0),
+                      'kg',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: <Widget>[
-                  Expanded(child: _buildTile('Ước tính đàn', _formatNumber(log.estimatedPopulation), 'con')),
+                  Expanded(
+                    child: _buildTile(
+                      'Ước tính đàn',
+                      _formatNumber(log.estimatedPopulation),
+                      'con',
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildTile('Cỡ mẫu', log.sampleSize != null ? '${log.sampleSize}' : '-', 'con')),
+                  Expanded(
+                    child: _buildTile(
+                      'Cỡ mẫu',
+                      log.sampleSize != null ? '${log.sampleSize}' : '-',
+                      'con',
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: _buildTile('Hao hụt', '${log.mortalityCount}', 'con')),
+                  Expanded(
+                    child: _buildTile(
+                      'Hao hụt',
+                      '${log.mortalityCount}',
+                      'con',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -347,7 +389,11 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                     children: <Widget>[
                       const Row(
                         children: <Widget>[
-                          Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD43B57)),
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: Color(0xFFD43B57),
+                          ),
                           SizedBox(width: 6),
                           Text(
                             'Bản ghi đã bị hủy hiệu lực',
@@ -359,7 +405,8 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                           ),
                         ],
                       ),
-                      if (log.voidReason != null && log.voidReason!.trim().isNotEmpty) ...<Widget>[
+                      if (log.voidReason != null &&
+                          log.voidReason!.trim().isNotEmpty) ...<Widget>[
                         const SizedBox(height: 6),
                         Text(
                           'Lý do: ${log.voidReason!.trim()}',
@@ -372,12 +419,16 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                     ],
                   ),
                 ),
-              ] else if (!_isVoidingMode) ...<Widget>[
+              ] else if (ref.watch(
+                    assignedSeasonCanWriteProvider(widget.seasonId),
+                  ) &&
+                  !_isVoidingMode) ...<Widget>[
                 // Outlined Void Trigger Button (figma_detail.png)
                 Builder(
                   builder: (_) {
                     final now = DateTime.now();
-                    final isRecordedToday = log.recordedAt.year == now.year &&
+                    final isRecordedToday =
+                        log.recordedAt.year == now.year &&
                         log.recordedAt.month == now.month &&
                         log.recordedAt.day == now.day;
 
@@ -444,7 +495,9 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                     );
                   },
                 ),
-              ] else ...<Widget>[
+              ] else if (ref.watch(
+                assignedSeasonCanWriteProvider(widget.seasonId),
+              )) ...<Widget>[
                 // Inline Void Confirmation Flow (figma_void.png)
                 Form(
                   key: _formKey,
@@ -469,24 +522,37 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                           }
                           return null;
                         },
-                        style: const TextStyle(fontSize: 14, color: Color(0xFF0F1C2E)),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF0F1C2E),
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Nhập lý do hủy bản ghi...',
-                          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 13,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.all(12),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDDE3EA),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDDE3EA),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFD43B57), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD43B57),
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -500,9 +566,13 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                               child: OutlinedButton(
                                 onPressed: _isSubmitting
                                     ? null
-                                    : () => setState(() => _isVoidingMode = false),
+                                    : () => setState(
+                                        () => _isVoidingMode = false,
+                                      ),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFFDDE3EA)),
+                                  side: const BorderSide(
+                                    color: Color(0xFFDDE3EA),
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -540,7 +610,9 @@ class _ShrimpHealthDetailSheetState extends ConsumerState<ShrimpHealthDetailShee
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
                                           valueColor:
-                                              AlwaysStoppedAnimation<Color>(Colors.white),
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         ),
                                       )
                                     : const Text(

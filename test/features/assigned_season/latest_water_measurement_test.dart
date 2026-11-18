@@ -23,6 +23,7 @@ Future<void> _open(
   Future<WaterLog?> Function() latest, {
   AssignedSeasonStatus status = AssignedSeasonStatus.active,
   Future<WaterLogMetadata> Function()? metadata,
+  List<RouteBase> routes = const [],
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
   tester.view.physicalSize = const Size(320, 700);
@@ -36,6 +37,7 @@ Future<void> _open(
         builder: (_, _) =>
             const Scaffold(body: AssignedSeasonDetailPage(seasonId: 'season')),
       ),
+      ...routes,
     ],
   );
   addTearDown(router.dispose);
@@ -60,21 +62,81 @@ Future<void> _open(
 }
 
 void main() {
+  for (final entry in [
+    (label: 'Sức khỏe', path: 'shrimp-health'),
+    (label: 'Vận hành', path: 'operations'),
+    (label: 'Trợ lý AI', path: 'rag'),
+    (label: 'Đo nước', path: 'water-logs'),
+    (label: 'AI nhận diện', path: 'ai-diagnoses'),
+    (label: 'Ca bệnh', path: 'disease-cases'),
+  ]) {
+    testWidgets('completed season opens ${entry.label} history', (
+      tester,
+    ) async {
+      Object? extra;
+      await _open(
+        tester,
+        () async => null,
+        status: AssignedSeasonStatus.completed,
+        routes: [
+          GoRoute(
+            path: '/seasons/season/${entry.path}',
+            builder: (_, state) {
+              extra = state.extra;
+              return const Scaffold(body: Text('Lịch sử vụ hoàn thành'));
+            },
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+      final action = find.text(entry.label);
+      await tester.ensureVisible(action);
+      await tester.pumpAndSettle();
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+      expect(find.text('Lịch sử vụ hoàn thành'), findsOneWidget);
+      if (entry.path == 'shrimp-health') {
+        expect((extra as Map<String, dynamic>)['isSeasonActive'], false);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final status in [
     AssignedSeasonStatus.planning,
     AssignedSeasonStatus.completed,
     AssignedSeasonStatus.cancelled,
   ]) {
-    testWidgets('water history and latest remain visible in $status', (
-      tester,
-    ) async {
-      await _open(tester, () async => null, status: status);
-      await tester.pumpAndSettle();
-      expect(find.text('Nhật ký đo nước'), findsOneWidget);
-      expect(find.text('Đo nước gần nhất'), findsOneWidget);
-      expect(find.text('Chưa có nhật ký đo nước.'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+    testWidgets(
+      'history links and latest measurement follow season status in $status',
+      (tester) async {
+        await _open(tester, () async => null, status: status);
+        await tester.pumpAndSettle();
+        final historyLinks =
+            status == AssignedSeasonStatus.planning ||
+                status == AssignedSeasonStatus.completed
+            ? findsNothing
+            : findsOneWidget;
+        expect(find.text('Xem ca bệnh'), historyLinks);
+        expect(find.text('Nhật ký đo nước'), historyLinks);
+        expect(find.text('Lịch sử nhận diện AI'), historyLinks);
+        final latestMeasurement =
+            status == AssignedSeasonStatus.planning ||
+                status == AssignedSeasonStatus.completed
+            ? findsNothing
+            : findsOneWidget;
+        expect(find.text('Đo nước gần nhất'), latestMeasurement);
+        expect(find.text('Chưa có nhật ký đo nước.'), latestMeasurement);
+        if (status == AssignedSeasonStatus.completed) {
+          expect(find.text('Sức khỏe'), findsOneWidget);
+          expect(find.text('Vận hành'), findsOneWidget);
+          expect(find.text('Trợ lý AI'), findsOneWidget);
+          expect(find.text('Đo nước'), findsOneWidget);
+          expect(find.text('AI nhận diện'), findsOneWidget);
+          expect(find.text('Ca bệnh'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
   for (final exceeded in <List<String>>[
     [],

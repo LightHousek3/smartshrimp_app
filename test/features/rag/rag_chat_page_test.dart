@@ -203,13 +203,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.rating, 1);
   });
-  testWidgets('completed season has no composer and allows rating', (
+  testWidgets('completed season keeps history without composer or rating', (
     tester,
   ) async {
     await tester.pumpWidget(_app(_Repository(canAsk: false)));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Gửi câu hỏi'), findsNothing);
-    expect(find.text('Đánh giá:'), findsOneWidget);
+    expect(find.text('Đánh giá:'), findsNothing);
+    expect(find.byTooltip('Đánh giá 5 sao'), findsNothing);
+    expect(find.text('Nguồn tham chiếu (1)'), findsOneWidget);
   });
   testWidgets('new conversation shows thinking until the answer arrives', (
     tester,

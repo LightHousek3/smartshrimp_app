@@ -622,6 +622,19 @@ void main() {
     expect(repo.mutations, 1);
     expect(find.text('Tôm giảm ăn'), findsOneWidget);
   });
+  testWidgets(
+    'closed season permission keeps case details without response controls',
+    (tester) async {
+      final repo = CaseFixtureRepository()
+        ..item = fixture.copyWith(canRespond: false);
+      await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
+      expect(find.text('Tôm giảm ăn'), findsOneWidget);
+      expect(find.text('Gửi phản hồi'), findsNothing);
+      expect(find.text('Ca bệnh hiện chỉ cho phép xem.'), findsOneWidget);
+      expect(repo.mutations, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('B: resolved case has no response controls', (tester) async {
     final repo = CaseFixtureRepository()
       ..item = fixture.copyWith(

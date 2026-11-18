@@ -99,6 +99,7 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
   }
 
   Future<void> _rate(RagQuery query, int? initialRating) async {
+    if (ref.read(ragChatProvider(_key)).value?.canAsk != true) return;
     final result = await showDialog<(int, String?)>(
       context: context,
       builder: (_) =>
@@ -208,6 +209,7 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
                                       : RagMessagePair(
                                           query: data.queries[index],
                                           busy: data.busy,
+                                          canRate: data.canAsk,
                                           onRate: (rating) => _rate(
                                             data.queries[index],
                                             rating,

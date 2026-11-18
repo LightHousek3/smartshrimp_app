@@ -8,22 +8,20 @@ class OperationScheduleCard extends StatelessWidget {
   const OperationScheduleCard({
     required this.schedule,
     required this.onTap,
+    this.decoration,
     super.key,
   });
 
   final OperationSchedule schedule;
   final VoidCallback onTap;
+  final BoxDecoration? decoration;
 
   static const Color _blueBg = Color(0xFFDEEDFD);
   static const Color _blueFg = Color(0xFF1D7AD6);
 
   (Color dot, Color text, Color bg) _statusVisuals(OperationStatus status) =>
       switch (status) {
-        OperationStatus.planned => (
-          _blueFg,
-          _blueFg,
-          _blueBg,
-        ),
+        OperationStatus.planned => (_blueFg, _blueFg, _blueBg),
         OperationStatus.completed => (
           const Color(0xFF10B981),
           const Color(0xFF047857),
@@ -50,29 +48,44 @@ class OperationScheduleCard extends StatelessWidget {
         ? 'Cữ ${schedule.protocolItem!.mealNumber}'
         : null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isOverdue ? OperationOverdueBadge.cardSurface : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isOverdue
-              ? OperationOverdueBadge.cardBorder.withValues(alpha: 0.85)
-              : AppColors.line.withValues(alpha: 0.6),
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    final baseDecoration =
+        decoration ??
+        BoxDecoration(
+          color: isOverdue ? OperationOverdueBadge.cardSurface : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isOverdue
+                ? OperationOverdueBadge.cardBorder.withValues(alpha: 0.85)
+                : AppColors.line.withValues(alpha: 0.6),
           ),
-        ],
-      ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        );
+    // Keep overdue warnings visible even when the parent customizes the card.
+    final cardDecoration = decoration != null && isOverdue
+        ? baseDecoration.copyWith(
+            color: OperationOverdueBadge.cardSurface,
+            border: Border.all(
+              color: OperationOverdueBadge.cardBorder.withValues(alpha: 0.85),
+            ),
+          )
+        : baseDecoration;
+    final borderRadius =
+        cardDecoration.borderRadius?.resolve(Directionality.of(context)) ??
+        BorderRadius.circular(20);
+    return Container(
+      decoration: cardDecoration,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: borderRadius,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: borderRadius,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

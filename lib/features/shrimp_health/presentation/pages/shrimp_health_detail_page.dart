@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -97,10 +98,9 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final canWrite = ref.watch(assignedSeasonCanWriteProvider(seasonId));
     final detailAsync = ref.watch(
-      shrimpHealthDetailProvider(
-        (seasonId: seasonId, logId: logId),
-      ),
+      shrimpHealthDetailProvider((seasonId: seasonId, logId: logId)),
     );
 
     return Scaffold(
@@ -110,11 +110,17 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
             children: <Widget>[
               // App Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 child: Row(
                   children: <Widget>[
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppColors.ink,
+                      ),
                       tooltip: 'Quay lại',
                       onPressed: () => context.pop(),
                     ),
@@ -136,9 +142,8 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
               // Content
               Expanded(
                 child: detailAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -160,9 +165,10 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                           ElevatedButton.icon(
                             onPressed: () {
                               ref.invalidate(
-                                shrimpHealthDetailProvider(
-                                  (seasonId: seasonId, logId: logId),
-                                ),
+                                shrimpHealthDetailProvider((
+                                  seasonId: seasonId,
+                                  logId: logId,
+                                )),
                               );
                             },
                             icon: const Icon(Icons.refresh_rounded),
@@ -176,7 +182,10 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                     final status = log.healthStatus;
 
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -188,7 +197,9 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEE2E2),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFFECACA)),
+                                border: Border.all(
+                                  color: const Color(0xFFFECACA),
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,7 +277,11 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: <Widget>[
-                                          Icon(status.icon, size: 16, color: status.color),
+                                          Icon(
+                                            status.icon,
+                                            size: 16,
+                                            color: status.color,
+                                          ),
                                           const SizedBox(width: 6),
                                           Text(
                                             status.displayName,
@@ -288,7 +303,9 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF1F5F9),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: Text(
                                           'DOC ${log.dayOfCulture}',
@@ -307,7 +324,9 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: log.isVoided ? AppColors.inkMuted : AppColors.ink,
+                                    color: log.isVoided
+                                        ? AppColors.inkMuted
+                                        : AppColors.ink,
                                   ),
                                 ),
                               ],
@@ -342,50 +361,87 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF1F5F9),
+                                ),
                                 const SizedBox(height: 4),
                                 _buildDetailRow(
                                   icon: Icons.scale_rounded,
                                   label: 'Trọng lượng trung bình',
-                                  value: _formatNumber(log.avgWeightG, fractionDigits: 2),
+                                  value: _formatNumber(
+                                    log.avgWeightG,
+                                    fractionDigits: 2,
+                                  ),
                                   unit: 'g/con',
                                 ),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF8FAFC)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF8FAFC),
+                                ),
                                 _buildDetailRow(
                                   icon: Icons.straighten_rounded,
                                   label: 'Chiều dài trung bình',
-                                  value: _formatNumber(log.avgLengthCm, fractionDigits: 1),
+                                  value: _formatNumber(
+                                    log.avgLengthCm,
+                                    fractionDigits: 1,
+                                  ),
                                   unit: 'cm',
                                 ),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF8FAFC)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF8FAFC),
+                                ),
                                 _buildDetailRow(
                                   icon: Icons.inventory_2_rounded,
                                   label: 'Sinh khối ao ước tính',
-                                  value: _formatNumber(log.estimatedBiomassKg, fractionDigits: 1),
+                                  value: _formatNumber(
+                                    log.estimatedBiomassKg,
+                                    fractionDigits: 1,
+                                  ),
                                   unit: 'kg',
                                   valueColor: AppColors.ocean,
                                 ),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF8FAFC)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF8FAFC),
+                                ),
                                 _buildDetailRow(
                                   icon: Icons.groups_rounded,
                                   label: 'Ước tính đàn',
                                   value: _formatNumber(log.estimatedPopulation),
                                   unit: 'con',
                                 ),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF8FAFC)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF8FAFC),
+                                ),
                                 _buildDetailRow(
                                   icon: Icons.catching_pokemon_rounded,
                                   label: 'Số lượng mẫu bắt kiểm tra',
-                                  value: log.sampleSize != null ? '${log.sampleSize}' : '-',
+                                  value: log.sampleSize != null
+                                      ? '${log.sampleSize}'
+                                      : '-',
                                   unit: 'con',
                                 ),
-                                const Divider(height: 1, thickness: 1, color: Color(0xFFF8FAFC)),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF8FAFC),
+                                ),
                                 _buildDetailRow(
                                   icon: Icons.heart_broken_rounded,
                                   label: 'Số tôm chết quan sát',
                                   value: '${log.mortalityCount}',
                                   unit: 'con',
-                                  valueColor: log.mortalityCount > 0 ? const Color(0xFFDC2626) : null,
+                                  valueColor: log.mortalityCount > 0
+                                      ? const Color(0xFFDC2626)
+                                      : null,
                                 ),
                               ],
                             ),
@@ -393,7 +449,8 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                           const SizedBox(height: 14),
 
                           // Note Card
-                          if (log.note != null && log.note!.isNotEmpty) ...<Widget>[
+                          if (log.note != null &&
+                              log.note!.isNotEmpty) ...<Widget>[
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
@@ -477,7 +534,8 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                         color: AppColors.ink,
                                       ),
                                     ),
-                                    if (log.recordedByEmail != null) ...<Widget>[
+                                    if (log.recordedByEmail !=
+                                        null) ...<Widget>[
                                       const SizedBox(width: 6),
                                       Text(
                                         '(${log.recordedByEmail})',
@@ -513,16 +571,18 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                           const SizedBox(height: 24),
 
                           // Void Button (if not voided)
-                          if (!log.isVoided) ...<Widget>[
+                          if (canWrite && !log.isVoided) ...<Widget>[
                             Builder(
                               builder: (_) {
                                 final now = DateTime.now();
-                                final isRecordedToday = log.recordedAt.year == now.year &&
+                                final isRecordedToday =
+                                    log.recordedAt.year == now.year &&
                                     log.recordedAt.month == now.month &&
                                     log.recordedAt.day == now.day;
 
                                 return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: <Widget>[
                                     SizedBox(
                                       width: double.infinity,
@@ -537,11 +597,18 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                                   onVoided: () {
                                                     ref.invalidate(
                                                       shrimpHealthDetailProvider(
-                                                        (seasonId: seasonId, logId: logId),
+                                                        (
+                                                          seasonId: seasonId,
+                                                          logId: logId,
+                                                        ),
                                                       ),
                                                     );
                                                     ref
-                                                        .read(shrimpHealthListProvider(seasonId).notifier)
+                                                        .read(
+                                                          shrimpHealthListProvider(
+                                                            seasonId,
+                                                          ).notifier,
+                                                        )
                                                         .refresh();
                                                   },
                                                 );
@@ -565,14 +632,18 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                           ),
                                         ),
                                         style: OutlinedButton.styleFrom(
-                                          disabledForegroundColor: const Color(0xFF94A3B8),
+                                          disabledForegroundColor: const Color(
+                                            0xFF94A3B8,
+                                          ),
                                           side: BorderSide(
                                             color: isRecordedToday
                                                 ? const Color(0xFFFCA5A5)
                                                 : const Color(0xFFE2E8F0),
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
                                           ),
                                         ),
                                       ),

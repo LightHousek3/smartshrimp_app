@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -27,7 +28,8 @@ class OperationDetailPage extends ConsumerStatefulWidget {
   final FeedingMedicineMealGroup? mealGroup;
 
   @override
-  ConsumerState<OperationDetailPage> createState() => _OperationDetailPageState();
+  ConsumerState<OperationDetailPage> createState() =>
+      _OperationDetailPageState();
 }
 
 class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
@@ -46,11 +48,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
 
   (Color dot, Color text, Color bg) _statusVisuals(OperationStatus status) =>
       switch (status) {
-        OperationStatus.planned => (
-          _blueFg,
-          _blueFg,
-          _blueBg,
-        ),
+        OperationStatus.planned => (_blueFg, _blueFg, _blueBg),
         OperationStatus.completed => (
           const Color(0xFF10B981),
           const Color(0xFF047857),
@@ -162,7 +160,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
               sub,
               style: TextStyle(
                 fontSize: 10.5,
-                fontWeight: subColor != null ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: subColor != null
+                    ? FontWeight.w700
+                    : FontWeight.w500,
                 color: subColor ?? AppColors.inkMuted,
               ),
               maxLines: 1,
@@ -216,7 +216,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
 
     if (isMedicine && item.product?.withdrawalDays != null) {
       fourthLabel = 'Ngưng thuốc';
-      fourthValue = '${_formatCompactNumber(item.product!.withdrawalDays!)} ngày';
+      fourthValue =
+          '${_formatCompactNumber(item.product!.withdrawalDays!)} ngày';
     } else if (!isMedicine && item.basisQuantity != null) {
       final basisUnit = _formatBasisUnit(item.basisUnit);
       fourthLabel = 'Dữ liệu tính liều';
@@ -234,8 +235,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final instructionLabel = switch (item.operationType) {
       OperationType.feeding => 'Hướng dẫn cho ăn:',
       OperationType.medicine => 'Hướng dẫn phối trộn & cách dùng:',
-      OperationType.mineral || OperationType.chemical =>
-        'Hướng dẫn tạt & xử lý ao:',
+      OperationType.mineral ||
+      OperationType.chemical => 'Hướng dẫn tạt & xử lý ao:',
       _ => 'Hướng dẫn thực hiện:',
     };
 
@@ -264,7 +265,10 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
               },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -414,7 +418,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                     ),
 
                     // Hướng dẫn chi tiết từ phác đồ
-                    if (instructions != null && instructions.isNotEmpty) ...<Widget>[
+                    if (instructions != null &&
+                        instructions.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 10),
                       Container(
                         width: double.infinity,
@@ -858,6 +863,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final canWrite = ref.watch(assignedSeasonCanWriteProvider(widget.seasonId));
     final state = ref.watch(operationDetailProvider(widget.scheduleId));
 
     // Luôn ưu tiên lấy cữ mới nhất từ operationListProvider để phản ánh đúng trạng thái sau khi ghi nhận,
@@ -881,9 +887,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         child: SafeArea(
           bottom: false,
           child: state.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: _blueFg),
-            ),
+            loading: () =>
+                const Center(child: CircularProgressIndicator(color: _blueFg)),
             error: (err, _) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -895,7 +900,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => ref
-                        .read(operationDetailProvider(widget.scheduleId).notifier)
+                        .read(
+                          operationDetailProvider(widget.scheduleId).notifier,
+                        )
                         .refresh(),
                     child: const Text('Thử lại'),
                   ),
@@ -906,8 +913,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
               // Toàn bộ các thành phần trong cữ (thay schedule mới nhất từ API detail vào danh sách)
               final allItems = effectiveMealGroup != null
                   ? effectiveMealGroup.allSchedules
-                      .map((s) => s.id == schedule.id ? schedule : s)
-                      .toList()
+                        .map((s) => s.id == schedule.id ? schedule : s)
+                        .toList()
                   : <OperationSchedule>[schedule];
 
               final plannedItems = allItems
@@ -923,15 +930,18 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
               final hasAnyPlanned = plannedItems.isNotEmpty;
               final displayStatus = hasAnyPlanned
                   ? OperationStatus.planned
-                  : (allItems.every((s) => s.status == OperationStatus.completed)
+                  : (allItems.every(
+                          (s) => s.status == OperationStatus.completed,
+                        )
                         ? OperationStatus.completed
                         : (allItems.every(
                                 (s) => s.status == OperationStatus.cancelled,
                               )
                               ? OperationStatus.cancelled
                               : schedule.status));
-              final (statusDot, statusText, statusBg) =
-                  _statusVisuals(displayStatus);
+              final (statusDot, statusText, statusBg) = _statusVisuals(
+                displayStatus,
+              );
 
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -994,7 +1004,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                           ],
 
                           // 2. Action button ghi nhận cữ (chỉ cho phép khi đã đến giờ dự kiến)
-                          if (hasAnyPlanned) ...<Widget>[
+                          if (hasAnyPlanned && canWrite) ...<Widget>[
                             const SizedBox(height: 14),
                             Builder(
                               builder: (_) {
@@ -1030,7 +1040,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                                     ? executableMealGroup.isBeforeScheduled
                                     : singleTarget.isBeforeScheduled;
                                 final insufficientItems = plannedItems
-                                    .where((s) => s.isStockInsufficientForPlanned)
+                                    .where(
+                                      (s) => s.isStockInsufficientForPlanned,
+                                    )
                                     .toList(growable: false);
                                 final hasInsufficientStock =
                                     insufficientItems.isNotEmpty;

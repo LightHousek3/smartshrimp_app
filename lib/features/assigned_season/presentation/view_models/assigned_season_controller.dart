@@ -17,6 +17,18 @@ import 'package:smartshrimp_app/features/operation/presentation/view_models/oper
 export 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 export 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season_detail.dart';
 
+/// Fail closed while the assigned season's current state is unavailable.
+final assignedSeasonCanWriteProvider = Provider.autoDispose
+    .family<bool, String>(
+      (ref, seasonId) =>
+          ref
+              .watch(assignedSeasonDetailProvider(seasonId))
+              .asData
+              ?.value
+              .status ==
+          AssignedSeasonStatus.active,
+    );
+
 /// Independent preview state prevents the full operation page's filters from
 /// changing what "today" means on the assigned-season detail page.
 final assignedSeasonTodayOperationsProvider = FutureProvider.autoDispose
