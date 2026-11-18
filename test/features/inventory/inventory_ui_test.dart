@@ -72,7 +72,7 @@ void main() {
         tester.widget<SvgPicture>(find.byType(SvgPicture)).colorFilter,
         const ColorFilter.mode(AppColors.inkSoft, BlendMode.srcIn),
       );
-      await tester.tap(find.byType(InkResponse));
+      await tester.tap(find.byTooltip('Quay lại'));
       expect(backPressed, isTrue);
     },
   );

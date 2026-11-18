@@ -6,10 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_search_toolbar.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
@@ -127,179 +127,153 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
   @override
   Widget build(BuildContext context) {
     final farms = ref.watch(farmListControllerProvider);
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: AppColors.ocean,
-          onRefresh: ref.read(farmListControllerProvider.notifier).refresh,
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              StickyPageHeader(
-                title: 'Trang trại',
-                subtitle: 'Quản lý trại, ao và vụ nuôi',
-                showBack: false,
-                height: 80,
-                titleSize: 22,
-                bottomHeight: 52,
-                bottom: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildSearch(),
+    return TabPageLayout(
+      title: 'Trang trại',
+      subtitle: 'Quản lý trại, ao và vụ nuôi',
+      trailing: AppCircleButton.add(
+        tooltip: 'Tạo trang trại',
+        onPressed: () => context.push('/farms/create'),
+      ),
+      headerBottom: SizedBox(
+        height: 52,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildSearch(),
+        ),
+      ),
+      child: RefreshIndicator(
+        color: AppColors.ocean,
+        onRefresh: ref.read(farmListControllerProvider.notifier).refresh,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            ...farms.when(
+              data: (page) => _buildFarmSlivers(page.items, page.hasNextPage),
+              loading: () => const <Widget>[
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.ocean),
+                  ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              ...farms.when(
-                data: (page) => _buildFarmSlivers(page.items, page.hasNextPage),
-                loading: () => const <Widget>[
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppColors.ocean),
-                    ),
+              ],
+              error: (error, _) => <Widget>[
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _FarmError(
+                    message: error is AppException
+                        ? error.message
+                        : 'Không thể tải danh sách trang trại.',
+                    onRetry: ref
+                        .read(farmListControllerProvider.notifier)
+                        .refresh,
                   ),
-                ],
-                error: (error, _) => <Widget>[
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _FarmError(
-                      message: error is AppException
-                          ? error.message
-                          : 'Không thể tải danh sách trang trại.',
-                      onRetry: ref
-                          .read(farmListControllerProvider.notifier)
-                          .refresh,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSearch() {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: SizedBox(
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              onChanged: _search,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: 'Tìm tên trang trại...',
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: AppSvgIcon(
-                    AppSvgIconName.pin,
-                    size: 15,
-                    color: AppColors.inkMuted,
-                  ),
+    return AppSearchToolbar(
+      search: TextField(
+        style: const TextStyle(color: AppColors.ink, fontSize: 13),
+        controller: _searchController,
+        onChanged: _search,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Tìm tên trang trại...',
+          prefixIcon: const Padding(
+            padding: EdgeInsets.all(12),
+            child: AppSvgIcon(
+              AppSvgIconName.pin,
+              size: 15,
+              color: AppColors.inkMuted,
+            ),
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 38,
+            minHeight: 40,
+          ),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Xóa tìm kiếm',
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                    _search('');
+                  },
+                  icon: const Icon(Icons.close_rounded, size: 19),
                 ),
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 38,
-                  minHeight: 40,
-                ),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Xóa tìm kiếm',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                          _search('');
-                        },
-                        icon: const Icon(Icons.close_rounded, size: 19),
-                      ),
-                hintStyle: const TextStyle(
-                  color: AppColors.inkMuted,
-                  fontSize: 13,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.oceanLight,
-                    width: 1.5,
-                  ),
-                ),
-              ),
+          hintStyle: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.line),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: AppColors.oceanLight,
+              width: 1.5,
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 128,
-          height: 40,
-          child: PopupMenuButton<_FarmStatusFilter>(
-            tooltip: 'Lọc trạng thái trang trại',
-            initialValue: _statusFilter,
-            onSelected: (value) {
-              setState(() => _statusFilter = value);
-              _applyFilters();
-            },
-            itemBuilder: (_) => const <PopupMenuEntry<_FarmStatusFilter>>[
-              PopupMenuItem<_FarmStatusFilter>(
-                value: _FarmStatusFilter.active,
-                child: Text('Đang hoạt động'),
+      ),
+      filter: PopupMenuButton<_FarmStatusFilter>(
+        tooltip: 'Lọc trạng thái trang trại',
+        initialValue: _statusFilter,
+        onSelected: (value) {
+          setState(() => _statusFilter = value);
+          _applyFilters();
+        },
+        itemBuilder: (_) => const <PopupMenuEntry<_FarmStatusFilter>>[
+          PopupMenuItem<_FarmStatusFilter>(
+            value: _FarmStatusFilter.active,
+            child: Text('Đang hoạt động'),
+          ),
+          PopupMenuItem<_FarmStatusFilter>(
+            value: _FarmStatusFilter.inactive,
+            child: Text('Ngừng hoạt động'),
+          ),
+        ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AppColors.line),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  _statusFilterLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              PopupMenuItem<_FarmStatusFilter>(
-                value: _FarmStatusFilter.inactive,
-                child: Text('Ngừng hoạt động'),
+              const SizedBox(width: 4),
+              const AppSvgIcon(
+                AppSvgIconName.dropdownChevron,
+                size: 11,
+                color: AppColors.inkSoft,
               ),
             ],
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.line),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      _statusFilterLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.inkSoft,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const AppSvgIcon(
-                    AppSvgIconName.dropdownChevron,
-                    size: 11,
-                    color: AppColors.inkSoft,
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
-        const SizedBox(width: 8),
-        AppCircleButton(
-          icon: Icons.add_rounded,
-          tooltip: 'Tạo trang trại',
-          filled: true,
-          size: 40,
-          iconSize: 20,
-          borderRadius: BorderRadius.circular(12),
-          onPressed: () => context.push('/farms/create'),
-        ),
-      ],
+      ),
     );
   }
 

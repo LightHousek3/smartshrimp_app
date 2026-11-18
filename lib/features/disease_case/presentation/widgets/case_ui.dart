@@ -78,14 +78,7 @@ class CaseFrame extends StatelessWidget {
                   title: title,
                   subtitle: subtitle,
                   trailing: trailing,
-                  backgroundColor: Colors.transparent,
                   onBack: () => Navigator.of(context).maybePop(),
-                  titleStyle: AppTypography.display(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                    height: 1.5,
-                  ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                 ),
                 Expanded(
                   child: Stack(

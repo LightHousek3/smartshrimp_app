@@ -156,8 +156,14 @@ Future<void> _chooseFutureDeadline(WidgetTester tester) async {
   );
   await tester.enterText(timeFields.at(0), '08');
   await tester.enterText(timeFields.at(1), '00');
-  await tester.tap(find.text('AM'));
-  await tester.pump();
+  final timeLabels = MaterialLocalizations.of(
+    tester.element(find.byType(TimePickerDialog)),
+  );
+  final morning = find.text(timeLabels.anteMeridiemAbbreviation);
+  if (morning.evaluate().isNotEmpty) {
+    await tester.tap(morning);
+    await tester.pump();
+  }
   await tester.tap(find.text('OK').last);
   await tester.pumpAndSettle();
 }
@@ -375,6 +381,8 @@ void main() {
         (widget) => widget is DashboardAlertCard && widget.alert == alert,
       );
       await tester.ensureVisible(card);
+      await tester.pumpAndSettle();
+      final positionBeforeOpen = tester.getTopLeft(card);
       await tester.tap(card);
       await tester.pumpAndSettle();
 
@@ -393,7 +401,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TaskDetailPage), findsNothing);
       expect(card, findsOneWidget);
-      expect(find.text('Cảnh báo quan trọng'), findsOneWidget);
+      expect(tester.getTopLeft(card), positionBeforeOpen);
       expect(tester.takeException(), isNull);
     },
   );
@@ -544,7 +552,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('OK').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Switch to text input mode'));
+      final timeLabels = MaterialLocalizations.of(
+        tester.element(find.byType(TimePickerDialog)),
+      );
+      await tester.tap(find.byTooltip(timeLabels.inputTimeModeButtonLabel));
       await tester.pumpAndSettle();
       final clockFields = find.descendant(
         of: find.byType(TimePickerDialog),
@@ -552,7 +563,10 @@ void main() {
       );
       await tester.enterText(clockFields.first, '12');
       await tester.enterText(clockFields.last, '00');
-      await tester.tap(find.text('AM').last);
+      final morning = find.text(timeLabels.anteMeridiemAbbreviation);
+      if (morning.evaluate().isNotEmpty) {
+        await tester.tap(morning.last);
+      }
       await tester.tap(find.text('OK').last);
       await tester.pumpAndSettle();
       expect(
@@ -669,6 +683,17 @@ void main() {
     }
     await openTasks(tester, repo);
     final heading = find.text('Nhiệm vụ').first;
+    final createAction = find.byTooltip('Tạo và giao nhiệm vụ');
+    expect(
+      tester
+          .widget<Material>(
+            find
+                .descendant(of: createAction, matching: find.byType(Material))
+                .first,
+          )
+          .color,
+      const Color(0xFF1D7AD6),
+    );
     final tabs = [
       find.text('Chờ làm (25)'),
       find.text('Đang làm (1)'),

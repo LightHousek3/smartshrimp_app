@@ -83,6 +83,6 @@ InputDecoration profileInputDecoration({String? hintText, Widget? suffixIcon}) {
       borderSide: const BorderSide(color: AppColors.error, width: 1.25),
     ),
     suffixIcon: suffixIcon,
-    suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
+    suffixIconConstraints: const BoxConstraints.tightFor(width: 44, height: 44),
   );
 }

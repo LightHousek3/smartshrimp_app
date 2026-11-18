@@ -117,16 +117,14 @@ Future<ProviderContainer> mount(
           ),
           child: child!,
         ),
-        home: Scaffold(
-          body: RepaintBoundary(
-            key: const Key('ai-snapshot'),
-            child: detail
-                ? const AiDiagnosisDetailPage(
-                    seasonId: 'season',
-                    diagnosisId: 'diagnosis',
-                  )
-                : const pages.AiDiagnosisPage(seasonId: 'season'),
-          ),
+        home: RepaintBoundary(
+          key: const Key('ai-snapshot'),
+          child: detail
+              ? const AiDiagnosisDetailPage(
+                  seasonId: 'season',
+                  diagnosisId: 'diagnosis',
+                )
+              : const pages.AiDiagnosisPage(seasonId: 'season'),
         ),
       ),
     ),
@@ -169,6 +167,32 @@ Future<void> capture(WidgetTester tester, String name) async {
 
 void main() {
   setUpAll(loadAppFonts);
+  for (final detail in [false, true]) {
+    testWidgets(
+      'N: ${detail ? 'detail' : 'list'} route uses themed text without a shell',
+      (tester) async {
+        await mount(tester, detail: detail);
+        final title = find.text(
+          detail ? 'Chi tiết nhận diện AI' : 'AI nhận diện bệnh',
+        );
+        final context = tester.element(title);
+        expect(
+          DefaultTextStyle.of(context).style,
+          Theme.of(context).textTheme.bodyMedium,
+        );
+        for (final paragraph in tester.renderObjectList<RenderParagraph>(
+          find.byType(RichText),
+        )) {
+          expect(
+            paragraph.text.style?.decoration,
+            isNot(TextDecoration.underline),
+            reason: paragraph.text.toPlainText(),
+          );
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'N: POST reloads history and opens detail, with no extra reload when returning',
     (tester) async {
@@ -180,16 +204,13 @@ void main() {
         routes: [
           GoRoute(
             path: '/seasons/:seasonId/ai-diagnoses',
-            builder: (_, _) =>
-                const Scaffold(body: pages.AiDiagnosisPage(seasonId: 'season')),
+            builder: (_, _) => const pages.AiDiagnosisPage(seasonId: 'season'),
             routes: [
               GoRoute(
                 path: ':diagnosisId',
-                builder: (_, state) => Scaffold(
-                  body: AiDiagnosisDetailPage(
-                    seasonId: 'season',
-                    diagnosisId: state.pathParameters['diagnosisId']!,
-                  ),
+                builder: (_, state) => AiDiagnosisDetailPage(
+                  seasonId: 'season',
+                  diagnosisId: state.pathParameters['diagnosisId']!,
                 ),
               ),
             ],

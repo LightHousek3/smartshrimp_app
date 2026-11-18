@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
-import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/core/widgets/app_search_toolbar.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
@@ -68,111 +69,98 @@ class _AssignedSeasonListPageState
         'Trại đã chọn không còn vụ nuôi được phân công.',
       );
     });
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: _refresh,
-          child: CustomScrollView(
-            controller: _scroll,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              const StickyPageHeader(
-                title: 'Vụ nuôi',
-                subtitle: 'Các vụ nuôi bạn được phân công',
-                showBack: false,
-                height: 80,
-                titleSize: 22,
+    return TabPageLayout(
+      title: 'Vụ nuôi',
+      subtitle: 'Các vụ nuôi bạn được phân công',
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: CustomScrollView(
+          controller: _scroll,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Column(
+                  children: [
+                    _SeasonSearchTools(
+                      search: _search,
+                      farms: farms,
+                      farmId: filter.farmId,
+                      onSearch: _onSearch,
+                      onSubmit: () => unawaited(_applyFilters()),
+                      onClear: () {
+                        _search.clear();
+                        unawaited(_applyFilters());
+                      },
+                      onFarm: (id) => unawaited(
+                        _applyFilters(changeFarm: true, farmId: id),
+                      ),
+                      onRetryFarms: () =>
+                          ref.invalidate(assignedSeasonFarmOptionsProvider),
+                    ),
+                    const SizedBox(height: 12),
+                    _Segmented(
+                      activeOnly: filter.status == AssignedSeasonStatus.active,
+                      activeCount: page?.activeResults,
+                      totalCount: page?.allResults,
+                      onChanged: (value) =>
+                          unawaited(_applyFilters(activeOnly: value)),
+                    ),
+                    if (filtered)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _clearFilters,
+                          child: const Text('Xóa bộ lọc'),
+                        ),
+                      ),
+                  ],
+                ),
               ),
+            ),
+            // Keep controls mounted so typing, clearing and retrying work
+            // while a different query is loading or has failed.
+            state.when<Widget>(
+              skipLoadingOnRefresh: retainRows,
+              skipError: retainRows,
+              loading: () => const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.ocean),
+                ),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                hasScrollBody: false,
+                child: _ErrorState(message: _message(error), onRetry: _refresh),
+              ),
+              data: (result) => result.items.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _EmptyState(
+                        filtered: filtered,
+                        onReset: _clearFilters,
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      sliver: SliverList.separated(
+                        itemCount: result.items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (_, index) =>
+                            _SeasonCard(season: result.items[index]),
+                      ),
+                    ),
+            ),
+            if (page != null && (page.hasNextPage || _loadMoreError != null))
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Column(
-                    children: [
-                      _SeasonSearchTools(
-                        search: _search,
-                        farms: farms,
-                        farmId: filter.farmId,
-                        onSearch: _onSearch,
-                        onSubmit: () => unawaited(_applyFilters()),
-                        onClear: () {
-                          _search.clear();
-                          unawaited(_applyFilters());
-                        },
-                        onFarm: (id) => unawaited(
-                          _applyFilters(changeFarm: true, farmId: id),
-                        ),
-                        onRetryFarms: () =>
-                            ref.invalidate(assignedSeasonFarmOptionsProvider),
-                      ),
-                      const SizedBox(height: 12),
-                      _Segmented(
-                        activeOnly:
-                            filter.status == AssignedSeasonStatus.active,
-                        activeCount: page?.activeResults,
-                        totalCount: page?.allResults,
-                        onChanged: (value) =>
-                            unawaited(_applyFilters(activeOnly: value)),
-                      ),
-                      if (filtered)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _clearFilters,
-                            child: const Text('Xóa bộ lọc'),
-                          ),
-                        ),
-                    ],
-                  ),
+                child: _PaginationFooter(
+                  loading: _loadingMore,
+                  error: _loadMoreError,
+                  onRetry: () => _loadMore(page),
                 ),
               ),
-              // Keep controls mounted so typing, clearing and retrying work
-              // while a different query is loading or has failed.
-              state.when<Widget>(
-                skipLoadingOnRefresh: retainRows,
-                skipError: retainRows,
-                loading: () => const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.ocean),
-                  ),
-                ),
-                error: (error, _) => SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: _ErrorState(
-                    message: _message(error),
-                    onRetry: _refresh,
-                  ),
-                ),
-                data: (result) => result.items.isEmpty
-                    ? SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _EmptyState(
-                          filtered: filtered,
-                          onReset: _clearFilters,
-                        ),
-                      )
-                    : SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                        sliver: SliverList.separated(
-                          itemCount: result.items.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (_, index) =>
-                              _SeasonCard(season: result.items[index]),
-                        ),
-                      ),
-              ),
-              if (page != null && (page.hasNextPage || _loadMoreError != null))
-                SliverToBoxAdapter(
-                  child: _PaginationFooter(
-                    loading: _loadingMore,
-                    error: _loadMoreError,
-                    onRetry: () => _loadMore(page),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -295,7 +283,7 @@ class _AssignedSeasonListPageState
   }
 }
 
-/// Search and popup geometry follows the pond's season toolbar.
+/// Keep assignment filters independent from the shared toolbar layout.
 class _SeasonSearchTools extends StatelessWidget {
   const _SeasonSearchTools({
     required this.search,
@@ -320,127 +308,119 @@ class _SeasonSearchTools extends StatelessWidget {
     final name = choices.where((farm) => farm.id == farmId).firstOrNull?.name;
     return Column(
       children: [
-        SizedBox(
-          height: 36,
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('assigned_season_search'),
-                  controller: search,
-                  onChanged: onSearch,
-                  onSubmitted: (_) => onSubmit(),
-                  textInputAction: TextInputAction.search,
-                  maxLength: AssignedSeasonRules.searchMaxLength,
-                  style: const TextStyle(color: AppColors.ink, fontSize: 11),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm tên vụ nuôi hoặc tên ao…',
-                    counterText: '',
-                    hintStyle: const TextStyle(
-                      color: AppColors.inkMuted,
-                      fontSize: 11,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.inkMuted,
-                      size: 15,
-                    ),
-                    prefixIconConstraints: const BoxConstraints(
-                      minWidth: 31,
-                      minHeight: 36,
-                    ),
-                    suffixIcon: search.text.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: 'Xóa tìm kiếm',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 34,
-                              minHeight: 36,
-                            ),
-                            onPressed: onClear,
-                            icon: const Icon(Icons.close_rounded, size: 15),
-                          ),
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.line),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.oceanLight),
-                    ),
-                  ),
-                ),
+        AppSearchToolbar(
+          search: TextField(
+            key: const Key('assigned_season_search'),
+            controller: search,
+            onChanged: onSearch,
+            onSubmitted: (_) => onSubmit(),
+            textInputAction: TextInputAction.search,
+            maxLength: AssignedSeasonRules.searchMaxLength,
+            style: const TextStyle(color: AppColors.ink, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Tìm tên vụ nuôi hoặc tên ao…',
+              counterText: '',
+              hintStyle: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 13,
               ),
-              const SizedBox(width: 6),
-              PopupMenuButton<String>(
-                key: const Key('assigned_season_farm_filter'),
-                tooltip: 'Lọc trại',
-                enabled: farms.hasValue && !farms.isLoading,
-                initialValue: farmId ?? AssignedSeasonRules.allFarmsValue,
-                onSelected: (value) => onFarm(
-                  value == AssignedSeasonRules.allFarmsValue ? null : value,
-                ),
-                color: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: AssignedSeasonRules.allFarmsValue,
-                    child: Text('Tất cả trại'),
-                  ),
-                  for (final farm in choices)
-                    PopupMenuItem(value: farm.id, child: Text(farm.name)),
-                ],
-                child: Container(
-                  width: 100,
-                  height: 36,
-                  padding: const EdgeInsets.only(left: 12, right: 7),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: farmId == null ? AppColors.line : AppColors.ocean,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          farmId == null
-                              ? 'Tất cả trại'
-                              : name ?? 'Trại đã chọn',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.inkSoft,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: AppColors.inkMuted,
+                size: 15,
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 38,
+                minHeight: 40,
+              ),
+              suffixIcon: search.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Xóa tìm kiếm',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 38,
+                        minHeight: 40,
                       ),
-                      if (farms.isLoading)
-                        const SizedBox.square(
-                          dimension: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else
-                        const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.inkSoft,
-                          size: 17,
-                        ),
-                    ],
-                  ),
+                      onPressed: onClear,
+                      icon: const Icon(Icons.close_rounded, size: 19),
+                    ),
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.line),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.oceanLight,
+                  width: 1.5,
                 ),
               ),
+            ),
+          ),
+          filter: PopupMenuButton<String>(
+            key: const Key('assigned_season_farm_filter'),
+            tooltip: 'Lọc trại',
+            enabled: farms.hasValue && !farms.isLoading,
+            initialValue: farmId ?? AssignedSeasonRules.allFarmsValue,
+            onSelected: (value) => onFarm(
+              value == AssignedSeasonRules.allFarmsValue ? null : value,
+            ),
+            color: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: AssignedSeasonRules.allFarmsValue,
+                child: Text('Tất cả trại'),
+              ),
+              for (final farm in choices)
+                PopupMenuItem(value: farm.id, child: Text(farm.name)),
             ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: farmId == null ? AppColors.line : AppColors.ocean,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      farmId == null ? 'Tất cả trại' : name ?? 'Trại đã chọn',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkSoft,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  if (farms.isLoading)
+                    const SizedBox.square(
+                      dimension: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    const AppSvgIcon(
+                      AppSvgIconName.dropdownChevron,
+                      color: AppColors.inkSoft,
+                      size: 11,
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
         if (farms.hasError)

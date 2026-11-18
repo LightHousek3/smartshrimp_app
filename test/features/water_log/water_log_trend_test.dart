@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
@@ -112,6 +114,13 @@ Future<void> _open(
     ),
   );
   if (settle) await tester.pumpAndSettle();
+  expect(
+    find.ancestor(
+      of: find.byType(PageHeaderBar),
+      matching: find.byType(AppGradientBackground),
+    ),
+    findsOneWidget,
+  );
 }
 
 void main() {

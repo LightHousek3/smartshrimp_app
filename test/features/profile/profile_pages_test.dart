@@ -27,6 +27,71 @@ import '../../support/load_app_fonts.dart';
 import '../../support/disabled_push_repository.dart';
 
 void main() {
+  testWidgets(
+    'all password visibility buttons work across their full bounds with the keyboard open',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpWidget(
+        _testApp(_FakeAuthRepository(), _FakeProfileRepository()),
+      );
+      await tester.pumpAndSettle();
+      ProviderScope.containerOf(
+        tester.element(find.byType(SmartShrimpApp)),
+      ).read(appRouterProvider).go(AppRoutes.changePassword);
+      await tester.pumpAndSettle();
+      for (final key in [
+        'current_password_field',
+        'new_password_field',
+        'confirm_password_field',
+      ]) {
+        final field = find.byKey(Key(key));
+        await tester.ensureVisible(field);
+        await tester.pumpAndSettle();
+        await tester.enterText(field, 'Password123');
+        await tester.pumpAndSettle();
+        final input = find.descendant(
+          of: field,
+          matching: find.byType(TextField),
+        );
+        final button = find.descendant(
+          of: field,
+          matching: find.byType(IconButton),
+        );
+        expect(tester.getSize(button), const Size(44, 44));
+        expect(tester.widget<TextField>(input).obscureText, isTrue);
+        for (final alignment in [
+          Alignment.center,
+          Alignment.centerRight,
+          Alignment.bottomRight,
+        ]) {
+          final bounds = tester.getRect(button).deflate(3);
+          await tester.tapAt(alignment.withinRect(bounds));
+          await tester.pumpAndSettle();
+          expect(tester.widget<TextField>(input).obscureText, isFalse);
+          expect(
+            tester.widget<TextField>(input).controller!.text,
+            'Password123',
+          );
+          expect(
+            find.descendant(
+              of: button,
+              matching: find.byIcon(Icons.visibility_off_outlined),
+            ),
+            findsOneWidget,
+          );
+          await tester.tap(button);
+          await tester.pumpAndSettle();
+          expect(tester.widget<TextField>(input).obscureText, isTrue);
+        }
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final role in [AccountRole.farmOwner, AccountRole.technician]) {
     testWidgets('account permission row refreshes on resume for ${role.name}', (
       tester,

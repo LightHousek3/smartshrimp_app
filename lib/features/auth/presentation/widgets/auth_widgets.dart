@@ -5,6 +5,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/password_visibility_button.dart';
 import 'package:smartshrimp_app/features/profile/domain/profile_rules.dart';
 
 class AuthShell extends StatelessWidget {
@@ -239,14 +240,11 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
           onSubmitted: (_) => widget.onSubmitted?.call(),
           decoration: InputDecoration(
             hintText: '••••••••',
-            suffixIcon: IconButton(
-              tooltip: _obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+            suffixIcon: PasswordVisibilityButton(
+              obscureText: _obscure,
               onPressed: widget.enabled
                   ? () => setState(() => _obscure = !_obscure)
                   : null,
-              icon: _obscure
-                  ? const AuthIcon('eye', size: 17)
-                  : const Icon(Icons.visibility_off_outlined, size: 17),
             ),
           ),
         ),

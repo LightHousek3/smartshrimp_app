@@ -25,7 +25,7 @@ abstract final class AuthFormRules {
         labels.length < 2 ||
         !labels.every(validLabel.hasMatch) ||
         !RegExp(r'^[a-zA-Z]').hasMatch(labels.last)) {
-      return 'Email không hợp lệ. Ví dụ: ten@trangtrai.vn.';
+      return 'Email không hợp lệ';
     }
     return null;
   }

@@ -81,17 +81,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        PageHeaderBar(
-          title: 'Cập nhật thông tin',
-          onBack: context.pop,
-          contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          titleStyle: AppTypography.display(
-            fontSize: 16,
-            height: 1.25,
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
-          ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
-        ),
+        PageHeaderBar(title: 'Cập nhật thông tin', onBack: context.pop),
         Expanded(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

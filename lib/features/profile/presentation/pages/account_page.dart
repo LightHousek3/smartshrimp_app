@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,7 +9,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
@@ -33,190 +32,167 @@ class _AccountPageState extends ConsumerState<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileControllerProvider);
+    final role = ref.watch(
+      authControllerProvider.select((state) => state.value?.role),
+    );
 
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: profileState.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.ocean,
-              strokeWidth: 2.5,
-            ),
-          ),
-          error: (error, _) => _ProfileError(
-            message: _messageFor(error),
-            onRetry: () =>
-                ref.read(profileControllerProvider.notifier).refresh(),
-          ),
-          data: (profile) => RefreshIndicator(
+    return TabPageLayout(
+      title: 'Tài khoản',
+      subtitle: role == AccountRole.farmOwner
+          ? 'Quản lý hồ sơ & nhân sự'
+          : 'Quản lý hồ sơ cá nhân',
+      child: profileState.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(
             color: AppColors.ocean,
-            onRefresh: () async {
-              if (profile.role == AccountRole.farmOwner) {
-                ref.invalidate(activePersonnelSummaryProvider);
-              }
-              await ref.read(profileControllerProvider.notifier).refresh();
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                StickyPageHeader(
-                  title: 'Tài khoản',
-                  subtitle: profile.role == AccountRole.farmOwner
-                      ? 'Quản lý hồ sơ & nhân sự'
-                      : 'Quản lý hồ sơ cá nhân',
-                  subtitleStyle: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                  showBack: false,
-                  height: 76,
-                  titleStyle: AppTypography.display(
-                    color: AppColors.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
-                    letterSpacing: -0.55,
-                  ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-                  sliver: SliverList.list(
-                    children: <Widget>[
-                      _ProfileHero(
-                        profile: profile,
-                        isUploading: _isUploadingAvatar,
-                        onAvatarTap: _pickAndUploadAvatar,
-                      ),
-                      if (profile.role == AccountRole.technician) ...<Widget>[
-                        const SizedBox(height: 14),
-                        _TechnicianKpiRow(kpi: profile.technicianKpi),
-                      ],
-                      if (profile.role == AccountRole.farmOwner) ...<Widget>[
-                        const SizedBox(height: 14),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            'Nhân sự',
-                            style:
-                                AppTypography.display(
-                                  color: AppColors.ink,
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  fontWeight: FontWeight.w700,
-                                ).copyWith(
-                                  fontFamilyFallback: const ['PlusJakartaSans'],
-                                ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _ActionCard(
-                          children: <Widget>[
-                            _ActionRow(
-                              key: const Key('account_personnel_entry'),
-                              icon: Icons.groups_outlined,
-                              iconForeground: const Color(0xFF0F9B8E),
-                              iconBackground: const Color(0xFFE2F6F3),
-                              label: ref
-                                  .watch(activePersonnelSummaryProvider)
-                                  .when(
-                                    data: (summary) =>
-                                        '${summary.technicians} KTV · '
-                                        '${summary.experts} Chuyên gia',
-                                    loading: () => 'KTV · Chuyên gia',
-                                    error: (_, _) => 'KTV · Chuyên gia',
-                                  ),
-                              subtitle: ref
-                                  .watch(activePersonnelSummaryProvider)
-                                  .when(
-                                    data: (summary) =>
-                                        '${summary.total} đang hoạt động',
-                                    loading: () => 'Đang tải số nhân sự...',
-                                    error: (_, _) => 'Xem danh sách nhân sự',
-                                  ),
-                              onTap: () => context.go(AppRoutes.personnel),
-                            ),
-                          ],
-                        ),
-                      ],
+            strokeWidth: 2.5,
+          ),
+        ),
+        error: (error, _) => _ProfileError(
+          message: _messageFor(error),
+          onRetry: () => ref.read(profileControllerProvider.notifier).refresh(),
+        ),
+        data: (profile) => RefreshIndicator(
+          color: AppColors.ocean,
+          onRefresh: () async {
+            if (profile.role == AccountRole.farmOwner) {
+              ref.invalidate(activePersonnelSummaryProvider);
+            }
+            await ref.read(profileControllerProvider.notifier).refresh();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                sliver: SliverList.list(
+                  children: <Widget>[
+                    _ProfileHero(
+                      profile: profile,
+                      isUploading: _isUploadingAvatar,
+                      onAvatarTap: _pickAndUploadAvatar,
+                    ),
+                    if (profile.role == AccountRole.technician) ...<Widget>[
                       const SizedBox(height: 14),
-                      Text(
-                        'Thông tin tài khoản',
-                        style:
-                            AppTypography.display(
-                              color: AppColors.ink,
-                              fontSize: 14,
-                              height: 1.5,
-                              fontWeight: FontWeight.w700,
-                            ).copyWith(
-                              fontFamilyFallback: const ['PlusJakartaSans'],
-                            ),
+                      _TechnicianKpiRow(kpi: profile.technicianKpi),
+                    ],
+                    if (profile.role == AccountRole.farmOwner) ...<Widget>[
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          'Nhân sự',
+                          style:
+                              AppTypography.display(
+                                color: AppColors.ink,
+                                fontSize: 14,
+                                height: 1.5,
+                                fontWeight: FontWeight.w700,
+                              ).copyWith(
+                                fontFamilyFallback: const ['PlusJakartaSans'],
+                              ),
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      _AccountInfoCard(profile: profile),
-                      const SizedBox(height: 12),
                       _ActionCard(
                         children: <Widget>[
                           _ActionRow(
-                            icon: Icons.edit_outlined,
-                            label: 'Cập nhật thông tin cá nhân',
-                            onTap: () => context.push(AppRoutes.profileEdit),
-                          ),
-                          const Divider(height: 1, color: AppColors.line),
-                          _ActionRow(
-                            icon: Icons.shield_outlined,
-                            label: 'Đổi mật khẩu',
-                            onTap: () => context.push(AppRoutes.changePassword),
-                          ),
-                          const Divider(height: 1, color: AppColors.line),
-                          const _ActionRow(
-                            icon: Icons.notifications_none_rounded,
-                            label: 'Cho phép thông báo',
-                            trailing: NotificationPermissionSwitch(),
+                            key: const Key('account_personnel_entry'),
+                            icon: Icons.groups_outlined,
+                            iconForeground: const Color(0xFF0F9B8E),
+                            iconBackground: const Color(0xFFE2F6F3),
+                            label: ref
+                                .watch(activePersonnelSummaryProvider)
+                                .when(
+                                  data: (summary) =>
+                                      '${summary.technicians} KTV · '
+                                      '${summary.experts} Chuyên gia',
+                                  loading: () => 'KTV · Chuyên gia',
+                                  error: (_, _) => 'KTV · Chuyên gia',
+                                ),
+                            subtitle: ref
+                                .watch(activePersonnelSummaryProvider)
+                                .when(
+                                  data: (summary) =>
+                                      '${summary.total} đang hoạt động',
+                                  loading: () => 'Đang tải số nhân sự...',
+                                  error: (_, _) => 'Xem danh sách nhân sự',
+                                ),
+                            onTap: () => context.go(AppRoutes.personnel),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        key: const Key('profile_logout_button'),
-                        onPressed: () =>
-                            ref.read(authControllerProvider.notifier).logout(),
-                        icon: const AppSvgIcon(
-                          AppSvgIconName.logout,
-                          size: 18,
-                          color: AppColors.error,
-                        ),
-                        label: const Text('Đăng xuất'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(52),
-                          foregroundColor: AppColors.error,
-                          backgroundColor: const Color(0xFFFBE6EA),
-                          side: const BorderSide(color: Color(0xFFFFC7D0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          textStyle: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'SmartShrimp Platform · v1.0.0',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 11,
-                        ),
-                      ),
                     ],
-                  ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Thông tin tài khoản',
+                      style: AppTypography.display(
+                        color: AppColors.ink,
+                        fontSize: 14,
+                        height: 1.5,
+                        fontWeight: FontWeight.w700,
+                      ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
+                    ),
+                    const SizedBox(height: 8),
+                    _AccountInfoCard(profile: profile),
+                    const SizedBox(height: 12),
+                    _ActionCard(
+                      children: <Widget>[
+                        _ActionRow(
+                          icon: Icons.edit_outlined,
+                          label: 'Cập nhật thông tin cá nhân',
+                          onTap: () => context.push(AppRoutes.profileEdit),
+                        ),
+                        const Divider(height: 1, color: AppColors.line),
+                        _ActionRow(
+                          icon: Icons.shield_outlined,
+                          label: 'Đổi mật khẩu',
+                          onTap: () => context.push(AppRoutes.changePassword),
+                        ),
+                        const Divider(height: 1, color: AppColors.line),
+                        const _ActionRow(
+                          icon: Icons.notifications_none_rounded,
+                          label: 'Cho phép thông báo',
+                          trailing: NotificationPermissionSwitch(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      key: const Key('profile_logout_button'),
+                      onPressed: () =>
+                          ref.read(authControllerProvider.notifier).logout(),
+                      icon: const AppSvgIcon(
+                        AppSvgIconName.logout,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
+                      label: const Text('Đăng xuất'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        foregroundColor: AppColors.error,
+                        backgroundColor: const Color(0xFFFBE6EA),
+                        side: const BorderSide(color: Color(0xFFFFC7D0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        textStyle: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'SmartShrimp System · v1.0.0',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -559,7 +535,7 @@ class _TechnicianKpiRow extends StatelessWidget {
         ),
         _KpiData(
           label: 'Nhiệm vụ',
-          subtitle: 'Đã hoàn tất',
+          subtitle: 'Đã hoàn thành',
           value: '${kpi?.completedTasks ?? 0}',
         ),
         _KpiData(

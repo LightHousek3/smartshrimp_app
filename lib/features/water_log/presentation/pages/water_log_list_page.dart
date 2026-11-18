@@ -105,93 +105,63 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
             bottom: false,
             child: Column(
               children: <Widget>[
-                AppGradientBackground(
-                  child: PageHeaderBar(
-                    title: 'Chất lượng nước',
-                    subtitle: subtitle.isEmpty ? null : subtitle,
-                    onBack: context.pop,
-                    backButton: SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: IconButton(
-                        tooltip: 'Quay lại',
-                        padding: EdgeInsets.zero,
-                        onPressed: context.pop,
-                        icon: SvgPicture.asset(
-                          'assets/icons/water-log/water_back.svg',
-                          width: 19.9898,
-                          height: 19.9898,
+                PageHeaderBar(
+                  title: 'Chất lượng nước',
+                  subtitle: subtitle.isEmpty ? null : subtitle,
+                  onBack: context.pop,
+                  trailing: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xB3FFFFFF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xB3FFFFFF)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1A000000),
+                          blurRadius: 3,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: TextButton(
+                      key: const Key('water_statistics_button'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0C4E8F),
+                        minimumSize: const Size(96, 35),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                    backgroundColor: AppColors.backgroundTop,
-                    trailing: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xB3FFFFFF),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xB3FFFFFF)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x1A000000),
-                            blurRadius: 3,
-                            offset: Offset(0, 1),
+                      onPressed: () => context.push(
+                        '/seasons/${widget.seasonId}/water-logs/statistics',
+                        extra: <String, String>{
+                          if (widget.pondName != null)
+                            'pondName': widget.pondName!,
+                          if (widget.seasonName != null)
+                            'seasonName': widget.seasonName!,
+                        },
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/water-log/water_statistics.svg',
+                            width: 14.9997,
+                            height: 14.9997,
                           ),
+                          const SizedBox(width: 6),
+                          const Text('Thống kê'),
                         ],
                       ),
-                      child: TextButton(
-                        key: const Key('water_statistics_button'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF0C4E8F),
-                          minimumSize: const Size(96, 35),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          textStyle: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        onPressed: () => context.push(
-                          '/seasons/${widget.seasonId}/water-logs/statistics',
-                          extra: <String, String>{
-                            if (widget.pondName != null)
-                              'pondName': widget.pondName!,
-                            if (widget.seasonName != null)
-                              'seasonName': widget.seasonName!,
-                          },
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/water-log/water_statistics.svg',
-                              width: 14.9997,
-                              height: 14.9997,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text('Thống kê'),
-                          ],
-                        ),
-                      ),
                     ),
-                    titleStyle:
-                        AppTypography.display(
-                          color: AppColors.ink,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          height: 1.5,
-                        ).copyWith(
-                          fontFamilyFallback: <String>[
-                            GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w700,
-                            ).fontFamily!,
-                          ],
-                        ),
                   ),
                 ),
                 Expanded(

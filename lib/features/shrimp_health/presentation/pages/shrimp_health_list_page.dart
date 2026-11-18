@@ -127,139 +127,146 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
     required String value,
     required String unit,
     required Color valueColor,
-  }) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E8F0)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+  }) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFE5E8F0)),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.02),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF6A7994),
-                letterSpacing: 0.2,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: valueColor,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              unit,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6A7994),
-              ),
-            ),
-          ],
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF6A7994),
+            letterSpacing: 0.2,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-      );
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: valueColor,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          unit,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF6A7994),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildMissingTodayBanner() => Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEB),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFDE68A)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
+    margin: const EdgeInsets.symmetric(horizontal: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFBEB),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFFFDE68A)),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.notification_important_rounded,
-                color: Color(0xFFD97706),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Chưa có ghi nhận hôm nay',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF92400E),
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Ao nuôi chưa có dữ liệu sức khỏe tôm trong ngày hôm nay. Hãy thực hiện chài mẫu kiểm tra và ghi nhận định kỳ nhé!',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFFB45309),
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.notification_important_rounded,
+            color: Color(0xFFD97706),
+            size: 20,
+          ),
         ),
-      );
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Chưa có ghi nhận hôm nay',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF92400E),
+                ),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Ao nuôi chưa có dữ liệu sức khỏe tôm trong ngày hôm nay. Hãy thực hiện chài mẫu kiểm tra và ghi nhận định kỳ nhé!',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFFB45309),
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
-  Widget _buildSegmentedFilter(List<ShrimpHealthLog> allLogs, ShrimpHealthCounts? counts) {
+  Widget _buildSegmentedFilter(
+    List<ShrimpHealthLog> allLogs,
+    ShrimpHealthCounts? counts,
+  ) {
     final totalCount = counts?.total ?? allLogs.length;
-    final attentionCount = counts?.warningOrCritical ??
+    final attentionCount =
+        counts?.warningOrCritical ??
         allLogs
-            .where((l) =>
-                !l.isVoided &&
-                (l.healthStatus == HealthStatus.warning ||
-                    l.healthStatus == HealthStatus.critical))
+            .where(
+              (l) =>
+                  !l.isVoided &&
+                  (l.healthStatus == HealthStatus.warning ||
+                      l.healthStatus == HealthStatus.critical),
+            )
             .length;
-    final voidedCount = counts?.voided ?? allLogs.where((l) => l.isVoided).length;
+    final voidedCount =
+        counts?.voided ?? allLogs.where((l) => l.isVoided).length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: <Widget>[
-          Expanded(
-            child: _buildFilterButton('Tất cả ($totalCount)', 'all'),
-          ),
+          Expanded(child: _buildFilterButton('Tất cả ($totalCount)', 'all')),
           const SizedBox(width: 8),
           Expanded(
-            child: _buildFilterButton('Cảnh báo ($attentionCount)', 'attention'),
+            child: _buildFilterButton(
+              'Cảnh báo ($attentionCount)',
+              'attention',
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -314,95 +321,68 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
           bottom: false,
           child: Column(
             children: <Widget>[
-              AppGradientBackground(
-                child: PageHeaderBar(
-                  title: 'Sức khỏe tôm',
-                  subtitle: subtitle.isEmpty ? null : subtitle,
-                  onBack: context.pop,
-                  backButton: SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: IconButton(
-                      tooltip: 'Quay lại',
-                      padding: EdgeInsets.zero,
-                      onPressed: context.pop,
-                      icon: SvgPicture.asset(
-                        'assets/icons/water-log/water_back.svg',
-                        width: 19.9898,
-                        height: 19.9898,
+              PageHeaderBar(
+                title: 'Sức khỏe tôm',
+                subtitle: subtitle.isEmpty ? null : subtitle,
+                onBack: context.pop,
+                trailing: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xB3FFFFFF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xB3FFFFFF)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: TextButton(
+                    key: const Key('shrimp_health_statistics_button'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF0C4E8F),
+                      minimumSize: const Size(96, 35),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                  backgroundColor: AppColors.backgroundTop,
-                  trailing: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xB3FFFFFF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xB3FFFFFF)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1A000000),
-                          blurRadius: 3,
-                          offset: Offset(0, 1),
+                    onPressed: () {
+                      final currentUri = GoRouterState.of(context).uri.path;
+                      final target = currentUri.endsWith('/shrimp-health')
+                          ? '$currentUri/statistics'
+                          : '/seasons/${widget.seasonId}/shrimp-health/statistics';
+                      context.push(
+                        target,
+                        extra: <String, dynamic>{
+                          if (widget.pondName != null)
+                            'pondName': widget.pondName,
+                          if (widget.seasonName != null)
+                            'seasonName': widget.seasonName,
+                        },
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/water-log/water_statistics.svg',
+                          width: 14.9997,
+                          height: 14.9997,
                         ),
+                        const SizedBox(width: 6),
+                        const Text('Thống kê'),
                       ],
                     ),
-                    child: TextButton(
-                      key: const Key('shrimp_health_statistics_button'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0C4E8F),
-                        minimumSize: const Size(96, 35),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        textStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      onPressed: () {
-                        final currentUri = GoRouterState.of(context).uri.path;
-                        final target = currentUri.endsWith('/shrimp-health')
-                            ? '$currentUri/statistics'
-                            : '/seasons/${widget.seasonId}/shrimp-health/statistics';
-                        context.push(
-                          target,
-                          extra: <String, dynamic>{
-                            if (widget.pondName != null) 'pondName': widget.pondName,
-                            if (widget.seasonName != null) 'seasonName': widget.seasonName,
-                          },
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/water-log/water_statistics.svg',
-                            width: 14.9997,
-                            height: 14.9997,
-                          ),
-                          const SizedBox(width: 6),
-                          const Text('Thống kê'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  titleStyle: AppTypography.display(
-                    color: AppColors.ink,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    height: 1.5,
-                  ).copyWith(
-                    fontFamilyFallback: <String>[
-                      GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w700,
-                      ).fontFamily!,
-                    ],
                   ),
                 ),
               ),
@@ -410,60 +390,72 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
               // Full width Action Button: + Ghi nhận sức khỏe tôm (matching Figma figma_list.png)
               if (widget.isSeasonActive)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   child: SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                    onPressed: () {
-                      final initialQuantity = ref
-                          .watch(assignedSeasonDetailProvider(widget.seasonId))
-                          .value
-                          ?.initialQuantity;
-                      ShrimpHealthFormSheet.show(
-                        context,
-                        seasonId: widget.seasonId,
-                        initialQuantity: initialQuantity,
-                        onCreated: () {
-                          ref
-                              .read(shrimpHealthListProvider(widget.seasonId).notifier)
-                              .refresh();
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD43B57),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Ghi nhận sức khỏe tôm',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                      onPressed: () {
+                        final initialQuantity = ref
+                            .watch(
+                              assignedSeasonDetailProvider(widget.seasonId),
+                            )
+                            .value
+                            ?.initialQuantity;
+                        ShrimpHealthFormSheet.show(
+                          context,
+                          seasonId: widget.seasonId,
+                          initialQuantity: initialQuantity,
+                          onCreated: () {
+                            ref
+                                .read(
+                                  shrimpHealthListProvider(
+                                    widget.seasonId,
+                                  ).notifier,
+                                )
+                                .refresh();
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD43B57),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                      ],
+                        elevation: 0,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Ghi nhận sức khỏe tôm',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
               // Scrollable Body Content
               Expanded(
                 child: listAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -485,7 +477,11 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                           ElevatedButton.icon(
                             onPressed: () {
                               ref
-                                  .read(shrimpHealthListProvider(widget.seasonId).notifier)
+                                  .read(
+                                    shrimpHealthListProvider(
+                                      widget.seasonId,
+                                    ).notifier,
+                                  )
                                   .refresh();
                             },
                             icon: const Icon(Icons.refresh_rounded),
@@ -498,12 +494,15 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                   data: (result) {
                     final counts = result.counts;
                     final now = DateTime.now();
-                    final hasLogToday = result.logs.any((l) =>
-                        !l.isVoided &&
-                        l.recordedAt.year == now.year &&
-                        l.recordedAt.month == now.month &&
-                        l.recordedAt.day == now.day);
-                    final showMissingToday = widget.isSeasonActive && !hasLogToday;
+                    final hasLogToday = result.logs.any(
+                      (l) =>
+                          !l.isVoided &&
+                          l.recordedAt.year == now.year &&
+                          l.recordedAt.month == now.month &&
+                          l.recordedAt.day == now.day,
+                    );
+                    final showMissingToday =
+                        widget.isSeasonActive && !hasLogToday;
 
                     // Filter logs based on selected tab
                     final displayedLogs = result.logs.where((log) {
@@ -521,7 +520,11 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                     return RefreshIndicator(
                       onRefresh: () async {
                         await ref
-                            .read(shrimpHealthListProvider(widget.seasonId).notifier)
+                            .read(
+                              shrimpHealthListProvider(
+                                widget.seasonId,
+                              ).notifier,
+                            )
                             .refresh();
                       },
                       child: NotificationListener<ScrollNotification>(
@@ -529,34 +532,46 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                           if (notification.metrics.pixels >=
                               notification.metrics.maxScrollExtent - 200) {
                             ref
-                                .read(shrimpHealthListProvider(widget.seasonId).notifier)
+                                .read(
+                                  shrimpHealthListProvider(
+                                    widget.seasonId,
+                                  ).notifier,
+                                )
                                 .loadMore();
                           }
                           return false;
                         },
                         child: CustomScrollView(
                           slivers: <Widget>[
-                            const SliverToBoxAdapter(child: SizedBox(height: 6)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 6),
+                            ),
 
                             // 3 Top Stat Cards: SINH KHỐI, CỠ TB, TĂNG TRƯỞNG
                             SliverToBoxAdapter(
                               child: _buildTopStatCards(result.logs),
                             ),
-                            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 12),
+                            ),
 
                             // Warning Banner: Only alert KTV if active season has NO log today!
                             if (showMissingToday) ...<Widget>[
                               SliverToBoxAdapter(
                                 child: _buildMissingTodayBanner(),
                               ),
-                              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 12),
+                              ),
                             ],
 
                             // Segmented Filter Tabs: Tất cả, Chú ý, Vô hiệu
                             SliverToBoxAdapter(
                               child: _buildSegmentedFilter(result.logs, counts),
                             ),
-                            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 8),
+                            ),
 
                             // Empty State or List of Cards
                             if (displayedLogs.isEmpty)
@@ -566,13 +581,16 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(32),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: <Widget>[
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
                                           ),
                                           child: const Icon(
                                             Icons.assignment_outlined,
@@ -607,31 +625,31 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                               SliverPadding(
                                 padding: const EdgeInsets.only(bottom: 24),
                                 sliver: SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                      final log = displayedLogs[index];
-                                      return ShrimpHealthCard(
-                                        log: log,
-                                        onTap: () {
-                                          ShrimpHealthDetailSheet.show(
-                                            context,
-                                            seasonId: widget.seasonId,
-                                            log: log,
-                                            onVoided: () {
-                                              ref
-                                                  .read(
-                                                    shrimpHealthListProvider(
-                                                      widget.seasonId,
-                                                    ).notifier,
-                                                  )
-                                                  .refresh();
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
-                                    childCount: displayedLogs.length,
-                                  ),
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final log = displayedLogs[index];
+                                    return ShrimpHealthCard(
+                                      log: log,
+                                      onTap: () {
+                                        ShrimpHealthDetailSheet.show(
+                                          context,
+                                          seasonId: widget.seasonId,
+                                          log: log,
+                                          onVoided: () {
+                                            ref
+                                                .read(
+                                                  shrimpHealthListProvider(
+                                                    widget.seasonId,
+                                                  ).notifier,
+                                                )
+                                                .refresh();
+                                          },
+                                        );
+                                      },
+                                    );
+                                  }, childCount: displayedLogs.length),
                                 ),
                               ),
 
@@ -644,7 +662,9 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                                     child: SizedBox(
                                       width: 24,
                                       height: 24,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     ),
                                   ),
                                 ),

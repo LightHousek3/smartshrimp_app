@@ -325,7 +325,7 @@ void main() {
         tester
             .widget<PageHeaderBar>(find.byType(PageHeaderBar))
             .backgroundColor,
-        Colors.transparent,
+        isNull,
       );
       await tester.tap(find.text('Điều trị (15)'));
       await tester.pumpAndSettle();
@@ -343,7 +343,7 @@ void main() {
         tester
             .widget<PageHeaderBar>(find.byType(PageHeaderBar))
             .backgroundColor,
-        Colors.transparent,
+        isNull,
       );
       await tester.drag(find.byType(ListView).first, const Offset(0, -400));
       await tester.pumpAndSettle();

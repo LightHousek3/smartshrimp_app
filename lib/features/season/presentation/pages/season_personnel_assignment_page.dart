@@ -174,7 +174,6 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
             title: _isReplacement ? 'Thay nhân sự' : 'Phân công nhân sự',
             subtitle:
                 '${widget.season.pond.name} • ${widget.season.pond.farm?.name ?? 'Trang trại'}',
-            titleSize: 18,
             onBack: mutation.isLoading ? null : context.pop,
           ),
           SliverPadding(

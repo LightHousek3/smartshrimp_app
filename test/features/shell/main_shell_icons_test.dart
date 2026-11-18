@@ -88,11 +88,25 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        Rect? bodyBounds;
+        Rect? navigationBounds;
         for (final path in paths) {
-          router.go(path);
+          final index = paths.indexOf(path);
+          final shell = tester.widget<Scaffold>(find.byType(Scaffold));
+          final shellNav = find.byWidget(shell.bottomNavigationBar!);
+          final buttons = find.descendant(
+            of: shellNav,
+            matching: find.byType(InkWell),
+          );
+          await tester.tap(buttons.at(index));
           await tester.pumpAndSettle();
           final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
           final nav = find.byWidget(scaffold.bottomNavigationBar!);
+          expect(router.routeInformationProvider.value.uri.path, path);
+          bodyBounds ??= tester.getRect(find.byWidget(scaffold.body!));
+          navigationBounds ??= tester.getRect(nav);
+          expect(tester.getRect(find.byWidget(scaffold.body!)), bodyBounds);
+          expect(tester.getRect(nav), navigationBounds);
           expect(
             tester
                 .widgetList<AppSvgIcon>(
@@ -101,6 +115,22 @@ void main() {
                 .map((icon) => icon.icon),
             icons,
           );
+          if (owner) {
+            final farmIcon = find.descendant(
+              of: nav,
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is AppSvgIcon && widget.icon == AppSvgIconName.farm,
+              ),
+            );
+            final transform = tester.widget<Transform>(
+              find
+                  .ancestor(of: farmIcon, matching: find.byType(Transform))
+                  .first,
+            );
+            expect(transform.transform.storage[0], 1.25);
+            expect(tester.getSize(farmIcon), const Size(22, 22));
+          }
           expect(tester.takeException(), isNull);
         }
       },

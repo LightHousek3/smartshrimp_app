@@ -75,7 +75,6 @@ class InventoryDetailPage extends ConsumerWidget {
 
     return InventoryPageFrame(
       title: product?.name ?? 'Chi tiết vật tư',
-      headerHeight: 60,
       onBack: context.pop,
       trailing: product != null && !product.isArchived && !product.readOnly
           ? Semantics(

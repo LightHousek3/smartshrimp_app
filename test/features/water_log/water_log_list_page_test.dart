@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -91,6 +93,13 @@ Future<void> _open(
   }
   await tester.runAsync(() => GoogleFonts.pendingFonts());
   if (settle) await tester.pumpAndSettle();
+  expect(
+    find.ancestor(
+      of: find.byType(PageHeaderBar),
+      matching: find.byType(AppGradientBackground),
+    ),
+    findsOneWidget,
+  );
 }
 
 void main() {
