@@ -15,6 +15,8 @@ import 'package:smartshrimp_app/features/water_log/presentation/view_models/wate
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_param_tiles.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_refresh_boundary.dart';
+import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_meal_group_card.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_schedule_card.dart';
 
 class AssignedSeasonDetailPage extends ConsumerWidget {
@@ -430,7 +432,7 @@ class _FeatureActions extends ConsumerWidget {
     ),
     _FeatureActionData(
       label: 'Vận hành',
-      icon: Icons.settings_outlined,
+      icon: Icons.event_note_rounded,
       background: Color(0xFFE2F6F3),
       foreground: Color(0xFF0F9B8E),
     ),
@@ -843,8 +845,8 @@ class _TodayOperations extends ConsumerWidget {
     final opState = ref.watch(provider);
 
     // Returning from execution must refresh the preview's independent state.
-    Future<void> openOperations(String path) async {
-      await context.push(path);
+    Future<void> openOperations(String path, {Object? extra}) async {
+      await context.push(path, extra: extra);
       if (context.mounted) ref.invalidate(provider);
     }
 
@@ -910,9 +912,33 @@ class _TodayOperations extends ConsumerWidget {
               );
             }
 
+            final mealGroups = FeedingMedicineMealGroup.group(schedules);
+            final otherSchedules = schedules
+                .where(
+                  (s) =>
+                      s.operationType != OperationType.feeding &&
+                      s.operationType != OperationType.medicine,
+                )
+                .toList(growable: false);
+            final nearestMealGroupKey = FeedingMedicineMealGroup.pickNearestKey(
+              mealGroups,
+            );
+
             return Column(
               children: <Widget>[
-                for (final s in schedules) ...<Widget>[
+                for (final group in mealGroups) ...<Widget>[
+                  OperationMealGroupCard(
+                    key: ValueKey<String>('today_${group.key}'),
+                    group: group,
+                    initiallyExpanded: group.key == nearestMealGroupKey,
+                    onTapDetail: (s) => openOperations(
+                      '/seasons/$seasonId/operations/${s.id}',
+                      extra: group,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                for (final s in otherSchedules) ...<Widget>[
                   OperationScheduleCard(
                     schedule: s,
                     onTap: () =>

@@ -22,5 +22,9 @@ abstract interface class OperationRepository {
     DateTime? executedAt,
   });
 
+  Future<List<OperationExecution>> executeSchedulesBatch(
+    List<OperationExecuteBatchItem> items,
+  );
+
   Future<OperationStats> getSeasonStats(String seasonId);
 }

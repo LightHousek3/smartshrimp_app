@@ -13,14 +13,14 @@ class OperationStatsBar extends StatelessWidget {
     Color? countColor,
   }) => Expanded(
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F6FF),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white, width: 1.5),
+        color: Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white, width: 1.2),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.025),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -29,14 +29,18 @@ class OperationStatsBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            title,
-            maxLines: 2,
-            style: const TextStyle(
-              color: AppColors.inkMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title,
+              maxLines: 1,
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.15,
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -46,6 +50,7 @@ class OperationStatsBar extends StatelessWidget {
               color: countColor ?? AppColors.ink,
               fontSize: 22,
               fontWeight: FontWeight.w800,
+              height: 1.1,
             ),
           ),
         ],
@@ -57,21 +62,21 @@ class OperationStatsBar extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: <Widget>[
       _buildStatBox(
-        title: 'CHỜ THỰC\nHIỆN',
+        title: 'CHỜ THỰC HIỆN',
         count: summary.planned,
         countColor: AppColors.ink,
       ),
-      const SizedBox(width: 10),
+      const SizedBox(width: 8),
       _buildStatBox(
-        title: 'HOÀN THÀNH\n ',
+        title: 'HOÀN THÀNH',
         count: summary.completed,
-        countColor: const Color(0xFF0F9B8E),
+        countColor: const Color(0xFF0D9488),
       ),
-      const SizedBox(width: 10),
+      const SizedBox(width: 8),
       _buildStatBox(
-        title: 'ĐÃ HỦY\n ',
+        title: 'ĐÃ HỦY',
         count: summary.cancelled,
-        countColor: AppColors.inkMuted,
+        countColor: AppColors.ink,
       ),
     ],
   );
