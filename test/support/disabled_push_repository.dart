@@ -10,6 +10,8 @@ final class DisabledPushRepository implements PushRepository {
   @override
   Stream<PushPermission> get states => const Stream.empty();
   @override
+  Future<PushPermission> permission() async => PushPermission.unavailable;
+  @override
   Future<PushPermission> register(
     String accountId, {
     bool requestPermission = true,

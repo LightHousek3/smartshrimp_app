@@ -15,59 +15,23 @@ class MainShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   static const _technicianItems = <_NavigationItem>[
-    _NavigationItem('Trang chủ', '/', Icons.home_outlined, Icons.home_rounded),
-    _NavigationItem(
-      'Vụ nuôi',
-      '/seasons',
-      Icons.layers_outlined,
-      Icons.layers_rounded,
-    ),
-    _NavigationItem(
-      'Nhiệm vụ',
-      '/tasks',
-      Icons.checklist_rtl_outlined,
-      Icons.checklist_rtl_rounded,
-    ),
-    _NavigationItem(
-      'Thông báo',
-      '/notifications',
-      Icons.notifications_none_rounded,
-      Icons.notifications_rounded,
-    ),
-    _NavigationItem(
-      'Tài khoản',
-      '/account',
-      Icons.person_outline,
-      Icons.person_rounded,
-    ),
+    _NavigationItem('Trang chủ', '/', AppSvgIconName.homeCompact),
+    _NavigationItem('Vụ nuôi', '/seasons', AppSvgIconName.shrimp),
+    _NavigationItem('Nhiệm vụ', '/tasks', AppSvgIconName.tasks),
+    _NavigationItem('Thông báo', '/notifications', AppSvgIconName.bellOutline),
+    _NavigationItem('Tài khoản', '/account', AppSvgIconName.person),
   ];
 
   static const _ownerItems = <_NavigationItem>[
-    _NavigationItem('Trang chủ', '/', Icons.home_outlined, Icons.home_rounded),
-    _NavigationItem(
-      'Trang trại',
-      '/farms',
-      Icons.grid_view_outlined,
-      Icons.grid_view_rounded,
-    ),
-    _NavigationItem(
-      'Nhiệm vụ',
-      '/tasks',
-      Icons.format_list_bulleted_outlined,
-      Icons.format_list_bulleted_rounded,
-    ),
+    _NavigationItem('Trang chủ', '/', AppSvgIconName.home),
+    _NavigationItem('Trang trại', '/farms', AppSvgIconName.farm),
+    _NavigationItem('Nhiệm vụ', '/tasks', AppSvgIconName.tasks),
     _NavigationItem(
       'Thông báo',
       '/notifications',
-      Icons.notifications_none_rounded,
-      Icons.notifications_rounded,
+      AppSvgIconName.notifications,
     ),
-    _NavigationItem(
-      'Tài khoản',
-      '/account',
-      Icons.person_outline,
-      Icons.person_rounded,
-    ),
+    _NavigationItem('Tài khoản', '/account', AppSvgIconName.account),
   ];
 
   @override
@@ -80,7 +44,6 @@ class MainShell extends ConsumerWidget {
     final taskScreen = !isOwner && location.startsWith('/tasks');
     final diseaseCaseScreen =
         isOwner && location.startsWith(AppRoutes.diseaseCases);
-    final compactIcons = taskScreen || diseaseCaseScreen;
     final unreadNotifications = ref.watch(
       notificationListProvider((
         readStatus: NotificationReadStatus.unread,
@@ -155,52 +118,18 @@ class MainShell extends ConsumerWidget {
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: <Widget>[
-                                    if (isOwner ||
-                                        taskScreen ||
-                                        item.path == '/tasks')
-                                      SizedBox.square(
-                                        dimension: diseaseCaseScreen ? 24 : 22,
-                                        child: Center(
-                                          child: AppSvgIcon(
-                                            switch (item.path) {
-                                              '/' =>
-                                                compactIcons
-                                                    ? AppSvgIconName.homeCompact
-                                                    : AppSvgIconName.home,
-                                              '/farms' =>
-                                                diseaseCaseScreen
-                                                    ? AppSvgIconName.farmCompact
-                                                    : AppSvgIconName.farm,
-                                              '/seasons' =>
-                                                AppSvgIconName.shrimp,
-                                              '/tasks' => AppSvgIconName.tasks,
-                                              '/notifications' =>
-                                                compactIcons
-                                                    ? AppSvgIconName.bellOutline
-                                                    : AppSvgIconName
-                                                          .notifications,
-                                              _ =>
-                                                compactIcons
-                                                    ? AppSvgIconName.person
-                                                    : AppSvgIconName.account,
-                                            },
-                                            color: selected
-                                                ? AppColors.ocean
-                                                : AppColors.inkMuted,
-                                            size: 22,
-                                          ),
+                                    SizedBox.square(
+                                      dimension: diseaseCaseScreen ? 24 : 22,
+                                      child: Center(
+                                        child: AppSvgIcon(
+                                          item.icon,
+                                          color: selected
+                                              ? AppColors.ocean
+                                              : AppColors.inkMuted,
+                                          size: 22,
                                         ),
-                                      )
-                                    else
-                                      Icon(
-                                        selected
-                                            ? item.selectedIcon
-                                            : item.icon,
-                                        color: selected
-                                            ? AppColors.ocean
-                                            : AppColors.inkMuted,
-                                        size: 22,
                                       ),
+                                    ),
                                     if (isNotificationTab &&
                                         notificationBadgeText != null)
                                       Positioned(
@@ -292,10 +221,9 @@ class MainShell extends ConsumerWidget {
 }
 
 final class _NavigationItem {
-  const _NavigationItem(this.label, this.path, this.icon, this.selectedIcon);
+  const _NavigationItem(this.label, this.path, this.icon);
 
   final String label;
   final String path;
-  final IconData icon;
-  final IconData selectedIcon;
+  final AppSvgIconName icon;
 }

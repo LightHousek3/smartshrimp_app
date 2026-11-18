@@ -31,6 +31,7 @@ class _SmartShrimpAppState extends ConsumerState<SmartShrimpApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      ref.invalidate(notificationPermissionProvider);
       ref.read(pushStatusProvider.notifier).synchronize();
     }
   }
@@ -45,7 +46,10 @@ class _SmartShrimpAppState extends ConsumerState<SmartShrimpApp>
       }
     });
     ref.listen(pushEventsProvider, (_, next) {
-      next.whenData(ref.read(pushStatusProvider.notifier).reportPermission);
+      next.whenData((permission) {
+        ref.read(pushStatusProvider.notifier).reportPermission(permission);
+        ref.invalidate(notificationPermissionProvider);
+      });
       if (next.hasError) {
         ref
             .read(pushStatusProvider.notifier)

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/notifications/firebase_bootstrap.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/push_repository.dart';
 
@@ -92,9 +92,36 @@ final class PushMessagingService implements PushMessagingTransport {
 
   @override
   Future<PushPermission> permission({required bool request}) async {
-    final settings = request
-        ? await _messaging!.requestPermission()
-        : await _messaging!.getNotificationSettings();
+    if (!request) {
+      if (platform == 'android') {
+        final enabled = await _local
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.areNotificationsEnabled();
+        if (enabled == null) {
+          throw const ApiException(
+            'Không thể kiểm tra quyền thông báo. Vui lòng thử lại.',
+          );
+        }
+        return enabled ? PushPermission.authorized : PushPermission.denied;
+      }
+      final settings = await _local
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.checkPermissions();
+      if (settings == null) {
+        throw const ApiException(
+          'Không thể kiểm tra quyền thông báo. Vui lòng thử lại.',
+        );
+      }
+      if (settings.isProvisionalEnabled) return PushPermission.provisional;
+      return settings.isEnabled
+          ? PushPermission.authorized
+          : PushPermission.denied;
+    }
+    final settings = await _messaging!.requestPermission();
     return switch (settings.authorizationStatus) {
       AuthorizationStatus.authorized => PushPermission.authorized,
       AuthorizationStatus.provisional => PushPermission.provisional,
@@ -174,9 +201,13 @@ final class PushMessagingService implements PushMessagingTransport {
   @override
   Future<void> dispose() => _opened.close();
 
-  /// Reuse the installed platform bridge; opening App settings does not request location.
+  /// Open the OS notification settings without changing permission inside the App.
   @override
   Future<void> openSettings() async {
-    await Geolocator.openAppSettings();
+    if (await _local.openAppNotificationSettings() != true) {
+      throw const ApiException(
+        'Không thể mở Cài đặt. Vui lòng mở Cài đặt trên điện thoại và chọn SmartShrimp → Thông báo.',
+      );
+    }
   }
 }
