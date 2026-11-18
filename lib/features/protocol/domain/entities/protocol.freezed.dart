@@ -1163,7 +1163,7 @@ as DateTime?,
 /// @nodoc
 mixin _$ProtocolManufacturer {
 
- String get name; String? get id; String? get address; String? get phone;
+ String get name; String? get id; String? get address; String? get phone; String? get contactName; String? get email; String? get note; String? get supplierType;
 /// Create a copy of ProtocolManufacturer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1176,16 +1176,16 @@ $ProtocolManufacturerCopyWith<ProtocolManufacturer> get copyWith => _$ProtocolMa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolManufacturer&&(identical(other.name, name) || other.name == name)&&(identical(other.id, id) || other.id == id)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolManufacturer&&(identical(other.name, name) || other.name == name)&&(identical(other.id, id) || other.id == id)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.contactName, contactName) || other.contactName == contactName)&&(identical(other.email, email) || other.email == email)&&(identical(other.note, note) || other.note == note)&&(identical(other.supplierType, supplierType) || other.supplierType == supplierType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,id,address,phone);
+int get hashCode => Object.hash(runtimeType,name,id,address,phone,contactName,email,note,supplierType);
 
 @override
 String toString() {
-  return 'ProtocolManufacturer(name: $name, id: $id, address: $address, phone: $phone)';
+  return 'ProtocolManufacturer(name: $name, id: $id, address: $address, phone: $phone, contactName: $contactName, email: $email, note: $note, supplierType: $supplierType)';
 }
 
 
@@ -1196,7 +1196,7 @@ abstract mixin class $ProtocolManufacturerCopyWith<$Res>  {
   factory $ProtocolManufacturerCopyWith(ProtocolManufacturer value, $Res Function(ProtocolManufacturer) _then) = _$ProtocolManufacturerCopyWithImpl;
 @useResult
 $Res call({
- String name, String? id, String? address, String? phone
+ String name, String? id, String? address, String? phone, String? contactName, String? email, String? note, String? supplierType
 });
 
 
@@ -1213,12 +1213,16 @@ class _$ProtocolManufacturerCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolManufacturer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? id = freezed,Object? address = freezed,Object? phone = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? id = freezed,Object? address = freezed,Object? phone = freezed,Object? contactName = freezed,Object? email = freezed,Object? note = freezed,Object? supplierType = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String?,contactName: freezed == contactName ? _self.contactName : contactName // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,supplierType: freezed == supplierType ? _self.supplierType : supplierType // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1304,10 +1308,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? id,  String? address,  String? phone)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? id,  String? address,  String? phone,  String? contactName,  String? email,  String? note,  String? supplierType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolManufacturer() when $default != null:
-return $default(_that.name,_that.id,_that.address,_that.phone);case _:
+return $default(_that.name,_that.id,_that.address,_that.phone,_that.contactName,_that.email,_that.note,_that.supplierType);case _:
   return orElse();
 
 }
@@ -1325,10 +1329,10 @@ return $default(_that.name,_that.id,_that.address,_that.phone);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? id,  String? address,  String? phone)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? id,  String? address,  String? phone,  String? contactName,  String? email,  String? note,  String? supplierType)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolManufacturer():
-return $default(_that.name,_that.id,_that.address,_that.phone);case _:
+return $default(_that.name,_that.id,_that.address,_that.phone,_that.contactName,_that.email,_that.note,_that.supplierType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1345,10 +1349,10 @@ return $default(_that.name,_that.id,_that.address,_that.phone);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? id,  String? address,  String? phone)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? id,  String? address,  String? phone,  String? contactName,  String? email,  String? note,  String? supplierType)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolManufacturer() when $default != null:
-return $default(_that.name,_that.id,_that.address,_that.phone);case _:
+return $default(_that.name,_that.id,_that.address,_that.phone,_that.contactName,_that.email,_that.note,_that.supplierType);case _:
   return null;
 
 }
@@ -1360,13 +1364,17 @@ return $default(_that.name,_that.id,_that.address,_that.phone);case _:
 
 @JsonSerializable(checked: true)
 class _ProtocolManufacturer implements ProtocolManufacturer {
-  const _ProtocolManufacturer({required this.name, this.id, this.address, this.phone});
+  const _ProtocolManufacturer({required this.name, this.id, this.address, this.phone, this.contactName, this.email, this.note, this.supplierType});
   factory _ProtocolManufacturer.fromJson(Map<String, dynamic> json) => _$ProtocolManufacturerFromJson(json);
 
 @override final  String name;
 @override final  String? id;
 @override final  String? address;
 @override final  String? phone;
+@override final  String? contactName;
+@override final  String? email;
+@override final  String? note;
+@override final  String? supplierType;
 
 /// Create a copy of ProtocolManufacturer
 /// with the given fields replaced by the non-null parameter values.
@@ -1381,16 +1389,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolManufacturer&&(identical(other.name, name) || other.name == name)&&(identical(other.id, id) || other.id == id)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolManufacturer&&(identical(other.name, name) || other.name == name)&&(identical(other.id, id) || other.id == id)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.contactName, contactName) || other.contactName == contactName)&&(identical(other.email, email) || other.email == email)&&(identical(other.note, note) || other.note == note)&&(identical(other.supplierType, supplierType) || other.supplierType == supplierType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,id,address,phone);
+int get hashCode => Object.hash(runtimeType,name,id,address,phone,contactName,email,note,supplierType);
 
 @override
 String toString() {
-  return 'ProtocolManufacturer(name: $name, id: $id, address: $address, phone: $phone)';
+  return 'ProtocolManufacturer(name: $name, id: $id, address: $address, phone: $phone, contactName: $contactName, email: $email, note: $note, supplierType: $supplierType)';
 }
 
 
@@ -1401,7 +1409,7 @@ abstract mixin class _$ProtocolManufacturerCopyWith<$Res> implements $ProtocolMa
   factory _$ProtocolManufacturerCopyWith(_ProtocolManufacturer value, $Res Function(_ProtocolManufacturer) _then) = __$ProtocolManufacturerCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? id, String? address, String? phone
+ String name, String? id, String? address, String? phone, String? contactName, String? email, String? note, String? supplierType
 });
 
 
@@ -1418,12 +1426,16 @@ class __$ProtocolManufacturerCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolManufacturer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? id = freezed,Object? address = freezed,Object? phone = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? id = freezed,Object? address = freezed,Object? phone = freezed,Object? contactName = freezed,Object? email = freezed,Object? note = freezed,Object? supplierType = freezed,}) {
   return _then(_ProtocolManufacturer(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String?,address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
+as String?,contactName: freezed == contactName ? _self.contactName : contactName // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,supplierType: freezed == supplierType ? _self.supplierType : supplierType // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1435,7 +1447,7 @@ as String?,
 /// @nodoc
 mixin _$ProtocolMaterialSnapshot {
 
- String get name; String get category; String get unit; String? get description; String? get recommendationReason; String? get manufacturerId; ProtocolManufacturer? get manufacturer; ProtocolMaterialProfile? get productCompliance; String? get conversionUnit;@JsonKey(fromJson: _optionalDecimalString) String? get conversionQuantity;
+ String get name; String get category; String get unit; String? get description; String? get recommendationReason; String? get manufacturerId; ProtocolManufacturer? get manufacturer; ProtocolMaterialProfile? get productCompliance; List<String> get imageUrls;@JsonKey(fromJson: _optionalDecimalString) String? get minAlertQuantity; String? get conversionUnit;@JsonKey(fromJson: _optionalDecimalString) String? get conversionQuantity;
 /// Create a copy of ProtocolMaterialSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1448,16 +1460,16 @@ $ProtocolMaterialSnapshotCopyWith<ProtocolMaterialSnapshot> get copyWith => _$Pr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolMaterialSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.description, description) || other.description == description)&&(identical(other.recommendationReason, recommendationReason) || other.recommendationReason == recommendationReason)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&(identical(other.manufacturer, manufacturer) || other.manufacturer == manufacturer)&&(identical(other.productCompliance, productCompliance) || other.productCompliance == productCompliance)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolMaterialSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.description, description) || other.description == description)&&(identical(other.recommendationReason, recommendationReason) || other.recommendationReason == recommendationReason)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&(identical(other.manufacturer, manufacturer) || other.manufacturer == manufacturer)&&(identical(other.productCompliance, productCompliance) || other.productCompliance == productCompliance)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,category,unit,description,recommendationReason,manufacturerId,manufacturer,productCompliance,conversionUnit,conversionQuantity);
+int get hashCode => Object.hash(runtimeType,name,category,unit,description,recommendationReason,manufacturerId,manufacturer,productCompliance,const DeepCollectionEquality().hash(imageUrls),minAlertQuantity,conversionUnit,conversionQuantity);
 
 @override
 String toString() {
-  return 'ProtocolMaterialSnapshot(name: $name, category: $category, unit: $unit, description: $description, recommendationReason: $recommendationReason, manufacturerId: $manufacturerId, manufacturer: $manufacturer, productCompliance: $productCompliance, conversionUnit: $conversionUnit, conversionQuantity: $conversionQuantity)';
+  return 'ProtocolMaterialSnapshot(name: $name, category: $category, unit: $unit, description: $description, recommendationReason: $recommendationReason, manufacturerId: $manufacturerId, manufacturer: $manufacturer, productCompliance: $productCompliance, imageUrls: $imageUrls, minAlertQuantity: $minAlertQuantity, conversionUnit: $conversionUnit, conversionQuantity: $conversionQuantity)';
 }
 
 
@@ -1468,7 +1480,7 @@ abstract mixin class $ProtocolMaterialSnapshotCopyWith<$Res>  {
   factory $ProtocolMaterialSnapshotCopyWith(ProtocolMaterialSnapshot value, $Res Function(ProtocolMaterialSnapshot) _then) = _$ProtocolMaterialSnapshotCopyWithImpl;
 @useResult
 $Res call({
- String name, String category, String unit, String? description, String? recommendationReason, String? manufacturerId, ProtocolManufacturer? manufacturer, ProtocolMaterialProfile? productCompliance, String? conversionUnit,@JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity
+ String name, String category, String unit, String? description, String? recommendationReason, String? manufacturerId, ProtocolManufacturer? manufacturer, ProtocolMaterialProfile? productCompliance, List<String> imageUrls,@JsonKey(fromJson: _optionalDecimalString) String? minAlertQuantity, String? conversionUnit,@JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity
 });
 
 
@@ -1485,7 +1497,7 @@ class _$ProtocolMaterialSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolMaterialSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? category = null,Object? unit = null,Object? description = freezed,Object? recommendationReason = freezed,Object? manufacturerId = freezed,Object? manufacturer = freezed,Object? productCompliance = freezed,Object? conversionUnit = freezed,Object? conversionQuantity = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? category = null,Object? unit = null,Object? description = freezed,Object? recommendationReason = freezed,Object? manufacturerId = freezed,Object? manufacturer = freezed,Object? productCompliance = freezed,Object? imageUrls = null,Object? minAlertQuantity = freezed,Object? conversionUnit = freezed,Object? conversionQuantity = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -1495,7 +1507,9 @@ as String?,recommendationReason: freezed == recommendationReason ? _self.recomme
 as String?,manufacturerId: freezed == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
 as String?,manufacturer: freezed == manufacturer ? _self.manufacturer : manufacturer // ignore: cast_nullable_to_non_nullable
 as ProtocolManufacturer?,productCompliance: freezed == productCompliance ? _self.productCompliance : productCompliance // ignore: cast_nullable_to_non_nullable
-as ProtocolMaterialProfile?,conversionUnit: freezed == conversionUnit ? _self.conversionUnit : conversionUnit // ignore: cast_nullable_to_non_nullable
+as ProtocolMaterialProfile?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,minAlertQuantity: freezed == minAlertQuantity ? _self.minAlertQuantity : minAlertQuantity // ignore: cast_nullable_to_non_nullable
+as String?,conversionUnit: freezed == conversionUnit ? _self.conversionUnit : conversionUnit // ignore: cast_nullable_to_non_nullable
 as String?,conversionQuantity: freezed == conversionQuantity ? _self.conversionQuantity : conversionQuantity // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -1606,10 +1620,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  List<String> imageUrls, @JsonKey(fromJson: _optionalDecimalString)  String? minAlertQuantity,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolMaterialSnapshot() when $default != null:
-return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.conversionUnit,_that.conversionQuantity);case _:
+return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.imageUrls,_that.minAlertQuantity,_that.conversionUnit,_that.conversionQuantity);case _:
   return orElse();
 
 }
@@ -1627,10 +1641,10 @@ return $default(_that.name,_that.category,_that.unit,_that.description,_that.rec
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  List<String> imageUrls, @JsonKey(fromJson: _optionalDecimalString)  String? minAlertQuantity,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolMaterialSnapshot():
-return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.conversionUnit,_that.conversionQuantity);case _:
+return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.imageUrls,_that.minAlertQuantity,_that.conversionUnit,_that.conversionQuantity);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1647,10 +1661,10 @@ return $default(_that.name,_that.category,_that.unit,_that.description,_that.rec
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String category,  String unit,  String? description,  String? recommendationReason,  String? manufacturerId,  ProtocolManufacturer? manufacturer,  ProtocolMaterialProfile? productCompliance,  List<String> imageUrls, @JsonKey(fromJson: _optionalDecimalString)  String? minAlertQuantity,  String? conversionUnit, @JsonKey(fromJson: _optionalDecimalString)  String? conversionQuantity)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolMaterialSnapshot() when $default != null:
-return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.conversionUnit,_that.conversionQuantity);case _:
+return $default(_that.name,_that.category,_that.unit,_that.description,_that.recommendationReason,_that.manufacturerId,_that.manufacturer,_that.productCompliance,_that.imageUrls,_that.minAlertQuantity,_that.conversionUnit,_that.conversionQuantity);case _:
   return null;
 
 }
@@ -1662,7 +1676,7 @@ return $default(_that.name,_that.category,_that.unit,_that.description,_that.rec
 
 @JsonSerializable(checked: true)
 class _ProtocolMaterialSnapshot implements ProtocolMaterialSnapshot {
-  const _ProtocolMaterialSnapshot({required this.name, required this.category, required this.unit, this.description, this.recommendationReason, this.manufacturerId, this.manufacturer, this.productCompliance, this.conversionUnit, @JsonKey(fromJson: _optionalDecimalString) this.conversionQuantity});
+  const _ProtocolMaterialSnapshot({required this.name, required this.category, required this.unit, this.description, this.recommendationReason, this.manufacturerId, this.manufacturer, this.productCompliance, final  List<String> imageUrls = const [], @JsonKey(fromJson: _optionalDecimalString) this.minAlertQuantity, this.conversionUnit, @JsonKey(fromJson: _optionalDecimalString) this.conversionQuantity}): _imageUrls = imageUrls;
   factory _ProtocolMaterialSnapshot.fromJson(Map<String, dynamic> json) => _$ProtocolMaterialSnapshotFromJson(json);
 
 @override final  String name;
@@ -1673,6 +1687,14 @@ class _ProtocolMaterialSnapshot implements ProtocolMaterialSnapshot {
 @override final  String? manufacturerId;
 @override final  ProtocolManufacturer? manufacturer;
 @override final  ProtocolMaterialProfile? productCompliance;
+ final  List<String> _imageUrls;
+@override@JsonKey() List<String> get imageUrls {
+  if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_imageUrls);
+}
+
+@override@JsonKey(fromJson: _optionalDecimalString) final  String? minAlertQuantity;
 @override final  String? conversionUnit;
 @override@JsonKey(fromJson: _optionalDecimalString) final  String? conversionQuantity;
 
@@ -1689,16 +1711,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolMaterialSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.description, description) || other.description == description)&&(identical(other.recommendationReason, recommendationReason) || other.recommendationReason == recommendationReason)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&(identical(other.manufacturer, manufacturer) || other.manufacturer == manufacturer)&&(identical(other.productCompliance, productCompliance) || other.productCompliance == productCompliance)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolMaterialSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.description, description) || other.description == description)&&(identical(other.recommendationReason, recommendationReason) || other.recommendationReason == recommendationReason)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId)&&(identical(other.manufacturer, manufacturer) || other.manufacturer == manufacturer)&&(identical(other.productCompliance, productCompliance) || other.productCompliance == productCompliance)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.minAlertQuantity, minAlertQuantity) || other.minAlertQuantity == minAlertQuantity)&&(identical(other.conversionUnit, conversionUnit) || other.conversionUnit == conversionUnit)&&(identical(other.conversionQuantity, conversionQuantity) || other.conversionQuantity == conversionQuantity));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,category,unit,description,recommendationReason,manufacturerId,manufacturer,productCompliance,conversionUnit,conversionQuantity);
+int get hashCode => Object.hash(runtimeType,name,category,unit,description,recommendationReason,manufacturerId,manufacturer,productCompliance,const DeepCollectionEquality().hash(_imageUrls),minAlertQuantity,conversionUnit,conversionQuantity);
 
 @override
 String toString() {
-  return 'ProtocolMaterialSnapshot(name: $name, category: $category, unit: $unit, description: $description, recommendationReason: $recommendationReason, manufacturerId: $manufacturerId, manufacturer: $manufacturer, productCompliance: $productCompliance, conversionUnit: $conversionUnit, conversionQuantity: $conversionQuantity)';
+  return 'ProtocolMaterialSnapshot(name: $name, category: $category, unit: $unit, description: $description, recommendationReason: $recommendationReason, manufacturerId: $manufacturerId, manufacturer: $manufacturer, productCompliance: $productCompliance, imageUrls: $imageUrls, minAlertQuantity: $minAlertQuantity, conversionUnit: $conversionUnit, conversionQuantity: $conversionQuantity)';
 }
 
 
@@ -1709,7 +1731,7 @@ abstract mixin class _$ProtocolMaterialSnapshotCopyWith<$Res> implements $Protoc
   factory _$ProtocolMaterialSnapshotCopyWith(_ProtocolMaterialSnapshot value, $Res Function(_ProtocolMaterialSnapshot) _then) = __$ProtocolMaterialSnapshotCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String category, String unit, String? description, String? recommendationReason, String? manufacturerId, ProtocolManufacturer? manufacturer, ProtocolMaterialProfile? productCompliance, String? conversionUnit,@JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity
+ String name, String category, String unit, String? description, String? recommendationReason, String? manufacturerId, ProtocolManufacturer? manufacturer, ProtocolMaterialProfile? productCompliance, List<String> imageUrls,@JsonKey(fromJson: _optionalDecimalString) String? minAlertQuantity, String? conversionUnit,@JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity
 });
 
 
@@ -1726,7 +1748,7 @@ class __$ProtocolMaterialSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolMaterialSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? category = null,Object? unit = null,Object? description = freezed,Object? recommendationReason = freezed,Object? manufacturerId = freezed,Object? manufacturer = freezed,Object? productCompliance = freezed,Object? conversionUnit = freezed,Object? conversionQuantity = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? category = null,Object? unit = null,Object? description = freezed,Object? recommendationReason = freezed,Object? manufacturerId = freezed,Object? manufacturer = freezed,Object? productCompliance = freezed,Object? imageUrls = null,Object? minAlertQuantity = freezed,Object? conversionUnit = freezed,Object? conversionQuantity = freezed,}) {
   return _then(_ProtocolMaterialSnapshot(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -1736,7 +1758,9 @@ as String?,recommendationReason: freezed == recommendationReason ? _self.recomme
 as String?,manufacturerId: freezed == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
 as String?,manufacturer: freezed == manufacturer ? _self.manufacturer : manufacturer // ignore: cast_nullable_to_non_nullable
 as ProtocolManufacturer?,productCompliance: freezed == productCompliance ? _self.productCompliance : productCompliance // ignore: cast_nullable_to_non_nullable
-as ProtocolMaterialProfile?,conversionUnit: freezed == conversionUnit ? _self.conversionUnit : conversionUnit // ignore: cast_nullable_to_non_nullable
+as ProtocolMaterialProfile?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,minAlertQuantity: freezed == minAlertQuantity ? _self.minAlertQuantity : minAlertQuantity // ignore: cast_nullable_to_non_nullable
+as String?,conversionUnit: freezed == conversionUnit ? _self.conversionUnit : conversionUnit // ignore: cast_nullable_to_non_nullable
 as String?,conversionQuantity: freezed == conversionQuantity ? _self.conversionQuantity : conversionQuantity // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -2702,11 +2726,304 @@ as int,
 
 }
 
+/// @nodoc
+mixin _$ProtocolMaterialCreation {
+
+ String get farmId; String get protocolId; String get itemId; DateTime get updatedAt; DateTime? get submittedAt; ProtocolMaterialSnapshot get material; String? get manufacturerId;
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ProtocolMaterialCreationCopyWith<ProtocolMaterialCreation> get copyWith => _$ProtocolMaterialCreationCopyWithImpl<ProtocolMaterialCreation>(this as ProtocolMaterialCreation, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolMaterialCreation&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.protocolId, protocolId) || other.protocolId == protocolId)&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.material, material) || other.material == material)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,farmId,protocolId,itemId,updatedAt,submittedAt,material,manufacturerId);
+
+@override
+String toString() {
+  return 'ProtocolMaterialCreation(farmId: $farmId, protocolId: $protocolId, itemId: $itemId, updatedAt: $updatedAt, submittedAt: $submittedAt, material: $material, manufacturerId: $manufacturerId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ProtocolMaterialCreationCopyWith<$Res>  {
+  factory $ProtocolMaterialCreationCopyWith(ProtocolMaterialCreation value, $Res Function(ProtocolMaterialCreation) _then) = _$ProtocolMaterialCreationCopyWithImpl;
+@useResult
+$Res call({
+ String farmId, String protocolId, String itemId, DateTime updatedAt, DateTime? submittedAt, ProtocolMaterialSnapshot material, String? manufacturerId
+});
+
+
+$ProtocolMaterialSnapshotCopyWith<$Res> get material;
+
+}
+/// @nodoc
+class _$ProtocolMaterialCreationCopyWithImpl<$Res>
+    implements $ProtocolMaterialCreationCopyWith<$Res> {
+  _$ProtocolMaterialCreationCopyWithImpl(this._self, this._then);
+
+  final ProtocolMaterialCreation _self;
+  final $Res Function(ProtocolMaterialCreation) _then;
+
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? farmId = null,Object? protocolId = null,Object? itemId = null,Object? updatedAt = null,Object? submittedAt = freezed,Object? material = null,Object? manufacturerId = freezed,}) {
+  return _then(_self.copyWith(
+farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
+as String,protocolId: null == protocolId ? _self.protocolId : protocolId // ignore: cast_nullable_to_non_nullable
+as String,itemId: null == itemId ? _self.itemId : itemId // ignore: cast_nullable_to_non_nullable
+as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,submittedAt: freezed == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,material: null == material ? _self.material : material // ignore: cast_nullable_to_non_nullable
+as ProtocolMaterialSnapshot,manufacturerId: freezed == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ProtocolMaterialSnapshotCopyWith<$Res> get material {
+
+  return $ProtocolMaterialSnapshotCopyWith<$Res>(_self.material, (value) {
+    return _then(_self.copyWith(material: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [ProtocolMaterialCreation].
+extension ProtocolMaterialCreationPatterns on ProtocolMaterialCreation {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ProtocolMaterialCreation value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ProtocolMaterialCreation value)  $default,){
+final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ProtocolMaterialCreation value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String farmId,  String protocolId,  String itemId,  DateTime updatedAt,  DateTime? submittedAt,  ProtocolMaterialSnapshot material,  String? manufacturerId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation() when $default != null:
+return $default(_that.farmId,_that.protocolId,_that.itemId,_that.updatedAt,_that.submittedAt,_that.material,_that.manufacturerId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String farmId,  String protocolId,  String itemId,  DateTime updatedAt,  DateTime? submittedAt,  ProtocolMaterialSnapshot material,  String? manufacturerId)  $default,) {final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation():
+return $default(_that.farmId,_that.protocolId,_that.itemId,_that.updatedAt,_that.submittedAt,_that.material,_that.manufacturerId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String farmId,  String protocolId,  String itemId,  DateTime updatedAt,  DateTime? submittedAt,  ProtocolMaterialSnapshot material,  String? manufacturerId)?  $default,) {final _that = this;
+switch (_that) {
+case _ProtocolMaterialCreation() when $default != null:
+return $default(_that.farmId,_that.protocolId,_that.itemId,_that.updatedAt,_that.submittedAt,_that.material,_that.manufacturerId);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _ProtocolMaterialCreation implements ProtocolMaterialCreation {
+  const _ProtocolMaterialCreation({required this.farmId, required this.protocolId, required this.itemId, required this.updatedAt, this.submittedAt, required this.material, this.manufacturerId});
+
+
+@override final  String farmId;
+@override final  String protocolId;
+@override final  String itemId;
+@override final  DateTime updatedAt;
+@override final  DateTime? submittedAt;
+@override final  ProtocolMaterialSnapshot material;
+@override final  String? manufacturerId;
+
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ProtocolMaterialCreationCopyWith<_ProtocolMaterialCreation> get copyWith => __$ProtocolMaterialCreationCopyWithImpl<_ProtocolMaterialCreation>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolMaterialCreation&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.protocolId, protocolId) || other.protocolId == protocolId)&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.material, material) || other.material == material)&&(identical(other.manufacturerId, manufacturerId) || other.manufacturerId == manufacturerId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,farmId,protocolId,itemId,updatedAt,submittedAt,material,manufacturerId);
+
+@override
+String toString() {
+  return 'ProtocolMaterialCreation(farmId: $farmId, protocolId: $protocolId, itemId: $itemId, updatedAt: $updatedAt, submittedAt: $submittedAt, material: $material, manufacturerId: $manufacturerId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ProtocolMaterialCreationCopyWith<$Res> implements $ProtocolMaterialCreationCopyWith<$Res> {
+  factory _$ProtocolMaterialCreationCopyWith(_ProtocolMaterialCreation value, $Res Function(_ProtocolMaterialCreation) _then) = __$ProtocolMaterialCreationCopyWithImpl;
+@override @useResult
+$Res call({
+ String farmId, String protocolId, String itemId, DateTime updatedAt, DateTime? submittedAt, ProtocolMaterialSnapshot material, String? manufacturerId
+});
+
+
+@override $ProtocolMaterialSnapshotCopyWith<$Res> get material;
+
+}
+/// @nodoc
+class __$ProtocolMaterialCreationCopyWithImpl<$Res>
+    implements _$ProtocolMaterialCreationCopyWith<$Res> {
+  __$ProtocolMaterialCreationCopyWithImpl(this._self, this._then);
+
+  final _ProtocolMaterialCreation _self;
+  final $Res Function(_ProtocolMaterialCreation) _then;
+
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? farmId = null,Object? protocolId = null,Object? itemId = null,Object? updatedAt = null,Object? submittedAt = freezed,Object? material = null,Object? manufacturerId = freezed,}) {
+  return _then(_ProtocolMaterialCreation(
+farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
+as String,protocolId: null == protocolId ? _self.protocolId : protocolId // ignore: cast_nullable_to_non_nullable
+as String,itemId: null == itemId ? _self.itemId : itemId // ignore: cast_nullable_to_non_nullable
+as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,submittedAt: freezed == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,material: null == material ? _self.material : material // ignore: cast_nullable_to_non_nullable
+as ProtocolMaterialSnapshot,manufacturerId: freezed == manufacturerId ? _self.manufacturerId : manufacturerId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+/// Create a copy of ProtocolMaterialCreation
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ProtocolMaterialSnapshotCopyWith<$Res> get material {
+
+  return $ProtocolMaterialSnapshotCopyWith<$Res>(_self.material, (value) {
+    return _then(_self.copyWith(material: value));
+  });
+}
+}
+
 
 /// @nodoc
 mixin _$ProtocolDetail {
 
- ProtocolCardData get card; DateTime get updatedAt; String? get anchorDate; int get durationDays; DateTime? get reviewedAt; DateTime? get treatmentStartAt; String? get reviewerName; String? get rejectionReason; DateTime? get supersededAt; List<ProtocolDayMarker> get dayMarkers; List<ProtocolHistory> get history; bool get canReview; ProtocolTemplateSource? get sourceTemplateSnapshot; String? get scheduleMessage; List<ProtocolMaterialReview> get materialReviews;
+ ProtocolCardData get card; String get farmId; DateTime get updatedAt; String? get anchorDate; int get durationDays; DateTime? get reviewedAt; DateTime? get treatmentStartAt; String? get reviewerName; String? get rejectionReason; DateTime? get supersededAt; List<ProtocolDayMarker> get dayMarkers; List<ProtocolHistory> get history; bool get canReview; ProtocolTemplateSource? get sourceTemplateSnapshot; String? get scheduleMessage; List<ProtocolMaterialReview> get materialReviews;
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2719,16 +3036,16 @@ $ProtocolDetailCopyWith<ProtocolDetail> get copyWith => _$ProtocolDetailCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other.dayMarkers, dayMarkers)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other.materialReviews, materialReviews));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other.dayMarkers, dayMarkers)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other.materialReviews, materialReviews));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(dayMarkers),const DeepCollectionEquality().hash(history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(materialReviews));
+int get hashCode => Object.hash(runtimeType,card,farmId,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(dayMarkers),const DeepCollectionEquality().hash(history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(materialReviews));
 
 @override
 String toString() {
-  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
+  return 'ProtocolDetail(card: $card, farmId: $farmId, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
 }
 
 
@@ -2739,7 +3056,7 @@ abstract mixin class $ProtocolDetailCopyWith<$Res>  {
   factory $ProtocolDetailCopyWith(ProtocolDetail value, $Res Function(ProtocolDetail) _then) = _$ProtocolDetailCopyWithImpl;
 @useResult
 $Res call({
- ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
+ ProtocolCardData card, String farmId, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
 });
 
 
@@ -2756,10 +3073,11 @@ class _$ProtocolDetailCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? farmId = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
   return _then(_self.copyWith(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
-as ProtocolCardData,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as ProtocolCardData,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
+as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,anchorDate: freezed == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
 as String?,durationDays: null == durationDays ? _self.durationDays : durationDays // ignore: cast_nullable_to_non_nullable
 as int,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable
@@ -2879,10 +3197,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProtocolCardData card,  String farmId,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolDetail() when $default != null:
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.farmId,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   return orElse();
 
 }
@@ -2900,10 +3218,10 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProtocolCardData card,  String farmId,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDetail():
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.farmId,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2920,10 +3238,10 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProtocolCardData card,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProtocolCardData card,  String farmId,  DateTime updatedAt,  String? anchorDate,  int durationDays,  DateTime? reviewedAt,  DateTime? treatmentStartAt,  String? reviewerName,  String? rejectionReason,  DateTime? supersededAt,  List<ProtocolDayMarker> dayMarkers,  List<ProtocolHistory> history,  bool canReview,  ProtocolTemplateSource? sourceTemplateSnapshot,  String? scheduleMessage,  List<ProtocolMaterialReview> materialReviews)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDetail() when $default != null:
-return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
+return $default(_that.card,_that.farmId,_that.updatedAt,_that.anchorDate,_that.durationDays,_that.reviewedAt,_that.treatmentStartAt,_that.reviewerName,_that.rejectionReason,_that.supersededAt,_that.dayMarkers,_that.history,_that.canReview,_that.sourceTemplateSnapshot,_that.scheduleMessage,_that.materialReviews);case _:
   return null;
 
 }
@@ -2935,10 +3253,11 @@ return $default(_that.card,_that.updatedAt,_that.anchorDate,_that.durationDays,_
 
 @JsonSerializable(checked: true)
 class _ProtocolDetail implements ProtocolDetail {
-  const _ProtocolDetail({required this.card, required this.updatedAt, this.anchorDate, required this.durationDays, this.reviewedAt, this.treatmentStartAt, this.reviewerName, this.rejectionReason, this.supersededAt, required final  List<ProtocolDayMarker> dayMarkers, required final  List<ProtocolHistory> history, required this.canReview, this.sourceTemplateSnapshot, this.scheduleMessage, final  List<ProtocolMaterialReview> materialReviews = const []}): _dayMarkers = dayMarkers,_history = history,_materialReviews = materialReviews;
+  const _ProtocolDetail({required this.card, this.farmId = '', required this.updatedAt, this.anchorDate, required this.durationDays, this.reviewedAt, this.treatmentStartAt, this.reviewerName, this.rejectionReason, this.supersededAt, required final  List<ProtocolDayMarker> dayMarkers, required final  List<ProtocolHistory> history, required this.canReview, this.sourceTemplateSnapshot, this.scheduleMessage, final  List<ProtocolMaterialReview> materialReviews = const []}): _dayMarkers = dayMarkers,_history = history,_materialReviews = materialReviews;
   factory _ProtocolDetail.fromJson(Map<String, dynamic> json) => _$ProtocolDetailFromJson(json);
 
 @override final  ProtocolCardData card;
+@override@JsonKey() final  String farmId;
 @override final  DateTime updatedAt;
 @override final  String? anchorDate;
 @override final  int durationDays;
@@ -2985,16 +3304,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other._dayMarkers, _dayMarkers)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other._materialReviews, _materialReviews));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.farmId, farmId) || other.farmId == farmId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.durationDays, durationDays) || other.durationDays == durationDays)&&(identical(other.reviewedAt, reviewedAt) || other.reviewedAt == reviewedAt)&&(identical(other.treatmentStartAt, treatmentStartAt) || other.treatmentStartAt == treatmentStartAt)&&(identical(other.reviewerName, reviewerName) || other.reviewerName == reviewerName)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.supersededAt, supersededAt) || other.supersededAt == supersededAt)&&const DeepCollectionEquality().equals(other._dayMarkers, _dayMarkers)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.canReview, canReview) || other.canReview == canReview)&&(identical(other.sourceTemplateSnapshot, sourceTemplateSnapshot) || other.sourceTemplateSnapshot == sourceTemplateSnapshot)&&(identical(other.scheduleMessage, scheduleMessage) || other.scheduleMessage == scheduleMessage)&&const DeepCollectionEquality().equals(other._materialReviews, _materialReviews));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(_dayMarkers),const DeepCollectionEquality().hash(_history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(_materialReviews));
+int get hashCode => Object.hash(runtimeType,card,farmId,updatedAt,anchorDate,durationDays,reviewedAt,treatmentStartAt,reviewerName,rejectionReason,supersededAt,const DeepCollectionEquality().hash(_dayMarkers),const DeepCollectionEquality().hash(_history),canReview,sourceTemplateSnapshot,scheduleMessage,const DeepCollectionEquality().hash(_materialReviews));
 
 @override
 String toString() {
-  return 'ProtocolDetail(card: $card, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
+  return 'ProtocolDetail(card: $card, farmId: $farmId, updatedAt: $updatedAt, anchorDate: $anchorDate, durationDays: $durationDays, reviewedAt: $reviewedAt, treatmentStartAt: $treatmentStartAt, reviewerName: $reviewerName, rejectionReason: $rejectionReason, supersededAt: $supersededAt, dayMarkers: $dayMarkers, history: $history, canReview: $canReview, sourceTemplateSnapshot: $sourceTemplateSnapshot, scheduleMessage: $scheduleMessage, materialReviews: $materialReviews)';
 }
 
 
@@ -3005,7 +3324,7 @@ abstract mixin class _$ProtocolDetailCopyWith<$Res> implements $ProtocolDetailCo
   factory _$ProtocolDetailCopyWith(_ProtocolDetail value, $Res Function(_ProtocolDetail) _then) = __$ProtocolDetailCopyWithImpl;
 @override @useResult
 $Res call({
- ProtocolCardData card, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
+ ProtocolCardData card, String farmId, DateTime updatedAt, String? anchorDate, int durationDays, DateTime? reviewedAt, DateTime? treatmentStartAt, String? reviewerName, String? rejectionReason, DateTime? supersededAt, List<ProtocolDayMarker> dayMarkers, List<ProtocolHistory> history, bool canReview, ProtocolTemplateSource? sourceTemplateSnapshot, String? scheduleMessage, List<ProtocolMaterialReview> materialReviews
 });
 
 
@@ -3022,10 +3341,11 @@ class __$ProtocolDetailCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? farmId = null,Object? updatedAt = null,Object? anchorDate = freezed,Object? durationDays = null,Object? reviewedAt = freezed,Object? treatmentStartAt = freezed,Object? reviewerName = freezed,Object? rejectionReason = freezed,Object? supersededAt = freezed,Object? dayMarkers = null,Object? history = null,Object? canReview = null,Object? sourceTemplateSnapshot = freezed,Object? scheduleMessage = freezed,Object? materialReviews = null,}) {
   return _then(_ProtocolDetail(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
-as ProtocolCardData,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as ProtocolCardData,farmId: null == farmId ? _self.farmId : farmId // ignore: cast_nullable_to_non_nullable
+as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,anchorDate: freezed == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
 as String?,durationDays: null == durationDays ? _self.durationDays : durationDays // ignore: cast_nullable_to_non_nullable
 as int,reviewedAt: freezed == reviewedAt ? _self.reviewedAt : reviewedAt // ignore: cast_nullable_to_non_nullable

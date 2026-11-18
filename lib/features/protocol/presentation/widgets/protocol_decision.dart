@@ -22,13 +22,11 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   _DecisionMode _mode = _DecisionMode.initial;
   final _reason = TextEditingController();
   final _form = GlobalKey<FormState>();
-  Map<String, String> _materialSelections = {};
   @override
   void didUpdateWidget(covariant ProtocolDecision oldWidget) {
     super.didUpdateWidget(oldWidget);
     // A refreshed revision invalidates the previous material choices and confirmation step.
     if (oldWidget.detail.updatedAt != widget.detail.updatedAt) {
-      _materialSelections = {};
       _mode = _DecisionMode.initial;
     }
   }
@@ -43,20 +41,15 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   Widget build(BuildContext context) {
     final mutation = ref.watch(protocolReviewProvider(widget.detail.card.id));
     final busy = mutation.isLoading;
+    final missing = protocolMaterialGroups(
+      widget.detail,
+    ).where((rows) => rows.any((row) => row.requiresResolution)).length;
     return ProtocolSurface(
       color: protocolAmberPanel,
       border: const Color(0xFFFFDF6A),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ProtocolMaterials(
-            key: ValueKey(widget.detail.updatedAt),
-            detail: widget.detail,
-            busy: busy,
-            onSelectionsChanged: (value) =>
-                setState(() => _materialSelections = value),
-          ),
-          const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -103,9 +96,41 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
             ],
           ),
           const SizedBox(height: 16),
+          if (missing > 0) ...[
+            ProtocolSurface(
+              border: const Color(0xFFFFC7D3),
+              radius: 12,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Chưa thể phê duyệt',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: protocolRose,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Còn $missing vật tư cần xử lý. Hãy xem mục “Vật tư được đề xuất bởi chuyên gia” phía trên trước khi duyệt.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.6,
+                      color: protocolRose,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (_mode == _DecisionMode.initial) ...[
             GradientButton(
-              label: 'Phê duyệt phác đồ',
+              label: missing > 0
+                  ? 'Cần xử lý $missing vật tư'
+                  : 'Phê duyệt phác đồ',
               compact: true,
               borderRadius: 12,
               leading: const AppSvgIcon(
@@ -113,7 +138,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                 size: 18,
                 color: Colors.white,
               ),
-              onPressed: busy
+              onPressed: busy || missing > 0
                   ? null
                   : () => setState(() => _mode = _DecisionMode.approve),
             ),
@@ -178,15 +203,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                             color: Colors.white,
                           ),
                           isLoading: busy,
-                          onPressed:
-                              busy ||
-                                  widget.detail.materialReviews.any(
-                                    (m) =>
-                                        m.requiresResolution &&
-                                        !_materialSelections.containsKey(
-                                          m.itemId,
-                                        ),
-                                  )
+                          onPressed: busy || missing > 0
                               ? null
                               : () => _submit(true),
                         ),
@@ -294,12 +311,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
   Future<void> _submit(bool approve) async {
     await ref
         .read(protocolReviewProvider(widget.detail.card.id).notifier)
-        .submit(
-          widget.detail,
-          approve: approve,
-          reason: _reason.text,
-          materialSelections: _materialSelections,
-        );
+        .submit(widget.detail, approve: approve, reason: _reason.text);
   }
 }
 

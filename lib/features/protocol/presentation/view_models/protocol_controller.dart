@@ -164,14 +164,10 @@ class ProtocolReviewController extends AsyncNotifier<bool?> {
     Map<String, String> materialSelections = const {},
   }) async {
     if (state.isLoading || !detail.canReview) return false;
-    if (approve &&
-        detail.materialReviews.any(
-          (m) =>
-              m.requiresResolution && !materialSelections.containsKey(m.itemId),
-        )) {
+    if (approve && detail.materialReviews.any((m) => m.requiresResolution)) {
       state = AsyncError(
         const ApiException(
-          'Hãy chọn vật tư catalog đủ điều kiện cho các đề xuất cần xử lý trước khi duyệt.',
+          'Hãy tạo đầy đủ vật tư được Chuyên gia đề xuất trước khi duyệt.',
         ),
         StackTrace.current,
       );

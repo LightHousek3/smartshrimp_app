@@ -151,6 +151,10 @@ abstract class ProtocolManufacturer with _$ProtocolManufacturer {
     String? id,
     String? address,
     String? phone,
+    String? contactName,
+    String? email,
+    String? note,
+    String? supplierType,
   }) = _ProtocolManufacturer;
   factory ProtocolManufacturer.fromJson(Map<String, dynamic> json) =>
       _$ProtocolManufacturerFromJson(json);
@@ -168,6 +172,8 @@ abstract class ProtocolMaterialSnapshot with _$ProtocolMaterialSnapshot {
     String? manufacturerId,
     ProtocolManufacturer? manufacturer,
     ProtocolMaterialProfile? productCompliance,
+    @Default([]) List<String> imageUrls,
+    @JsonKey(fromJson: _optionalDecimalString) String? minAlertQuantity,
     String? conversionUnit,
     @JsonKey(fromJson: _optionalDecimalString) String? conversionQuantity,
   }) = _ProtocolMaterialSnapshot;
@@ -248,11 +254,26 @@ abstract class ProtocolTemplateSource with _$ProtocolTemplateSource {
       _$ProtocolTemplateSourceFromJson(json);
 }
 
+/// Navigation data for the existing inventory form; the server revalidates the proposal.
+@freezed
+abstract class ProtocolMaterialCreation with _$ProtocolMaterialCreation {
+  const factory ProtocolMaterialCreation({
+    required String farmId,
+    required String protocolId,
+    required String itemId,
+    required DateTime updatedAt,
+    DateTime? submittedAt,
+    required ProtocolMaterialSnapshot material,
+    String? manufacturerId,
+  }) = _ProtocolMaterialCreation;
+}
+
 @freezed
 abstract class ProtocolDetail with _$ProtocolDetail {
   @JsonSerializable(checked: true)
   const factory ProtocolDetail({
     required ProtocolCardData card,
+    @Default('') String farmId,
     required DateTime updatedAt,
     String? anchorDate,
     required int durationDays,
@@ -304,6 +325,25 @@ abstract class ProtocolDetail with _$ProtocolDetail {
         material.doseBasis,
         material.doseUnit,
       ]);
+      final proposed = material.proposed;
+      if (proposed != null &&
+          (![
+                'FEED',
+                'MEDICINE',
+                'MINERAL',
+                'CHEMICAL',
+                'OTHER',
+              ].contains(proposed.category.toUpperCase()) ||
+              ![
+                'KG',
+                'G',
+                'L',
+                'ML',
+                'PACK',
+                'BOTTLE',
+              ].contains(proposed.unit.toUpperCase()))) {
+        throw const InvalidResponseException();
+      }
       final dose = double.tryParse(material.doseValue);
       final increment = double.tryParse(material.dailyDoseIncrement);
       if (dose == null ||

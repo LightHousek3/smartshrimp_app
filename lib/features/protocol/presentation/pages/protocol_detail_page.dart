@@ -105,10 +105,6 @@ class _DetailContent extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           _Header(detail),
-          if (!detail.canReview) ...[
-            const SizedBox(height: 16),
-            ProtocolMaterials(detail: detail),
-          ],
           if (detail.scheduleMessage case final message?)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -154,6 +150,13 @@ class _DetailContent extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (detail.materialReviews.any((row) => row.proposed != null)) ...[
+            ProtocolMaterials(
+              detail: detail,
+              busy: ref.watch(protocolReviewProvider(detail.card.id)).isLoading,
+            ),
+            const SizedBox(height: 16),
+          ],
           if (detail.durationDays > 0) ...[
             ProtocolTimeline(
               detail: detail,

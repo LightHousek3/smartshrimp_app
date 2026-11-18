@@ -47,6 +47,8 @@ final class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<InventoryProduct> createProduct({
     required String farmId,
+    Map<String, dynamic>? protocolProposal,
+    String? recommendationReason,
     required String name,
     required InventoryProductCategory category,
     String manufacturerId = '',
@@ -64,9 +66,10 @@ final class InventoryRepositoryImpl implements InventoryRepository {
       conversionQuantity: conversionQuantity,
       conversionUnit: conversionUnit,
     );
-    return _remoteDataSource.createProduct(
-      farmId,
-      _productData(
+    return _remoteDataSource.createProduct(farmId, {
+      'protocolProposal': ?protocolProposal,
+      'recommendationReason': ?recommendationReason,
+      ..._productData(
         name: name,
         category: category,
         manufacturerId: manufacturerId,
@@ -79,7 +82,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
         imageUrl: imageUrl,
         imageUrls: imageUrls,
       ),
-    );
+    });
   }
 
   @override

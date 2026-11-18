@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/presentation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -599,6 +600,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                 builder: (_, state) =>
                                     InventorySupplierFormPage(
                                       farmId: state.pathParameters['farmId']!,
+                                      initialSupplier:
+                                          state.extra is InventorySupplier
+                                          ? state.extra as InventorySupplier
+                                          : null,
                                     ),
                               ),
                               GoRoute(
@@ -621,6 +626,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             builder: (_, state) =>
                                 InventoryProductFormPage.create(
                                   farmId: state.pathParameters['farmId']!,
+                                  proposal:
+                                      state.extra is ProtocolMaterialCreation
+                                      ? state.extra as ProtocolMaterialCreation
+                                      : null,
                                 ),
                           ),
                           GoRoute(

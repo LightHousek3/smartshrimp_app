@@ -3,6 +3,7 @@ import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dar
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 /// Prefer the product photo and keep its category icon while loading or unavailable.
+/// Let callers supply a neutral placeholder when category icons do not fit the screen.
 class InventoryProductImage extends StatelessWidget {
   const InventoryProductImage({
     this.url,
@@ -13,6 +14,7 @@ class InventoryProductImage extends StatelessWidget {
     this.category = InventoryProductCategory.other,
     this.isArchived = false,
     this.isLowStock = false,
+    this.placeholder,
     super.key,
   });
   final String? url;
@@ -23,6 +25,7 @@ class InventoryProductImage extends StatelessWidget {
   final InventoryProductCategory category;
   final bool isArchived;
   final bool isLowStock;
+  final Widget? placeholder;
 
   String get _iconAsset => switch (category) {
     InventoryProductCategory.feed => InventoryAssets.catalogFeed,
@@ -57,17 +60,19 @@ class InventoryProductImage extends StatelessWidget {
     ),
   );
 
-  Widget _placeholder() => ColoredBox(
-    color: isArchived
-        ? const Color(0xFFF1F5F9)
-        : category == InventoryProductCategory.medicine && isLowStock
-        ? const Color(0xFFFBE6EA)
-        : const Color(0xFFEAF4FF),
-    child: Center(
-      child: InventorySvgIcon(
-        _iconAsset,
-        size: (height ?? size) > 80 ? 44 : 20,
-      ),
-    ),
-  );
+  Widget _placeholder() =>
+      placeholder ??
+      ColoredBox(
+        color: isArchived
+            ? const Color(0xFFF1F5F9)
+            : category == InventoryProductCategory.medicine && isLowStock
+            ? const Color(0xFFFBE6EA)
+            : const Color(0xFFEAF4FF),
+        child: Center(
+          child: InventorySvgIcon(
+            _iconAsset,
+            size: (height ?? size) > 80 ? 44 : 20,
+          ),
+        ),
+      );
 }

@@ -1,315 +1,470 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/view_models/protocol_controller.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart';
 
-/// Evidence is paged locally; catalog queries run only when the Owner opens a selector.
-class ProtocolMaterials extends StatefulWidget {
-  const ProtocolMaterials({
-    required this.detail,
-    this.onSelectionsChanged,
-    this.busy = false,
-    super.key,
-  });
+/// Show this submission's Expert proposals, including those created during its review.
+/// Catalogue selections remain in the timeline, even when meals share a product.
+List<List<ProtocolMaterialReview>> protocolMaterialGroups(
+  ProtocolDetail detail,
+) {
+  final groups = <Object, List<ProtocolMaterialReview>>{};
+  for (final row in detail.materialReviews) {
+    final proposed = row.proposed;
+    if (proposed == null) continue;
+    final manufacturer = proposed.manufacturer;
+    final identity = proposed.copyWith(
+      name: proposed.name.trim().toLowerCase(),
+      category: proposed.category.toUpperCase(),
+      unit: proposed.unit.toUpperCase(),
+      description: null,
+      recommendationReason: null,
+      imageUrls: const [],
+      minAlertQuantity: null,
+      manufacturer: manufacturer == null
+          ? null
+          : ProtocolManufacturer(
+              name: manufacturer.name.trim().toLowerCase(),
+              address: manufacturer.address?.trim().toLowerCase(),
+            ),
+      productCompliance: proposed.productCompliance?.copyWith(
+        checkedAt: null,
+        checkedBy: null,
+        evidenceUrls: const [],
+      ),
+    );
+    final Object key =
+        row.productId ?? (identity, row.recommendedManufacturerId);
+    groups.putIfAbsent(key, () => []).add(row);
+  }
+  return groups.values.toList(growable: false);
+}
+
+/// Keep material creation separate from the Owner's approval decision.
+class ProtocolMaterials extends ConsumerStatefulWidget {
+  const ProtocolMaterials({required this.detail, this.busy = false, super.key});
   final ProtocolDetail detail;
-  final ValueChanged<Map<String, String>>? onSelectionsChanged;
   final bool busy;
   @override
-  State<ProtocolMaterials> createState() => _ProtocolMaterialsState();
+  ConsumerState<ProtocolMaterials> createState() => _ProtocolMaterialsState();
 }
 
-class _ProtocolMaterialsState extends State<ProtocolMaterials> {
-  final _selected = <String, ProtocolMaterialOption>{};
+class _ProtocolMaterialsState extends ConsumerState<ProtocolMaterials> {
   int _page = 0;
-  static const _pageSize = 20;
+  String? _opening;
+  static const _pageSize = 10;
+
+  Future<void> _create(ProtocolMaterialReview row) async {
+    if (_opening != null || widget.busy || row.proposed == null) return;
+    setState(() => _opening = row.itemId);
+    try {
+      await context.push<bool>(
+        '/farms/${Uri.encodeComponent(widget.detail.farmId)}/inventory/new',
+        extra: ProtocolMaterialCreation(
+          farmId: widget.detail.farmId,
+          protocolId: widget.detail.card.id,
+          itemId: row.itemId,
+          updatedAt: widget.detail.updatedAt,
+          submittedAt: widget.detail.card.submittedAt,
+          material: row.proposed!,
+          manufacturerId:
+              row.recommendedManufacturerId ?? row.proposed!.manufacturerId,
+        ),
+      );
+      // A save may have committed even if its response was lost before returning.
+      if (mounted) {
+        ref.invalidate(protocolDetailProvider(widget.detail.card.id));
+        ref.invalidate(protocolDayProvider);
+      }
+    } finally {
+      if (mounted) setState(() => _opening = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final rows = widget.detail.materialReviews;
-    final canChoose =
-        widget.onSelectionsChanged != null && widget.detail.canReview;
-    final dayLabel = widget.detail.card.protocolType == ProtocolType.treatment
-        ? 'Ngày điều trị'
-        : 'DOC';
+    final groups = protocolMaterialGroups(widget.detail);
+    if (groups.isEmpty) return const SizedBox.shrink();
+    final unresolved = groups
+        .where(
+          (group) => group.any(
+            (row) => row.productId == null || row.requiresResolution,
+          ),
+        )
+        .length;
+    final page = _page.clamp(0, (groups.length - 1) ~/ _pageSize);
     return ProtocolSurface(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Vật tư và căn cứ đề xuất (${rows.length} hạng mục)',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          if (widget.detail.sourceTemplateSnapshot case final source?)
-            Text(
-              'Khởi tạo từ ${source.name} · v${source.version}; nội dung phác đồ được lưu độc lập.',
-            ),
-          if (canChoose && rows.any((row) => row.requiresResolution))
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                'Chọn vật tư catalog phù hợp của trang trại cho các đề xuất chưa được liên kết trước khi duyệt.',
-              ),
-            ),
-          ...rows.skip(_page * _pageSize).take(_pageSize).map((row) {
-            final chosen = _selected[row.itemId];
-            final pending = row.requiresResolution && chosen == null;
-            return ExpansionTile(
-              key: ValueKey('${row.itemId}:$_page'),
-              tilePadding: EdgeInsets.zero,
-              title: Text(row.name),
-              subtitle: Text(
-                '$dayLabel ${row.firstDay}–${row.lastDay} · ${row.mealNumber == null ? 'Môi trường' : 'Cữ ${row.mealNumber}'} · ${row.plannedTime?.substring(0, 5) ?? 'Chưa đặt giờ'}',
-              ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${row.doseValue} ${protocolUnit(row.doseUnit)} · ${_basis(row.doseBasis)} / lần',
+                const Expanded(
+                  child: Text(
+                    'Vật tư đề xuất bởi chuyên gia',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
                     ),
-                    Text(
-                      'Lặp mỗi ${row.repeatIntervalDays} ngày, mốc $dayLabel ${row.recurrenceAnchorDay}.',
-                    ),
-                    Text(
-                      'Tăng ${row.dailyDoseIncrement} ${protocolUnit(row.doseUnit)}/ngày, liều gốc tại $dayLabel ${row.doseAnchorDay}.',
-                    ),
-                    if (row.proposed case final proposed?)
-                      _MaterialEvidence(
-                        title: 'Đề xuất gốc của Expert',
-                        material: proposed,
-                        manufacturerId: row.recommendedManufacturerId,
-                      ),
-                    if (row.catalog case final catalog?)
-                      _MaterialEvidence(
-                        title: 'Vật tư catalog',
-                        material: catalog,
-                      ),
-                    if (chosen?.material case final material?)
-                      _MaterialEvidence(
-                        title: 'Vật tư Owner chọn để thực thi',
-                        material: material,
-                      ),
-                    if (pending)
-                      Text(
-                        row.resolutionMessage ??
-                            'Cần chọn vật tư đủ điều kiện.',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    if (canChoose)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: OutlinedButton(
-                          onPressed: widget.busy
-                              ? null
-                              : () async {
-                                  final option =
-                                      await showModalBottomSheet<
-                                        ProtocolMaterialOption
-                                      >(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        useSafeArea: true,
-                                        builder: (_) => _MaterialOptions(
-                                          id: widget.detail.card.id,
-                                          itemId: row.itemId,
-                                        ),
-                                      );
-                                  if (!mounted || option == null) return;
-                                  setState(
-                                    () => _selected[row.itemId] = option,
-                                  );
-                                  widget.onSelectionsChanged?.call(
-                                    _selected.map(
-                                      (key, value) => MapEntry(key, value.id),
-                                    ),
-                                  );
-                                },
-                          child: Text(
-                            chosen == null
-                                ? 'Chọn catalog đủ điều kiện'
-                                : 'Đổi vật tư đã chọn: ${chosen.name}',
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                  ],
+                  ),
                 ),
-              ],
-            );
-          }),
-          if (rows.length > _pageSize)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: _page == 0 ? null : () => setState(() => _page--),
-                  child: const Text('Trước'),
-                ),
-                Text('${_page + 1}/${(rows.length / _pageSize).ceil()}'),
-                TextButton(
-                  onPressed: (_page + 1) * _pageSize >= rows.length
-                      ? null
-                      : () => setState(() => _page++),
-                  child: const Text('Tiếp'),
+                const SizedBox(width: 10),
+                ProtocolBadge(
+                  '$unresolved/${groups.length} cần xử lý',
+                  color: unresolved == 0
+                      ? protocolTeal
+                      : const Color(0xFFBB4D00),
+                  background: unresolved == 0
+                      ? protocolTealPanel
+                      : protocolAmberPanel,
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-String _basis(String value) => switch (value) {
-  'FIXED_QUANTITY' => 'liều cố định',
-  'PER_KG_BIOMASS' => 'trên kg sinh khối',
-  'PERCENT_BIOMASS' => '% sinh khối',
-  'PER_M3_WATER' => 'trên m³ nước',
-  _ => value,
-};
-
-class _MaterialEvidence extends StatelessWidget {
-  const _MaterialEvidence({
-    required this.title,
-    required this.material,
-    this.manufacturerId,
-  });
-  final String title;
-  final ProtocolMaterialSnapshot material;
-  final String? manufacturerId;
-  @override
-  Widget build(BuildContext context) {
-    final profile = material.productCompliance;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Text(
-            '${material.name} · ${material.category} · ${protocolUnit(material.unit)}',
           ),
-          if (material.description case final description?) Text(description),
-          Text(
-            'Nhà sản xuất: ${material.manufacturer?.name ?? material.manufacturerId ?? manufacturerId ?? 'Chưa xác định'}',
-          ),
-          if (material.manufacturer?.address case final address?) Text(address),
-          if (material.conversionQuantity case final quantity?)
-            Text(
-              'Quy đổi: $quantity ${material.conversionUnit ?? ''} / ${material.unit}',
-            ),
-          Text('Loại hồ sơ: ${profile?.regulatoryType ?? 'Chưa xác định'}'),
-          if (profile?.registrationNumber case final number?)
-            Text('Số tiếp nhận/ĐKLH: $number'),
-          if (profile?.ingredientsText case final ingredients?)
-            Text('Thành phần: $ingredients'),
-          Text(
-            'Kháng sinh: ${profile?.containsAntibiotic == null
-                ? 'Chưa xác định'
-                : profile!.containsAntibiotic!
-                ? 'Có'
-                : 'Không'}',
-          ),
-          if (profile?.usageInstructions case final instructions?)
-            Text('Theo nhãn: $instructions'),
-          if (profile?.withdrawalDays case final days?)
-            Text('Ngừng thuốc: $days ngày'),
-          if (profile?.checkedAt case final checked?)
-            Text(
-              'Xác nhận dữ liệu: ${protocolDate(checked, year: true, time: true)}',
-            ),
-          if (material.recommendationReason case final reason?)
-            Text('Lý do: $reason'),
-          for (final evidence in profile?.evidenceUrls ?? <String>[])
-            SelectableText('Nguồn hồ sơ: $evidence'),
-        ],
-      ),
-    );
-  }
-}
-
-class _MaterialOptions extends ConsumerStatefulWidget {
-  const _MaterialOptions({required this.id, required this.itemId});
-  final String id, itemId;
-  @override
-  ConsumerState<_MaterialOptions> createState() => _MaterialOptionsState();
-}
-
-class _MaterialOptionsState extends ConsumerState<_MaterialOptions> {
-  Timer? _debounce;
-  String _search = '';
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scope = (id: widget.id, itemId: widget.itemId, search: _search);
-    final state = ref.watch(protocolMaterialOptionsProvider(scope));
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        MediaQuery.viewInsetsOf(context).bottom + 16,
-      ),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .65,
-        child: Column(
-          children: [
-            Text(
-              'Vật tư đủ điều kiện của trang trại',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Tìm theo tên vật tư',
-              ),
-              onChanged: (value) {
-                _debounce?.cancel();
-                _debounce = Timer(const Duration(milliseconds: 300), () {
-                  if (mounted) setState(() => _search = value.trim());
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => ProtocolFailure(
-                  error: error,
-                  onRetry: () =>
-                      ref.invalidate(protocolMaterialOptionsProvider(scope)),
-                ),
-                data: (rows) => rows.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Chưa có vật tư phù hợp đủ hồ sơ. Hãy bổ sung catalog trước khi duyệt.',
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: rows.length,
-                        itemBuilder: (context, index) {
-                          final row = rows[index];
-                          return ListTile(
-                            title: Text(row.name),
-                            subtitle: Text(
-                              '${row.manufacturerName} · ${protocolUnit(row.unit)}',
-                            ),
-                            onTap: () => Navigator.of(context).pop(row),
-                          );
-                        },
-                      ),
-              ),
+          for (final group
+              in groups.skip(page * _pageSize).take(_pageSize)) ...[
+            const Divider(height: 1, color: AppColors.line),
+            _ProposalRow(
+              rows: group,
+              canCreate:
+                  widget.detail.canReview && widget.detail.farmId.isNotEmpty,
+              busy: widget.busy || _opening != null,
+              onCreate: () => _create(group.first),
             ),
           ],
-        ),
+          if (groups.length > _pageSize)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: page == 0
+                        ? null
+                        : () => setState(() => _page = page - 1),
+                    child: const Text('Trước'),
+                  ),
+                  Text(
+                    '${page + 1}/${(groups.length / _pageSize).ceil()}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: (page + 1) * _pageSize >= groups.length
+                        ? null
+                        : () => setState(() => _page = page + 1),
+                    child: const Text('Tiếp'),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 }
+
+class _ProposalRow extends StatelessWidget {
+  const _ProposalRow({
+    required this.rows,
+    required this.canCreate,
+    required this.busy,
+    required this.onCreate,
+  });
+  final List<ProtocolMaterialReview> rows;
+  final bool canCreate, busy;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    const photoGap = 10.0;
+    const columnGap = 8.0;
+    final row = rows.first;
+    final material = row.proposed!;
+    final photos = material.imageUrls.isNotEmpty
+        ? material.imageUrls
+        : row.catalog?.imageUrls ?? const <String>[];
+    final unresolved = rows.any((entry) => entry.requiresResolution);
+    final needsCreation = row.productId == null;
+    final color = needsCreation || unresolved
+        ? const Color(0xFFBB4D00)
+        : protocolTeal;
+    final status = needsCreation
+        ? 'Chưa tạo vật tư'
+        : unresolved
+        ? 'Cần kiểm tra vật tư'
+        : 'Đã tạo vật tư';
+    const metadataStyle = TextStyle(
+      fontSize: 10.5,
+      height: 1.5,
+      color: AppColors.inkMuted,
+    );
+    final categoryLabel =
+        '${_category(material.category)} · ${protocolUnit(material.unit)}';
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MaterialPhoto(
+                key: ValueKey('protocol_material_photo_${row.itemId}'),
+                urls: photos,
+                name: material.name,
+              ),
+              const SizedBox(width: photoGap),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Table(
+                        columnWidths: {
+                          0: FixedColumnWidth(
+                            // Start status and manufacturer at the card midpoint,
+                            // accounting for the photo and the two column gaps.
+                            ((constraints.maxWidth -
+                                            _MaterialPhoto.extent -
+                                            photoGap) /
+                                        2 -
+                                    columnGap)
+                                .clamp(0, constraints.maxWidth / 2)
+                                .toDouble(),
+                          ),
+                          1: const FlexColumnWidth(),
+                        },
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.top,
+                        children: [
+                          TableRow(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  material.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: columnGap,
+                                  bottom: 4,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 3),
+                                        child: Text(
+                                          status,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            height: 1.5,
+                                            color: color,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (needsCreation && canCreate) ...[
+                                      const SizedBox(width: 6),
+                                      TextButton(
+                                        key: ValueKey(
+                                          'create-proposal-${row.itemId}',
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFEAF4FF,
+                                          ),
+                                          foregroundColor: AppColors.ocean,
+                                          minimumSize: const Size(0, 28),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 5,
+                                          ),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          textStyle: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.copyWith(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                        onPressed: busy ? null : onCreate,
+                                        child: const Text('Tạo vật tư'),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          TableRow(
+                            children: [
+                              Text(
+                                categoryLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: metadataStyle,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: columnGap),
+                                child: Text(
+                                  material.manufacturer == null
+                                      ? ''
+                                      : 'NSX: ${material.manufacturer!.name}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    height: 1.5,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      if (material.recommendationReason case final reason?
+                          when reason.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            reason,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              height: 1.5,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (unresolved && !needsCreation && row.resolutionMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                row.resolutionMessage!,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  height: 1.5,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Use the Expert's label photo and the shared gallery, without a material icon fallback.
+class _MaterialPhoto extends StatelessWidget {
+  const _MaterialPhoto({required this.urls, required this.name, super.key});
+  static const extent = 58.0;
+  final List<String> urls;
+  final String name;
+
+  Widget get _placeholder => ColoredBox(
+    color: protocolPanel,
+    child: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Text(
+          urls.isEmpty ? 'Chưa có ảnh' : 'Ảnh vật tư',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 9,
+            height: 1.4,
+            color: AppColors.inkMuted,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: urls.isEmpty ? 'Chưa có ảnh $name' : 'Xem ảnh $name',
+    button: urls.isNotEmpty,
+    child: Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: urls.isEmpty
+            ? null
+            : () => showAppImageViewer(
+                context,
+                builder: (_) => AppImageViewer(
+                  itemCount: urls.length,
+                  initialIndex: 0,
+                  imageBuilder: (index, fit) => InventoryProductImage(
+                    url: urls[index],
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: fit,
+                    placeholder: _placeholder,
+                  ),
+                ),
+              ),
+        child: InventoryProductImage(
+          url: urls.isEmpty ? null : urls.first,
+          size: extent,
+          fit: BoxFit.contain,
+          placeholder: _placeholder,
+        ),
+      ),
+    ),
+  );
+}
+
+String _category(String value) => switch (value.toUpperCase()) {
+  'FEED' || 'FEEDING' => 'Thức ăn',
+  'MEDICINE' => 'Thuốc',
+  'MINERAL' => 'Khoáng chất',
+  'CHEMICAL' => 'Xử lý môi trường',
+  _ => 'Vật tư khác',
+};

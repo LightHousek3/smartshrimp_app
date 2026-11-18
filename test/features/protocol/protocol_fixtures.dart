@@ -32,6 +32,7 @@ Map<String, dynamic> detailJson({
   String status = 'PENDING_APPROVAL',
 }) => {
   ...cardJson(type: type, status: status),
+  'farmId': 'farm-1',
   'updatedAt': '2026-06-20T02:00:00Z',
   'durationDays': type == 'TREATMENT' ? 7 : 90,
   'anchorDate': type == 'TREATMENT' && status == 'PENDING_APPROVAL'
@@ -182,7 +183,8 @@ class ProtocolFixtureRepository implements ProtocolRepository {
     if (readError != null) throw readError!;
     return ProtocolDetail.parse({
       ...detailJson(type: type, status: status),
-      'id': id,      if (v2) 'materialReviews': [materialReviewJson()],
+      'id': id,
+      if (v2) 'materialReviews': [materialReviewJson()],
       if (anchorDate != null) 'anchorDate': anchorDate,
       if (status == 'REJECTED') 'rejectionReason': rejectionReason,
     });

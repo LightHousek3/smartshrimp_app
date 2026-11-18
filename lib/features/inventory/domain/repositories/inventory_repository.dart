@@ -20,6 +20,8 @@ abstract interface class InventoryRepository {
 
   Future<InventoryProduct> createProduct({
     required String farmId,
+    Map<String, dynamic>? protocolProposal,
+    String? recommendationReason,
     required String name,
     required InventoryProductCategory category,
     String manufacturerId = '',

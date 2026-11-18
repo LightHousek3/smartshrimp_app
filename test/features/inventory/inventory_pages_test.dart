@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_detail_page.dart';
 import 'dart:io';
@@ -128,6 +129,7 @@ void main() {
           path: '/farms/:farmId/inventory/suppliers/new',
           builder: (_, state) => InventorySupplierFormPage(
             farmId: state.pathParameters['farmId']!,
+            initialSupplier: state.extra as InventorySupplier?,
           ),
         ),
         GoRoute(
@@ -355,6 +357,87 @@ void main() {
       image.dispose();
     });
   }
+
+  testWidgets(
+    'proposal prefills the product, requires its new manufacturer and returns after save',
+    (tester) async {
+      final repository = _InventoryRepository(
+        product: _product(),
+        history: _history(),
+      );
+      final suppliers = _SupplierRepository();
+      final proposal = ProtocolMaterialCreation(
+        farmId: 'farm-1',
+        protocolId: 'protocol-1',
+        itemId: 'item-1',
+        updatedAt: DateTime.utc(2026, 10, 10),
+        material: const ProtocolMaterialSnapshot(
+          name: 'Thức ăn đề xuất',
+          category: 'FEED',
+          unit: 'KG',
+          description: 'Mô tả từ Chuyên gia',
+          imageUrls: ['https://example.com/proposal.jpg'],
+          recommendationReason: 'Phù hợp tôm thẻ',
+          manufacturer: ProtocolManufacturer(
+            name: 'Nhà sản xuất đề xuất',
+            phone: '0901234567',
+            address: 'Cà Mau',
+            email: 'expert@example.com',
+            contactName: 'Anh Nam',
+          ),
+          productCompliance: ProtocolMaterialProfile(
+            regulatoryType: 'feed',
+            registrationNumber: '01-123456',
+            ingredientsText: 'Protein',
+            containsAntibiotic: false,
+            usageInstructions: 'Theo nhãn',
+            withdrawalDays: '0',
+          ),
+        ),
+      );
+      await openForm(
+        tester,
+        InventoryProductFormPage.create(farmId: 'farm-1', proposal: proposal),
+        repository,
+        suppliers: suppliers,
+        chooseManufacturer: false,
+      );
+      expect(find.text('Thức ăn đề xuất'), findsOneWidget);
+      await tester.ensureVisible(find.text('Tạo nhà sản xuất được đề xuất'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Nhà sản xuất mới do Chuyên gia đề xuất'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Tạo nhà sản xuất được đề xuất'));
+      await tester.pumpAndSettle();
+      expect(find.text('Nhà sản xuất đề xuất'), findsOneWidget);
+      expect(find.text('expert@example.com'), findsOneWidget);
+      await submitForm(tester, 'Lưu nhà cung cấp');
+      expect(suppliers.saved?.name, 'Nhà sản xuất đề xuất');
+      expect(suppliers.saved?.address, 'Cà Mau');
+      expect(suppliers.saved?.phone, '0901234567');
+      expect(find.text('Đã tạo nhà sản xuất'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await submitForm(tester, 'Thêm vào kho');
+      expect(
+        repository.createdProduct,
+        isNotNull,
+        reason: tester
+            .widgetList<Text>(find.byType(Text))
+            .map((text) => text.data)
+            .join(' | '),
+      );
+      expect(repository.createdProduct?['name'], 'Thức ăn đề xuất');
+      expect(repository.createdManufacturerId, 'created-supplier');
+      expect(repository.createdProposal?['protocolId'], 'protocol-1');
+      expect(repository.createdProposal?['itemId'], 'item-1');
+      expect(repository.createdRecommendationReason, 'Phù hợp tôm thẻ');
+      expect(find.text('Open inventory form'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('supplier requires name, phone and address before saving', (
     tester,
@@ -2828,6 +2911,8 @@ final class _InventoryRepository implements InventoryRepository {
   final domain.InventoryHistoryPage history;
   Map<String, Object?>? createdProduct;
   String? createdManufacturerId;
+  Map<String, dynamic>? createdProposal;
+  String? createdRecommendationReason;
   Map<String, dynamic>? updatedCompliance;
   Map<String, Object?>? stockInPayload;
   DateTime? stockInExpiryDate;
@@ -2888,6 +2973,8 @@ final class _InventoryRepository implements InventoryRepository {
 
   @override
   Future<domain.InventoryProduct> createProduct({
+    Map<String, dynamic>? protocolProposal,
+    String? recommendationReason,
     required String farmId,
     required String name,
     required domain.InventoryProductCategory category,
@@ -2902,6 +2989,8 @@ final class _InventoryRepository implements InventoryRepository {
     List<String>? imageUrls,
   }) async {
     createdManufacturerId = manufacturerId;
+    createdProposal = protocolProposal;
+    createdRecommendationReason = recommendationReason;
     createdProduct = <String, Object?>{
       'farmId': farmId,
       'name': name,
