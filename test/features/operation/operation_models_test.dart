@@ -254,5 +254,188 @@ void main() {
         expect(exec.actualQuantity, 48.25);
       },
     );
+
+    test('FeedingMedicineMealGroup.group correctly isolates meals by date', () {
+      final sTodayMeal1Feed = OperationSchedule(
+        id: 'feed-d1-m1',
+        seasonId: 'season-1',
+        protocolItemId: 'item-1',
+        operationType: OperationType.feeding,
+        scheduledAt: DateTime.parse('2026-11-17T07:30:00Z'),
+        plannedQuantity: 2.0,
+        unit: 'kg',
+        doseBasisSnapshot: 'PERCENT_BIOMASS',
+        doseValueSnapshot: 3.5,
+        calculationVersion: 'v1',
+        status: OperationStatus.planned,
+        product: const OperationProduct(id: 'p1', name: 'HI-TOM'),
+        protocolItem: const OperationProtocolItem(id: 'item-1', mealNumber: 1),
+      );
+
+      final sTodayMeal1Med = OperationSchedule(
+        id: 'med-d1-m1',
+        seasonId: 'season-1',
+        protocolItemId: 'item-2',
+        operationType: OperationType.medicine,
+        scheduledAt: DateTime.parse('2026-11-17T07:30:00Z'),
+        plannedQuantity: 1.0,
+        unit: 'kg',
+        doseBasisSnapshot: 'PER_KG_FEED',
+        doseValueSnapshot: 10.0,
+        calculationVersion: 'v1',
+        status: OperationStatus.planned,
+        product: const OperationProduct(id: 'p2', name: 'EN-GRO'),
+        protocolItem: const OperationProtocolItem(id: 'item-2', mealNumber: 1),
+      );
+
+      final sTomorrowMeal1Feed = OperationSchedule(
+        id: 'feed-d2-m1',
+        seasonId: 'season-1',
+        protocolItemId: 'item-3',
+        operationType: OperationType.feeding,
+        scheduledAt: DateTime.parse('2026-11-18T07:30:00Z'),
+        plannedQuantity: 2.5,
+        unit: 'kg',
+        doseBasisSnapshot: 'PERCENT_BIOMASS',
+        doseValueSnapshot: 3.5,
+        calculationVersion: 'v1',
+        status: OperationStatus.planned,
+        product: const OperationProduct(id: 'p1', name: 'HI-TOM'),
+        protocolItem: const OperationProtocolItem(id: 'item-3', mealNumber: 1),
+      );
+
+      final groups = FeedingMedicineMealGroup.group([
+        sTodayMeal1Feed,
+        sTodayMeal1Med,
+        sTomorrowMeal1Feed,
+      ]);
+
+      // Phải tách thành 2 cữ riêng biệt theo ngày: Hôm nay và Ngày mai
+      expect(groups.length, 2);
+
+      // Cữ hôm nay có cả thức ăn và thuốc
+      final todayGroup = groups[0];
+      expect(todayGroup.mealNumber, 1);
+      expect(todayGroup.hasBoth, isTrue);
+      expect(todayGroup.feedings.length, 1);
+      expect(todayGroup.feedings.first.id, 'feed-d1-m1');
+      expect(todayGroup.medicines.length, 1);
+      expect(todayGroup.medicines.first.id, 'med-d1-m1');
+
+      // Cữ ngày mai chỉ có thức ăn của ngày mai, KHÔNG bị gom thuốc của hôm nay vào
+      final tomorrowGroup = groups[1];
+      expect(tomorrowGroup.mealNumber, 1);
+      expect(tomorrowGroup.hasFeeding, isTrue);
+      expect(tomorrowGroup.hasMedicine, isFalse);
+      expect(tomorrowGroup.feedings.length, 1);
+      expect(tomorrowGroup.feedings.first.id, 'feed-d2-m1');
+    });
+
+    test('isOverdueAt matches BE timingComparison deadline rule', () {
+      final schedule = OperationSchedule(
+        id: 'sched-overdue-1',
+        seasonId: 'season-1',
+        protocolItemId: 'item-1',
+        operationType: OperationType.feeding,
+        scheduledAt: DateTime.parse('2026-11-18T00:30:00Z'), // 07:30 +07:00
+        plannedQuantity: 2.0,
+        unit: 'kg',
+        doseBasisSnapshot: 'FIXED_QUANTITY',
+        doseValueSnapshot: 2.0,
+        calculationVersion: 'v3',
+        status: OperationStatus.planned,
+        protocolItem: const OperationProtocolItem(
+          id: 'item-1',
+          mealNumber: 1,
+          dueAtMinutes: 60, // deadline 08:30 +07:00
+        ),
+      );
+
+      expect(
+        schedule.isOverdueAt(DateTime.parse('2026-11-18T01:29:59Z')),
+        isFalse,
+      );
+      expect(
+        schedule.isOverdueAt(DateTime.parse('2026-11-18T01:30:00Z')),
+        isFalse,
+      );
+      expect(
+        schedule.isOverdueAt(DateTime.parse('2026-11-18T01:30:01Z')),
+        isTrue,
+      );
+
+      // Chặn ghi nhận trước giờ dự kiến, cho phép đúng giờ và trễ hạn
+      expect(
+        schedule.isBeforeScheduledAt(DateTime.parse('2026-11-18T00:29:59Z')),
+        isTrue,
+      );
+      expect(
+        schedule.canExecuteAt(DateTime.parse('2026-11-18T00:29:59Z')),
+        isFalse,
+      );
+      expect(
+        schedule.canExecuteAt(DateTime.parse('2026-11-18T00:30:00Z')),
+        isTrue,
+      );
+      expect(
+        schedule.canExecuteAt(DateTime.parse('2026-11-18T02:00:00Z')),
+        isTrue,
+      );
+    });
+
+    test('FeedingMedicineMealGroup.pickNearestKey prioritizes active, overdue, then closest', () {
+      OperationSchedule makeMeal(String id, int mealNum, String isoUtc) =>
+          OperationSchedule(
+            id: id,
+            seasonId: 'season-1',
+            protocolItemId: 'item-$mealNum',
+            operationType: OperationType.feeding,
+            scheduledAt: DateTime.parse(isoUtc),
+            plannedQuantity: 10,
+            unit: 'g',
+            doseBasisSnapshot: 'FIXED_QUANTITY',
+            doseValueSnapshot: 10,
+            calculationVersion: 'v3',
+            status: OperationStatus.planned,
+            protocolItem: OperationProtocolItem(
+              id: 'item-$mealNum',
+              mealNumber: mealNum,
+              dueAtMinutes: 30,
+            ),
+          );
+
+      final groups = FeedingMedicineMealGroup.group([
+        makeMeal('m2', 2, '2026-11-18T05:00:00Z'), // 12:00 - 12:30 +07:00
+        makeMeal('m3', 3, '2026-11-18T10:00:00Z'), // 17:00 - 17:30 +07:00
+        makeMeal('m4', 4, '2026-11-18T15:00:00Z'), // 22:00 - 22:30 +07:00
+      ]);
+
+      // Lúc 09:53 +07:00 (02:53Z) => gần nhất là Cữ 2 (12:00)
+      expect(
+        FeedingMedicineMealGroup.pickNearestKey(
+          groups,
+          DateTime.parse('2026-11-18T02:53:00Z'),
+        ),
+        groups[0].key,
+      );
+
+      // Lúc 17:10 +07:00 (10:10Z) => đang trong khung Cữ 3 (17:00 - 17:30)
+      expect(
+        FeedingMedicineMealGroup.pickNearestKey(
+          groups,
+          DateTime.parse('2026-11-18T10:10:00Z'),
+        ),
+        groups[1].key,
+      );
+
+      // Lúc 15:00 +07:00 (08:00Z) => Cữ 2 quá hạn chờ xử lý
+      expect(
+        FeedingMedicineMealGroup.pickNearestKey(
+          groups,
+          DateTime.parse('2026-11-18T08:00:00Z'),
+        ),
+        groups[0].key,
+      );
+    });
   });
 }

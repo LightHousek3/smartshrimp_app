@@ -74,20 +74,59 @@ class OperationProduct {
     required this.name,
     this.category,
     this.unit,
+    this.description,
+    this.withdrawalDays,
+    this.usageInstructions,
+    this.imageUrls = const <String>[],
   });
 
   final String id;
   final String name;
   final String? category;
   final String? unit;
+  final String? description;
+  final double? withdrawalDays;
+  final String? usageInstructions;
+  final List<String>? imageUrls;
 
-  factory OperationProduct.fromJson(Map<String, dynamic> json) =>
-      OperationProduct(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        category: json['category'] as String?,
-        unit: json['unit'] as String?,
-      );
+  String? get primaryImageUrl {
+    final urls = imageUrls;
+    if (urls == null) return null;
+    for (final url in urls) {
+      final trimmed = url.trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return null;
+  }
+
+  factory OperationProduct.fromJson(Map<String, dynamic> json) {
+    final compliance = json['compliance'] as Map<String, dynamic>?;
+    final rawUrls = json['imageUrls'];
+    final urls = rawUrls is List
+        ? rawUrls
+              .whereType<String>()
+              .map((u) => u.trim())
+              .where((u) => u.isNotEmpty)
+              .toList(growable: false)
+        : (json['imageUrl'] is String &&
+              (json['imageUrl'] as String).trim().isNotEmpty)
+        ? <String>[(json['imageUrl'] as String).trim()]
+        : const <String>[];
+    return OperationProduct(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      category: json['category'] as String?,
+      unit: json['unit'] as String?,
+      description: json['description'] as String?,
+      withdrawalDays: _asNullableDouble(
+        compliance?['withdrawalDays'] ?? json['withdrawalDays'],
+      ),
+      usageInstructions:
+          (compliance?['usageInstructions'] ?? json['usageInstructions'])
+              as String?,
+      imageUrls: urls,
+    );
+  }
 }
 
 class OperationProtocol {
@@ -120,6 +159,7 @@ class OperationProtocolItem {
     required this.id,
     this.mealNumber,
     this.plannedTime,
+    this.dueAtMinutes,
     this.instructions,
     this.protocol,
   });
@@ -127,6 +167,7 @@ class OperationProtocolItem {
   final String id;
   final int? mealNumber;
   final String? plannedTime;
+  final int? dueAtMinutes;
   final String? instructions;
   final OperationProtocol? protocol;
 
@@ -135,6 +176,7 @@ class OperationProtocolItem {
         id: json['id'] as String,
         mealNumber: _asNullableInt(json['mealNumber']),
         plannedTime: json['plannedTime'] as String?,
+        dueAtMinutes: _asNullableInt(json['dueAtMinutes']),
         instructions: json['instructions'] as String?,
         protocol: json['protocol'] is Map<String, dynamic>
             ? OperationProtocol.fromJson(
@@ -179,6 +221,37 @@ class OperationExecution {
       );
 }
 
+class OperationExecuteBatchItem {
+  const OperationExecuteBatchItem({
+    required this.scheduleId,
+    required this.actualQuantity,
+    required this.idempotencyKey,
+    this.actualProductId,
+    this.note,
+    this.varianceReason,
+    this.executedAt,
+  });
+
+  final String scheduleId;
+  final double actualQuantity;
+  final String idempotencyKey;
+  final String? actualProductId;
+  final String? note;
+  final String? varianceReason;
+  final DateTime? executedAt;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'scheduleId': scheduleId,
+    'actualQuantity': actualQuantity,
+    'idempotencyKey': idempotencyKey,
+    'actualProductId': ?actualProductId,
+    if (note != null && note!.isNotEmpty) 'note': note,
+    if (varianceReason != null && varianceReason!.isNotEmpty)
+      'varianceReason': varianceReason,
+    if (executedAt != null) 'executedAt': executedAt!.toUtc().toIso8601String(),
+  };
+}
+
 class OperationSchedule {
   const OperationSchedule({
     required this.id,
@@ -202,6 +275,8 @@ class OperationSchedule {
     this.execution,
     this.seasonName,
     this.pondName,
+    this.availableStock,
+    this.hasSufficientStock,
   });
 
   final String id;
@@ -225,8 +300,77 @@ class OperationSchedule {
   final OperationExecution? execution;
   final String? seasonName;
   final String? pondName;
+  final double? availableStock;
+  final bool? hasSufficientStock;
+
+  static const double _stockEpsilon = 1e-9;
+
+  bool get isStockInsufficientForPlanned {
+    if (status != OperationStatus.planned) return false;
+    if (hasSufficientStock == false) return true;
+    final stock = availableStock;
+    return stock != null && stock + _stockEpsilon < plannedQuantity;
+  }
+
+  bool isStockInsufficientFor(double quantity) {
+    final stock = availableStock;
+    if (stock == null) return hasSufficientStock == false;
+    return quantity > stock + _stockEpsilon;
+  }
 
   String get productName => product?.name ?? 'Sản phẩm vận hành';
+
+  String? get productImageUrl => product?.primaryImageUrl;
+
+  DateTime? get deadlineAt {
+    final mins = protocolItem?.dueAtMinutes;
+    if (mins == null || mins < 0) return null;
+    return scheduledAt.add(Duration(minutes: mins));
+  }
+
+  /// Khớp chính xác `timingComparison` ở BE (`protocolExecution.js`):
+  /// lịch đang ở trạng thái `PLANNED` và đã vượt quá mốc `scheduledAt + dueAtMinutes`.
+  bool isOverdueAt(DateTime now) {
+    if (status != OperationStatus.planned) return false;
+    final deadline = deadlineAt;
+    return deadline != null && now.isAfter(deadline);
+  }
+
+  bool get isOverdue => isOverdueAt(DateTime.now());
+
+  /// Khớp `timingComparison` ở BE: bản ghi đã thực hiện sau mốc `scheduledAt + dueAtMinutes`.
+  bool get wasExecutedLate {
+    final execAt = execution?.executedAt;
+    final deadline = deadlineAt;
+    if (execAt == null || deadline == null) return false;
+    return execAt.isAfter(deadline);
+  }
+
+  /// Chỉ cho phép ghi nhận từ đúng giờ dự kiến trở đi (đúng giờ hoặc trễ hạn),
+  /// không cho phép ghi nhận trước `scheduledAt`.
+  bool isBeforeScheduledAt(DateTime now) =>
+      status == OperationStatus.planned && now.isBefore(scheduledAt);
+
+  bool get isBeforeScheduled => isBeforeScheduledAt(DateTime.now());
+
+  bool canExecuteAt(DateTime now) =>
+      status == OperationStatus.planned && !now.isBefore(scheduledAt);
+
+  bool get canExecute => canExecuteAt(DateTime.now());
+
+  String _fmtHm(DateTime dt) {
+    final local = dt.toLocal();
+    return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Khoảng giờ dự kiến - deadline (vd: "07:30 - 08:00" nếu có dueAtMinutes > 0, hoặc "07:30").
+  String get timeRangeText {
+    final start = _fmtHm(scheduledAt);
+    final mins = protocolItem?.dueAtMinutes;
+    final end = deadlineAt;
+    if (end == null || mins == null || mins <= 0) return start;
+    return '$start - ${_fmtHm(end)}';
+  }
 
   String get doseBasisDescription => switch (doseBasisSnapshot.toUpperCase()) {
     'PERCENT_BIOMASS' => 'Theo % sinh khối',
@@ -274,6 +418,8 @@ class OperationSchedule {
           : null,
       seasonName: (season?['name'] ?? json['seasonName']) as String?,
       pondName: (pond?['name'] ?? json['pondName']) as String?,
+      availableStock: _asNullableDouble(json['availableStock']),
+      hasSufficientStock: json['hasSufficientStock'] as bool?,
     );
   }
 }
@@ -357,6 +503,9 @@ class OperationListResult {
       pondName: pond?['name'] as String?,
     );
   }
+
+  List<FeedingMedicineMealGroup> get mealGroups =>
+      FeedingMedicineMealGroup.group(schedules);
 }
 
 class OperationTypeStats {
@@ -421,5 +570,229 @@ class OperationStats {
       completionRate: _asDouble(json['completionRate']),
       byType: byType,
     );
+  }
+}
+
+
+class FeedingMedicineMealGroup {
+  FeedingMedicineMealGroup({
+    required this.key,
+    required this.mealNumber,
+    required this.time,
+    required this.scheduledAt,
+    required this.feedings,
+    required this.medicines,
+  });
+
+  final String key;
+  int? mealNumber;
+  final String time;
+  final DateTime scheduledAt;
+  final List<OperationSchedule> feedings;
+  final List<OperationSchedule> medicines;
+
+  /// Gom nhóm thức ăn và thuốc/men trộn theo CÙNG NGÀY và CÙNG CỮ (hoặc cùng giờ)
+  static List<FeedingMedicineMealGroup> group(
+    List<OperationSchedule> schedules,
+  ) {
+    final groups = <FeedingMedicineMealGroup>[];
+
+    final sorted = List<OperationSchedule>.from(schedules)
+      ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
+    for (final s in sorted) {
+      if (s.operationType != OperationType.feeding &&
+          s.operationType != OperationType.medicine) {
+        continue;
+      }
+
+      final local = s.scheduledAt.toLocal();
+      final dateStr =
+          '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+      final mealNum = s.protocolItem?.mealNumber;
+
+      // Tìm nhóm đã tồn tại trong CÙNG 1 NGÀY
+      FeedingMedicineMealGroup? matchedGroup;
+      for (final g in groups) {
+        final gLocal = g.scheduledAt.toLocal();
+        final isSameDay = gLocal.year == local.year &&
+            gLocal.month == local.month &&
+            gLocal.day == local.day;
+
+        // BẮT BUỘC PHẢI CÙNG NGÀY
+        if (!isSameDay) continue;
+
+        // Cùng ngày: nếu cả hai đều có mealNumber thì so sánh mealNumber
+        if (mealNum != null && g.mealNumber != null) {
+          if (mealNum == g.mealNumber) {
+            matchedGroup = g;
+            break;
+          }
+        } else if (g.time == timeStr) {
+          // Hoặc cùng giờ trong ngày
+          matchedGroup = g;
+          break;
+        }
+      }
+
+      if (matchedGroup != null) {
+        if (matchedGroup.mealNumber == null && mealNum != null) {
+          matchedGroup.mealNumber = mealNum;
+        }
+        if (s.operationType == OperationType.feeding) {
+          matchedGroup.feedings.add(s);
+        } else if (s.operationType == OperationType.medicine) {
+          matchedGroup.medicines.add(s);
+        }
+      } else {
+        final groupKey = mealNum != null
+            ? '${dateStr}_meal_$mealNum'
+            : '${dateStr}_time_$timeStr';
+
+        groups.add(
+          FeedingMedicineMealGroup(
+            key: groupKey,
+            mealNumber: mealNum,
+            time: timeStr,
+            scheduledAt: s.scheduledAt,
+            feedings: s.operationType == OperationType.feeding
+                ? <OperationSchedule>[s]
+                : <OperationSchedule>[],
+            medicines: s.operationType == OperationType.medicine
+                ? <OperationSchedule>[s]
+                : <OperationSchedule>[],
+          ),
+        );
+      }
+    }
+
+    groups.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return groups;
+  }
+
+  List<OperationSchedule> get allSchedules => <OperationSchedule>[
+    ...feedings,
+    ...medicines,
+  ];
+
+  OperationSchedule? get primaryFeeding =>
+      feedings.isNotEmpty ? feedings.first : null;
+
+  /// Khoảng giờ thực hiện của cả cữ (vd: "07:30 - 08:00") dựa trên deadline muộn nhất trong cữ.
+  String get timeRangeText {
+    DateTime? latestDeadline;
+    for (final s in allSchedules) {
+      final mins = s.protocolItem?.dueAtMinutes;
+      final d = s.deadlineAt;
+      if (d != null &&
+          mins != null &&
+          mins > 0 &&
+          (latestDeadline == null || d.isAfter(latestDeadline))) {
+        latestDeadline = d;
+      }
+    }
+    if (latestDeadline == null) return time;
+    final localEnd = latestDeadline.toLocal();
+    final endStr =
+        '${localEnd.hour.toString().padLeft(2, '0')}:${localEnd.minute.toString().padLeft(2, '0')}';
+    return '$time - $endStr';
+  }
+
+  bool isOverdueAt(DateTime now) => allSchedules.any((s) => s.isOverdueAt(now));
+
+  bool get isOverdue => isOverdueAt(DateTime.now());
+
+  bool get wasExecutedLate => allSchedules.any((s) => s.wasExecutedLate);
+
+  bool isBeforeScheduledAt(DateTime now) =>
+      activeSchedules.any((s) => s.isBeforeScheduledAt(now));
+
+  bool get isBeforeScheduled => isBeforeScheduledAt(DateTime.now());
+
+  bool canExecuteAt(DateTime now) =>
+      activeSchedules.isNotEmpty &&
+      activeSchedules.every((s) => s.canExecuteAt(now));
+
+  bool get canExecute => canExecuteAt(DateTime.now());
+
+  /// Mốc giờ muộn nhất cần chờ trong cữ để có thể bắt đầu ghi nhận cả cữ.
+  DateTime get executableFromAt {
+    DateTime latest = scheduledAt;
+    for (final s in activeSchedules) {
+      if (s.scheduledAt.isAfter(latest)) {
+        latest = s.scheduledAt;
+      }
+    }
+    return latest;
+  }
+
+  String get title => mealNumber != null
+      ? 'Cữ $mealNumber ($time)'
+      : 'Cữ $time';
+
+  bool get hasFeeding => feedings.isNotEmpty;
+  bool get hasMedicine => medicines.isNotEmpty;
+  bool get hasBoth => hasFeeding && hasMedicine;
+
+  List<OperationSchedule> get activeSchedules => allSchedules
+      .where((s) => s.status == OperationStatus.planned)
+      .toList(growable: false);
+
+  bool get hasPlanned => activeSchedules.isNotEmpty;
+
+  /// Chọn key của cữ gần nhất / ưu tiên sổ sẵn khi mở danh sách:
+  /// 1. Đang trong khung giờ thực hiện (`scheduledAt <= now <= deadline`).
+  /// 2. Đang quá hạn chờ xử lý (`hasPlanned && isOverdueAt(now)`), ưu tiên cữ sớm nhất cần ghi nhận ngay.
+  /// 3. Cữ có thời gian dự kiến gần `now` nhất (`|scheduledAt - now|` nhỏ nhất).
+  static String? pickNearestKey(
+    List<FeedingMedicineMealGroup> groups, [
+    DateTime? now,
+  ]) {
+    if (groups.isEmpty) return null;
+    final ref = now ?? DateTime.now();
+
+    for (final g in groups) {
+      if (g.hasPlanned && !g.isBeforeScheduledAt(ref) && !g.isOverdueAt(ref)) {
+        return g.key;
+      }
+    }
+
+    for (final g in groups) {
+      if (g.hasPlanned && g.isOverdueAt(ref)) {
+        return g.key;
+      }
+    }
+
+    FeedingMedicineMealGroup nearest = groups.first;
+    int bestDiffMs =
+        (nearest.scheduledAt.millisecondsSinceEpoch -
+                ref.millisecondsSinceEpoch)
+            .abs();
+    for (var i = 1; i < groups.length; i++) {
+      final candidate = groups[i];
+      final diffMs =
+          (candidate.scheduledAt.millisecondsSinceEpoch -
+                  ref.millisecondsSinceEpoch)
+              .abs();
+      if (diffMs < bestDiffMs) {
+        bestDiffMs = diffMs;
+        nearest = candidate;
+      }
+    }
+    return nearest.key;
+  }
+
+  OperationStatus get overallStatus {
+    if (allSchedules.isEmpty) return OperationStatus.planned;
+    if (activeSchedules.isNotEmpty) return OperationStatus.planned;
+    if (allSchedules.every((s) => s.status == OperationStatus.completed)) {
+      return OperationStatus.completed;
+    }
+    if (allSchedules.every((s) => s.status == OperationStatus.cancelled)) {
+      return OperationStatus.cancelled;
+    }
+    return OperationStatus.planned;
   }
 }

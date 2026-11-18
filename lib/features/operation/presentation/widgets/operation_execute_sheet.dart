@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 import 'package:uuid/uuid.dart';
 
 class OperationExecuteSheet extends ConsumerStatefulWidget {
@@ -24,6 +24,7 @@ class OperationExecuteSheet extends ConsumerStatefulWidget {
     required VoidCallback onSuccess,
   }) => showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) =>
@@ -37,37 +38,33 @@ class OperationExecuteSheet extends ConsumerStatefulWidget {
 
 class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
   late final TextEditingController _quantityController;
-  late final TextEditingController _noteController;
   late final TextEditingController _varianceReasonController;
+  late final Listenable _formListenable;
+  late final DateTime _openedAt;
   final _formKey = GlobalKey<FormState>();
 
   bool _isSubmitting = false;
-  double _actualQuantity = 0;
 
   @override
   void initState() {
     super.initState();
-    _actualQuantity = widget.schedule.plannedQuantity;
+    _openedAt = DateTime.now();
     _quantityController = TextEditingController(
-      text: widget.schedule.plannedQuantity.toString(),
+      text: formatOperationCompact(
+        widget.schedule.plannedQuantity,
+        maxDecimals: 3,
+      ),
     );
-    _noteController = TextEditingController();
     _varianceReasonController = TextEditingController();
-
-    _quantityController.addListener(() {
-      final parsed = double.tryParse(_quantityController.text);
-      if (parsed != null && parsed != _actualQuantity) {
-        setState(() {
-          _actualQuantity = parsed;
-        });
-      }
-    });
+    _formListenable = Listenable.merge(<Listenable>[
+      _quantityController,
+      _varianceReasonController,
+    ]);
   }
 
   @override
   void dispose() {
     _quantityController.dispose();
-    _noteController.dispose();
     _varianceReasonController.dispose();
     super.dispose();
   }
@@ -75,21 +72,49 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
   double get _allowedVariancePct =>
       widget.schedule.protocolItem?.protocol?.allowedVariancePct ?? 10.0;
 
-  double get _variancePct {
-    final planned = widget.schedule.plannedQuantity;
-    if (planned <= 0) return 0;
-    return ((_actualQuantity - planned).abs() / planned) * 100;
+  OperationVarianceEvaluation get _eval => OperationVarianceEvaluation(
+    planned: widget.schedule.plannedQuantity,
+    actual: parseOperationQuantity(_quantityController.text),
+    allowedPct: _allowedVariancePct,
+  );
+
+  bool get _canSubmit {
+    if (!widget.schedule.canExecute) return false;
+    final eval = _eval;
+    if (!eval.isValidPositive) return false;
+    if (widget.schedule.isStockInsufficientFor(eval.actual!)) return false;
+    if (eval.hasAnyDeviation && _varianceReasonController.text.trim().isEmpty) {
+      return false;
+    }
+    return true;
   }
 
-  bool get _exceedsVariance => _variancePct > _allowedVariancePct;
-
   Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_exceedsVariance && _varianceReasonController.text.trim().isEmpty) {
+    if (!widget.schedule.canExecute) {
       AppNoticeService.warning(
         context,
-        'Chênh lệch ${_variancePct.toStringAsFixed(1)}% vượt mức cho phép (${_allowedVariancePct.toStringAsFixed(0)}%). Vui lòng nhập lý do.',
+        'Chưa đến thời gian dự kiến thực hiện lịch vận hành.',
+      );
+      return;
+    }
+    if (!_formKey.currentState!.validate()) return;
+
+    final eval = _eval;
+    if (!eval.isValidPositive) return;
+
+    if (widget.schedule.isStockInsufficientFor(eval.actual!)) {
+      AppNoticeService.danger(
+        context,
+        'Số lượng vật tư trong kho không đủ để thực hiện (${widget.schedule.productName}).',
+      );
+      return;
+    }
+
+    final reason = _varianceReasonController.text.trim();
+    if (eval.hasAnyDeviation && reason.isEmpty) {
+      AppNoticeService.danger(
+        context,
+        'Vui lòng nhập lý do khi số lượng thực tế khác kế hoạch.',
       );
       return;
     }
@@ -103,14 +128,9 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
       await ref
           .read(operationDetailProvider(widget.schedule.id).notifier)
           .execute(
-            actualQuantity: _actualQuantity,
+            actualQuantity: eval.actual!,
             idempotencyKey: idempotencyKey,
-            note: _noteController.text.trim().isEmpty
-                ? null
-                : _noteController.text.trim(),
-            varianceReason: _exceedsVariance
-                ? _varianceReasonController.text.trim()
-                : null,
+            varianceReason: eval.hasAnyDeviation ? reason : null,
           );
 
       if (mounted) {
@@ -140,272 +160,60 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.88;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // Header
-              Row(
-                children: <Widget>[
-                  const Expanded(
-                    child: Text(
-                      'Ghi nhận thực hiện',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // FIFO Warning card
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F7F5),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFF0F9B8E).withValues(alpha: 0.2),
-                  ),
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 20),
+        child: SafeArea(
+          top: false,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                OperationExecuteSheetHeader(
+                  title: 'Ghi nhận thực hiện',
+                  recordedAt: _openedAt,
+                  onClose: () => Navigator.of(context).pop(),
                 ),
-                child: const Text(
-                  'Khi xác nhận, hệ thống trừ kho theo thứ tự lô nhập trước, lưu kết quả thực hiện không thể chỉnh sửa và hoàn tất lịch.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.4,
-                    color: Color(0xFF0B7A70),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Product name field (Readonly)
-              const Text(
-                'Sản phẩm sử dụng',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.line),
-                ),
-                child: Text(
-                  widget.schedule.productName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Actual quantity input
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  const Text(
-                    'Số lượng thực tế',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                  Text(
-                    widget.schedule.unit.toLowerCase(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _quantityController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.line),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.line),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.ocean),
-                  ),
-                ),
-                validator: (val) {
-                  final n = double.tryParse(val ?? '');
-                  if (n == null || n <= 0) {
-                    return 'Số lượng phải lớn hơn 0';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Kế hoạch: ${widget.schedule.plannedQuantity} ${widget.schedule.unit.toLowerCase()}',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: AppColors.inkMuted,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Variance info indicator
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: _exceedsVariance
-                      ? const Color(0xFFFDE8EC)
-                      : const Color(0xFFF2F6FC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _exceedsVariance
-                      ? 'Chênh lệch ${_variancePct.toStringAsFixed(1)}% — vượt ngưỡng cho phép (${_allowedVariancePct.toStringAsFixed(0)}%)! Bắt buộc nhập lý do.'
-                      : 'Chênh lệch ${_variancePct.toStringAsFixed(1)}% — trong ngưỡng cho phép.',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: _exceedsVariance
-                        ? AppColors.error
-                        : const Color(0xFF1378D1),
-                  ),
-                ),
-              ),
-
-              // Variance reason if exceeded
-              if (_exceedsVariance) ...<Widget>[
                 const SizedBox(height: 16),
-                const Text(
-                  'Lý do chênh lệch *',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.error,
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: OperationExecuteItemCard(
+                      schedule: widget.schedule,
+                      quantityController: _quantityController,
+                      varianceReasonController: _varianceReasonController,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _varianceReasonController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: 'Nhập lý do chênh lệch số lượng...',
-                    hintStyle: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.inkMuted,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (_exceedsVariance &&
-                        (val == null || val.trim().isEmpty)) {
-                      return 'Vui lòng nhập lý do chênh lệch';
-                    }
-                    return null;
+                const SizedBox(height: 18),
+                ListenableBuilder(
+                  listenable: _formListenable,
+                  builder: (_, _) {
+                    final enabled = _canSubmit && !_isSubmitting;
+                    return GradientButton(
+                      label: _isSubmitting
+                          ? 'Đang ghi nhận...'
+                          : 'Xác nhận ghi nhận',
+                      compact: true,
+                      height: 48,
+                      borderRadius: 16,
+                      icon: Icons.check_rounded,
+                      isLoading: _isSubmitting,
+                      onPressed: enabled ? _handleSubmit : null,
+                    );
                   },
                 ),
               ],
-              const SizedBox(height: 16),
-
-              // Notes field
-              const Text(
-                'Ghi chú',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _noteController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Tình trạng bắt mồi, thời tiết...',
-                  hintStyle: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.inkMuted,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.line),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              // Submit button
-              GradientButton(
-                label: _isSubmitting ? 'Đang ghi nhận...' : 'Xác nhận ghi nhận',
-                isLoading: _isSubmitting,
-                onPressed: _isSubmitting ? null : _handleSubmit,
-              ),
-            ],
+            ),
           ),
         ),
       ),

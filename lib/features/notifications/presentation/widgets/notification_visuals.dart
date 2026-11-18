@@ -46,7 +46,7 @@ final class NotificationVisuals {
     NotificationType.scheduleGenerationFailed => Icons.warning_amber_rounded,
     NotificationType.operationDue ||
     NotificationType.operationOverdue ||
-    NotificationType.operationCancelled => Icons.settings_rounded,
+    NotificationType.operationCancelled => Icons.event_note_rounded,
     NotificationType.diseaseCaseCreated ||
     NotificationType.diseaseCaseResponse ||
     NotificationType.diseaseCaseWaitingInfo ||

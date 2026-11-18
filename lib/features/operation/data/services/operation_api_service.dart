@@ -56,7 +56,7 @@ class OperationApiService {
       if (note != null && note.isNotEmpty) 'note': note,
       if (varianceReason != null && varianceReason.isNotEmpty)
         'varianceReason': varianceReason,
-      if (executedAt != null) 'executedAt': executedAt.toIso8601String(),
+      if (executedAt != null) 'executedAt': executedAt.toUtc().toIso8601String(),
     };
 
     final response = await _client.post(
@@ -66,6 +66,23 @@ class OperationApiService {
     );
 
     return OperationExecution.fromJson(response.requireMapData());
+  }
+
+  Future<List<OperationExecution>> executeSchedulesBatch(
+    List<OperationExecuteBatchItem> items,
+  ) async {
+    final response = await _client.post(
+      '/operations/schedules/execute-batch',
+      authenticated: true,
+      data: <String, dynamic>{
+        'items': items.map((item) => item.toJson()).toList(growable: false),
+      },
+    );
+
+    return response
+        .requireListData()
+        .map((e) => OperationExecution.fromJson(e! as Map<String, dynamic>))
+        .toList(growable: false);
   }
 
   Future<OperationStats> getSeasonStats(String seasonId) async {

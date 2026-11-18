@@ -47,6 +47,11 @@ final class OperationRepositoryImpl implements OperationRepository {
   );
 
   @override
+  Future<List<OperationExecution>> executeSchedulesBatch(
+    List<OperationExecuteBatchItem> items,
+  ) => _apiService.executeSchedulesBatch(items);
+
+  @override
   Future<OperationStats> getSeasonStats(String seasonId) =>
       _apiService.getSeasonStats(seasonId);
 }

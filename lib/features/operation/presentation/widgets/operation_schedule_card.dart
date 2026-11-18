@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 
 class OperationScheduleCard extends StatelessWidget {
   const OperationScheduleCard({
@@ -12,62 +14,35 @@ class OperationScheduleCard extends StatelessWidget {
   final OperationSchedule schedule;
   final VoidCallback onTap;
 
-  (Color bg, Color fg, IconData icon) _typeVisuals(OperationType type) =>
-      switch (type) {
-        OperationType.feeding => (
-          const Color(0xFFE2F6F3),
-          const Color(0xFF0F9B8E),
-          Icons.settings_outlined,
-        ),
-        OperationType.mineral => (
-          const Color(0xFFEAF4FF),
-          const Color(0xFF1378D1),
-          Icons.grain_rounded,
-        ),
-        OperationType.chemical => (
-          const Color(0xFFF0E9FF),
-          const Color(0xFF7B5BD6),
-          Icons.biotech_rounded,
-        ),
-        OperationType.medicine => (
-          const Color(0xFFFBE6EA),
-          AppColors.error,
-          Icons.medication_rounded,
-        ),
-        OperationType.other => (
-          const Color(0xFFF5F5F5),
-          AppColors.inkSoft,
-          Icons.category_rounded,
-        ),
-      };
+  static const Color _blueBg = Color(0xFFDEEDFD);
+  static const Color _blueFg = Color(0xFF1D7AD6);
 
   (Color dot, Color text, Color bg) _statusVisuals(OperationStatus status) =>
       switch (status) {
         OperationStatus.planned => (
-          const Color(0xFF1378D1),
-          const Color(0xFF1378D1),
-          const Color(0xFFEAF4FF),
+          _blueFg,
+          _blueFg,
+          _blueBg,
         ),
         OperationStatus.completed => (
-          const Color(0xFF0F9B8E),
-          const Color(0xFF0F9B8E),
-          const Color(0xFFE2F6F3),
+          const Color(0xFF10B981),
+          const Color(0xFF047857),
+          const Color(0xFFECFDF5),
         ),
         OperationStatus.cancelled => (
           AppColors.inkMuted,
           AppColors.inkMuted,
-          const Color(0xFFF5F5F5),
+          const Color(0xFFF1F5F9),
         ),
       };
 
   @override
   Widget build(BuildContext context) {
-    final (iconBg, iconFg, icon) = _typeVisuals(schedule.operationType);
+    final visuals = OperationTypeVisuals.of(schedule.operationType);
     final (statusDot, statusText, statusBg) = _statusVisuals(schedule.status);
 
-    final localTime = schedule.scheduledAt.toLocal();
-    final timeStr =
-        '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
+    final timeStr = schedule.timeRangeText;
+    final isOverdue = schedule.isOverdue;
 
     final quantityStr =
         '${schedule.plannedQuantity} ${schedule.unit.toLowerCase()}';
@@ -77,9 +52,13 @@ class OperationScheduleCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isOverdue ? OperationOverdueBadge.cardSurface : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.line.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: isOverdue
+              ? OperationOverdueBadge.cardBorder.withValues(alpha: 0.85)
+              : AppColors.line.withValues(alpha: 0.6),
+        ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -99,14 +78,14 @@ class OperationScheduleCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: iconFg, size: 22),
+                OperationProductThumbnail(
+                  imageUrl: schedule.productImageUrl,
+                  fallbackIcon: visuals.icon,
+                  fallbackBg: visuals.bg,
+                  fallbackFg: visuals.fg,
+                  size: 44,
+                  borderRadius: 14,
+                  iconSize: 22,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -115,24 +94,7 @@ class OperationScheduleCard extends StatelessWidget {
                     children: <Widget>[
                       Row(
                         children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: iconBg,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              schedule.operationType.displayName,
-                              style: TextStyle(
-                                color: iconFg,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                          OperationTypeBadge(type: schedule.operationType),
                           if (mealStr != null) ...<Widget>[
                             const SizedBox(width: 8),
                             Text(
@@ -147,12 +109,12 @@ class OperationScheduleCard extends StatelessWidget {
                           const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
+                              horizontal: 8.5,
+                              vertical: 3.5,
                             ),
                             decoration: BoxDecoration(
                               color: statusBg,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(999),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -222,6 +184,10 @@ class OperationScheduleCard extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          if (isOverdue) ...<Widget>[
+                            const Spacer(),
+                            const OperationOverdueBadge(compact: true),
+                          ],
                         ],
                       ),
                     ],
