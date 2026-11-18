@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -306,37 +307,12 @@ class _Header extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => showModalBottomSheet<void>(
-                        context: context,
-                        showDragHandle: true,
-                        builder: (_) => SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Ca bệnh liên quan',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(card.diseaseCaseTitle!),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${card.pondName} · ${card.seasonName}',
-                                  style: const TextStyle(
-                                    color: AppColors.inkMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      onTap: card.diseaseCaseId?.trim().isNotEmpty == true
+                          ? () => context.push(
+                              '/disease-cases/${Uri.encodeComponent(card.diseaseCaseId!)}',
+                              extra: '${card.pondName} · ${card.seasonName}',
+                            )
+                          : null,
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Row(
@@ -374,11 +350,12 @@ class _Header extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const AppSvgIcon(
-                              AppSvgIconName.chevron,
-                              size: 13,
-                              color: Color(0xFFFF587C),
-                            ),
+                            if (card.diseaseCaseId?.trim().isNotEmpty == true)
+                              const AppSvgIcon(
+                                AppSvgIconName.chevron,
+                                size: 13,
+                                color: Color(0xFFFF587C),
+                              ),
                           ],
                         ),
                       ),

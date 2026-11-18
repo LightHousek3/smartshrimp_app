@@ -40,9 +40,15 @@ final class NotificationSocket {
       ..onConnect((_) {
         _onChanged();
         _caseChanges.add(null);
+        // Initial dashboard load already reads current data; only recovery needs a reload.
+        if (_hasConnected) _dashboardChanges.add(null);
+        _hasConnected = true;
       })
       ..on('notification:new', (payload) {
         _onChanged();
+        // Treatment lifecycle notices reference the season, not always the case.
+        // Keep this stream separate so existing case subscribers retain their scope.
+        _dashboardChanges.add(null);
         if (payload is! Map) return;
         final referenceType = payload['referenceType'];
         // Older producers send only a notification id. Reload active cases
@@ -70,9 +76,12 @@ final class NotificationSocket {
   Timer? _retry;
   bool _disposed = false;
   final _caseChanges = StreamController<String?>.broadcast();
+  final _dashboardChanges = StreamController<void>.broadcast();
+  bool _hasConnected = false;
 
   /// A null id means reconnect or an event without reference metadata.
   Stream<String?> get caseChanges => _caseChanges.stream;
+  Stream<void> get dashboardChanges => _dashboardChanges.stream;
 
   void connect() => _socket.connect();
 
@@ -81,5 +90,6 @@ final class NotificationSocket {
     _retry?.cancel();
     _socket.dispose();
     _caseChanges.close();
+    _dashboardChanges.close();
   }
 }

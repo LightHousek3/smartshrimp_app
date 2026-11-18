@@ -5,6 +5,8 @@ part 'owner_dashboard.freezed.dart';
 part 'owner_dashboard.g.dart';
 
 enum DashboardAlertKind {
+  @JsonValue('CASE_OPEN')
+  caseOpen,
   @JsonValue('URGENT_TASK')
   urgentTask,
   @JsonValue('PENDING_TREATMENT')
@@ -205,6 +207,18 @@ abstract class OwnerDashboard with _$OwnerDashboard {
           alert.preview.farmId,
           alert.preview.farmName,
         ]);
+        if ([
+          DashboardAlertKind.caseOpen,
+          DashboardAlertKind.inTreatment,
+          DashboardAlertKind.monitoring,
+        ].contains(alert.kind)) {
+          if (alert.count != 1) throw const InvalidResponseException();
+          _strings([
+            alert.preview.seasonId,
+            alert.preview.seasonName,
+            alert.preview.pondId,
+          ]);
+        }
         if (alert.kind == DashboardAlertKind.lowStock &&
             (alert.preview.quantity == null ||
                 alert.preview.minAlertQuantity == null ||
@@ -261,8 +275,9 @@ abstract class FinanceMonth with _$FinanceMonth {
   @JsonSerializable(checked: true)
   const factory FinanceMonth({
     required String month,
-    required double income,
+    required double? income,
     required double cost,
+    @Default(0) int unpricedHarvests,
   }) = _FinanceMonth;
   factory FinanceMonth.fromJson(Map<String, dynamic> json) =>
       _$FinanceMonthFromJson(json);
@@ -272,9 +287,10 @@ abstract class FinanceMonth with _$FinanceMonth {
 abstract class FinanceTotals with _$FinanceTotals {
   @JsonSerializable(checked: true)
   const factory FinanceTotals({
-    required double income,
+    required double? income,
     required double cost,
-    required double profit,
+    required double? profit,
+    @Default(0) int unpricedHarvests,
   }) = _FinanceTotals;
   factory FinanceTotals.fromJson(Map<String, dynamic> json) =>
       _$FinanceTotalsFromJson(json);
@@ -309,11 +325,16 @@ abstract class OwnerFinance with _$OwnerFinance {
           throw const InvalidResponseException();
         }
         previous = month.month;
-        _nonNegative([month.income, month.cost]);
+        _validateRevenue(month.income, month.unpricedHarvests);
+        _nonNegative([month.cost]);
       }
-      _nonNegative([value.totals.income, value.totals.cost]);
-      if (!value.totals.profit.isFinite ||
-          (value.totals.income - value.totals.cost - value.totals.profit)
+      _validateRevenue(value.totals.income, value.totals.unpricedHarvests);
+      _nonNegative([value.totals.cost]);
+      if (value.totals.income == null) {
+        if (value.totals.profit != null) throw const InvalidResponseException();
+      } else if (value.totals.profit == null ||
+          !value.totals.profit!.isFinite ||
+          (value.totals.income! - value.totals.cost - value.totals.profit!)
                   .abs() >
               0.01) {
         throw const InvalidResponseException();
@@ -322,6 +343,13 @@ abstract class OwnerFinance with _$OwnerFinance {
     } on Object catch (_, stack) {
       Error.throwWithStackTrace(const InvalidResponseException(), stack);
     }
+  }
+}
+
+void _validateRevenue(double? income, int unpricedHarvests) {
+  _nonNegative([unpricedHarvests, ?income]);
+  if (income == null && unpricedHarvests == 0) {
+    throw const InvalidResponseException();
   }
 }
 

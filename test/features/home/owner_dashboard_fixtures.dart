@@ -39,7 +39,11 @@ final overviewFixture = OwnerDashboard(
           farmName: kind == DashboardAlertKind.pendingProduction
               ? 'Trang trại Đông Hải'
               : 'Trang trại Cửa Lấp',
-          pondId: kind == DashboardAlertKind.lowStock ? null : 'pond1',
+          pondId: kind == DashboardAlertKind.lowStock
+              ? null
+              : kind == DashboardAlertKind.monitoring
+              ? 'pond2'
+              : 'pond1',
           pondName: kind == DashboardAlertKind.lowStock
               ? null
               : kind == DashboardAlertKind.monitoring
@@ -47,7 +51,11 @@ final overviewFixture = OwnerDashboard(
               : kind == DashboardAlertKind.pendingProduction
               ? 'Ao D2'
               : 'Ao A3',
-          seasonId: kind == DashboardAlertKind.lowStock ? null : 'season1',
+          seasonId: kind == DashboardAlertKind.lowStock
+              ? null
+              : kind == DashboardAlertKind.monitoring
+              ? 'season2'
+              : 'season1',
           seasonName: kind == DashboardAlertKind.lowStock
               ? null
               : 'Vụ Đông Xuân 2025',

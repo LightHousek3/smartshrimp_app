@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -7,6 +9,7 @@ import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_cont
 import 'package:smartshrimp_app/features/home/data/owner_dashboard_api_service.dart';
 import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart';
 import 'package:smartshrimp_app/features/home/domain/repositories/owner_dashboard_repository.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 
 final ownerDashboardRepositoryProvider = Provider<OwnerDashboardRepository>(
   (ref) => OwnerDashboardApiService(ref.watch(apiClientProvider)),
@@ -28,6 +31,15 @@ final ownerDashboardProvider = FutureProvider<OwnerDashboard>((ref) async {
   if (account.role != AccountRole.farmOwner) {
     throw const UnsupportedRoleException();
   }
+  // Committed business notices and reconnects refresh alerts, never scrolling/inbox reads.
+  StreamSubscription<void>? dashboardChanges;
+  ref.listen(notificationSocketProvider, (_, socket) {
+    dashboardChanges?.cancel();
+    dashboardChanges = socket?.dashboardChanges.listen((_) {
+      if (ref.mounted) ref.invalidateSelf();
+    });
+  }, fireImmediately: true);
+  ref.onDispose(() => dashboardChanges?.cancel());
   // Observe successful CRUD without changing the Farm feature's mutation policy.
   // Its initial async build is not a mutation and must not trigger another fetch.
   var mutationStarted = false;

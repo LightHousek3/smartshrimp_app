@@ -22,12 +22,61 @@ import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_li
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_empty_state.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/view_models/protocol_controller.dart';
+import 'package:smartshrimp_app/features/disease_case/domain/entities/owner_disease_case.dart'
+    as cases;
+import 'package:smartshrimp_app/features/disease_case/domain/repositories/owner_disease_case_repository.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/view_models/owner_disease_case_controller.dart'
+    as owner_cases;
 import '../home/owner_dashboard_fixtures.dart';
 import 'protocol_fixtures.dart';
+
+class _MissingRelatedCase extends ProtocolFixtureRepository {
+  _MissingRelatedCase() : super(type: 'TREATMENT', status: 'ACTIVE');
+  @override
+  Future<ProtocolDetail> detail(String id) async {
+    final result = await super.detail(id);
+    return result.copyWith(card: result.card.copyWith(diseaseCaseId: null));
+  }
+}
+
+class _RelatedCases implements DiseaseCaseRepository {
+  final detailIds = <String>[];
+  @override
+  Future<cases.DiseaseCasePage> list({
+    required String seasonId,
+    required bool resolved,
+    required int page,
+  }) => throw UnimplementedError();
+  @override
+  Future<cases.DiseaseCaseDetail> detail(String caseId) async {
+    detailIds.add(caseId);
+    return cases.DiseaseCaseDetail(
+      card: cases.DiseaseCaseCard(
+        id: caseId,
+        title: 'Tôm bỏ ăn',
+        description: 'KTV ghi nhận tôm giảm ăn.',
+        status: cases.DiseaseCaseStatus.open,
+        severity: cases.DiseaseCaseSeverity.medium,
+        expertName: 'Chuyên gia',
+        responseCount: 0,
+      ),
+      seasonName: 'Vụ Đông Xuân 2025',
+      pondName: 'Ao A3',
+      farmName: 'Trang trại Cửa Lấp',
+      reporterName: 'KTV',
+      createdAt: DateTime(2026, 11, 19),
+      updatedAt: DateTime(2026, 11, 19),
+      attachments: [],
+      protocols: [],
+      timeline: [],
+    );
+  }
+}
 
 Future<ProviderContainer> open(
   WidgetTester tester, {
   ProtocolFixtureRepository? repository,
+  DiseaseCaseRepository? caseRepository,
   Widget? page,
   bool shell = false,
   bool settle = true,
@@ -102,6 +151,10 @@ Future<ProviderContainer> open(
       protocolRepositoryProvider.overrideWithValue(
         repository ?? ProtocolFixtureRepository(),
       ),
+      if (caseRepository != null)
+        owner_cases.diseaseCaseRepositoryProvider.overrideWithValue(
+          caseRepository,
+        ),
       ownerDashboardRepositoryProvider.overrideWithValue(
         DashboardFixtureRepository(),
       ),
@@ -153,6 +206,50 @@ Future<void> scrollTo(WidgetTester tester, String label) async {
 
 void main() {
   _ProtocolTestBinding();
+  testWidgets(
+    'N: related case opens the real case detail and back restores the treatment protocol',
+    (tester) async {
+      final related = _RelatedCases();
+      await open(
+        tester,
+        shell: true,
+        repository: ProtocolFixtureRepository(
+          type: 'TREATMENT',
+          status: 'ACTIVE',
+        ),
+        caseRepository: related,
+      );
+      await tester.tap(find.text('CA BỆNH LIÊN QUAN'));
+      await tester.pumpAndSettle();
+      expect(related.detailIds, ['case-1']);
+      expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
+      await tester.tap(find.byTooltip('Quay lại'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProtocolDetailPage), findsOneWidget);
+      expect(find.text('CA BỆNH LIÊN QUAN'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'A: historical case title without an id cannot open an invented target',
+    (tester) async {
+      final related = _RelatedCases();
+      await open(
+        tester,
+        shell: true,
+        repository: _MissingRelatedCase(),
+        caseRepository: related,
+      );
+      await tester.tap(find.text('CA BỆNH LIÊN QUAN'));
+      await tester.pumpAndSettle();
+      expect(related.detailIds, isEmpty);
+      expect(find.byType(ProtocolDetailPage), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final (kind, type) in [
     (DashboardAlertKind.pendingProduction, 'PRODUCTION'),
     (DashboardAlertKind.pendingTreatment, 'TREATMENT'),

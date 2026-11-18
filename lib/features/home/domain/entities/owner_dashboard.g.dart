@@ -92,6 +92,7 @@ Map<String, dynamic> _$DashboardAlertToJson(_DashboardAlert instance) =>
     };
 
 const _$DashboardAlertKindEnumMap = {
+  DashboardAlertKind.caseOpen: 'CASE_OPEN',
   DashboardAlertKind.urgentTask: 'URGENT_TASK',
   DashboardAlertKind.pendingTreatment: 'PENDING_TREATMENT',
   DashboardAlertKind.pendingProduction: 'PENDING_PRODUCTION',
@@ -239,8 +240,12 @@ _FinanceMonth _$FinanceMonthFromJson(Map<String, dynamic> json) =>
     $checkedCreate('_FinanceMonth', json, ($checkedConvert) {
       final val = _FinanceMonth(
         month: $checkedConvert('month', (v) => v as String),
-        income: $checkedConvert('income', (v) => (v as num).toDouble()),
+        income: $checkedConvert('income', (v) => (v as num?)?.toDouble()),
         cost: $checkedConvert('cost', (v) => (v as num).toDouble()),
+        unpricedHarvests: $checkedConvert(
+          'unpricedHarvests',
+          (v) => (v as num?)?.toInt() ?? 0,
+        ),
       );
       return val;
     });
@@ -250,14 +255,19 @@ Map<String, dynamic> _$FinanceMonthToJson(_FinanceMonth instance) =>
       'month': instance.month,
       'income': instance.income,
       'cost': instance.cost,
+      'unpricedHarvests': instance.unpricedHarvests,
     };
 
 _FinanceTotals _$FinanceTotalsFromJson(Map<String, dynamic> json) =>
     $checkedCreate('_FinanceTotals', json, ($checkedConvert) {
       final val = _FinanceTotals(
-        income: $checkedConvert('income', (v) => (v as num).toDouble()),
+        income: $checkedConvert('income', (v) => (v as num?)?.toDouble()),
         cost: $checkedConvert('cost', (v) => (v as num).toDouble()),
-        profit: $checkedConvert('profit', (v) => (v as num).toDouble()),
+        profit: $checkedConvert('profit', (v) => (v as num?)?.toDouble()),
+        unpricedHarvests: $checkedConvert(
+          'unpricedHarvests',
+          (v) => (v as num?)?.toInt() ?? 0,
+        ),
       );
       return val;
     });
@@ -267,6 +277,7 @@ Map<String, dynamic> _$FinanceTotalsToJson(_FinanceTotals instance) =>
       'income': instance.income,
       'cost': instance.cost,
       'profit': instance.profit,
+      'unpricedHarvests': instance.unpricedHarvests,
     };
 
 _OwnerFinance _$OwnerFinanceFromJson(Map<String, dynamic> json) =>
