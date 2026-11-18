@@ -4,6 +4,77 @@ import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.da
 import 'owner_dashboard_fixtures.dart';
 
 void main() {
+  test(
+    'N/A: case alerts preserve the case target and reject grouped or contextless episodes',
+    () {
+      Map<String, dynamic> wire() => {
+        ...overviewFixture.toJson(),
+        'summary': overviewFixture.summary.toJson(),
+        'personnel': overviewFixture.personnel.toJson(),
+        'financeFarms': overviewFixture.financeFarms
+            .map((farm) => farm.toJson())
+            .toList(),
+        'seasons': [],
+        'inventories': [],
+        'alerts': [
+          {
+            'kind': 'CASE_OPEN',
+            'count': 1,
+            'preview': overviewFixture.alerts.last.preview.toJson(),
+          },
+        ],
+      };
+      expect(
+        OwnerDashboard.parse(wire()).alerts.single.kind,
+        DashboardAlertKind.caseOpen,
+      );
+      final grouped = wire();
+      (grouped['alerts'] as List).first['count'] = 2;
+      expect(
+        () => OwnerDashboard.parse(grouped),
+        throwsA(isA<InvalidResponseException>()),
+      );
+      final missing = wire();
+      (missing['alerts'] as List).first['preview']['seasonId'] = null;
+      expect(
+        () => OwnerDashboard.parse(missing),
+        throwsA(isA<InvalidResponseException>()),
+      );
+    },
+  );
+
+  test(
+    'N/B: revenue unknown and partial data remain distinguishable from true zero',
+    () {
+      for (final (income, unpriced, profit) in [
+        (null, 2, null),
+        (100.0, 1, 60.0),
+        (0.0, 0, -40.0),
+      ]) {
+        final finance = OwnerFinance.parse({
+          'from': '2026-11-01',
+          'to': '2026-11-19',
+          'months': [
+            {
+              'month': '2026-11',
+              'income': income,
+              'cost': 40,
+              'unpricedHarvests': unpriced,
+            },
+          ],
+          'totals': {
+            'income': income,
+            'cost': 40,
+            'profit': profit,
+            'unpricedHarvests': unpriced,
+          },
+        });
+        expect(finance.totals.income, income);
+        expect(finance.totals.unpricedHarvests, unpriced);
+        expect(finance.totals.profit, profit);
+      }
+    },
+  );
   test('B: custom range accepts 60 calendar months and rejects 61', () {
     expect(
       FinanceFilter(

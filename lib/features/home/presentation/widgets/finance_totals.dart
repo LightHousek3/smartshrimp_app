@@ -39,25 +39,33 @@ class FinanceTotalsView extends StatelessWidget {
           color: dashboardTeal,
           useRootNavigator: useRootNavigator,
           explanation:
-              'Doanh thu từ các lần thu hoạch (thu tỉa và thu hoạch cuối) trong khoảng thời gian đã chọn.',
+              'Cộng doanh thu đã biết của các lần thu tỉa và thu cuối trong kỳ. Lần chưa có giá được ghi riêng; nếu tất cả chưa có giá thì doanh thu chưa xác định.',
         ),
         _TotalRow(
-          label: 'Tổng chi',
+          label: 'Chi phí vật tư',
           value: totals.cost,
           color: dashboardRed,
           useRootNavigator: useRootNavigator,
           explanation:
-              'Giá trị vật tư đã xuất kho cho vụ nuôi: thức ăn, thuốc, khoáng và hóa chất. Không tính tiền nhập kho để tránh tính trùng.',
+              'Giá vốn phần nhập thực dùng của mọi nhóm vật tư xuất qua lần thực hiện ao, tính theo giờ dùng thật. Không tính tiền mua hoặc xuất thủ công không liên quan vận hành ao.',
         ),
         _TotalRow(
-          label: 'Lợi nhuận',
+          label: 'Chênh lệch sau vật tư',
           value: totals.profit,
           color: AppColors.ocean,
           bold: true,
           useRootNavigator: useRootNavigator,
           explanation:
-              'Tổng thu − Tổng chi. Chỉ sử dụng dữ liệu đã ghi nhận trong hệ thống; chưa bao gồm điện, nhân công và tôm giống.',
+              'Tổng thu − Chi phí vật tư thực dùng. Đây không phải lợi nhuận đầy đủ: chưa gồm điện, nhân công và tôm giống. Nếu còn lần thu chưa có giá, chênh lệch cũng chưa đầy đủ.',
         ),
+        if (totals.unpricedHarvests > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              '${totals.unpricedHarvests} lần thu hoạch chưa có giá. Tổng thu và chênh lệch ${totals.income == null ? 'chưa xác định' : 'chưa đầy đủ'}.',
+              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            ),
+          ),
       ],
     ),
   );
@@ -73,7 +81,7 @@ class _TotalRow extends StatelessWidget {
     this.bold = false,
   });
   final String label;
-  final double value;
+  final double? value;
   final Color color;
   final String explanation;
   final bool bold;
@@ -85,12 +93,15 @@ class _TotalRow extends StatelessWidget {
       children: [
         FinanceDot(color),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: bold ? AppColors.ink : AppColors.inkMuted,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+        Expanded(
+          flex: 6,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: bold ? AppColors.ink : AppColors.inkMuted,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            ),
           ),
         ),
         SizedBox(
@@ -133,11 +144,18 @@ class _TotalRow extends StatelessWidget {
           ),
         ),
         Expanded(
+          flex: 7,
           child: Text(
-            dashboardMoney(value, signed: bold),
+            value == null
+                ? 'Chưa xác định'
+                : dashboardMoney(value!, signed: bold),
             textAlign: TextAlign.right,
             style: dashboardDisplay(
-              fontSize: bold ? 16 : 14,
+              fontSize: value == null
+                  ? 12
+                  : bold
+                  ? 16
+                  : 14,
               fontWeight: FontWeight.w800,
               color: color,
             ),

@@ -16,6 +16,9 @@ import 'package:smartshrimp_app/features/disease_case/domain/entities/owner_dise
 import 'package:smartshrimp_app/features/disease_case/domain/repositories/owner_disease_case_repository.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/view_models/owner_disease_case_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart'
+    as dashboard;
+import 'package:smartshrimp_app/features/home/domain/repositories/owner_dashboard_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
@@ -130,7 +133,12 @@ class _Cases implements DiseaseCaseRepository {
   }
 }
 
-Future<void> _open(WidgetTester tester, _Cases repository, String route) async {
+Future<void> _open(
+  WidgetTester tester,
+  _Cases repository,
+  String route, {
+  OwnerDashboardRepository? dashboardRepository,
+}) async {
   GoogleFonts.config.allowRuntimeFetching = false;
   tester.view.physicalSize = const Size(403, 874);
   tester.view.devicePixelRatio = 1;
@@ -142,7 +150,7 @@ Future<void> _open(WidgetTester tester, _Cases repository, String route) async {
       authRepositoryProvider.overrideWithValue(DashboardFixtureAuth()),
       diseaseCaseRepositoryProvider.overrideWithValue(repository),
       ownerDashboardRepositoryProvider.overrideWithValue(
-        DashboardFixtureRepository(),
+        dashboardRepository ?? DashboardFixtureRepository(),
       ),
       notificationRepositoryProvider.overrideWithValue(
         DashboardFixtureNotifications(),
@@ -163,6 +171,35 @@ Future<void> _open(WidgetTester tester, _Cases repository, String route) async {
 }
 
 void main() {
+  for (final (kind, label) in [
+    (dashboard.DashboardAlertKind.caseOpen, 'ca bệnh đang mở'),
+    (dashboard.DashboardAlertKind.inTreatment, 'ca bệnh đang điều trị'),
+    (dashboard.DashboardAlertKind.monitoring, 'ca bệnh đang theo dõi'),
+  ]) {
+    testWidgets(
+      'Owner dashboard $kind opens the real authorized case detail page',
+      (tester) async {
+        final repository = _Cases();
+        await _open(
+          tester,
+          repository,
+          '/',
+          dashboardRepository: _DashboardCases(kind),
+        );
+        await tester.pumpAndSettle();
+        final alert = find.text('1 $label');
+        await tester.ensureVisible(alert);
+        await tester.pumpAndSettle();
+        await tester.tap(alert);
+        await tester.pumpAndSettle();
+        expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
+        expect(repository.detailIds, ['case-a3']);
+        expect(repository.requests, isEmpty);
+        expect(find.byType(BottomSheet), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'list keeps both tabs pinned, loads real counts and opens detail',
     (tester) async {
@@ -344,4 +381,21 @@ void main() {
     expect(detail.timeline.first, isA<DiseaseCaseStatusChange>());
     expect(detail.timeline.last, isA<DiseaseCaseResponse>());
   });
+}
+
+class _DashboardCases extends DashboardFixtureRepository {
+  _DashboardCases(this.kind);
+  final dashboard.DashboardAlertKind kind;
+  @override
+  Future<dashboard.OwnerDashboard> getOverview() async =>
+      overviewFixture.copyWith(
+        alerts: [
+          overviewFixture.alerts.last.copyWith(
+            kind: kind,
+            preview: overviewFixture.alerts.last.preview.copyWith(
+              id: 'case-a3',
+            ),
+          ),
+        ],
+      );
 }

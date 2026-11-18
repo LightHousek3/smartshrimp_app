@@ -2565,7 +2565,7 @@ $DashboardPersonnelCopyWith<$Res> get personnel {
 /// @nodoc
 mixin _$FinanceMonth {
 
- String get month; double get income; double get cost;
+ String get month; double? get income; double get cost; int get unpricedHarvests;
 /// Create a copy of FinanceMonth
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2578,16 +2578,16 @@ $FinanceMonthCopyWith<FinanceMonth> get copyWith => _$FinanceMonthCopyWithImpl<F
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FinanceMonth&&(identical(other.month, month) || other.month == month)&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FinanceMonth&&(identical(other.month, month) || other.month == month)&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,month,income,cost);
+int get hashCode => Object.hash(runtimeType,month,income,cost,unpricedHarvests);
 
 @override
 String toString() {
-  return 'FinanceMonth(month: $month, income: $income, cost: $cost)';
+  return 'FinanceMonth(month: $month, income: $income, cost: $cost, unpricedHarvests: $unpricedHarvests)';
 }
 
 
@@ -2598,7 +2598,7 @@ abstract mixin class $FinanceMonthCopyWith<$Res>  {
   factory $FinanceMonthCopyWith(FinanceMonth value, $Res Function(FinanceMonth) _then) = _$FinanceMonthCopyWithImpl;
 @useResult
 $Res call({
- String month, double income, double cost
+ String month, double? income, double cost, int unpricedHarvests
 });
 
 
@@ -2615,12 +2615,13 @@ class _$FinanceMonthCopyWithImpl<$Res>
 
 /// Create a copy of FinanceMonth
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? month = null,Object? income = null,Object? cost = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? month = null,Object? income = freezed,Object? cost = null,Object? unpricedHarvests = null,}) {
   return _then(_self.copyWith(
 month: null == month ? _self.month : month // ignore: cast_nullable_to_non_nullable
-as String,income: null == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
-as double,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
-as double,
+as String,income: freezed == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
+as double?,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -2705,10 +2706,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String month,  double income,  double cost)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String month,  double? income,  double cost,  int unpricedHarvests)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FinanceMonth() when $default != null:
-return $default(_that.month,_that.income,_that.cost);case _:
+return $default(_that.month,_that.income,_that.cost,_that.unpricedHarvests);case _:
   return orElse();
 
 }
@@ -2726,10 +2727,10 @@ return $default(_that.month,_that.income,_that.cost);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String month,  double income,  double cost)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String month,  double? income,  double cost,  int unpricedHarvests)  $default,) {final _that = this;
 switch (_that) {
 case _FinanceMonth():
-return $default(_that.month,_that.income,_that.cost);case _:
+return $default(_that.month,_that.income,_that.cost,_that.unpricedHarvests);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2746,10 +2747,10 @@ return $default(_that.month,_that.income,_that.cost);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String month,  double income,  double cost)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String month,  double? income,  double cost,  int unpricedHarvests)?  $default,) {final _that = this;
 switch (_that) {
 case _FinanceMonth() when $default != null:
-return $default(_that.month,_that.income,_that.cost);case _:
+return $default(_that.month,_that.income,_that.cost,_that.unpricedHarvests);case _:
   return null;
 
 }
@@ -2761,12 +2762,13 @@ return $default(_that.month,_that.income,_that.cost);case _:
 
 @JsonSerializable(checked: true)
 class _FinanceMonth implements FinanceMonth {
-  const _FinanceMonth({required this.month, required this.income, required this.cost});
+  const _FinanceMonth({required this.month, required this.income, required this.cost, this.unpricedHarvests = 0});
   factory _FinanceMonth.fromJson(Map<String, dynamic> json) => _$FinanceMonthFromJson(json);
 
 @override final  String month;
-@override final  double income;
+@override final  double? income;
 @override final  double cost;
+@override@JsonKey() final  int unpricedHarvests;
 
 /// Create a copy of FinanceMonth
 /// with the given fields replaced by the non-null parameter values.
@@ -2781,16 +2783,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FinanceMonth&&(identical(other.month, month) || other.month == month)&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FinanceMonth&&(identical(other.month, month) || other.month == month)&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,month,income,cost);
+int get hashCode => Object.hash(runtimeType,month,income,cost,unpricedHarvests);
 
 @override
 String toString() {
-  return 'FinanceMonth(month: $month, income: $income, cost: $cost)';
+  return 'FinanceMonth(month: $month, income: $income, cost: $cost, unpricedHarvests: $unpricedHarvests)';
 }
 
 
@@ -2801,7 +2803,7 @@ abstract mixin class _$FinanceMonthCopyWith<$Res> implements $FinanceMonthCopyWi
   factory _$FinanceMonthCopyWith(_FinanceMonth value, $Res Function(_FinanceMonth) _then) = __$FinanceMonthCopyWithImpl;
 @override @useResult
 $Res call({
- String month, double income, double cost
+ String month, double? income, double cost, int unpricedHarvests
 });
 
 
@@ -2818,12 +2820,13 @@ class __$FinanceMonthCopyWithImpl<$Res>
 
 /// Create a copy of FinanceMonth
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? month = null,Object? income = null,Object? cost = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? month = null,Object? income = freezed,Object? cost = null,Object? unpricedHarvests = null,}) {
   return _then(_FinanceMonth(
 month: null == month ? _self.month : month // ignore: cast_nullable_to_non_nullable
-as String,income: null == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
-as double,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
-as double,
+as String,income: freezed == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
+as double?,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -2834,7 +2837,7 @@ as double,
 /// @nodoc
 mixin _$FinanceTotals {
 
- double get income; double get cost; double get profit;
+ double? get income; double get cost; double? get profit; int get unpricedHarvests;
 /// Create a copy of FinanceTotals
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2847,16 +2850,16 @@ $FinanceTotalsCopyWith<FinanceTotals> get copyWith => _$FinanceTotalsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FinanceTotals&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.profit, profit) || other.profit == profit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FinanceTotals&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.profit, profit) || other.profit == profit)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,income,cost,profit);
+int get hashCode => Object.hash(runtimeType,income,cost,profit,unpricedHarvests);
 
 @override
 String toString() {
-  return 'FinanceTotals(income: $income, cost: $cost, profit: $profit)';
+  return 'FinanceTotals(income: $income, cost: $cost, profit: $profit, unpricedHarvests: $unpricedHarvests)';
 }
 
 
@@ -2867,7 +2870,7 @@ abstract mixin class $FinanceTotalsCopyWith<$Res>  {
   factory $FinanceTotalsCopyWith(FinanceTotals value, $Res Function(FinanceTotals) _then) = _$FinanceTotalsCopyWithImpl;
 @useResult
 $Res call({
- double income, double cost, double profit
+ double? income, double cost, double? profit, int unpricedHarvests
 });
 
 
@@ -2884,12 +2887,13 @@ class _$FinanceTotalsCopyWithImpl<$Res>
 
 /// Create a copy of FinanceTotals
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? income = null,Object? cost = null,Object? profit = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? income = freezed,Object? cost = null,Object? profit = freezed,Object? unpricedHarvests = null,}) {
   return _then(_self.copyWith(
-income: null == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
-as double,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
-as double,profit: null == profit ? _self.profit : profit // ignore: cast_nullable_to_non_nullable
-as double,
+income: freezed == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
+as double?,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,profit: freezed == profit ? _self.profit : profit // ignore: cast_nullable_to_non_nullable
+as double?,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -2974,10 +2978,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double income,  double cost,  double profit)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double? income,  double cost,  double? profit,  int unpricedHarvests)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FinanceTotals() when $default != null:
-return $default(_that.income,_that.cost,_that.profit);case _:
+return $default(_that.income,_that.cost,_that.profit,_that.unpricedHarvests);case _:
   return orElse();
 
 }
@@ -2995,10 +2999,10 @@ return $default(_that.income,_that.cost,_that.profit);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double income,  double cost,  double profit)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double? income,  double cost,  double? profit,  int unpricedHarvests)  $default,) {final _that = this;
 switch (_that) {
 case _FinanceTotals():
-return $default(_that.income,_that.cost,_that.profit);case _:
+return $default(_that.income,_that.cost,_that.profit,_that.unpricedHarvests);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3015,10 +3019,10 @@ return $default(_that.income,_that.cost,_that.profit);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double income,  double cost,  double profit)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double? income,  double cost,  double? profit,  int unpricedHarvests)?  $default,) {final _that = this;
 switch (_that) {
 case _FinanceTotals() when $default != null:
-return $default(_that.income,_that.cost,_that.profit);case _:
+return $default(_that.income,_that.cost,_that.profit,_that.unpricedHarvests);case _:
   return null;
 
 }
@@ -3030,12 +3034,13 @@ return $default(_that.income,_that.cost,_that.profit);case _:
 
 @JsonSerializable(checked: true)
 class _FinanceTotals implements FinanceTotals {
-  const _FinanceTotals({required this.income, required this.cost, required this.profit});
+  const _FinanceTotals({required this.income, required this.cost, required this.profit, this.unpricedHarvests = 0});
   factory _FinanceTotals.fromJson(Map<String, dynamic> json) => _$FinanceTotalsFromJson(json);
 
-@override final  double income;
+@override final  double? income;
 @override final  double cost;
-@override final  double profit;
+@override final  double? profit;
+@override@JsonKey() final  int unpricedHarvests;
 
 /// Create a copy of FinanceTotals
 /// with the given fields replaced by the non-null parameter values.
@@ -3050,16 +3055,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FinanceTotals&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.profit, profit) || other.profit == profit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FinanceTotals&&(identical(other.income, income) || other.income == income)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.profit, profit) || other.profit == profit)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,income,cost,profit);
+int get hashCode => Object.hash(runtimeType,income,cost,profit,unpricedHarvests);
 
 @override
 String toString() {
-  return 'FinanceTotals(income: $income, cost: $cost, profit: $profit)';
+  return 'FinanceTotals(income: $income, cost: $cost, profit: $profit, unpricedHarvests: $unpricedHarvests)';
 }
 
 
@@ -3070,7 +3075,7 @@ abstract mixin class _$FinanceTotalsCopyWith<$Res> implements $FinanceTotalsCopy
   factory _$FinanceTotalsCopyWith(_FinanceTotals value, $Res Function(_FinanceTotals) _then) = __$FinanceTotalsCopyWithImpl;
 @override @useResult
 $Res call({
- double income, double cost, double profit
+ double? income, double cost, double? profit, int unpricedHarvests
 });
 
 
@@ -3087,12 +3092,13 @@ class __$FinanceTotalsCopyWithImpl<$Res>
 
 /// Create a copy of FinanceTotals
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? income = null,Object? cost = null,Object? profit = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? income = freezed,Object? cost = null,Object? profit = freezed,Object? unpricedHarvests = null,}) {
   return _then(_FinanceTotals(
-income: null == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
-as double,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
-as double,profit: null == profit ? _self.profit : profit // ignore: cast_nullable_to_non_nullable
-as double,
+income: freezed == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
+as double?,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,profit: freezed == profit ? _self.profit : profit // ignore: cast_nullable_to_non_nullable
+as double?,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

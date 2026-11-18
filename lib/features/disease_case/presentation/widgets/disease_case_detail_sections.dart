@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart'
     show ProtocolBadge, protocolDate;
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/entities/owner_disease_case.dart';
 import 'disease_case_ui.dart';
+
+export 'case_evidence.dart' show CaseEvidence;
 
 class CaseOpeningSnapshot extends StatelessWidget {
   const CaseOpeningSnapshot({required this.snapshot, super.key});
@@ -155,89 +154,6 @@ class _OpeningMetric extends StatelessWidget {
       ],
     ),
   );
-}
-
-class CaseEvidence extends StatelessWidget {
-  const CaseEvidence({required this.attachments, super.key});
-
-  final List<DiseaseCaseAttachment> attachments;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    spacing: 8,
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: DiseaseCaseSectionTitle(
-          'Bằng chứng ban đầu',
-          trailing: DiseaseCaseBadge('${attachments.length} tệp'),
-        ),
-      ),
-      for (final item in attachments)
-        DiseaseCaseSurface(
-          onTap: () => _openAttachment(context, item.fileUrl),
-          child: Row(
-            spacing: 12,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: casePurple.background,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: AppSvgIcon(
-                    item.mediaType?.toLowerCase().startsWith('image/') == true
-                        ? AppSvgIconName.camera
-                        : AppSvgIconName.document,
-                    color: caseAiAccent,
-                    size: 18,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.caption ?? 'Tệp đính kèm',
-                      style: caseTitleStyle.copyWith(fontSize: 12, height: 1.5),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${item.uploaderName} · ${protocolDate(item.createdAt, year: true, time: true)}',
-                      style: caseMetadataStyle,
-                    ),
-                    if (item.mediaType case final type?)
-                      Text(
-                        type.toUpperCase(),
-                        style: caseMetadataStyle.copyWith(fontSize: 9),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-    ],
-  );
-
-  Future<void> _openAttachment(BuildContext context, String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri != null &&
-        (uri.isScheme('https') || uri.isScheme('http')) &&
-        uri.host.isNotEmpty) {
-      try {
-        if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
-      } on PlatformException {
-        // Use the same notice when the device cannot open the file.
-      }
-    }
-    if (context.mounted) {
-      AppNoticeService.danger(context, 'Không thể mở tệp đính kèm.');
-    }
-  }
 }
 
 class CaseTreatmentProtocols extends StatelessWidget {

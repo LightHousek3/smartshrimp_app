@@ -106,6 +106,7 @@ void main() {
     for (final kind in [
       DashboardAlertKind.pendingProduction,
       DashboardAlertKind.pendingTreatment,
+      DashboardAlertKind.caseOpen,
       DashboardAlertKind.inTreatment,
       DashboardAlertKind.monitoring,
       DashboardAlertKind.urgentTask,
@@ -244,6 +245,40 @@ void main() {
     expect(find.byType(BottomSheet), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  for (final (kind, label) in [
+    (DashboardAlertKind.caseOpen, 'ca bệnh đang mở'),
+    (DashboardAlertKind.inTreatment, 'ca bệnh đang điều trị'),
+    (DashboardAlertKind.monitoring, 'ca bệnh đang theo dõi'),
+  ]) {
+    testWidgets(
+      'N: $kind opens the exact case directly without a bottom sheet',
+      (tester) async {
+        final alert = overviewFixture.alerts.first.copyWith(
+          kind: kind,
+          preview: overviewFixture.alerts.first.preview.copyWith(
+            id: 'case-id-${kind.name}',
+          ),
+        );
+        var returns = 0;
+        final router = _router(
+          DashboardAlertCard(alert, onReturn: () => returns++),
+        );
+        addTearDown(router.dispose);
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+        expect(find.text('1 $label'), findsOneWidget);
+        await tester.tap(find.byType(DashboardAlertCard));
+        await tester.pumpAndSettle();
+        expect(find.text('Ca ${alert.preview.id}'), findsOneWidget);
+        expect(find.byType(BottomSheet), findsNothing);
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(returns, 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }
 
 GoRouter _router(Widget card) => GoRouter(
@@ -251,6 +286,11 @@ GoRouter _router(Widget card) => GoRouter(
     GoRoute(
       path: '/',
       builder: (_, _) => Scaffold(body: Center(child: card)),
+    ),
+    GoRoute(
+      path: '/disease-cases/:caseId',
+      builder: (_, state) =>
+          Scaffold(body: Text('Ca ${state.pathParameters['caseId']}')),
     ),
     GoRoute(
       path: '/farms/:farmId/inventory',

@@ -1,10 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/data/services/notification_socket.dart';
+import '../task/task_api_test.dart' show TaskSessionStore;
 import 'owner_dashboard_fixtures.dart';
 
 void main() {
@@ -16,6 +22,7 @@ void main() {
     auth = _SwitchableAuth();
     container = ProviderContainer(
       overrides: [
+        notificationSocketProvider.overrideWith((ref) => null),
         authRepositoryProvider.overrideWithValue(auth),
         ownerDashboardRepositoryProvider.overrideWithValue(repository),
       ],
@@ -23,6 +30,85 @@ void main() {
     await container.read(authControllerProvider.future);
   });
   tearDown(() => container.dispose());
+
+  test(
+    'N: case events refresh overview once, preserve finance cache and ignore notification reads',
+    () async {
+      final transport = io.io(
+        'http://localhost:1',
+        io.OptionBuilder().disableAutoConnect().enableForceNew().build(),
+      );
+      final dio = Dio();
+      final socket = NotificationSocket(
+        serverUrl: 'http://localhost:1',
+        apiClient: ApiClient(dio, TaskSessionStore()),
+        onChanged: () {},
+        onSessionExpired: () {},
+        socket: transport,
+      );
+      addTearDown(() {
+        socket.dispose();
+        dio.close();
+      });
+      final live = ProviderContainer(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(auth),
+          ownerDashboardRepositoryProvider.overrideWithValue(repository),
+          notificationSocketProvider.overrideWithValue(socket),
+        ],
+      );
+      addTearDown(live.dispose);
+      await live.read(authControllerProvider.future);
+      await live.read(ownerDashboardProvider.future);
+      await live.read(ownerFinanceProvider.future);
+      for (var update = 0; update < 2; update++) {
+        transport.emitEvent([
+          'notification:new',
+          {'referenceType': 'disease_case', 'referenceId': 'case-1'},
+        ]);
+        await Future<void>.delayed(Duration.zero);
+        await live.pump();
+        await live.read(ownerDashboardProvider.future);
+        expect(repository.overviewCalls, update + 2);
+        expect(repository.calls.length, 1);
+      }
+      transport.emitEvent([
+        'notification:read',
+        {'id': 'read'},
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      await live.pump();
+      expect(repository.overviewCalls, 3);
+      expect(repository.calls.length, 1);
+      transport.emitEvent([
+        'notification:new',
+        {
+          'referenceType': 'aquaculture_season',
+          'type': 'TREATMENT_SCHEDULE_READY',
+          'referenceId': 'season-1',
+        },
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      await live.pump();
+      await live.read(ownerDashboardProvider.future);
+      expect(repository.overviewCalls, 4);
+      transport.emitReserved('connect');
+      await Future<void>.delayed(Duration.zero);
+      await live.pump();
+      expect(
+        repository.overviewCalls,
+        4,
+        reason:
+            'Initial connect must not duplicate the first dashboard request',
+      );
+      transport.emitReserved('connect');
+      await Future<void>.delayed(Duration.zero);
+      await live.pump();
+      await live.read(ownerDashboardProvider.future);
+      expect(repository.overviewCalls, 5);
+      expect(repository.calls.length, 1);
+    },
+  );
 
   test(
     'N: removing all listeners and reopening retains responses without more requests',

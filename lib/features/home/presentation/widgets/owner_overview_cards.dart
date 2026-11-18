@@ -82,11 +82,19 @@ class _StatCard extends StatelessWidget {
 }
 
 class DashboardAlertCard extends StatelessWidget {
-  const DashboardAlertCard(this.alert, {super.key});
+  const DashboardAlertCard(this.alert, {this.onReturn, super.key});
   final DashboardAlert alert;
+  final VoidCallback? onReturn;
   @override
   Widget build(BuildContext context) {
     final (label, icon, color, background, border) = switch (alert.kind) {
+      DashboardAlertKind.caseOpen => (
+        'ca bệnh đang mở',
+        AppSvgIconName.shield,
+        const Color(0xFFD70040),
+        const Color(0xFFFCE7EC),
+        const Color(0xFFFFC7D3),
+      ),
       DashboardAlertKind.urgentTask => (
         'nhiệm vụ khẩn cấp',
         AppSvgIconName.tasks,
@@ -147,7 +155,10 @@ class DashboardAlertCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => _showAlert(context, alert, label),
+        onTap: () async {
+          await _showAlert(context, alert, label);
+          if (context.mounted) onReturn?.call();
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
@@ -227,6 +238,7 @@ String _alertContext(DashboardAlert alert) {
   final hidePond = switch (alert.kind) {
     DashboardAlertKind.pendingProduction ||
     DashboardAlertKind.pendingTreatment ||
+    DashboardAlertKind.caseOpen ||
     DashboardAlertKind.inTreatment ||
     DashboardAlertKind.monitoring => true,
     _ => false,
@@ -238,24 +250,37 @@ String _alertContext(DashboardAlert alert) {
   ].join(' · ');
 }
 
-void _showAlert(BuildContext context, DashboardAlert alert, String label) {
+Future<void> _showAlert(
+  BuildContext context,
+  DashboardAlert alert,
+  String label,
+) async {
   final preview = alert.preview;
+  if (alert.kind == DashboardAlertKind.caseOpen ||
+      alert.kind == DashboardAlertKind.inTreatment ||
+      alert.kind == DashboardAlertKind.monitoring) {
+    await context.push(
+      '/disease-cases/${Uri.encodeComponent(preview.id)}',
+      extra: _alertContext(alert),
+    );
+    return;
+  }
   if (alert.kind == DashboardAlertKind.urgentTask) {
-    context.push(
+    await context.push(
       alert.count > 1 ? '/tasks' : '/tasks/${Uri.encodeComponent(preview.id)}',
     );
     return;
   }
   if (alert.kind == DashboardAlertKind.pendingProduction ||
       alert.kind == DashboardAlertKind.pendingTreatment) {
-    context.push('/protocols/${Uri.encodeComponent(preview.id)}');
+    await context.push('/protocols/${Uri.encodeComponent(preview.id)}');
     return;
   }
   if (alert.kind == DashboardAlertKind.lowStock) {
-    context.push(_inventoryPath(preview.farmId), extra: preview.farmName);
+    await context.push(_inventoryPath(preview.farmId), extra: preview.farmName);
     return;
   }
-  showModalBottomSheet<void>(
+  await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) => SafeArea(

@@ -28,7 +28,7 @@ class _FinanceChartState extends State<FinanceChart> {
   Widget build(BuildContext context) {
     final peak = widget.months.fold<double>(
       0,
-      (max, month) => math.max(max, math.max(month.income, month.cost)),
+      (max, month) => math.max(max, math.max(month.income ?? 0, month.cost)),
     );
     final scale = _niceScale(peak);
     final activeIndex = _hovered ?? _selected;
@@ -62,7 +62,7 @@ class _FinanceChartState extends State<FinanceChart> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                'Tháng ${widget.months[activeIndex].month.split('-').reversed.join('/')} · Thu ${dashboardMoney(widget.months[activeIndex].income)} · Chi ${dashboardMoney(widget.months[activeIndex].cost)}',
+                                'Tháng ${widget.months[activeIndex].month.split('-').reversed.join('/')} · Thu ${_revenueLabel(widget.months[activeIndex])} · Chi ${dashboardMoney(widget.months[activeIndex].cost)}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppColors.inkSoft,
@@ -112,7 +112,7 @@ class _FinanceChartState extends State<FinanceChart> {
                                 child: Semantics(
                                   button: true,
                                   label:
-                                      '${widget.months[index].month}, Thu ${widget.months[index].income} đồng, Chi ${widget.months[index].cost} đồng',
+                                      '${widget.months[index].month}, Thu ${_revenueLabel(widget.months[index])}, Chi ${dashboardMoney(widget.months[index].cost)}',
                                   selected: activeIndex == index,
                                   child: InkWell(
                                     key: ValueKey(
@@ -143,7 +143,7 @@ class _FinanceChartState extends State<FinanceChart> {
                                             CrossAxisAlignment.end,
                                         children: [
                                           _bar(
-                                            widget.months[index].income,
+                                            widget.months[index].income ?? 0,
                                             scale,
                                             dashboardTeal,
                                             width,
@@ -193,7 +193,15 @@ class _FinanceChartState extends State<FinanceChart> {
             );
           },
         ),
-        if (peak == 0)
+        if (widget.months.any((month) => month.unpricedHarvests > 0))
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text(
+              'Doanh thu chưa đầy đủ: còn lần thu hoạch chưa có giá.',
+              style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            ),
+          )
+        else if (peak == 0)
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
@@ -215,6 +223,10 @@ class _FinanceChartState extends State<FinanceChart> {
         ),
       );
 }
+
+String _revenueLabel(FinanceMonth month) => month.income == null
+    ? 'Chưa xác định'
+    : '${dashboardMoney(month.income!)}${month.unpricedHarvests > 0 ? ' (chưa đầy đủ)' : ''}';
 
 String _monthLabel(String month) {
   final parts = month.split('-');
@@ -292,7 +304,11 @@ class _ChartGrid extends CustomPainter {
         text: TextSpan(
           text: value == 0
               ? '0'
-              : dashboardMoney(value).replaceAll(' tr', 'tr'),
+              : dashboardMoney(value)
+                    .replaceAll(' tr', 'tr')
+                    .replaceAll(',0 nghìn', 'k')
+                    .replaceAll(' nghìn', 'k')
+                    .replaceAll(' tỷ', 'tỷ'),
           style: const TextStyle(
             color: AppColors.inkMuted,
             fontSize: 9,

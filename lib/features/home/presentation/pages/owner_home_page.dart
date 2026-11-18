@@ -67,7 +67,11 @@ class OwnerHomePage extends ConsumerWidget {
                         padding: EdgeInsets.only(
                           bottom: i == dashboard.alerts.length - 1 ? 8 : 16,
                         ),
-                        child: DashboardAlertCard(dashboard.alerts[i]),
+                        child: DashboardAlertCard(
+                          dashboard.alerts[i],
+                          onReturn: () =>
+                              ref.invalidate(ownerDashboardProvider),
+                        ),
                       ),
                     const DashboardSectionTitle('Vụ đang nuôi'),
                     if (dashboard.seasons.isEmpty)
