@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/features/notifications/presentation/widgets/push_permission_card.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
-import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_detail_sheet.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
+import 'package:smartshrimp_app/features/notifications/presentation/widgets/push_permission_card.dart';
 
 enum _NotificationFilter { all, unread, action, warning }
 
@@ -89,70 +88,65 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
         ? '$unreadCount thông báo chưa đọc'
         : 'Bạn đã đọc hết';
 
-    return AppGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: AppColors.ocean,
-          onRefresh: () => ref.read(provider.notifier).refresh(),
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              StickyPageHeader(
-                title: 'Thông báo',
-                subtitle: subtitle,
-                showBack: false,
-                titleSize: 22,
-                bottomHeight: 63,
-                bottom: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 3, 16, 12),
-                  child: _FilterChips(
-                    selected: _filter,
-                    onSelect: (filter) {
-                      if (_filter == filter) return;
-                      setState(() {
-                        _filter = filter;
-                        _loadMoreError = null;
-                        _loadingMore = false;
-                      });
-                    },
-                  ),
-                ),
-                trailing: _MarkAllButton(
-                  markingAllAsRead: _markingAllAsRead,
-                  onPressed: hasUnread && !_markingAllAsRead
-                      ? () => _markAllAsRead(provider)
-                      : null,
-                ),
-              ),
-              const SliverToBoxAdapter(child: PushPermissionCard()),
-              ...listState.when(
-                loading: () => const <Widget>[
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppColors.ocean),
-                    ),
-                  ),
-                ],
-                error: (error, _) => <Widget>[
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _MessageState(
-                      icon: Icons.cloud_off_rounded,
-                      title: 'Không thể tải thông báo',
-                      message: _errorMessage(error),
-                      actionLabel: 'Thử lại',
-                      actionIcon: Icons.refresh_rounded,
-                      onAction: () => ref.read(provider.notifier).refresh(),
-                    ),
-                  ),
-                ],
-                data: (page) => _buildSlivers(provider, page),
-              ),
-            ],
+    return TabPageLayout(
+      title: 'Thông báo',
+      subtitle: subtitle,
+      headerBottom: SizedBox(
+        height: 63,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 3, 16, 12),
+          child: _FilterChips(
+            selected: _filter,
+            onSelect: (filter) {
+              if (_filter == filter) return;
+              setState(() {
+                _filter = filter;
+                _loadMoreError = null;
+                _loadingMore = false;
+              });
+            },
           ),
+        ),
+      ),
+      trailing: _MarkAllButton(
+        markingAllAsRead: _markingAllAsRead,
+        onPressed: hasUnread && !_markingAllAsRead
+            ? () => _markAllAsRead(provider)
+            : null,
+      ),
+      child: RefreshIndicator(
+        color: AppColors.ocean,
+        onRefresh: () => ref.read(provider.notifier).refresh(),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            const SliverToBoxAdapter(child: PushPermissionCard()),
+            ...listState.when(
+              loading: () => const <Widget>[
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.ocean),
+                  ),
+                ),
+              ],
+              error: (error, _) => <Widget>[
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _MessageState(
+                    icon: Icons.cloud_off_rounded,
+                    title: 'Không thể tải thông báo',
+                    message: _errorMessage(error),
+                    actionLabel: 'Thử lại',
+                    actionIcon: Icons.refresh_rounded,
+                    onAction: () => ref.read(provider.notifier).refresh(),
+                  ),
+                ),
+              ],
+              data: (page) => _buildSlivers(provider, page),
+            ),
+          ],
         ),
       ),
     );

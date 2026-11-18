@@ -2,7 +2,6 @@ import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 
@@ -33,25 +32,8 @@ class TaskHeader extends StatelessWidget {
   final VoidCallback onBack;
   final Widget? trailing;
   @override
-  Widget build(BuildContext context) => PageHeaderBar(
-    title: title,
-    titleStyle: taskHeadingStyle(),
-    trailing: trailing,
-    backButton: AppCircleButton(
-      icon: Icons.arrow_back,
-      tooltip: 'Quay lại',
-      onPressed: onBack,
-      size: 36,
-      backgroundColor: Colors.transparent,
-      iconWidget: Center(
-        child: AppSvgIcon(
-          AppSvgIconName.back,
-          size: 20,
-          color: AppColors.inkSoft,
-        ),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      PageHeaderBar(title: title, trailing: trailing, onBack: onBack);
 }
 
 String taskError(Object error) => error is AppException

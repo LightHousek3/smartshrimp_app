@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
+
 import 'task_ui.dart';
 
 /// The same list layout renders owner status tabs and technician grouped tabs.
@@ -35,136 +37,94 @@ class TaskListView extends StatelessWidget {
   final bool showAssignee;
 
   @override
-  Widget build(BuildContext context) => AppGradientBackground(
-    child: SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 28, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nhiệm vụ',
-                        style: taskHeadingStyle(
-                          size: 22,
-                          weight: FontWeight.w800,
-                        ).copyWith(letterSpacing: -.55),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.5,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (onCreate != null)
-                  IconButton(
-                    tooltip: 'Tạo và giao nhiệm vụ',
-                    onPressed: onCreate,
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.ocean,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const AppSvgIcon(
-                      AppSvgIconName.plus,
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-              ],
-            ),
+  Widget build(BuildContext context) => TabPageLayout(
+    title: 'Nhiệm vụ',
+    subtitle: subtitle,
+    trailing: onCreate == null
+        ? null
+        : AppCircleButton.add(
+            tooltip: 'Tạo và giao nhiệm vụ',
+            onPressed: onCreate,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: _TaskTabs(
-              labels: tabs,
-              selected: selectedTab,
-              onSelected: onSelectTab,
-            ),
+    child: Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: _TaskTabs(
+            labels: tabs,
+            selected: selectedTab,
+            onSelected: onSelectTab,
           ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: onRefresh,
-              child: CustomScrollView(
-                key: ValueKey(selectedTab),
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: tasks.when(
-                  loading: () => const [
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: CustomScrollView(
+              key: ValueKey(selectedTab),
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: tasks.when(
+                loading: () => const [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+                error: (error, _) => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(child: TaskLoadError(error, onRetry)),
+                  ),
+                ],
+                data: (page) => [
+                  if (page.items.isEmpty)
                     SliverFillRemaining(
                       hasScrollBody: false,
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  ],
-                  error: (error, _) => [
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(child: TaskLoadError(error, onRetry)),
-                    ),
-                  ],
-                  data: (page) => [
-                    if (page.items.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: TaskEmpty(canCreate: onCreate != null),
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList.separated(
-                          itemCount: page.items.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (_, index) => TaskCard(
-                            page.items[index],
-                            now: page.serverNow,
-                            showAssignee: showAssignee,
-                            onTap: () => onOpenTask(page.items[index].id),
-                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: TaskEmpty(canCreate: onCreate != null),
                         ),
                       ),
-                    if (page.hasNextPage)
-                      SliverToBoxAdapter(
-                        child: TextButton(
-                          onPressed: () async {
-                            try {
-                              await onLoadMore();
-                            } catch (error) {
-                              if (context.mounted) {
-                                AppNoticeService.danger(
-                                  context,
-                                  taskError(error),
-                                );
-                              }
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList.separated(
+                        itemCount: page.items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) => TaskCard(
+                          page.items[index],
+                          now: page.serverNow,
+                          showAssignee: showAssignee,
+                          onTap: () => onOpenTask(page.items[index].id),
+                        ),
+                      ),
+                    ),
+                  if (page.hasNextPage)
+                    SliverToBoxAdapter(
+                      child: TextButton(
+                        onPressed: () async {
+                          try {
+                            await onLoadMore();
+                          } catch (error) {
+                            if (context.mounted) {
+                              AppNoticeService.danger(
+                                context,
+                                taskError(error),
+                              );
                             }
-                          },
-                          child: const Text('Tải thêm'),
-                        ),
+                          }
+                        },
+                        child: const Text('Tải thêm'),
                       ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  ],
-                ),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

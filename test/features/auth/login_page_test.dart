@@ -15,6 +15,32 @@ import 'package:smartshrimp_app/features/auth/presentation/pages/login_page.dart
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 
 void main() {
+  testWidgets('invalid login email shows only the concise format message', (
+    tester,
+  ) async {
+    final repository = _LoginAuthRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        child: const MaterialApp(home: LoginPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('login_email_field')),
+      'invalid-address',
+    );
+    await tester.enterText(
+      find.byKey(const Key('login_password_field')),
+      'Password123',
+    );
+    await tester.ensureVisible(find.text('Đăng nhập').last);
+    await tester.tap(find.text('Đăng nhập').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Email không hợp lệ'), findsOneWidget);
+    expect(find.textContaining('Ví dụ:'), findsNothing);
+    expect(repository.email, isNull);
+  });
   testWidgets('login validates required credentials without asterisk labels', (
     tester,
   ) async {

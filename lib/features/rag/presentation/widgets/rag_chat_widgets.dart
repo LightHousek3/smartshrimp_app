@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/presentation/widgets/rag_answer_body.dart';
@@ -30,37 +29,9 @@ class RagChatHeader extends StatelessWidget {
   final VoidCallback onBack;
   final String title, subtitle;
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .8),
-      border: Border(
-        bottom: BorderSide(color: AppColors.line.withValues(alpha: .7)),
-      ),
-    ),
-    child: SafeArea(
-      bottom: false,
-      child: PageHeaderBar(
-        title: title,
-        subtitle: subtitle,
-        height: 62,
-        backgroundColor: Colors.transparent,
-        titleStyle: AppTypography.display(
-          color: AppColors.ink,
-          fontSize: 16,
-          letterSpacing: 0,
-          fontWeight: FontWeight.w700,
-          height: 1.25,
-        ).copyWith(fontFamilyFallback: const ['PlusJakartaSans_regular']),
-        backButton: AppCircleButton(
-          icon: Icons.chevron_left,
-          tooltip: 'Quay lại',
-          onPressed: onBack,
-          size: 36,
-          backgroundColor: const Color(0xFFEEF1F6),
-          iconWidget: Center(child: SvgPicture.asset(RagAssets.back)),
-        ),
-      ),
-    ),
+  Widget build(BuildContext context) => SafeArea(
+    bottom: false,
+    child: PageHeaderBar(title: title, subtitle: subtitle, onBack: onBack),
   );
 }
 

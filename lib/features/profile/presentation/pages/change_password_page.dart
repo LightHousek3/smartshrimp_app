@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
-import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/core/widgets/password_visibility_button.dart';
 import 'package:smartshrimp_app/features/profile/presentation/widgets/profile_form_field.dart';
 import 'package:smartshrimp_app/features/profile/presentation/profile_form_utils.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
@@ -48,17 +48,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
         bottom: false,
         child: Column(
           children: <Widget>[
-            PageHeaderBar(
-              title: 'Đổi mật khẩu',
-              onBack: context.pop,
-              contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              titleStyle: AppTypography.display(
-                fontSize: 16,
-                height: 1.25,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
-            ),
+            PageHeaderBar(title: 'Đổi mật khẩu', onBack: context.pop),
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
@@ -239,17 +229,9 @@ class _PasswordField extends StatelessWidget {
         style: profileInputStyle,
         decoration: profileInputDecoration(
           hintText: '••••••••',
-          suffixIcon: IconButton(
-            style: IconButton.styleFrom(
-              minimumSize: const Size(40, 40),
-              fixedSize: const Size(40, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            tooltip: obscureText ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+          suffixIcon: PasswordVisibilityButton(
+            obscureText: obscureText,
             onPressed: enabled ? onToggle : null,
-            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-            padding: const EdgeInsets.all(10),
-            icon: const AppSvgIcon(AppSvgIconName.eye, size: 17),
           ),
         ),
         validator: validator,

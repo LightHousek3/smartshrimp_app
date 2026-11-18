@@ -456,11 +456,6 @@ class _HarvestListScaffold extends StatelessWidget {
       slivers: [
         StickyPageHeader(
           title: title,
-          titleStyle: AppTypography.display(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
-          ).copyWith(fontFamilyFallback: const ['Roboto']),
           subtitle: subtitle,
           onBack: () => Navigator.of(context).maybePop(),
         ),

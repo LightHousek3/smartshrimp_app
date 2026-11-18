@@ -62,6 +62,7 @@ abstract final class AiDiagnosisText {
       : 'Không thể hoàn thành thao tác. Vui lòng thử lại.';
 }
 
+/// Provide a Material surface for AI routes opened above the main shell.
 class AiDiagnosisFrame extends StatelessWidget {
   const AiDiagnosisFrame({
     required this.title,
@@ -73,28 +74,20 @@ class AiDiagnosisFrame extends StatelessWidget {
   final String? subtitle;
   final Widget child;
   @override
-  Widget build(BuildContext context) => AppGradientBackground(
-    child: SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          PageHeaderBar(
-            title: title,
-            titleStyle: AiDiagnosisStyle.heading(fontSize: 16),
-            subtitle: subtitle,
-            onBack: () => Navigator.of(context).maybePop(),
-            backButton: SizedBox(
-              width: 36,
-              height: 44,
-              child: IconButton(
-                tooltip: 'Quay lại',
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const AiIcon('back'),
-              ),
+  Widget build(BuildContext context) => Scaffold(
+    body: AppGradientBackground(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            PageHeaderBar(
+              title: title,
+              subtitle: subtitle,
+              onBack: () => Navigator.of(context).maybePop(),
             ),
-          ),
-          Expanded(child: child),
-        ],
+            Expanded(child: child),
+          ],
+        ),
       ),
     ),
   );

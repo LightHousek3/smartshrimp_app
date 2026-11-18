@@ -184,7 +184,7 @@ void main() {
   });
 
   testWidgets(
-    'pond-style filter toolbar fits a narrow screen and limits search length',
+    'owner-sized filter toolbar fits a narrow screen and limits search length',
     (tester) async {
       tester.view.physicalSize = const Size(320, 800);
       tester.view.devicePixelRatio = 1;
@@ -222,6 +222,10 @@ void main() {
       repository.requests[0].result.complete(empty);
       await tester.pumpAndSettle();
       final field = find.byKey(const Key('assigned_season_search'));
+      final filter = find.byKey(const Key('assigned_season_farm_filter'));
+      expect(tester.getSize(field).height, 40);
+      expect(tester.getSize(filter), const Size(128, 40));
+      expect(tester.getRect(filter).left - tester.getRect(field).right, 8);
       await tester.enterText(field, 'a' * 256);
       await tester.pump(AssignedSeasonRules.searchDebounce);
       expect(

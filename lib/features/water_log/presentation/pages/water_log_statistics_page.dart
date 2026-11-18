@@ -78,41 +78,10 @@ class _WaterLogStatisticsPageState
             bottom: false,
             child: Column(
               children: [
-                AppGradientBackground(
-                  child: PageHeaderBar(
-                    height: 78,
-                    titleStyle:
-                        AppTypography.display(
-                          color: AppColors.ink,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ).copyWith(
-                          fontFamilyFallback: [
-                            GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w700,
-                            ).fontFamily!,
-                          ],
-                        ),
-                    title: 'Thống kê chất lượng nước',
-                    subtitle: subtitle.isEmpty ? null : subtitle,
-                    backgroundColor: AppColors.backgroundTop,
-                    onBack: context.pop,
-                    backButton: SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        tooltip: 'Quay lại',
-                        onPressed: context.pop,
-                        icon: SvgPicture.asset(
-                          'assets/icons/water-log/water_back.svg',
-                          width: 19.9898,
-                          height: 19.9898,
-                        ),
-                      ),
-                    ),
-                  ),
+                PageHeaderBar(
+                  title: 'Thống kê chất lượng nước',
+                  subtitle: subtitle.isEmpty ? null : subtitle,
+                  onBack: context.pop,
                 ),
                 Expanded(
                   child: RefreshIndicator(

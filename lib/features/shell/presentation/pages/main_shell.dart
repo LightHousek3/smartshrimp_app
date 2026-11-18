@@ -24,7 +24,12 @@ class MainShell extends ConsumerWidget {
 
   static const _ownerItems = <_NavigationItem>[
     _NavigationItem('Trang chủ', '/', AppSvgIconName.home),
-    _NavigationItem('Trang trại', '/farms', AppSvgIconName.farm),
+    _NavigationItem(
+      'Trang trại',
+      '/farms',
+      AppSvgIconName.farm,
+      iconScale: 1.25,
+    ),
     _NavigationItem('Nhiệm vụ', '/tasks', AppSvgIconName.tasks),
     _NavigationItem(
       'Thông báo',
@@ -41,7 +46,6 @@ class MainShell extends ConsumerWidget {
         ref.watch(authControllerProvider).value?.role == AccountRole.farmOwner;
     final items = isOwner ? _ownerItems : _technicianItems;
     final location = GoRouterState.of(context).uri.path;
-    final taskScreen = !isOwner && location.startsWith('/tasks');
     final diseaseCaseScreen =
         isOwner && location.startsWith(AppRoutes.diseaseCases);
     final unreadNotifications = ref.watch(
@@ -78,7 +82,7 @@ class MainShell extends ConsumerWidget {
               ? const EdgeInsets.symmetric(horizontal: 4)
               : EdgeInsets.zero,
           child: SizedBox(
-            height: isOwner || taskScreen ? 66 : 64,
+            height: 66,
             child: Row(
               children: List<Widget>.generate(items.length, (index) {
                 final item = items[index];
@@ -121,12 +125,15 @@ class MainShell extends ConsumerWidget {
                                     SizedBox.square(
                                       dimension: diseaseCaseScreen ? 24 : 22,
                                       child: Center(
-                                        child: AppSvgIcon(
-                                          item.icon,
-                                          color: selected
-                                              ? AppColors.ocean
-                                              : AppColors.inkMuted,
-                                          size: 22,
+                                        child: Transform.scale(
+                                          scale: item.iconScale,
+                                          child: AppSvgIcon(
+                                            item.icon,
+                                            color: selected
+                                                ? AppColors.ocean
+                                                : AppColors.inkMuted,
+                                            size: 22,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -221,9 +228,10 @@ class MainShell extends ConsumerWidget {
 }
 
 final class _NavigationItem {
-  const _NavigationItem(this.label, this.path, this.icon);
+  const _NavigationItem(this.label, this.path, this.icon, {this.iconScale = 1});
 
   final String label;
   final String path;
   final AppSvgIconName icon;
+  final double iconScale;
 }

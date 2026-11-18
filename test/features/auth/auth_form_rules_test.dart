@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/features/auth/domain/auth_form_rules.dart';
 
 void main() {
+  test('malformed email uses the concise validation message', () {
+    expect(AuthFormRules.email('invalid-address'), 'Email không hợp lệ');
+  });
   for (final value in [
     'a@example.com',
     'a+b@example.com',

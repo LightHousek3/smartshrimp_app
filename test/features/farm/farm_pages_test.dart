@@ -476,8 +476,26 @@ void main() {
     expect(find.text('3 vụ nuôi'), findsOneWidget);
     expect(repository.getCalls, 1);
 
+    final createAction = find.byTooltip('Tạo trang trại');
+    expect(createAction, findsOneWidget);
+    expect(
+      tester.getRect(createAction).bottom,
+      lessThan(tester.getRect(find.byType(TextField).first).top),
+    );
+    expect(
+      tester
+          .widget<Material>(
+            find
+                .descendant(of: createAction, matching: find.byType(Material))
+                .first,
+          )
+          .color,
+      const Color(0xFF1D7AD6),
+    );
+
     await tester.enterText(find.byType(TextField).first, 'không tồn tại');
     await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.getSize(find.byType(TextField).first).height, 40);
     expect(find.text('Trại Cà Mau'), findsNothing);
     expect(repository.getCalls, 1);
 

@@ -23,6 +23,8 @@ import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_contro
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 
+import '../../support/load_app_fonts.dart';
+
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
   testWidgets(
@@ -83,6 +85,7 @@ void main() {
   _historyTests();
   for (final width in [402.0, 320.0]) {
     testWidgets('Figma chat layout fits a $width pixel phone', (tester) async {
+      await loadAppFonts();
       tester.view.physicalSize = Size(width, 876);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(top: 40);
@@ -126,7 +129,7 @@ void main() {
       expect(find.text('Trại Cửa Lấp  ›  Vụ Đông Xuân 2025'), findsOneWidget);
       expect(tester.takeException(), isNull);
       const assetWidths = {
-        'assets/icons/rag/back.svg': 19.9863,
+        'assets/icons/common/back.svg': 20,
         'assets/icons/rag/location.svg': 13.9828,
         'assets/icons/rag/assistant.svg': 12.9854,
         'assets/icons/rag/star.svg': 15.9965,

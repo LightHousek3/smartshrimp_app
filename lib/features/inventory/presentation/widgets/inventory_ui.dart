@@ -76,16 +76,12 @@ class InventoryPageFrame extends StatelessWidget {
     required this.title,
     required this.child,
     required this.onBack,
-    this.headerHeight = 76,
-    this.backIconAsset = InventoryAssets.catalogBack,
     this.subtitle,
     this.trailing,
     this.stackChildren = const <Widget>[],
     super.key,
   });
 
-  final double headerHeight;
-  final String backIconAsset;
   final String title;
   final String? subtitle;
   final Widget child;
@@ -105,38 +101,8 @@ class InventoryPageFrame extends StatelessWidget {
               children: <Widget>[
                 PageHeaderBar(
                   title: title,
-                  titleStyle: AppTypography.display(
-                    color: AppColors.ink,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                   subtitle: subtitle,
                   onBack: onBack,
-                  height: headerHeight,
-                  backgroundColor: Colors.transparent,
-                  backButton: Semantics(
-                    button: true,
-                    label: 'Quay lại',
-                    child: InkResponse(
-                      onTap: onBack,
-                      radius: 22,
-                      child: SizedBox.square(
-                        dimension: 36,
-                        child: Center(
-                          child: SvgPicture.asset(
-                            backIconAsset,
-                            width: 20,
-                            height: 20,
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.inkSoft,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                   trailing: trailing,
                 ),
                 Expanded(child: child),

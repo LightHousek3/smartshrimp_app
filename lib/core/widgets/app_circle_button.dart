@@ -15,6 +15,18 @@ class AppCircleButton extends StatelessWidget {
     super.key,
   });
 
+  const AppCircleButton.add({
+    required this.tooltip,
+    required this.onPressed,
+    super.key,
+  }) : icon = Icons.add_rounded,
+       filled = true,
+       size = 40,
+       iconSize = 20,
+       borderRadius = const BorderRadius.all(Radius.circular(12)),
+       iconWidget = null,
+       backgroundColor = null;
+
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;

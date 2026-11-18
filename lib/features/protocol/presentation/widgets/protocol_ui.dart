@@ -177,31 +177,8 @@ class ProtocolFrame extends StatelessWidget {
               PageHeaderBar(
                 title: title,
                 subtitle: subtitle,
-                backgroundColor: Colors.transparent,
-                titleStyle:
-                    AppTypography.display(
-                      fontSize: 16,
-                      height: 1.25,
-                      color: AppColors.ink,
-                      fontWeight: FontWeight.w700,
-                    ).copyWith(
-                      fontFamily: 'Sora',
-                      fontFamilyFallback: const ['PlusJakartaSans'],
-                    ),
-                backButton: SizedBox.square(
-                  dimension: 36,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Quay lại',
-                    onPressed: () =>
-                        context.canPop() ? context.pop() : context.go('/'),
-                    icon: const AppSvgIcon(
-                      AppSvgIconName.back,
-                      size: 20,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                ),
+                onBack: () =>
+                    context.canPop() ? context.pop() : context.go('/'),
               ),
               ?bottom,
               Expanded(child: child),

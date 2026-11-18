@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/core/widgets/app_logo.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/password_visibility_button.dart';
 import 'package:smartshrimp_app/features/auth/domain/auth_form_rules.dart';
 import 'package:smartshrimp_app/features/auth/domain/verification_purpose.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -151,18 +152,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         enableSuggestions: false,
                         decoration: InputDecoration(
                           hintText: '••••••••',
-                          suffixIcon: IconButton(
+                          suffixIcon: PasswordVisibilityButton(
                             key: const Key('toggle_password_visibility'),
-                            tooltip: _obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+                            obscureText: _obscure,
                             onPressed: loading
                                 ? null
                                 : () => setState(() => _obscure = !_obscure),
-                            icon: _obscure
-                                ? const AuthIcon('eye', size: 17)
-                                : const Icon(
-                                    Icons.visibility_off_outlined,
-                                    size: 17,
-                                  ),
                           ),
                         ),
                         validator: (value) {

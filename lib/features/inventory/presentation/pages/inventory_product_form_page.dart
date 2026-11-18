@@ -1208,8 +1208,6 @@ class _InventoryProductFormPageState
     canPop: !_saving,
     child: InventoryPageFrame(
       title: _isEdit ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới',
-      backIconAsset: InventoryAssets.formBack,
-      headerHeight: 60,
       onBack: () {
         if (!_saving) context.pop();
       },

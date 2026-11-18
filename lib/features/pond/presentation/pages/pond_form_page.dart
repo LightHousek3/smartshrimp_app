@@ -211,7 +211,6 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
               slivers: <Widget>[
                 StickyPageHeader(
                   title: editing ? 'Cập nhật ao' : 'Tạo ao mới',
-                  titleSize: 18,
                   onBack: loading ? null : context.pop,
                 ),
                 SliverPadding(

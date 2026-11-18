@@ -4,7 +4,6 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
-import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 
 import '../../domain/entities/owner_disease_case.dart';
@@ -86,41 +85,10 @@ class DiseaseCaseFrame extends StatelessWidget {
         StickyPageHeader(
           title: title,
           subtitle: subtitle,
-          height: 62 + (textScaler.scale(28) - 28).clamp(0, double.infinity),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          backButton: SizedBox(
-            width: 36,
-            height: 44,
-            child: IconButton(
-              tooltip: 'Quay lại',
-              padding: EdgeInsets.zero,
-              onPressed: () =>
-                  context.canPop() ? context.pop() : context.go('/farms'),
-              icon: const AppSvgIcon(
-                AppSvgIconName.arrowBack,
-                color: AppColors.inkSoft,
-              ),
-            ),
-          ),
-          titleStyle: const TextStyle(
-            fontFamily: 'Sora',
-            fontFamilyFallback: ['PlusJakartaSans'],
-            fontSize: 16,
-            height: 1.25,
-            color: AppColors.ink,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0,
-          ),
-          subtitleStyle: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            height: 1.5,
-            color: AppColors.inkMuted,
-            letterSpacing: 0,
-          ),
           bottom: tabs,
           bottomHeight:
               52 + 3 * (textScaler.scale(13) - 13).clamp(0, double.infinity),
+          onBack: () => context.canPop() ? context.pop() : context.go('/farms'),
         ),
         ...slivers,
       ],

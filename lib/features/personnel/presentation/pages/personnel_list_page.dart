@@ -74,8 +74,6 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
             slivers: <Widget>[
               StickyPageHeader(
                 title: 'Nhân sự',
-                titleSize: 20,
-                height: 64,
                 onBack: () => context.go(AppRoutes.account),
                 bottomHeight: 126,
                 bottom: Padding(

@@ -1,5 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 
 /// A page header that stays pinned while its [CustomScrollView] scrolls.
 ///
@@ -17,7 +22,7 @@ class StickyPageHeader extends StatelessWidget {
     this.bottomHeight = 0,
     this.height = 76,
     this.titleSize = 16,
-    this.backgroundColor = AppColors.backgroundTop,
+    this.backgroundColor,
     this.titleStyle,
     this.subtitleStyle,
     this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
@@ -34,7 +39,7 @@ class StickyPageHeader extends StatelessWidget {
   final double bottomHeight;
   final double height;
   final double titleSize;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
@@ -51,7 +56,14 @@ class StickyPageHeader extends StatelessWidget {
       backButton: backButton,
       bottom: bottom,
       bottomHeight: bottomHeight,
-      height: height,
+      height: _headerHeight(
+        context,
+        height,
+        titleSize,
+        subtitle,
+        titleStyle,
+        subtitleStyle,
+      ),
       titleSize: titleSize,
       backgroundColor: backgroundColor,
       titleStyle: titleStyle,
@@ -71,7 +83,7 @@ class PageHeaderBar extends StatelessWidget {
     this.trailing,
     this.height = 76,
     this.titleSize = 16,
-    this.backgroundColor = AppColors.backgroundTop,
+    this.backgroundColor,
     this.backButton,
     this.titleStyle,
     this.subtitleStyle,
@@ -86,7 +98,7 @@ class PageHeaderBar extends StatelessWidget {
   final Widget? trailing;
   final double height;
   final double titleSize;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final Widget? backButton;
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
@@ -95,19 +107,28 @@ class PageHeaderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     width: double.infinity,
-    height: height,
-    child: _PageHeaderContent(
-      title: title,
-      subtitle: subtitle,
-      onBack: onBack,
-      showBack: showBack,
-      trailing: trailing,
-      titleSize: titleSize,
-      backgroundColor: backgroundColor,
-      backButton: backButton,
-      titleStyle: titleStyle,
-      subtitleStyle: subtitleStyle,
-      contentPadding: contentPadding,
+    height: _headerHeight(
+      context,
+      height,
+      titleSize,
+      subtitle,
+      titleStyle,
+      subtitleStyle,
+    ),
+    child: AppBackgroundSurface(
+      color: backgroundColor,
+      child: _PageHeaderContent(
+        title: title,
+        subtitle: subtitle,
+        onBack: onBack,
+        showBack: showBack,
+        trailing: trailing,
+        titleSize: titleSize,
+        backButton: backButton,
+        titleStyle: titleStyle,
+        subtitleStyle: subtitleStyle,
+        contentPadding: contentPadding,
+      ),
     ),
   );
 }
@@ -140,7 +161,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double bottomHeight;
   final double height;
   final double titleSize;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
@@ -156,7 +177,7 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
     BuildContext context,
     double shrinkOffset,
     bool overlapsContent,
-  ) => ColoredBox(
+  ) => AppBackgroundSurface(
     color: backgroundColor,
     child: Column(
       children: <Widget>[
@@ -170,7 +191,6 @@ class _StickyPageHeaderDelegate extends SliverPersistentHeaderDelegate {
             trailing: trailing,
             backButton: backButton,
             titleSize: titleSize,
-            backgroundColor: backgroundColor,
             titleStyle: titleStyle,
             subtitleStyle: subtitleStyle,
             contentPadding: contentPadding,
@@ -208,7 +228,6 @@ class _PageHeaderContent extends StatelessWidget {
     required this.showBack,
     required this.trailing,
     required this.titleSize,
-    required this.backgroundColor,
     this.backButton,
     this.titleStyle,
     this.subtitleStyle,
@@ -221,38 +240,40 @@ class _PageHeaderContent extends StatelessWidget {
   final bool showBack;
   final Widget? trailing;
   final double titleSize;
-  final Color backgroundColor;
   final Widget? backButton;
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
   final EdgeInsetsGeometry contentPadding;
 
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: backgroundColor,
-    child: SizedBox.expand(
-      child: Padding(
-        padding: contentPadding,
-        child: Row(
+  Widget build(BuildContext context) => SizedBox.expand(
+    child: Padding(
+      padding: contentPadding,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
           children: <Widget>[
             if (showBack) ...<Widget>[
-              backButton ??
-                  SizedBox(
-                    width: 40,
-                    height: 44,
-                    child: IconButton(
+              SizedBox(
+                width: 36,
+                height: 44,
+                child:
+                    backButton ??
+                    AppCircleButton(
+                      icon: Icons.arrow_back,
                       tooltip: 'Quay lại',
                       onPressed: onBack,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 40,
-                        height: 44,
+                      size: 36,
+                      backgroundColor: Colors.transparent,
+                      iconWidget: const Center(
+                        child: AppSvgIcon(
+                          AppSvgIconName.back,
+                          size: 20,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                      icon: const Icon(Icons.arrow_back_rounded, size: 22),
-                      color: AppColors.inkSoft,
                     ),
-                  ),
-              SizedBox(width: backButton == null ? 8 : 12),
+              ),
+              const SizedBox(width: 12),
             ],
             Expanded(
               child: Column(
@@ -271,6 +292,8 @@ class _PageHeaderContent extends StatelessWidget {
                           fontSize: titleSize,
                           fontWeight: FontWeight.w700,
                           height: 1.25,
+                        ).copyWith(
+                          fontFamilyFallback: const ['PlusJakartaSans'],
                         ),
                   ),
                   if (subtitle case final subtitle?)
@@ -281,8 +304,8 @@ class _PageHeaderContent extends StatelessWidget {
                       style:
                           subtitleStyle ??
                           const TextStyle(
-                            color: AppColors.inkMuted,
-                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                            fontSize: 13,
                             height: 1.5,
                           ),
                     ),
@@ -291,11 +314,36 @@ class _PageHeaderContent extends StatelessWidget {
             ),
             if (trailing != null) ...<Widget>[
               const SizedBox(width: 8),
-              trailing!,
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth * .45,
+                ),
+                child: trailing!,
+              ),
             ],
           ],
         ),
       ),
     ),
   );
+}
+
+/// Keep controls usable when accessibility text is larger than the standard header.
+double _headerHeight(
+  BuildContext context,
+  double height,
+  double titleSize,
+  String? subtitle,
+  TextStyle? titleStyle,
+  TextStyle? subtitleStyle,
+) {
+  final scaler = MediaQuery.textScalerOf(context);
+  final titleHeight =
+      scaler.scale(titleStyle?.fontSize ?? titleSize) *
+      (titleStyle?.height ?? 1.25);
+  final subtitleHeight = subtitle == null
+      ? 0
+      : scaler.scale(subtitleStyle?.fontSize ?? 13) *
+            (subtitleStyle?.height ?? 1.5);
+  return math.max(height, 24 + titleHeight + subtitleHeight);
 }

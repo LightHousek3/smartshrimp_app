@@ -41,8 +41,6 @@ class PersonnelDetailPage extends ConsumerWidget {
               slivers: <Widget>[
                 StickyPageHeader(
                   title: detail.personnel.displayName,
-                  titleSize: 20,
-                  height: 64,
                   onBack: context.pop,
                 ),
                 SliverToBoxAdapter(
