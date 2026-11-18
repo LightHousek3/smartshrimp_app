@@ -573,7 +573,18 @@ void main() {
     await mount(tester, status: AssignedSeasonStatus.completed);
     expect(find.text('Lịch sử nhận diện'), findsOneWidget);
     expect(find.byType(GradientButton), findsNothing);
+    expect(find.text('Chọn ảnh mẫu tôm'), findsNothing);
   });
+  testWidgets(
+    'completed season shows AI result without the create-case action',
+    (tester) async {
+      await mount(tester, detail: true, status: AssignedSeasonStatus.completed);
+      expect(find.text('Đốm trắng'), findsOneWidget);
+      expect(find.text('90%'), findsOneWidget);
+      expect(find.text('Tạo ca bệnh từ kết quả này'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'N: detail shows confidence, gallery and a disabled case action without exposing URLs',
     (tester) async {

@@ -86,9 +86,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final entry = find.text(
-          status == AssignedSeasonStatus.active ? 'Ca bệnh' : 'Xem ca bệnh',
-        );
+        final entry = find.text('Ca bệnh');
         await tester.scrollUntilVisible(
           entry,
           240,

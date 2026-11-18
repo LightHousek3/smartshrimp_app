@@ -308,6 +308,9 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final canWrite =
+        widget.isSeasonActive &&
+        ref.watch(assignedSeasonCanWriteProvider(widget.seasonId));
     final listAsync = ref.watch(shrimpHealthListProvider(widget.seasonId));
     final subtitle = [
       if (widget.pondName?.trim().isNotEmpty == true) widget.pondName!.trim(),
@@ -388,7 +391,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
               ),
 
               // Full width Action Button: + Ghi nhận sức khỏe tôm (matching Figma figma_list.png)
-              if (widget.isSeasonActive)
+              if (canWrite)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -501,8 +504,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                           l.recordedAt.month == now.month &&
                           l.recordedAt.day == now.day,
                     );
-                    final showMissingToday =
-                        widget.isSeasonActive && !hasLogToday;
+                    final showMissingToday = canWrite && !hasLogToday;
 
                     // Filter logs based on selected tab
                     final displayedLogs = result.logs.where((log) {

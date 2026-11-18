@@ -103,6 +103,28 @@ Future<void> _open(
 }
 
 void main() {
+  testWidgets(
+    'completed season keeps water readings and statistics without mutations',
+    (tester) async {
+      final repository = _VoidRepository(fail: false);
+      await _open(tester, repository, status: AssignedSeasonStatus.completed);
+      expect(find.byKey(const Key('water_statistics_button')), findsOneWidget);
+      expect(find.text('Nhập nhật ký đo nước'), findsNothing);
+      await tester.ensureVisible(find.byType(WaterLogCard));
+      await tester.tap(find.byType(WaterLogCard));
+      await tester.pumpAndSettle();
+      final sheet = find.byKey(const Key('void_water_log_sheet'));
+      expect(sheet, findsOneWidget);
+      expect(
+        find.descendant(of: sheet, matching: find.text('H2S')),
+        findsOneWidget,
+      );
+      expect(find.text('Lý do hủy hiệu lực (bắt buộc)'), findsNothing);
+      expect(find.text('Xác nhận'), findsNothing);
+      expect(repository.voidCalls, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final fail in [false, true]) {
     testWidgets('pending void blocks dismissal and then resolves: fail=$fail', (
       tester,

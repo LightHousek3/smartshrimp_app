@@ -129,7 +129,7 @@ final class RagChatController extends AsyncNotifier<RagChatState> {
 
   Future<void> rate(String id, int rating, String? comment) async {
     final current = state.value;
-    if (current == null || current.busy) return;
+    if (current == null || current.busy || !current.canAsk) return;
     state = AsyncData(current.copyWith(busy: true));
     try {
       final feedback = await _session(

@@ -252,10 +252,12 @@ class RagMessagePair extends StatelessWidget {
     required this.query,
     required this.busy,
     required this.onRate,
+    this.canRate = true,
     super.key,
   });
   final RagQuery query;
   final bool busy;
+  final bool canRate;
   final void Function(int? rating) onRate;
 
   String? get _warning =>
@@ -393,57 +395,65 @@ class RagMessagePair extends StatelessWidget {
                 if (query.canRate) ...[
                   const SizedBox(height: 8),
                   const Divider(height: 1, color: Color(0xFFEEF1F7)),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      children: [
-                        Semantics(
-                          button: true,
-                          child: InkWell(
-                            onTap: busy ? null : () => onRate(null),
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: Text(
-                                'Đánh giá:',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.inkMuted,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        for (var star = 1; star <= 5; star++)
-                          Tooltip(
-                            message:
-                                '${query.feedback == null ? 'Đánh giá' : 'Sửa đánh giá'} $star sao',
-                            child: Semantics(
-                              button: true,
-                              selected: star == query.feedback?.rating,
-                              label: '$star sao',
-                              child: InkWell(
-                                onTap: busy ? null : () => onRate(star),
-                                borderRadius: BorderRadius.circular(4),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 3,
-                                    horizontal: 1,
-                                  ),
-                                  child: SvgPicture.asset(
-                                    star <= (query.feedback?.rating ?? 0)
-                                        ? RagAssets.star
-                                        : RagAssets.starMuted,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                  if (!canRate && query.feedback != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Đánh giá đã lưu: ${query.feedback!.rating}/5',
+                      ),
                     ),
-                  ),
+                  if (canRate)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        children: [
+                          Semantics(
+                            button: true,
+                            child: InkWell(
+                              onTap: busy ? null : () => onRate(null),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Text(
+                                  'Đánh giá:',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.inkMuted,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          for (var star = 1; star <= 5; star++)
+                            Tooltip(
+                              message:
+                                  '${query.feedback == null ? 'Đánh giá' : 'Sửa đánh giá'} $star sao',
+                              child: Semantics(
+                                button: true,
+                                selected: star == query.feedback?.rating,
+                                label: '$star sao',
+                                child: InkWell(
+                                  onTap: busy ? null : () => onRate(star),
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 3,
+                                      horizontal: 1,
+                                    ),
+                                    child: SvgPicture.asset(
+                                      star <= (query.feedback?.rating ?? 0)
+                                          ? RagAssets.star
+                                          : RagAssets.starMuted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   if (query.feedback?.comment != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 6),

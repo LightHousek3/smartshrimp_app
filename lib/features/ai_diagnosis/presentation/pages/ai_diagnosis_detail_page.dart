@@ -185,30 +185,31 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
                   ),
                 ),
                 const SizedBox(height: 16),
-                Tooltip(
-                  message: 'Chưa hỗ trợ tạo ca bệnh từ kết quả AI.',
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: null,
-                      icon: const AiIcon('case'),
-                      style: FilledButton.styleFrom(
-                        disabledBackgroundColor: AppColors.error.withValues(
-                          alpha: 0.45,
+                if (season?.status == AssignedSeasonStatus.active)
+                  Tooltip(
+                    message: 'Chưa hỗ trợ tạo ca bệnh từ kết quả AI.',
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: null,
+                        icon: const AiIcon('case'),
+                        style: FilledButton.styleFrom(
+                          disabledBackgroundColor: AppColors.error.withValues(
+                            alpha: 0.45,
+                          ),
+                          disabledForegroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        disabledForegroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        label: const Text(
+                          'Tạo ca bệnh từ kết quả này',
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                      label: const Text(
-                        'Tạo ca bệnh từ kết quả này',
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                ),
               ],
             ],
           ),

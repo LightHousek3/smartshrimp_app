@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/shrimp_health/presentation/pages/shrimp_health_detail_page.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
@@ -47,6 +49,11 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          assignedSeasonCanWriteProvider(
+            'season-1',
+          ).overrideWith((ref) => true),
+        ],
         child: MaterialApp(
           home: Scaffold(
             body: ShrimpHealthDetailSheet(seasonId: 'season-1', log: sampleLog),
@@ -87,6 +94,11 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          assignedSeasonCanWriteProvider(
+            'season-1',
+          ).overrideWith((ref) => true),
+        ],
         child: MaterialApp(
           home: Scaffold(
             body: ShrimpHealthDetailSheet(seasonId: 'season-1', log: pastLog),
@@ -108,6 +120,85 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('read-only health sheet preserves observations and hides void', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assignedSeasonCanWriteProvider(
+            'season-1',
+          ).overrideWith((ref) => false),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: ShrimpHealthDetailSheet(seasonId: 'season-1', log: sampleLog),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Sức khỏe H-512'), findsOneWidget);
+    expect(find.text('Hủy hiệu lực bản ghi'), findsNothing);
+    expect(find.text('Xác nhận'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'read-only health route hides void even for a log recorded today',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => false),
+            shrimpHealthRepositoryProvider.overrideWithValue(
+              _FakeShrimpHealthRepository(
+                listResult: ShrimpHealthListResult(logs: [sampleLog]),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            home: ShrimpHealthDetailPage(seasonId: 'season-1', logId: 'log'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Hủy hiệu lực bản ghi'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'read-only health list keeps statistics and hides record actions',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => false),
+            shrimpHealthRepositoryProvider.overrideWithValue(
+              _FakeShrimpHealthRepository(
+                listResult: const ShrimpHealthListResult(logs: []),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            home: ShrimpHealthListPage(seasonId: 'season-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Thống kê'), findsOneWidget);
+      expect(find.text('Ghi nhận sức khỏe tôm'), findsNothing);
+      expect(find.text('Chưa có ghi nhận hôm nay'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Renders ShrimpHealthFormSheet without crashing', (tester) async {
     await tester.pumpWidget(
@@ -401,6 +492,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => true),
             shrimpHealthRepositoryProvider.overrideWithValue(
               _FakeShrimpHealthRepository(listResult: listResult),
             ),
@@ -485,6 +579,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => true),
             shrimpHealthRepositoryProvider.overrideWithValue(
               _FakeShrimpHealthRepository(listResult: listResult),
             ),

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/widgets/assigned_season_progress.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart'
     show shrimpTypeLabel;
@@ -66,23 +68,26 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                         children: <Widget>[
                           _Breadcrumb(season),
                           const SizedBox(height: 16),
-                          if (season.status ==
-                              AssignedSeasonStatus.planning) ...<Widget>[
-                            const _PlanningNotice(),
-                            const SizedBox(height: 18),
-                          ],
                           _PondCard(season),
-                          if (season.status ==
-                              AssignedSeasonStatus.active) ...<Widget>[
+                          const SizedBox(height: 18),
+                          _Card(child: AssignedSeasonProgress(season: season)),
+                          if (season.status == AssignedSeasonStatus.active ||
+                              season.status ==
+                                  AssignedSeasonStatus.completed) ...<Widget>[
                             const SizedBox(height: 18),
                             _FeatureActions(
                               seasonId: season.id,
                               farmName: season.farmName,
                               seasonName: season.name,
                               pondName: season.pondName,
+                              readOnly:
+                                  season.status ==
+                                  AssignedSeasonStatus.completed,
                             ),
                           ],
-                          if (season.status != AssignedSeasonStatus.active)
+                          if (season.status != AssignedSeasonStatus.active &&
+                              season.status != AssignedSeasonStatus.planning &&
+                              season.status != AssignedSeasonStatus.completed)
                             TextButton.icon(
                               onPressed: () => context.push(
                                 '/seasons/${season.id}/disease-cases',
@@ -92,7 +97,9 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                               ),
                               label: const Text('Xem ca bệnh'),
                             ),
-                          if (season.status != AssignedSeasonStatus.active)
+                          if (season.status != AssignedSeasonStatus.active &&
+                              season.status != AssignedSeasonStatus.planning &&
+                              season.status != AssignedSeasonStatus.completed)
                             TextButton(
                               onPressed: () async {
                                 await context.push(
@@ -109,19 +116,25 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
                               },
                               child: const Text('Nhật ký đo nước'),
                             ),
-                          if (season.status != AssignedSeasonStatus.active)
+                          if (season.status != AssignedSeasonStatus.active &&
+                              season.status != AssignedSeasonStatus.planning &&
+                              season.status != AssignedSeasonStatus.completed)
                             TextButton(
                               onPressed: () => context.push(
                                 '/seasons/${season.id}/ai-diagnoses',
                               ),
                               child: const Text('Lịch sử nhận diện AI'),
                             ),
-                          const SizedBox(height: 22),
-                          _LatestWaterMeasurement(
-                            seasonId: season.id,
-                            pondName: season.pondName,
-                            seasonName: season.name,
-                          ),
+                          if (season.status != AssignedSeasonStatus.planning &&
+                              season.status !=
+                                  AssignedSeasonStatus.completed) ...<Widget>[
+                            const SizedBox(height: 22),
+                            _LatestWaterMeasurement(
+                              seasonId: season.id,
+                              pondName: season.pondName,
+                              seasonName: season.name,
+                            ),
+                          ],
                           if (season.status ==
                               AssignedSeasonStatus.active) ...<Widget>[
                             const SizedBox(height: 22),
@@ -190,23 +203,6 @@ class _Breadcrumb extends StatelessWidget {
   );
 }
 
-class _PlanningNotice extends StatelessWidget {
-  const _PlanningNotice();
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(
-      color: const Color(0xFFEFE7FF),
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: const Text(
-      'Vụ đang chuẩn bị và chưa phát sinh dữ liệu vận hành. Các chức năng đo nước, sức khỏe, vận hành và AI nhận diện sẽ mở khi Chủ trại kích hoạt vụ.',
-      style: TextStyle(color: Color(0xFF7008E7), fontSize: 12, height: 1.55),
-    ),
-  );
-}
-
 /// Both health entry points must refresh the summary after create/void actions.
 Future<void> _openShrimpHealth(
   BuildContext context,
@@ -240,13 +236,10 @@ class _PondCard extends ConsumerWidget {
                 color: const Color(0xFF126BC0),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                _initials(season.pondName),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: const AppSvgIcon(
+                AppSvgIconName.shrimp,
+                size: 32,
+                color: Colors.white,
               ),
             ),
             const SizedBox(width: 12),
@@ -274,64 +267,6 @@ class _PondCard extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xB3EEF1F6),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: <Widget>[
-              const Icon(
-                Icons.home_work_outlined,
-                color: AppColors.inkMuted,
-                size: 18,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text(
-                      'Trang trại',
-                      style: TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      season.farmName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (season.farmAddress?.trim().isNotEmpty ==
-                        true) ...<Widget>[
-                      const SizedBox(height: 2),
-                      Text(
-                        season.farmAddress!.trim(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
         const Divider(height: 28),
         Row(
           children: <Widget>[
@@ -347,9 +282,10 @@ class _PondCard extends ConsumerWidget {
           Row(
             children: <Widget>[
               _Metric(
-                'NGÀY TUỔI (DOC)',
-                '${season.dayOfCulture ?? '—'}',
-                subtitle: 'Thả vào: ${_date(season.stockingDate)}',
+                'SỐ LƯỢNG THẢ',
+                season.initialQuantity == null
+                    ? '—'
+                    : '${season.initialQuantity} con',
               ),
               const SizedBox(width: 10),
               _Metric(
@@ -369,19 +305,6 @@ class _PondCard extends ConsumerWidget {
                   },
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              _Metric(
-                'SỐ LƯỢNG THẢ',
-                season.initialQuantity == null
-                    ? '—'
-                    : '${season.initialQuantity} con',
-              ),
-              const SizedBox(width: 10),
-              _Metric('KẾT THÚC DỰ KIẾN', _date(season.expectedEndDate)),
             ],
           ),
           const SizedBox(height: 10),
@@ -410,12 +333,14 @@ class _FeatureActions extends ConsumerWidget {
     required this.farmName,
     required this.seasonName,
     required this.pondName,
+    this.readOnly = false,
   });
 
   final String seasonId;
   final String farmName;
   final String seasonName;
   final String pondName;
+  final bool readOnly;
 
   static const _items = <_FeatureActionData>[
     _FeatureActionData(
@@ -458,53 +383,56 @@ class _FeatureActions extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: _items.length,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 1.14,
-    ),
-    itemBuilder: (context, index) => _FeatureAction(
-      _items[index],
-      onTap: switch (index) {
-        0 => () async {
-          await context.push(
-            '/seasons/$seasonId/water-logs',
-            extra: <String, String>{
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.14,
+      ),
+      itemBuilder: (context, index) => _FeatureAction(
+        _items[index],
+        onTap: switch (index) {
+          0 => () async {
+            await context.push(
+              '/seasons/$seasonId/water-logs',
+              extra: <String, String>{
+                'farmName': farmName,
+                'seasonName': seasonName,
+                'pondName': pondName,
+              },
+            );
+            if (context.mounted) invalidateWaterLogViews(ref, seasonId);
+          },
+          1 => () => _openShrimpHealth(
+            context,
+            ref,
+            seasonId: seasonId,
+            extra: <String, dynamic>{
               'farmName': farmName,
               'seasonName': seasonName,
               'pondName': pondName,
+              'isSeasonActive': !readOnly,
             },
-          );
-          if (context.mounted) invalidateWaterLogViews(ref, seasonId);
-        },
-        1 => () => _openShrimpHealth(
-          context,
-          ref,
-          seasonId: seasonId,
-          extra: <String, String>{
-            'farmName': farmName,
-            'seasonName': seasonName,
-            'pondName': pondName,
+          ),
+          2 => () async {
+            await context.push('/seasons/$seasonId/operations');
+            if (context.mounted) {
+              ref.invalidate(assignedSeasonTodayOperationsProvider(seasonId));
+            }
           },
-        ),
-        2 => () async {
-          await context.push('/seasons/$seasonId/operations');
-          if (context.mounted) {
-            ref.invalidate(assignedSeasonTodayOperationsProvider(seasonId));
-          }
+          3 => () => context.push('/seasons/$seasonId/ai-diagnoses'),
+          4 => () => context.push('/seasons/$seasonId/rag'),
+          5 => () => context.push('/seasons/$seasonId/disease-cases'),
+          _ => null,
         },
-        3 => () => context.push('/seasons/$seasonId/ai-diagnoses'),
-        4 => () => context.push('/seasons/$seasonId/rag'),
-        5 => () => context.push('/seasons/$seasonId/disease-cases'),
-        _ => null,
-      },
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _FeatureActionData {
@@ -527,43 +455,43 @@ class _FeatureAction extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: const Color(0xF7FFFFFF),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: AppColors.line),
-    ),
-    child: InkWell(
-      onTap:
-          onTap ??
-          () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${data.label} đang được phát triển.')),
-          ),
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: data.background,
-              borderRadius: BorderRadius.circular(13),
+  Widget build(BuildContext context) => Container(
+    decoration: _seasonCardDecoration,
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap:
+            onTap ??
+            () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${data.label} đang được phát triển.')),
             ),
-            child: Icon(data.icon, color: data.foreground, size: 21),
-          ),
-          const SizedBox(height: 9),
-          Text(
-            data.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.inkSoft,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: data.background,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(data.icon, color: data.foreground, size: 21),
             ),
-          ),
-        ],
+            const SizedBox(height: 9),
+            Text(
+              data.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -589,27 +517,10 @@ class _LatestWaterMeasurement extends ConsumerWidget {
         : ref.watch(waterLogMetadataProvider(seasonId));
     final borderRadius = BorderRadius.circular(18);
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x0A0F1C2E),
-            blurRadius: 1,
-            offset: Offset(0, 1),
-          ),
-          BoxShadow(
-            color: Color(0x590F1C2E),
-            blurRadius: 12,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: _seasonCardDecoration,
       child: Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: borderRadius,
-          side: const BorderSide(color: AppColors.line, width: 1.2),
-        ),
+        color: Colors.transparent,
+        borderRadius: borderRadius,
         child: InkWell(
           borderRadius: borderRadius,
           onTap: () async {
@@ -888,16 +799,10 @@ class _TodayOperations extends ConsumerWidget {
           ),
           data: (schedules) {
             if (schedules.isEmpty) {
-              return Container(
-                width: double.infinity,
+              return _Card(
                 padding: const EdgeInsets.symmetric(
                   vertical: 24,
                   horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.line),
                 ),
                 child: const Center(
                   child: Text(
@@ -941,6 +846,7 @@ class _TodayOperations extends ConsumerWidget {
                 for (final s in otherSchedules) ...<Widget>[
                   OperationScheduleCard(
                     schedule: s,
+                    decoration: _seasonCardDecoration,
                     onTap: () =>
                         openOperations('/seasons/$seasonId/operations/${s.id}'),
                   ),
@@ -1082,6 +988,15 @@ class _OtherAssignedSeasonCard extends StatelessWidget {
   }
 }
 
+final _seasonCardDecoration = BoxDecoration(
+  color: const Color(0xF7FFFFFF),
+  borderRadius: BorderRadius.circular(18),
+  border: Border.all(color: AppColors.line),
+  boxShadow: const <BoxShadow>[
+    BoxShadow(color: Color(0x300F1C2E), blurRadius: 16, offset: Offset(0, 8)),
+  ],
+);
+
 class _Card extends StatelessWidget {
   const _Card({required this.child, this.padding = const EdgeInsets.all(16)});
   final Widget child;
@@ -1090,18 +1005,7 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: double.infinity,
     padding: padding,
-    decoration: BoxDecoration(
-      color: const Color(0xF7FFFFFF),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppColors.line),
-      boxShadow: const <BoxShadow>[
-        BoxShadow(
-          color: Color(0x300F1C2E),
-          blurRadius: 16,
-          offset: Offset(0, 8),
-        ),
-      ],
-    ),
+    decoration: _seasonCardDecoration,
     child: child,
   );
 }
@@ -1258,13 +1162,6 @@ class _Failure extends StatelessWidget {
       ),
     ),
   );
-}
-
-String _initials(String value) {
-  final parts = value.trim().split(RegExp(r'\s+'));
-  return parts.length > 1
-      ? '${parts.first[0]}${parts.last}'
-      : value.substring(0, value.length.clamp(0, 2));
 }
 
 String _num(num? value) => value == null
