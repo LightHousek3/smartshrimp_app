@@ -133,6 +133,7 @@ _TechnicianOperation _$TechnicianOperationFromJson(Map<String, dynamic> json) =>
           'scheduledAt',
           (v) => DateTime.parse(v as String),
         ),
+        dueAt: $checkedConvert('dueAt', (v) => DateTime.parse(v as String)),
         plannedQuantity: $checkedConvert(
           'plannedQuantity',
           (v) => (v as num).toDouble(),
@@ -149,6 +150,7 @@ Map<String, dynamic> _$TechnicianOperationToJson(
   'id': instance.id,
   'operationType': instance.operationType,
   'scheduledAt': instance.scheduledAt.toIso8601String(),
+  'dueAt': instance.dueAt.toIso8601String(),
   'plannedQuantity': instance.plannedQuantity,
   'unit': instance.unit,
   'productName': instance.productName,

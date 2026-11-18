@@ -83,6 +83,7 @@ abstract class TechnicianOperation with _$TechnicianOperation {
     required String id,
     required String operationType,
     required DateTime scheduledAt,
+    required DateTime dueAt,
     required double plannedQuantity,
     required String unit,
     String? productName,
@@ -182,7 +183,8 @@ abstract class TechnicianDashboard with _$TechnicianDashboard {
           if (!ids.add(item.id) ||
               !item.plannedQuantity.isFinite ||
               item.plannedQuantity <= 0 ||
-              item.scheduledAt.isBefore(value.serverNow) ||
+              !item.dueAt.isAfter(item.scheduledAt) ||
+              item.dueAt.isBefore(value.serverNow) ||
               !item.scheduledAt.isBefore(value.dayEndExclusive) ||
               (previous != null && item.scheduledAt.isBefore(previous))) {
             throw const InvalidResponseException();

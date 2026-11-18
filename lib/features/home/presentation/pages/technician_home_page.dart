@@ -74,7 +74,7 @@ class TechnicianHomePage extends ConsumerWidget {
                         tasks: dashboard.tasks,
                         now: dashboard.serverNow,
                       ),
-                    const DashboardSectionTitle('Cữ sắp tới hôm nay'),
+                    const DashboardSectionTitle('Cữ còn lại hôm nay'),
                     if (dashboard.operationGroups.isEmpty)
                       const _CompactEmpty(
                         'Không còn cữ đã lên lịch trong hôm nay.',

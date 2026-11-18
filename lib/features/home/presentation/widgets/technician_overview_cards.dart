@@ -503,14 +503,25 @@ class _OperationCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  technicianTime(item.scheduledAt),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      technicianTime(item.scheduledAt),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    Text(
+                      'Hạn ${technicianTime(item.dueAt)}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
