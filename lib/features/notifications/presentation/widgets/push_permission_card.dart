@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/push_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_providers.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
@@ -48,12 +49,25 @@ class PushPermissionCard extends ConsumerWidget {
             onPressed: state.isLoading
                 ? null
                 : () async {
-                    if (denied) {
-                      await ref.read(pushRepositoryProvider).openSettings();
-                    } else {
-                      await ref
-                          .read(pushStatusProvider.notifier)
-                          .synchronize(requestPermission: true);
+                    try {
+                      if (denied) {
+                        await ref.read(pushRepositoryProvider).openSettings();
+                      } else {
+                        await ref
+                            .read(pushStatusProvider.notifier)
+                            .synchronize(requestPermission: true);
+                      }
+                    } on AppException catch (error) {
+                      if (context.mounted) {
+                        AppNoticeService.danger(context, error.message);
+                      }
+                    } on Object {
+                      if (context.mounted) {
+                        AppNoticeService.danger(
+                          context,
+                          'Không thể mở Cài đặt thông báo. Vui lòng thử lại.',
+                        );
+                      }
                     }
                   },
             child: state.isLoading

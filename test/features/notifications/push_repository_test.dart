@@ -119,6 +119,27 @@ void main() {
   });
 
   test(
+    'permission remains readable without Firebase configuration or a server binding',
+    () async {
+      native.ready = false;
+      expect(await repository.register('one'), PushPermission.unconfigured);
+      expect(await repository.permission(), PushPermission.authorized);
+      expect(native.requested, 0);
+      expect(api.bindings, isEmpty);
+      expect(api.removals, 0);
+    },
+  );
+
+  test('a registration error does not hide device permission', () async {
+    api.fail = true;
+    await expectLater(repository.register('one'), throwsA(isA<ApiException>()));
+    expect(await repository.permission(), PushPermission.authorized);
+    native.allowed = PushPermission.denied;
+    expect(await repository.permission(), PushPermission.denied);
+    expect(api.removals, 0);
+  });
+
+  test(
     'N: registration binds once; foreground duplicates update one logical notification',
     () async {
       expect(await repository.register('one'), PushPermission.authorized);

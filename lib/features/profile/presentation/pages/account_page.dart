@@ -17,6 +17,7 @@ import 'package:smartshrimp_app/features/personnel/presentation/view_models/pers
 import 'package:smartshrimp_app/features/profile/data/services/cloudinary_avatar_storage.dart';
 import 'package:smartshrimp_app/features/profile/domain/entities/account_profile.dart';
 import 'package:smartshrimp_app/features/profile/presentation/view_models/profile_controller.dart';
+import 'package:smartshrimp_app/features/profile/presentation/widgets/notification_permission_switch.dart';
 
 class AccountPage extends ConsumerStatefulWidget {
   const AccountPage({super.key});
@@ -167,6 +168,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                             icon: Icons.shield_outlined,
                             label: 'Đổi mật khẩu',
                             onTap: () => context.push(AppRoutes.changePassword),
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          const _ActionRow(
+                            icon: Icons.notifications_none_rounded,
+                            label: 'Cho phép thông báo',
+                            trailing: NotificationPermissionSwitch(),
                           ),
                         ],
                       ),
@@ -778,7 +785,8 @@ class _ActionRow extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
+    this.trailing,
     this.subtitle,
     this.iconForeground = AppColors.ocean,
     this.iconBackground = const Color(0xFFEAF4FF),
@@ -786,7 +794,8 @@ class _ActionRow extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final Widget? trailing;
   final String? subtitle;
   final Color iconForeground;
   final Color iconBackground;
@@ -838,7 +847,7 @@ class _ActionRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const AppSvgIcon(AppSvgIconName.chevron, size: 18),
+              trailing ?? const AppSvgIcon(AppSvgIconName.chevron, size: 18),
             ],
           ),
         ),
@@ -868,6 +877,7 @@ class _SquareIcon extends StatelessWidget {
       Icons.schedule_outlined => AppSvgIconName.clock,
       Icons.edit_outlined => AppSvgIconName.edit,
       Icons.shield_outlined => AppSvgIconName.shieldOutline,
+      Icons.notifications_none_rounded => AppSvgIconName.notifications,
       _ => null,
     };
     return Container(

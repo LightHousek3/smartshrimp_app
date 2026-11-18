@@ -11,6 +11,8 @@ abstract interface class PushRepository {
   Stream<String> get openedNotificationIds;
   Stream<PushPermission> get states;
 
+  Future<PushPermission> permission();
+
   Future<PushPermission> register(
     String accountId, {
     bool requestPermission = true,

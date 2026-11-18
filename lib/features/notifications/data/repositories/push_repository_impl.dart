@@ -37,6 +37,19 @@ final class PushRepositoryImpl implements PushRepository {
   @override
   Stream<PushPermission> get states => _states.stream;
 
+  /// Device permission is independent of Firebase availability and server registration.
+  @override
+  Future<PushPermission> permission() async {
+    if (!supportsNativePush) return PushPermission.unavailable;
+    try {
+      return await _messaging.permission(request: false);
+    } on PlatformException {
+      throw const ApiException(
+        'Không thể kiểm tra quyền thông báo. Vui lòng thử lại.',
+      );
+    }
+  }
+
   /// Reject delayed messages from a previous account or beyond the sender's useful lifetime.
   String? _target(Map<String, dynamic> data) {
     final id = data['notificationId'];

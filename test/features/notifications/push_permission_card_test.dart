@@ -27,6 +27,13 @@ final class _AuthRepository implements AuthRepository {
 final class _PushRepository implements PushRepository {
   Completer<PushPermission>? registration;
   int calls = 0;
+  PushPermission allowed = PushPermission.unconfigured;
+  Object? settingsError;
+
+  @override
+  Future<void> openSettings() async {
+    if (settingsError case final error?) throw error;
+  }
 
   @override
   Future<PushPermission> register(
@@ -34,7 +41,7 @@ final class _PushRepository implements PushRepository {
     bool requestPermission = true,
   }) async {
     calls++;
-    return registration?.future ?? PushPermission.unconfigured;
+    return registration?.future ?? allowed;
   }
 
   @override
@@ -59,6 +66,20 @@ Future<void> _open(WidgetTester tester, _PushRepository repository) async {
 }
 
 void main() {
+  testWidgets('a failed settings launch shows a localized notice', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      _PushRepository()
+        ..allowed = PushPermission.denied
+        ..settingsError = const ApiException('Không thể mở Cài đặt.'),
+    );
+    await tester.tap(find.text('Cài đặt'));
+    await tester.pumpAndSettle();
+    expect(find.text('Không thể mở Cài đặt.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'retry shows progress, prevents duplicate taps and exposes localized errors',
     (tester) async {

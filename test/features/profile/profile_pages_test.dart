@@ -22,10 +22,51 @@ import 'package:smartshrimp_app/features/profile/presentation/view_models/profil
 import 'package:smartshrimp_app/features/profile/presentation/pages/account_page.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
+import 'package:smartshrimp_app/features/notifications/domain/repositories/push_repository.dart';
 import '../../support/load_app_fonts.dart';
 import '../../support/disabled_push_repository.dart';
 
 void main() {
+  for (final role in [AccountRole.farmOwner, AccountRole.technician]) {
+    testWidgets('account permission row refreshes on resume for ${role.name}', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final push = _SettingsPushRepository();
+      await tester.pumpWidget(
+        _testApp(
+          _FakeAuthRepository(account: _authAccountFor(role)),
+          _FakeProfileRepository(profile: _profileFor(role)),
+          pushRepository: push,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tài khoản'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Cho phép thông báo'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+      final toggle = find.byKey(const Key('account_notification_switch'));
+      expect(
+        tester.getTopLeft(find.text('Cho phép thông báo')).dy,
+        greaterThan(tester.getTopLeft(find.text('Đổi mật khẩu')).dy),
+      );
+      expect(tester.widget<Switch>(toggle).value, isFalse);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      push.allowed = PushPermission.authorized;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(tester.widget<Switch>(toggle).value, isTrue);
+      expect(push.registrations.last, PushPermission.authorized);
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final (route, title) in [
     (AppRoutes.profileEdit, 'Cập nhật thông tin'),
     (AppRoutes.changePassword, 'Đổi mật khẩu'),
@@ -188,7 +229,7 @@ void main() {
     expect(profileRepository.lastFullName, 'Nguyễn Văn An');
     expect(profileRepository.lastPhone, '0912345678');
     expect(find.text('Cập nhật thông tin'), findsNothing);
-    expect(find.text('Thông tin tài khoản'), findsOneWidget);
+    expect(find.byType(AccountPage), findsOneWidget);
     expect(find.text('Nguyễn Văn An'), findsOneWidget);
   });
 
@@ -221,7 +262,7 @@ void main() {
 
     expect(profileRepository.lastFullName, 'Nguyễn Văn Chủ Mới');
     expect(find.text('Cập nhật thông tin'), findsNothing);
-    expect(find.text('Thông tin tài khoản'), findsOneWidget);
+    expect(find.byType(AccountPage), findsOneWidget);
     await tester.fling(
       find.byType(Scrollable).last,
       const Offset(0, 1000),
@@ -271,17 +312,18 @@ void main() {
 
     expect(authRepository.logoutCalls, 0);
     expect(find.byKey(const Key('login_email_field')), findsNothing);
-    expect(find.text('Thông tin tài khoản'), findsOneWidget);
+    expect(find.byType(AccountPage), findsOneWidget);
   });
 }
 
 Widget _testApp(
   AuthRepository authRepository,
-  ProfileRepository profileRepository,
-) {
+  ProfileRepository profileRepository, {
+  PushRepository pushRepository = const DisabledPushRepository(),
+}) {
   return ProviderScope(
     overrides: [
-      pushRepositoryProvider.overrideWithValue(const DisabledPushRepository()),
+      pushRepositoryProvider.overrideWithValue(pushRepository),
       technicianDashboardRepositoryProvider.overrideWithValue(
         TechnicianFixtureRepository(),
       ),
@@ -298,6 +340,34 @@ Widget _testApp(
     ],
     child: const SmartShrimpApp(),
   );
+}
+
+final class _SettingsPushRepository implements PushRepository {
+  PushPermission allowed = PushPermission.denied;
+  final registrations = <PushPermission>[];
+  @override
+  Stream<String> get openedNotificationIds => const Stream.empty();
+  @override
+  Stream<PushPermission> get states => const Stream.empty();
+  @override
+  Future<PushPermission> permission() async => allowed;
+  @override
+  Future<PushPermission> register(
+    String accountId, {
+    bool requestPermission = true,
+  }) async {
+    registrations.add(allowed);
+    return allowed;
+  }
+
+  @override
+  void suspend() {}
+  @override
+  Future<void> unregister() async {}
+  @override
+  Future<void> openSettings() async {}
+  @override
+  Future<void> dispose() async {}
 }
 
 const _authAccount = AuthAccount(
