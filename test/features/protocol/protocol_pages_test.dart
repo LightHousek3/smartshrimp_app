@@ -224,6 +224,8 @@ void main() {
         find.byKey(const Key('protocol_current_range_badge')),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.text('15').last);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('15').last);
       await tester.pumpAndSettle();
       expect(repo.days.last, 15);
@@ -355,6 +357,8 @@ void main() {
     final repo = ProtocolFixtureRepository()..firstDay = gate;
     // Keep the first response pending while the separate day-2 provider resolves.
     await open(tester, repository: repo, settle: false);
+    await tester.ensureVisible(find.text('2').last);
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.text('2').last);
     await tester.pumpAndSettle();
     gate.complete(

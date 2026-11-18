@@ -204,6 +204,10 @@ _ProtocolManufacturer _$ProtocolManufacturerFromJson(
     id: $checkedConvert('id', (v) => v as String?),
     address: $checkedConvert('address', (v) => v as String?),
     phone: $checkedConvert('phone', (v) => v as String?),
+    contactName: $checkedConvert('contactName', (v) => v as String?),
+    email: $checkedConvert('email', (v) => v as String?),
+    note: $checkedConvert('note', (v) => v as String?),
+    supplierType: $checkedConvert('supplierType', (v) => v as String?),
   );
   return val;
 });
@@ -215,6 +219,10 @@ Map<String, dynamic> _$ProtocolManufacturerToJson(
   'id': instance.id,
   'address': instance.address,
   'phone': instance.phone,
+  'contactName': instance.contactName,
+  'email': instance.email,
+  'note': instance.note,
+  'supplierType': instance.supplierType,
 };
 
 _ProtocolMaterialSnapshot _$ProtocolMaterialSnapshotFromJson(
@@ -242,6 +250,15 @@ _ProtocolMaterialSnapshot _$ProtocolMaterialSnapshotFromJson(
           ? null
           : ProtocolMaterialProfile.fromJson(v as Map<String, dynamic>),
     ),
+    imageUrls: $checkedConvert(
+      'imageUrls',
+      (v) =>
+          (v as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+    ),
+    minAlertQuantity: $checkedConvert(
+      'minAlertQuantity',
+      (v) => _optionalDecimalString(v),
+    ),
     conversionUnit: $checkedConvert('conversionUnit', (v) => v as String?),
     conversionQuantity: $checkedConvert(
       'conversionQuantity',
@@ -262,6 +279,8 @@ Map<String, dynamic> _$ProtocolMaterialSnapshotToJson(
   'manufacturerId': instance.manufacturerId,
   'manufacturer': instance.manufacturer,
   'productCompliance': instance.productCompliance,
+  'imageUrls': instance.imageUrls,
+  'minAlertQuantity': instance.minAlertQuantity,
   'conversionUnit': instance.conversionUnit,
   'conversionQuantity': instance.conversionQuantity,
 };
@@ -379,6 +398,7 @@ _ProtocolDetail _$ProtocolDetailFromJson(
       'card',
       (v) => ProtocolCardData.fromJson(v as Map<String, dynamic>),
     ),
+    farmId: $checkedConvert('farmId', (v) => v as String? ?? ''),
     updatedAt: $checkedConvert('updatedAt', (v) => DateTime.parse(v as String)),
     anchorDate: $checkedConvert('anchorDate', (v) => v as String?),
     durationDays: $checkedConvert('durationDays', (v) => (v as num).toInt()),
@@ -434,6 +454,7 @@ _ProtocolDetail _$ProtocolDetailFromJson(
 Map<String, dynamic> _$ProtocolDetailToJson(_ProtocolDetail instance) =>
     <String, dynamic>{
       'card': instance.card,
+      'farmId': instance.farmId,
       'updatedAt': instance.updatedAt.toIso8601String(),
       'anchorDate': instance.anchorDate,
       'durationDays': instance.durationDays,

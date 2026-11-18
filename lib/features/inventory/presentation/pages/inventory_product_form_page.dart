@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,15 +28,19 @@ bool _hasPhoto(_MaterialPhoto photo) =>
 /// Create or edit a product with conversion and three-image validation.
 /// Keep successful uploads available when a failed save is retried.
 class InventoryProductFormPage extends ConsumerStatefulWidget {
-  const InventoryProductFormPage.create({required this.farmId, super.key})
-    : productId = null;
+  const InventoryProductFormPage.create({
+    required this.farmId,
+    this.proposal,
+    super.key,
+  }) : productId = null;
 
   const InventoryProductFormPage.edit({
     required this.farmId,
     required String this.productId,
     super.key,
-  });
+  }) : proposal = null;
 
+  final ProtocolMaterialCreation? proposal;
   final String farmId;
   final String? productId;
 
@@ -84,6 +90,85 @@ class _InventoryProductFormPageState
       _unit != null && InventoryRules.isPackaged(_unit!)
       ? _conversionUnit?.label ?? 'đơn vị quy đổi'
       : _unit?.label ?? 'đơn vị';
+
+  @override
+  void initState() {
+    super.initState();
+    final proposal = widget.proposal;
+    if (proposal == null) return;
+    final material = proposal.material;
+    _nameController.text = material.name;
+    _descriptionController.text = material.description ?? '';
+    _thresholdController.text = material.minAlertQuantity ?? '0';
+    _conversionQuantityController.text = material.conversionQuantity ?? '';
+    _category = InventoryProductCategory.values.byName(
+      material.category.toLowerCase(),
+    );
+    _unit = InventoryProductUnit.values.byName(material.unit.toLowerCase());
+    _conversionUnit = material.conversionUnit == null
+        ? null
+        : InventoryConversionUnit.values.byName(
+            material.conversionUnit!.toLowerCase(),
+          );
+    _manufacturerId = proposal.manufacturerId;
+    _manufacturerName = material.manufacturer?.name ?? '';
+    final profile = material.productCompliance;
+    _compliance = InventoryCompliance(
+      regulatoryType: profile?.regulatoryType,
+      registrationNumber: profile?.registrationNumber,
+      ingredientsText: profile?.ingredientsText,
+      containsAntibiotic: profile?.containsAntibiotic,
+      usageInstructions: profile?.usageInstructions,
+      withdrawalDays: double.tryParse(profile?.withdrawalDays ?? '0'),
+      evidenceUrls: profile?.evidenceUrls ?? [],
+    );
+    _images.clear();
+    _images.addAll(
+      material.imageUrls.map((url) => (url: url, bytes: null, fileName: null)),
+    );
+    while (_images.length < InventoryRules.maxProductImages) {
+      _images.add(_emptyPhoto);
+    }
+  }
+
+  bool get _requiresNewManufacturer =>
+      widget.proposal != null && widget.proposal!.manufacturerId == null;
+
+  Future<void> _addManufacturer() async {
+    final proposed = _requiresNewManufacturer
+        ? widget.proposal?.material.manufacturer
+        : null;
+    final now = DateTime.now();
+    final supplier = await context.push<InventorySupplier>(
+      '/farms/${widget.farmId}/inventory/suppliers/new',
+      extra: proposed == null
+          ? null
+          : InventorySupplier(
+              id: '',
+              ownerId: '',
+              name: proposed.name,
+              address: proposed.address,
+              phone: proposed.phone,
+              email: proposed.email,
+              contactName: proposed.contactName,
+              note: proposed.note,
+              supplierType:
+                  proposed.supplierType?.toUpperCase() ?? 'MANUFACTURER',
+              createdAt: now,
+              updatedAt: now,
+            ),
+    );
+    if (!mounted ||
+        supplier == null ||
+        !supplier.isActive ||
+        !supplier.isManufacturer) {
+      return;
+    }
+    setState(() {
+      _manufacturerId = supplier.id;
+      _manufacturerName = supplier.name;
+    });
+  }
 
   @override
   void dispose() {
@@ -321,6 +406,14 @@ class _InventoryProductFormPageState
       return;
     }
 
+    if (widget.proposal != null &&
+        (widget.proposal!.farmId != widget.farmId || _manufacturerId == null)) {
+      AppNoticeService.danger(
+        context,
+        'Hãy tạo nhà sản xuất được đề xuất trước khi lưu vật tư.',
+      );
+      return;
+    }
     setState(() => _saving = true);
     final conversionQuantity = InventoryRules.isPackaged(unit)
         ? InventoryRules.parseNumber(_conversionQuantityController.text)
@@ -384,6 +477,14 @@ class _InventoryProductFormPageState
         );
       } else {
         await notifier.create(
+          protocolProposal: widget.proposal == null
+              ? null
+              : {
+                  'protocolId': widget.proposal!.protocolId,
+                  'itemId': widget.proposal!.itemId,
+                  'updatedAt': widget.proposal!.updatedAt.toIso8601String(),
+                },
+          recommendationReason: widget.proposal?.material.recommendationReason,
           name: _nameController.text,
           category: category,
           manufacturerId: _manufacturerId!,
@@ -401,7 +502,7 @@ class _InventoryProductFormPageState
       }
       if (!mounted) return;
       AppNoticeService.success(context, 'Đã lưu vật tư.');
-      context.pop();
+      context.pop(widget.proposal != null ? true : null);
     } on FormatException catch (error) {
       if (!mounted) return;
       AppNoticeService.show(
@@ -614,31 +715,24 @@ class _InventoryProductFormPageState
                       label: 'Nhà sản xuất *',
                       child: _buildManufacturerDropdown(),
                     ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.add_business_outlined, size: 16),
-                      label: const Text(
-                        'Thêm nhà sản xuất',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                    if (!_requiresNewManufacturer || _manufacturerId == null)
+                      TextButton.icon(
+                        icon: const AppSvgIcon(
+                          AppSvgIconName.plus,
+                          size: 16,
+                          color: AppColors.ocean,
                         ),
+                        label: Text(
+                          _requiresNewManufacturer
+                              ? 'Tạo nhà sản xuất được đề xuất'
+                              : 'Thêm nhà sản xuất',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onPressed: _saving ? null : _addManufacturer,
                       ),
-                      onPressed: () async {
-                        final supplier = await context.push<InventorySupplier>(
-                          '/farms/${widget.farmId}/inventory/suppliers/new',
-                        );
-                        if (supplier != null &&
-                            supplier.isActive &&
-                            supplier.isManufacturer &&
-                            mounted) {
-                          setState(() {
-                            _manufacturerId = supplier.id;
-                            _manufacturerName = supplier.name;
-                          });
-                        }
-                      },
-                    ),
                     const SizedBox(height: 16),
                     InventoryComplianceEditor(
                       farmId: widget.farmId,
@@ -942,6 +1036,59 @@ class _InventoryProductFormPageState
   }
 
   Widget _buildManufacturerDropdown() {
+    if (_requiresNewManufacturer) {
+      // Reuse a supplier created for this submission if the product form was cancelled.
+      final proposal = widget.proposal!;
+      final proposed = proposal.material.manufacturer;
+      final suppliers = ref.watch(
+        supplierListControllerProvider(widget.farmId),
+      );
+      if (_manufacturerId == null && proposed != null) {
+        final matches = (suppliers.value ?? <InventorySupplier>[]).where(
+          (row) =>
+              row.isActive &&
+              row.isManufacturer &&
+              !row.createdAt.isBefore(
+                proposal.submittedAt ?? proposal.updatedAt,
+              ) &&
+              row.name.trim().toLowerCase() ==
+                  proposed.name.trim().toLowerCase() &&
+              (proposed.address == null ||
+                  proposed.address!.trim().isEmpty ||
+                  row.address?.trim().toLowerCase() ==
+                      proposed.address!.trim().toLowerCase()),
+        );
+        if (matches.isNotEmpty) {
+          _manufacturerId = matches.first.id;
+          _manufacturerName = matches.first.name;
+        }
+      }
+      return FormField<String>(
+        key: ValueKey('proposed-manufacturer-$_manufacturerId'),
+        initialValue: _manufacturerId,
+        validator: (value) => value == null
+            ? 'Tạo nhà sản xuất được Chuyên gia đề xuất để tiếp tục.'
+            : null,
+        builder: (field) => InputDecorator(
+          decoration: inventoryInputDecoration().copyWith(
+            errorText: field.errorText,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_manufacturerName, style: inventoryInputTextStyle),
+              const SizedBox(height: 4),
+              Text(
+                _manufacturerId == null
+                    ? 'Nhà sản xuất mới do Chuyên gia đề xuất'
+                    : 'Đã tạo nhà sản xuất',
+                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final suppliers = ref.watch(supplierListControllerProvider(widget.farmId));
     return suppliers.when(
       loading: () => InputDecorator(
@@ -1041,14 +1188,16 @@ class _InventoryProductFormPageState
               ),
             ),
           ],
-          onChanged: (id) {
-            if (id == null) return;
-            final item = items.firstWhere((item) => item.id == id);
-            setState(() {
-              _manufacturerId = item.id;
-              _manufacturerName = item.name;
-            });
-          },
+          onChanged: widget.proposal != null
+              ? null
+              : (id) {
+                  if (id == null) return;
+                  final item = items.firstWhere((item) => item.id == id);
+                  setState(() {
+                    _manufacturerId = item.id;
+                    _manufacturerName = item.name;
+                  });
+                },
           validator: (id) => id == null ? 'Vui lòng chọn nhà sản xuất' : null,
         );
       },

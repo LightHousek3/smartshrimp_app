@@ -539,6 +539,8 @@ final class InventoryMutationController
   );
 
   Future<InventoryProduct> create({
+    Map<String, dynamic>? protocolProposal,
+    String? recommendationReason,
     required String name,
     required InventoryProductCategory category,
     String manufacturerId = '',
@@ -555,6 +557,8 @@ final class InventoryMutationController
         .read(inventoryRepositoryProvider)
         .createProduct(
           farmId: farmId,
+          protocolProposal: protocolProposal,
+          recommendationReason: recommendationReason,
           name: name,
           category: category,
           manufacturerId: manufacturerId,

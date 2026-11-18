@@ -47,6 +47,26 @@ class _InventorySupplierFormPageState
   String _supplierType = 'MANUFACTURER';
 
   @override
+  void initState() {
+    super.initState();
+    final draft = widget.supplierId == null ? widget.initialSupplier : null;
+    if (draft != null) {
+      _supplierType = draft.supplierType;
+      final values = {
+        'name': draft.name,
+        'contactName': draft.contactName,
+        'phone': draft.phone,
+        'email': draft.email,
+        'address': draft.address,
+        'note': draft.note,
+      };
+      for (final entry in values.entries) {
+        _fields[entry.key]!.text = entry.value ?? '';
+      }
+    }
+  }
+
+  @override
   void dispose() {
     for (final controller in _fields.values) {
       controller.dispose();
@@ -173,7 +193,10 @@ class _InventorySupplierFormPageState
                     'name',
                     'Tên nhà cung cấp *',
                     255,
-                    enabled: _existing?.metadataLocked != true,
+                    enabled:
+                        _existing?.metadataLocked != true &&
+                        !(widget.supplierId == null &&
+                            widget.initialSupplier != null),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? 'Vui lòng nhập tên nhà cung cấp'
                         : null,
@@ -204,7 +227,10 @@ class _InventorySupplierFormPageState
                           child: Text('Sản xuất và phân phối'),
                         ),
                       ],
-                      onChanged: _existing?.metadataLocked == true
+                      onChanged:
+                          _existing?.metadataLocked == true ||
+                              (widget.supplierId == null &&
+                                  widget.initialSupplier != null)
                           ? null
                           : (type) => setState(() => _supplierType = type!),
                     ),
