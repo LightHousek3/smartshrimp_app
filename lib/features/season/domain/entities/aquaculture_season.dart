@@ -183,6 +183,56 @@ abstract class SeasonActions with _$SeasonActions {
 }
 
 @Freezed(fromJson: false, toJson: false)
+abstract class SeasonMaterialCosts with _$SeasonMaterialCosts {
+  const SeasonMaterialCosts._();
+
+  const factory SeasonMaterialCosts({
+    required String currency,
+    required String feed,
+    required String medicine,
+    required String environment,
+    required String total,
+  }) = _SeasonMaterialCosts;
+
+  factory SeasonMaterialCosts.fromJson(Map<String, dynamic> json) {
+    final values = <String, String>{};
+    for (final key in ['feed', 'medicine', 'environment', 'total']) {
+      final value = json[key];
+      if (value is! String ||
+          !RegExp(r'^(0|[1-9][0-9]{0,39})\.[0-9]{2}$').hasMatch(value)) {
+        throw const InvalidResponseException();
+      }
+      values[key] = value;
+    }
+    if (json['currency'] != 'VND' ||
+        minorUnits(values['feed']!) +
+                minorUnits(values['medicine']!) +
+                minorUnits(values['environment']!) !=
+            minorUnits(values['total']!)) {
+      throw const InvalidResponseException();
+    }
+    return SeasonMaterialCosts(
+      currency: 'VND',
+      feed: values['feed']!,
+      medicine: values['medicine']!,
+      environment: values['environment']!,
+      total: values['total']!,
+    );
+  }
+
+  // Keep money exact; only chart proportions are converted to floating point.
+  static BigInt minorUnits(String amount) =>
+      BigInt.parse(amount.replaceAll('.', ''));
+
+  double proportion(String amount) {
+    final sum = minorUnits(total);
+    return sum == BigInt.zero
+        ? 0
+        : minorUnits(amount).toDouble() / sum.toDouble();
+  }
+}
+
+@Freezed(fromJson: false, toJson: false)
 abstract class AquacultureSeason with _$AquacultureSeason {
   const AquacultureSeason._();
 
@@ -208,6 +258,7 @@ abstract class AquacultureSeason with _$AquacultureSeason {
     SeasonProtocol? approvedProductionProtocol,
     ActivationEligibility? activationEligibility,
     SeasonActions? availableActions,
+    SeasonMaterialCosts? materialCosts,
   }) = _AquacultureSeason;
 
   factory AquacultureSeason.fromJson(Map<String, dynamic> json) {
@@ -217,6 +268,7 @@ abstract class AquacultureSeason with _$AquacultureSeason {
       final protocol = _nullableMap(json['approvedProductionProtocol']);
       final eligibility = _nullableMap(json['activationEligibility']);
       final actions = _nullableMap(json['availableActions']);
+      final costs = _nullableMap(json['materialCosts']);
       return AquacultureSeason(
         id: _requiredString(json, 'id'),
         pondId: _requiredString(json, 'pondId'),
@@ -249,6 +301,9 @@ abstract class AquacultureSeason with _$AquacultureSeason {
         availableActions: actions == null
             ? null
             : SeasonActions.fromJson(actions),
+        materialCosts: costs == null
+            ? null
+            : SeasonMaterialCosts.fromJson(costs),
       );
     } on InvalidResponseException {
       rethrow;

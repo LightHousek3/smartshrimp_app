@@ -211,7 +211,7 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.status);ca
 
 class _SeasonAccount implements SeasonAccount {
   const _SeasonAccount({required this.id, required this.email, required this.fullName, this.phone, required this.status});
-  
+
 
 @override final  String id;
 @override final  String email;
@@ -346,7 +346,7 @@ as DateTime?,
 @override
 @pragma('vm:prefer-inline')
 $SeasonAccountCopyWith<$Res> get account {
-  
+
   return $SeasonAccountCopyWith<$Res>(_self.account, (value) {
     return _then(_self.copyWith(account: value));
   });
@@ -489,7 +489,7 @@ return $default(_that.id,_that.role,_that.assignedAt,_that.account,_that.unassig
 
 class _SeasonAssignment implements SeasonAssignment {
   const _SeasonAssignment({required this.id, required this.role, required this.assignedAt, required this.account, this.unassignedAt});
-  
+
 
 @override final  String id;
 @override final  String role;
@@ -560,7 +560,7 @@ as DateTime?,
 @override
 @pragma('vm:prefer-inline')
 $SeasonAccountCopyWith<$Res> get account {
-  
+
   return $SeasonAccountCopyWith<$Res>(_self.account, (value) {
     return _then(_self.copyWith(account: value));
   });
@@ -788,7 +788,7 @@ return $default(_that.technician,_that.expert);case _:
 
 class _SeasonPersonnel implements SeasonPersonnel {
   const _SeasonPersonnel({this.technician, this.expert});
-  
+
 
 @override final  SeasonAssignment? technician;
 @override final  SeasonAssignment? expert;
@@ -1075,7 +1075,7 @@ return $default(_that.id,_that.title,_that.versionNo,_that.status,_that.reviewed
 
 class _SeasonProtocol implements SeasonProtocol {
   const _SeasonProtocol({required this.id, required this.title, required this.versionNo, required this.status, this.reviewedAt});
-  
+
 
 @override final  String id;
 @override final  String title;
@@ -1341,7 +1341,7 @@ return $default(_that.canActivate,_that.missingConditions);case _:
 
 class _ActivationEligibility implements ActivationEligibility {
   const _ActivationEligibility({required this.canActivate, required final  List<String> missingConditions}): _missingConditions = missingConditions;
-  
+
 
 @override final  bool canActivate;
  final  List<String> _missingConditions;
@@ -1608,7 +1608,7 @@ return $default(_that.update,_that.activate,_that.cancel);case _:
 
 class _SeasonActions implements SeasonActions {
   const _SeasonActions({required this.update, required this.activate, required this.cancel});
-  
+
 
 @override final  bool update;
 @override final  bool activate;
@@ -1674,9 +1674,278 @@ as bool,
 }
 
 /// @nodoc
+mixin _$SeasonMaterialCosts {
+
+ String get currency; String get feed; String get medicine; String get environment; String get total;
+/// Create a copy of SeasonMaterialCosts
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SeasonMaterialCostsCopyWith<SeasonMaterialCosts> get copyWith => _$SeasonMaterialCostsCopyWithImpl<SeasonMaterialCosts>(this as SeasonMaterialCosts, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SeasonMaterialCosts&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.feed, feed) || other.feed == feed)&&(identical(other.medicine, medicine) || other.medicine == medicine)&&(identical(other.environment, environment) || other.environment == environment)&&(identical(other.total, total) || other.total == total));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,currency,feed,medicine,environment,total);
+
+@override
+String toString() {
+  return 'SeasonMaterialCosts(currency: $currency, feed: $feed, medicine: $medicine, environment: $environment, total: $total)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SeasonMaterialCostsCopyWith<$Res>  {
+  factory $SeasonMaterialCostsCopyWith(SeasonMaterialCosts value, $Res Function(SeasonMaterialCosts) _then) = _$SeasonMaterialCostsCopyWithImpl;
+@useResult
+$Res call({
+ String currency, String feed, String medicine, String environment, String total
+});
+
+
+
+
+}
+/// @nodoc
+class _$SeasonMaterialCostsCopyWithImpl<$Res>
+    implements $SeasonMaterialCostsCopyWith<$Res> {
+  _$SeasonMaterialCostsCopyWithImpl(this._self, this._then);
+
+  final SeasonMaterialCosts _self;
+  final $Res Function(SeasonMaterialCosts) _then;
+
+/// Create a copy of SeasonMaterialCosts
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? currency = null,Object? feed = null,Object? medicine = null,Object? environment = null,Object? total = null,}) {
+  return _then(_self.copyWith(
+currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,feed: null == feed ? _self.feed : feed // ignore: cast_nullable_to_non_nullable
+as String,medicine: null == medicine ? _self.medicine : medicine // ignore: cast_nullable_to_non_nullable
+as String,environment: null == environment ? _self.environment : environment // ignore: cast_nullable_to_non_nullable
+as String,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SeasonMaterialCosts].
+extension SeasonMaterialCostsPatterns on SeasonMaterialCosts {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SeasonMaterialCosts value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SeasonMaterialCosts value)  $default,){
+final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SeasonMaterialCosts value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String currency,  String feed,  String medicine,  String environment,  String total)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts() when $default != null:
+return $default(_that.currency,_that.feed,_that.medicine,_that.environment,_that.total);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String currency,  String feed,  String medicine,  String environment,  String total)  $default,) {final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts():
+return $default(_that.currency,_that.feed,_that.medicine,_that.environment,_that.total);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String currency,  String feed,  String medicine,  String environment,  String total)?  $default,) {final _that = this;
+switch (_that) {
+case _SeasonMaterialCosts() when $default != null:
+return $default(_that.currency,_that.feed,_that.medicine,_that.environment,_that.total);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _SeasonMaterialCosts extends SeasonMaterialCosts {
+  const _SeasonMaterialCosts({required this.currency, required this.feed, required this.medicine, required this.environment, required this.total}): super._();
+
+
+@override final  String currency;
+@override final  String feed;
+@override final  String medicine;
+@override final  String environment;
+@override final  String total;
+
+/// Create a copy of SeasonMaterialCosts
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SeasonMaterialCostsCopyWith<_SeasonMaterialCosts> get copyWith => __$SeasonMaterialCostsCopyWithImpl<_SeasonMaterialCosts>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SeasonMaterialCosts&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.feed, feed) || other.feed == feed)&&(identical(other.medicine, medicine) || other.medicine == medicine)&&(identical(other.environment, environment) || other.environment == environment)&&(identical(other.total, total) || other.total == total));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,currency,feed,medicine,environment,total);
+
+@override
+String toString() {
+  return 'SeasonMaterialCosts(currency: $currency, feed: $feed, medicine: $medicine, environment: $environment, total: $total)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SeasonMaterialCostsCopyWith<$Res> implements $SeasonMaterialCostsCopyWith<$Res> {
+  factory _$SeasonMaterialCostsCopyWith(_SeasonMaterialCosts value, $Res Function(_SeasonMaterialCosts) _then) = __$SeasonMaterialCostsCopyWithImpl;
+@override @useResult
+$Res call({
+ String currency, String feed, String medicine, String environment, String total
+});
+
+
+
+
+}
+/// @nodoc
+class __$SeasonMaterialCostsCopyWithImpl<$Res>
+    implements _$SeasonMaterialCostsCopyWith<$Res> {
+  __$SeasonMaterialCostsCopyWithImpl(this._self, this._then);
+
+  final _SeasonMaterialCosts _self;
+  final $Res Function(_SeasonMaterialCosts) _then;
+
+/// Create a copy of SeasonMaterialCosts
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? currency = null,Object? feed = null,Object? medicine = null,Object? environment = null,Object? total = null,}) {
+  return _then(_SeasonMaterialCosts(
+currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,feed: null == feed ? _self.feed : feed // ignore: cast_nullable_to_non_nullable
+as String,medicine: null == medicine ? _self.medicine : medicine // ignore: cast_nullable_to_non_nullable
+as String,environment: null == environment ? _self.environment : environment // ignore: cast_nullable_to_non_nullable
+as String,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$AquacultureSeason {
 
- String get id; String get pondId; String get name; ShrimpType get shrimpType; SeasonStatus get status; String get createdBy; DateTime get createdAt; DateTime get updatedAt; Pond get pond; DateTime? get stockingDate; DateTime? get expectedEndDate; DateTime? get actualEndDate; int? get initialQuantity; double? get initialDensityPerM2; String? get cancellationReason; int? get dayOfCulture; SeasonPersonnel? get personnel; SeasonPersonnel? get lastAssignedPersonnel; SeasonProtocol? get approvedProductionProtocol; ActivationEligibility? get activationEligibility; SeasonActions? get availableActions;
+ String get id; String get pondId; String get name; ShrimpType get shrimpType; SeasonStatus get status; String get createdBy; DateTime get createdAt; DateTime get updatedAt; Pond get pond; DateTime? get stockingDate; DateTime? get expectedEndDate; DateTime? get actualEndDate; int? get initialQuantity; double? get initialDensityPerM2; String? get cancellationReason; int? get dayOfCulture; SeasonPersonnel? get personnel; SeasonPersonnel? get lastAssignedPersonnel; SeasonProtocol? get approvedProductionProtocol; ActivationEligibility? get activationEligibility; SeasonActions? get availableActions; SeasonMaterialCosts? get materialCosts;
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1687,16 +1956,16 @@ $AquacultureSeasonCopyWith<AquacultureSeason> get copyWith => _$AquacultureSeaso
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions)&&(identical(other.materialCosts, materialCosts) || other.materialCosts == materialCosts));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
+int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions,materialCosts]);
 
 @override
 String toString() {
-  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
+  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions, materialCosts: $materialCosts)';
 }
 
 
@@ -1707,11 +1976,11 @@ abstract mixin class $AquacultureSeasonCopyWith<$Res>  {
   factory $AquacultureSeasonCopyWith(AquacultureSeason value, $Res Function(AquacultureSeason) _then) = _$AquacultureSeasonCopyWithImpl;
 @useResult
 $Res call({
- String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
+ String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions, SeasonMaterialCosts? materialCosts
 });
 
 
-$PondCopyWith<$Res> get pond;$SeasonPersonnelCopyWith<$Res>? get personnel;$SeasonPersonnelCopyWith<$Res>? get lastAssignedPersonnel;$SeasonProtocolCopyWith<$Res>? get approvedProductionProtocol;$ActivationEligibilityCopyWith<$Res>? get activationEligibility;$SeasonActionsCopyWith<$Res>? get availableActions;
+$PondCopyWith<$Res> get pond;$SeasonPersonnelCopyWith<$Res>? get personnel;$SeasonPersonnelCopyWith<$Res>? get lastAssignedPersonnel;$SeasonProtocolCopyWith<$Res>? get approvedProductionProtocol;$ActivationEligibilityCopyWith<$Res>? get activationEligibility;$SeasonActionsCopyWith<$Res>? get availableActions;$SeasonMaterialCostsCopyWith<$Res>? get materialCosts;
 
 }
 /// @nodoc
@@ -1724,7 +1993,7 @@ class _$AquacultureSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,Object? materialCosts = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
@@ -1747,7 +2016,8 @@ as SeasonPersonnel?,lastAssignedPersonnel: freezed == lastAssignedPersonnel ? _s
 as SeasonPersonnel?,approvedProductionProtocol: freezed == approvedProductionProtocol ? _self.approvedProductionProtocol : approvedProductionProtocol // ignore: cast_nullable_to_non_nullable
 as SeasonProtocol?,activationEligibility: freezed == activationEligibility ? _self.activationEligibility : activationEligibility // ignore: cast_nullable_to_non_nullable
 as ActivationEligibility?,availableActions: freezed == availableActions ? _self.availableActions : availableActions // ignore: cast_nullable_to_non_nullable
-as SeasonActions?,
+as SeasonActions?,materialCosts: freezed == materialCosts ? _self.materialCosts : materialCosts // ignore: cast_nullable_to_non_nullable
+as SeasonMaterialCosts?,
   ));
 }
 /// Create a copy of AquacultureSeason
@@ -1755,7 +2025,7 @@ as SeasonActions?,
 @override
 @pragma('vm:prefer-inline')
 $PondCopyWith<$Res> get pond {
-  
+
   return $PondCopyWith<$Res>(_self.pond, (value) {
     return _then(_self.copyWith(pond: value));
   });
@@ -1818,6 +2088,18 @@ $SeasonActionsCopyWith<$Res>? get availableActions {
 
   return $SeasonActionsCopyWith<$Res>(_self.availableActions!, (value) {
     return _then(_self.copyWith(availableActions: value));
+  });
+}/// Create a copy of AquacultureSeason
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SeasonMaterialCostsCopyWith<$Res>? get materialCosts {
+    if (_self.materialCosts == null) {
+    return null;
+  }
+
+  return $SeasonMaterialCostsCopyWith<$Res>(_self.materialCosts!, (value) {
+    return _then(_self.copyWith(materialCosts: value));
   });
 }
 }
@@ -1901,10 +2183,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions,  SeasonMaterialCosts? materialCosts)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AquacultureSeason() when $default != null:
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions,_that.materialCosts);case _:
   return orElse();
 
 }
@@ -1922,10 +2204,10 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions,  SeasonMaterialCosts? materialCosts)  $default,) {final _that = this;
 switch (_that) {
 case _AquacultureSeason():
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions,_that.materialCosts);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1942,10 +2224,10 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String pondId,  String name,  ShrimpType shrimpType,  SeasonStatus status,  String createdBy,  DateTime createdAt,  DateTime updatedAt,  Pond pond,  DateTime? stockingDate,  DateTime? expectedEndDate,  DateTime? actualEndDate,  int? initialQuantity,  double? initialDensityPerM2,  String? cancellationReason,  int? dayOfCulture,  SeasonPersonnel? personnel,  SeasonPersonnel? lastAssignedPersonnel,  SeasonProtocol? approvedProductionProtocol,  ActivationEligibility? activationEligibility,  SeasonActions? availableActions,  SeasonMaterialCosts? materialCosts)?  $default,) {final _that = this;
 switch (_that) {
 case _AquacultureSeason() when $default != null:
-return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions);case _:
+return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_that.createdBy,_that.createdAt,_that.updatedAt,_that.pond,_that.stockingDate,_that.expectedEndDate,_that.actualEndDate,_that.initialQuantity,_that.initialDensityPerM2,_that.cancellationReason,_that.dayOfCulture,_that.personnel,_that.lastAssignedPersonnel,_that.approvedProductionProtocol,_that.activationEligibility,_that.availableActions,_that.materialCosts);case _:
   return null;
 
 }
@@ -1957,8 +2239,8 @@ return $default(_that.id,_that.pondId,_that.name,_that.shrimpType,_that.status,_
 
 
 class _AquacultureSeason extends AquacultureSeason {
-  const _AquacultureSeason({required this.id, required this.pondId, required this.name, required this.shrimpType, required this.status, required this.createdBy, required this.createdAt, required this.updatedAt, required this.pond, this.stockingDate, this.expectedEndDate, this.actualEndDate, this.initialQuantity, this.initialDensityPerM2, this.cancellationReason, this.dayOfCulture, this.personnel, this.lastAssignedPersonnel, this.approvedProductionProtocol, this.activationEligibility, this.availableActions}): super._();
-  
+  const _AquacultureSeason({required this.id, required this.pondId, required this.name, required this.shrimpType, required this.status, required this.createdBy, required this.createdAt, required this.updatedAt, required this.pond, this.stockingDate, this.expectedEndDate, this.actualEndDate, this.initialQuantity, this.initialDensityPerM2, this.cancellationReason, this.dayOfCulture, this.personnel, this.lastAssignedPersonnel, this.approvedProductionProtocol, this.activationEligibility, this.availableActions, this.materialCosts}): super._();
+
 
 @override final  String id;
 @override final  String pondId;
@@ -1981,6 +2263,7 @@ class _AquacultureSeason extends AquacultureSeason {
 @override final  SeasonProtocol? approvedProductionProtocol;
 @override final  ActivationEligibility? activationEligibility;
 @override final  SeasonActions? availableActions;
+@override final  SeasonMaterialCosts? materialCosts;
 
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
@@ -1992,16 +2275,16 @@ _$AquacultureSeasonCopyWith<_AquacultureSeason> get copyWith => __$AquacultureSe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AquacultureSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.pondId, pondId) || other.pondId == pondId)&&(identical(other.name, name) || other.name == name)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.stockingDate, stockingDate) || other.stockingDate == stockingDate)&&(identical(other.expectedEndDate, expectedEndDate) || other.expectedEndDate == expectedEndDate)&&(identical(other.actualEndDate, actualEndDate) || other.actualEndDate == actualEndDate)&&(identical(other.initialQuantity, initialQuantity) || other.initialQuantity == initialQuantity)&&(identical(other.initialDensityPerM2, initialDensityPerM2) || other.initialDensityPerM2 == initialDensityPerM2)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.dayOfCulture, dayOfCulture) || other.dayOfCulture == dayOfCulture)&&(identical(other.personnel, personnel) || other.personnel == personnel)&&(identical(other.lastAssignedPersonnel, lastAssignedPersonnel) || other.lastAssignedPersonnel == lastAssignedPersonnel)&&(identical(other.approvedProductionProtocol, approvedProductionProtocol) || other.approvedProductionProtocol == approvedProductionProtocol)&&(identical(other.activationEligibility, activationEligibility) || other.activationEligibility == activationEligibility)&&(identical(other.availableActions, availableActions) || other.availableActions == availableActions)&&(identical(other.materialCosts, materialCosts) || other.materialCosts == materialCosts));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions]);
+int get hashCode => Object.hashAll([runtimeType,id,pondId,name,shrimpType,status,createdBy,createdAt,updatedAt,pond,stockingDate,expectedEndDate,actualEndDate,initialQuantity,initialDensityPerM2,cancellationReason,dayOfCulture,personnel,lastAssignedPersonnel,approvedProductionProtocol,activationEligibility,availableActions,materialCosts]);
 
 @override
 String toString() {
-  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions)';
+  return 'AquacultureSeason(id: $id, pondId: $pondId, name: $name, shrimpType: $shrimpType, status: $status, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, pond: $pond, stockingDate: $stockingDate, expectedEndDate: $expectedEndDate, actualEndDate: $actualEndDate, initialQuantity: $initialQuantity, initialDensityPerM2: $initialDensityPerM2, cancellationReason: $cancellationReason, dayOfCulture: $dayOfCulture, personnel: $personnel, lastAssignedPersonnel: $lastAssignedPersonnel, approvedProductionProtocol: $approvedProductionProtocol, activationEligibility: $activationEligibility, availableActions: $availableActions, materialCosts: $materialCosts)';
 }
 
 
@@ -2012,11 +2295,11 @@ abstract mixin class _$AquacultureSeasonCopyWith<$Res> implements $AquacultureSe
   factory _$AquacultureSeasonCopyWith(_AquacultureSeason value, $Res Function(_AquacultureSeason) _then) = __$AquacultureSeasonCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions
+ String id, String pondId, String name, ShrimpType shrimpType, SeasonStatus status, String createdBy, DateTime createdAt, DateTime updatedAt, Pond pond, DateTime? stockingDate, DateTime? expectedEndDate, DateTime? actualEndDate, int? initialQuantity, double? initialDensityPerM2, String? cancellationReason, int? dayOfCulture, SeasonPersonnel? personnel, SeasonPersonnel? lastAssignedPersonnel, SeasonProtocol? approvedProductionProtocol, ActivationEligibility? activationEligibility, SeasonActions? availableActions, SeasonMaterialCosts? materialCosts
 });
 
 
-@override $PondCopyWith<$Res> get pond;@override $SeasonPersonnelCopyWith<$Res>? get personnel;@override $SeasonPersonnelCopyWith<$Res>? get lastAssignedPersonnel;@override $SeasonProtocolCopyWith<$Res>? get approvedProductionProtocol;@override $ActivationEligibilityCopyWith<$Res>? get activationEligibility;@override $SeasonActionsCopyWith<$Res>? get availableActions;
+@override $PondCopyWith<$Res> get pond;@override $SeasonPersonnelCopyWith<$Res>? get personnel;@override $SeasonPersonnelCopyWith<$Res>? get lastAssignedPersonnel;@override $SeasonProtocolCopyWith<$Res>? get approvedProductionProtocol;@override $ActivationEligibilityCopyWith<$Res>? get activationEligibility;@override $SeasonActionsCopyWith<$Res>? get availableActions;@override $SeasonMaterialCostsCopyWith<$Res>? get materialCosts;
 
 }
 /// @nodoc
@@ -2029,7 +2312,7 @@ class __$AquacultureSeasonCopyWithImpl<$Res>
 
 /// Create a copy of AquacultureSeason
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? pondId = null,Object? name = null,Object? shrimpType = null,Object? status = null,Object? createdBy = null,Object? createdAt = null,Object? updatedAt = null,Object? pond = null,Object? stockingDate = freezed,Object? expectedEndDate = freezed,Object? actualEndDate = freezed,Object? initialQuantity = freezed,Object? initialDensityPerM2 = freezed,Object? cancellationReason = freezed,Object? dayOfCulture = freezed,Object? personnel = freezed,Object? lastAssignedPersonnel = freezed,Object? approvedProductionProtocol = freezed,Object? activationEligibility = freezed,Object? availableActions = freezed,Object? materialCosts = freezed,}) {
   return _then(_AquacultureSeason(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,pondId: null == pondId ? _self.pondId : pondId // ignore: cast_nullable_to_non_nullable
@@ -2052,7 +2335,8 @@ as SeasonPersonnel?,lastAssignedPersonnel: freezed == lastAssignedPersonnel ? _s
 as SeasonPersonnel?,approvedProductionProtocol: freezed == approvedProductionProtocol ? _self.approvedProductionProtocol : approvedProductionProtocol // ignore: cast_nullable_to_non_nullable
 as SeasonProtocol?,activationEligibility: freezed == activationEligibility ? _self.activationEligibility : activationEligibility // ignore: cast_nullable_to_non_nullable
 as ActivationEligibility?,availableActions: freezed == availableActions ? _self.availableActions : availableActions // ignore: cast_nullable_to_non_nullable
-as SeasonActions?,
+as SeasonActions?,materialCosts: freezed == materialCosts ? _self.materialCosts : materialCosts // ignore: cast_nullable_to_non_nullable
+as SeasonMaterialCosts?,
   ));
 }
 
@@ -2061,7 +2345,7 @@ as SeasonActions?,
 @override
 @pragma('vm:prefer-inline')
 $PondCopyWith<$Res> get pond {
-  
+
   return $PondCopyWith<$Res>(_self.pond, (value) {
     return _then(_self.copyWith(pond: value));
   });
@@ -2124,6 +2408,18 @@ $SeasonActionsCopyWith<$Res>? get availableActions {
 
   return $SeasonActionsCopyWith<$Res>(_self.availableActions!, (value) {
     return _then(_self.copyWith(availableActions: value));
+  });
+}/// Create a copy of AquacultureSeason
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SeasonMaterialCostsCopyWith<$Res>? get materialCosts {
+    if (_self.materialCosts == null) {
+    return null;
+  }
+
+  return $SeasonMaterialCostsCopyWith<$Res>(_self.materialCosts!, (value) {
+    return _then(_self.copyWith(materialCosts: value));
   });
 }
 }
@@ -2328,7 +2624,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 class _SeasonPage extends SeasonPage {
   const _SeasonPage({required final  List<AquacultureSeason> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor}): _items = items,super._();
-  
+
 
  final  List<AquacultureSeason> _items;
 @override List<AquacultureSeason> get items {
@@ -2466,7 +2762,7 @@ as int,
 @override
 @pragma('vm:prefer-inline')
 $AquacultureSeasonCopyWith<$Res> get season {
-  
+
   return $AquacultureSeasonCopyWith<$Res>(_self.season, (value) {
     return _then(_self.copyWith(season: value));
   });
@@ -2609,7 +2905,7 @@ return $default(_that.season,_that.cancelledScheduleCount);case _:
 
 class _SeasonCancellationResult implements SeasonCancellationResult {
   const _SeasonCancellationResult({required this.season, required this.cancelledScheduleCount});
-  
+
 
 @override final  AquacultureSeason season;
 @override final  int cancelledScheduleCount;
@@ -2674,7 +2970,7 @@ as int,
 @override
 @pragma('vm:prefer-inline')
 $AquacultureSeasonCopyWith<$Res> get season {
-  
+
   return $AquacultureSeasonCopyWith<$Res>(_self.season, (value) {
     return _then(_self.copyWith(season: value));
   });

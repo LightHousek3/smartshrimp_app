@@ -1,9 +1,126 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
+import 'package:smartshrimp_app/core/network/api_client.dart';
+import 'package:smartshrimp_app/core/storage/session_store.dart';
+import 'package:smartshrimp_app/features/season/data/services/season_api_service.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 
 void main() {
+  test('parses additive costs without changing legacy season data', () {
+    final legacy = AquacultureSeason.fromJson(_seasonJson());
+    final updated = AquacultureSeason.fromJson(
+      _seasonJson()..['materialCosts'] = _costsJson(),
+    );
+    expect(updated.copyWith(materialCosts: null), legacy);
+    expect(legacy.materialCosts, isNull);
+    expect(
+      AquacultureSeason.fromJson(
+        _seasonJson()..['materialCosts'] = null,
+      ).materialCosts,
+      isNull,
+    );
+    expect(updated.materialCosts!.total, '2000000.00');
+    expect(
+      updated.materialCosts!.proportion(updated.materialCosts!.feed),
+      0.75,
+    );
+  });
+
+  test('keeps large money exact and handles an empty total', () {
+    final json = _costsJson()
+      ..addAll({
+        'feed': '9007199254740993.01',
+        'medicine': '0.02',
+        'environment': '0.03',
+        'total': '9007199254740993.06',
+      });
+    final costs = SeasonMaterialCosts.fromJson(json);
+    expect(
+      SeasonMaterialCosts.minorUnits(costs.total),
+      BigInt.parse('900719925474099306'),
+    );
+    final zero = SeasonMaterialCosts.fromJson(
+      _costsJson()
+        ..updateAll((key, value) => key == 'currency' ? value : '0.00'),
+    );
+    expect(zero.proportion(zero.feed), 0);
+  });
+
+  test('rejects invalid costs rather than displaying misleading zeros', () {
+    for (final value in [123, [], 'costs']) {
+      expect(
+        () => AquacultureSeason.fromJson(
+          _seasonJson()..['materialCosts'] = value,
+        ),
+        throwsA(isA<InvalidResponseException>()),
+      );
+    }
+    for (final value in [
+      null,
+      10,
+      '-1.00',
+      'NaN',
+      'Infinity',
+      '1.234',
+      '01.00',
+      '1e3',
+      '1',
+      '1.00\n',
+    ]) {
+      expect(
+        () => SeasonMaterialCosts.fromJson(_costsJson()..['feed'] = value),
+        throwsA(isA<InvalidResponseException>()),
+      );
+    }
+    expect(
+      () => SeasonMaterialCosts.fromJson(_costsJson()..['currency'] = 'USD'),
+      throwsA(isA<InvalidResponseException>()),
+    );
+    expect(
+      () => SeasonMaterialCosts.fromJson(_costsJson()..['total'] = '0.00'),
+      throwsA(isA<InvalidResponseException>()),
+    );
+  });
+
+  test(
+    'old and new detail responses use exactly one existing authenticated GET',
+    () async {
+      for (final hasCosts in [false, true]) {
+        final requests = <RequestOptions>[];
+        final dio = Dio(BaseOptions(baseUrl: 'https://api.smartshrimp.test'));
+        addTearDown(dio.close);
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (request, handler) {
+              requests.add(request);
+              final data = _seasonJson();
+              if (hasCosts) data['materialCosts'] = _costsJson();
+              handler.resolve(
+                Response(
+                  requestOptions: request,
+                  statusCode: 200,
+                  data: {'success': true, 'message': 'Success', 'data': data},
+                ),
+              );
+            },
+          ),
+        );
+        final result = await SeasonApiService(
+          ApiClient(dio, _SessionStore()),
+        ).getSeason('season-1');
+        expect(requests, hasLength(1));
+        expect(requests.single.method, 'GET');
+        expect(requests.single.path, '/owner/seasons/season-1');
+        expect(requests.single.headers['Authorization'], 'Bearer access-token');
+        expect(requests.single.queryParameters, isEmpty);
+        expect(requests.single.data, isNull);
+        expect(result.materialCosts != null, hasCosts);
+      }
+    },
+  );
+
   test('parses list and detail fields returned by the season API', () {
     final season = AquacultureSeason.fromJson(_seasonJson());
 
@@ -142,3 +259,30 @@ Map<String, dynamic> _seasonJson() => <String, dynamic>{
     'cancel': true,
   },
 };
+
+Map<String, dynamic> _costsJson() => {
+  'currency': 'VND',
+  'feed': '1500000.00',
+  'medicine': '200000.00',
+  'environment': '300000.00',
+  'total': '2000000.00',
+};
+
+final class _SessionStore implements SessionStore {
+  @override
+  String? accessToken = 'access-token';
+  @override
+  String? refreshToken = 'refresh-token';
+  @override
+  Future<void> initialize() async {}
+  @override
+  Future<void> clear() async {}
+  @override
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+  }
+}

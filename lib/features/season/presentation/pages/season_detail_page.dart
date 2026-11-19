@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +14,7 @@ import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_seas
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
+import 'package:smartshrimp_app/features/season/presentation/widgets/season_material_cost_card.dart';
 
 class SeasonDetailPage extends ConsumerWidget {
   const SeasonDetailPage({
@@ -322,84 +321,7 @@ class _SeasonDetailContent extends ConsumerWidget {
     onTap: () => _openHarvests(context),
   );
 
-  Widget _costCard() => SeasonSectionCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const Text(
-          'Chi phí vật tư',
-          style: TextStyle(
-            color: AppColors.ink,
-            fontSize: 14,
-            height: 1.5,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 14),
-        const Row(
-          children: <Widget>[
-            SizedBox.square(
-              dimension: 128,
-              child: CustomPaint(
-                painter: _EmptyCostRingPainter(),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        'TỔNG ĐÃ DÙNG',
-                        style: TextStyle(
-                          color: AppColors.inkMuted,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        '0 ₫',
-                        style: TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                children: <Widget>[
-                  _CostRow(
-                    label: 'Thức ăn',
-                    value: '0 ₫',
-                    percent: 0,
-                    color: Color(0xFF0F9B8E),
-                  ),
-                  SizedBox(height: 9),
-                  _CostRow(
-                    label: 'Thuốc',
-                    value: '0 ₫',
-                    percent: 0,
-                    color: AppColors.error,
-                  ),
-                  SizedBox(height: 9),
-                  _CostRow(
-                    label: 'Môi trường',
-                    value: '0 ₫',
-                    percent: 0,
-                    color: Color(0xFF7B5BD6),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+  Widget _costCard() => SeasonMaterialCostCard(costs: season.materialCosts);
 
   Widget _diseaseCard(BuildContext context) => _FeatureCard(
     icon: Icons.health_and_safety_rounded,
@@ -686,12 +608,12 @@ class _ActivationDialogContent extends StatelessWidget {
         : null;
     final expectedDurationDays =
         season.stockingDate != null && season.expectedEndDate != null
-            ? season.expectedEndDate!.difference(season.stockingDate!).inDays
-            : null;
+        ? season.expectedEndDate!.difference(season.stockingDate!).inDays
+        : null;
     final expectedEndDisplay = expectedEndDateStr != null
         ? (expectedDurationDays != null && expectedDurationDays > 0
-            ? '$expectedEndDateStr (~$expectedDurationDays ngày)'
-            : expectedEndDateStr)
+              ? '$expectedEndDateStr (~$expectedDurationDays ngày)'
+              : expectedEndDateStr)
         : 'Chưa đặt';
     final areaDisplay = season.pond.areaM2 != null && season.pond.areaM2! > 0
         ? '${seasonDecimalLabel(season.pond.areaM2)} m²'
@@ -814,7 +736,8 @@ class _ActivationDialogContent extends StatelessWidget {
                   Expanded(
                     child: _ActivationDialogMetric(
                       label: 'Kỹ thuật viên',
-                      value: season.personnel?.technician?.account.fullName ??
+                      value:
+                          season.personnel?.technician?.account.fullName ??
                           'Chưa phân công',
                     ),
                   ),
@@ -822,7 +745,8 @@ class _ActivationDialogContent extends StatelessWidget {
                   Expanded(
                     child: _ActivationDialogMetric(
                       label: 'Chuyên gia thủy sản',
-                      value: season.personnel?.expert?.account.fullName ??
+                      value:
+                          season.personnel?.expert?.account.fullName ??
                           'Chưa phân công',
                     ),
                   ),
@@ -832,47 +756,47 @@ class _ActivationDialogContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF5E3),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFF1D8A9)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFBE8C5),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: const Icon(
-                Icons.lock_outline_rounded,
-                size: 16,
-                color: Color(0xFFB86808),
-              ),
-            ),
-            const SizedBox(width: 9),
-            const Expanded(
-              child: Text(
-                'Thông tin khởi tạo sẽ được khóa sau khi kích hoạt và không thể chỉnh sửa.',
-                style: TextStyle(
-                  color: Color(0xFF8B540D),
-                  fontSize: 11,
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF5E3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFF1D8A9)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBE8C5),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 16,
+                  color: Color(0xFFB86808),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'Thông tin khởi tạo sẽ được khóa sau khi kích hoạt và không thể chỉnh sửa.',
+                  style: TextStyle(
+                    color: Color(0xFF8B540D),
+                    fontSize: 11,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
   }
 }
 
@@ -1277,93 +1201,6 @@ class _FeatureBadge extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _CostRow extends StatelessWidget {
-  const _CostRow({
-    required this.label,
-    required this.value,
-    required this.percent,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final double percent;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    children: <Widget>[
-      Row(
-        children: <Widget>[
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: AppColors.inkSoft, fontSize: 10),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 5),
-      Row(
-        children: <Widget>[
-          const SizedBox(width: 18),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(
-                value: percent,
-                minHeight: 5,
-                color: color,
-                backgroundColor: const Color(0xFFEEF1F6),
-              ),
-            ),
-          ),
-          const SizedBox(width: 7),
-          SizedBox(
-            width: 24,
-            child: Text(
-              '${(percent * 100).round()}%',
-              textAlign: TextAlign.right,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 9),
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-class _EmptyCostRingPainter extends CustomPainter {
-  const _EmptyCostRingPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final paint = Paint()
-      ..color = const Color(0xFFEEF1F6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 13;
-    canvas.drawArc(rect.deflate(7), -math.pi / 2, math.pi * 2, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _EmptyCostRingPainter oldDelegate) => false;
 }
 
 class _CancellationDialog extends StatefulWidget {
