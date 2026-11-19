@@ -553,8 +553,8 @@ void main() {
       await mount(tester);
       await tester.tap(find.text('Chọn ảnh mẫu tôm'));
       await tester.pumpAndSettle();
-      expect(find.text('Chụp ảnh'), findsOneWidget);
-      expect(find.text('Chọn từ thư viện'), findsOneWidget);
+      expect(find.text('Chụp ảnh mới'), findsOneWidget);
+      expect(find.text('Chọn ảnh từ thiết bị'), findsOneWidget);
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.text('0/5 ảnh'), findsOneWidget);
@@ -586,7 +586,7 @@ void main() {
     },
   );
   testWidgets(
-    'N: detail shows confidence, gallery and a disabled case action without exposing URLs',
+    'N: detail shows confidence, gallery and a case action without exposing URLs',
     (tester) async {
       await mount(tester, detail: true);
       expect(find.text('Đốm trắng'), findsOneWidget);
@@ -603,11 +603,7 @@ void main() {
           matching: find.byType(FilledButton),
         ),
       );
-      expect(button.onPressed, isNull);
-      expect(
-        find.byTooltip('Chưa hỗ trợ tạo ca bệnh từ kết quả AI.'),
-        findsOneWidget,
-      );
+      expect(button.onPressed, isNotNull);
       expect(find.textContaining('https://'), findsNothing);
       expect(find.textContaining('signature=private'), findsNothing);
       await capture(tester, 'detail-bottom');

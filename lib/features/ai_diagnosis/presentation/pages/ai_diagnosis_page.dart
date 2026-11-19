@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +15,13 @@ import '../widgets/ai_diagnosis_photos.dart';
 import '../widgets/ai_diagnosis_ui.dart';
 
 class AiDiagnosisPage extends ConsumerStatefulWidget {
-  const AiDiagnosisPage({required this.seasonId, super.key});
+  const AiDiagnosisPage({
+    required this.seasonId,
+    this.selectForCase = false,
+    super.key,
+  });
   final String seasonId;
+  final bool selectForCase;
   @override
   ConsumerState<AiDiagnosisPage> createState() => _AiDiagnosisPageState();
 }
@@ -74,12 +81,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
             return Padding(
               key: ValueKey('ai-diagnosis-${item.id}'),
               padding: const EdgeInsets.only(bottom: 8),
-              child: _HistoryCard(
-                item,
-                onTap: () => context.push(
-                  '/seasons/${widget.seasonId}/ai-diagnoses/${item.id}',
-                ),
-              ),
+              child: _HistoryCard(item, onTap: () => _openDetail(item.id)),
             );
           }
           if (state.page.items.isEmpty) {
@@ -119,31 +121,15 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
   );
 
   Future<void> pickImages() async {
-    final source = await showModalBottomSheet<AiImageSource>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Chọn từ thư viện'),
-              onTap: () => Navigator.pop(context, AiImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Chụp ảnh'),
-              onTap: () => Navigator.pop(context, AiImageSource.camera),
-            ),
-          ],
-        ),
-      ),
-    );
+    final source = await showAppImageSourceDialog(context);
     if (source != null && mounted) {
       await ref
           .read(aiDiagnosisDraftProvider(widget.seasonId).notifier)
-          .pick(source);
+          .pick(
+            source == ImageSource.camera
+                ? AiImageSource.camera
+                : AiImageSource.gallery,
+          );
     }
   }
 
@@ -152,9 +138,19 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
         .read(aiDiagnosisDraftProvider(widget.seasonId).notifier)
         .submit();
     if (mounted && result != null) {
-      await context.push(
-        '/seasons/${widget.seasonId}/ai-diagnoses/${result.id}',
-      );
+      await _openDetail(result.id);
+    }
+  }
+
+  Future<void> _openDetail(String id) async {
+    final selected = await context.push<String>(
+      Uri(
+        path: '/seasons/${widget.seasonId}/ai-diagnoses/$id',
+        queryParameters: widget.selectForCase ? {'selectForCase': '1'} : null,
+      ).toString(),
+    );
+    if (mounted && widget.selectForCase && selected != null) {
+      context.pop(selected);
     }
   }
 

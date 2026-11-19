@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
@@ -43,7 +44,16 @@ class _AssignedTaskDetailPageState
     }
   }
 
+  Future<void> _chooseImage() async {
+    final source = await showAppImageSourceDialog(context);
+    if (source != null && mounted) await _pick(source);
+  }
+
   Future<void> _pick(ImageSource source) async {
+    if (ref.read(assignedTaskDetailProvider(widget.taskId)).value?.status !=
+        TaskStatus.inProgress) {
+      return;
+    }
     if (_picking ||
         _confirming ||
         ref.read(assignedTaskMutationProvider).isLoading ||
@@ -175,12 +185,7 @@ class _AssignedTaskDetailPageState
             status: task.status,
             busy: busy,
             uploading: _picking,
-            onCamera: task.status == TaskStatus.inProgress
-                ? () => _pick(ImageSource.camera)
-                : null,
-            onLibrary: task.status == TaskStatus.inProgress
-                ? () => _pick(ImageSource.gallery)
-                : null,
+            onAdd: task.status == TaskStatus.inProgress ? _chooseImage : null,
             onRemove: task.status == TaskStatus.inProgress
                 ? (index) => setState(() => _evidenceUrls.removeAt(index))
                 : null,

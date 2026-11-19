@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import '../../domain/domain.dart';
 import '../../data/data.dart';
 
@@ -149,17 +150,21 @@ class DiseaseCaseMutation extends AsyncNotifier<void> {
     List<String> attachments = const [],
     String? aiDiagnosisId,
     String? relatedCaseId,
-  }) => _run(
-    (repo) => repo.create(
-      seasonId,
-      title,
-      description,
-      severity,
-      attachments: attachments,
-      aiDiagnosisId: aiDiagnosisId,
-      relatedCaseId: relatedCaseId,
-    ),
-  );
+  }) async {
+    final item = await _run(
+      (repo) => repo.create(
+        seasonId,
+        title,
+        description,
+        severity,
+        attachments: attachments,
+        aiDiagnosisId: aiDiagnosisId,
+        relatedCaseId: relatedCaseId,
+      ),
+    );
+    if (ref.mounted) ref.invalidate(technicianDashboardProvider);
+    return item;
+  }
 
   /// Send a case response through the repository without changing clinical state locally.
   Future<DiseaseCase> respond(

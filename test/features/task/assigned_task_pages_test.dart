@@ -28,6 +28,17 @@ import 'assigned_task_test.dart' show AssignedTaskFixtureRepository;
 import 'task_fixtures.dart';
 import '../../support/disabled_push_repository.dart';
 
+Future<void> pickTaskImage(WidgetTester tester, ImageSource source) async {
+  await tester.ensureVisible(find.text('Thêm ảnh'));
+  await tester.tap(find.text('Thêm ảnh'));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.text(
+      source == ImageSource.camera ? 'Chụp ảnh mới' : 'Chọn ảnh từ thiết bị',
+    ),
+  );
+}
+
 Future<ProviderContainer> openAssignedTasks(
   WidgetTester tester,
   AssignedTaskFixtureRepository repo, {
@@ -105,24 +116,13 @@ void main() {
       width: 320,
       picker: picker,
     );
-    await tester.scrollUntilVisible(find.text('Chụp ảnh'), 150);
+    await tester.scrollUntilVisible(find.text('Thêm ảnh'), 150);
     await tester.pumpAndSettle();
-    expect(find.text('Chọn từ thư viện').hitTestable(), findsOneWidget);
-    final cameraButton = find.widgetWithText(FilledButton, 'Chụp ảnh');
-    final libraryButton = find.widgetWithText(
-      OutlinedButton,
-      'Chọn từ thư viện',
-    );
-    expect(
-      tester.getSize(cameraButton).height,
-      tester.getSize(libraryButton).height,
-    );
-    expect(
-      tester.getCenter(cameraButton).dy,
-      tester.getCenter(libraryButton).dy,
-    );
+    final addButton = find.widgetWithText(FilledButton, 'Thêm ảnh');
+    expect(addButton.hitTestable(), findsOneWidget);
+    expect(tester.getSize(addButton).height, greaterThanOrEqualTo(44));
     expect(tester.takeException(), isNull);
-    await tester.tap(find.text('Chụp ảnh'));
+    await pickTaskImage(tester, ImageSource.camera);
     await tester.pumpAndSettle();
     expect(find.text('1/5 ảnh'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -2500));
@@ -179,12 +179,12 @@ void main() {
         picker: picker,
       );
       expect(find.byType(TaskEvidencePanel), findsOneWidget);
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
       expect(picker.sources, [ImageSource.camera]);
       expect(find.text('1/5 ảnh'), findsOneWidget);
-      await tester.tap(find.text('Chọn từ thư viện'));
+      await pickTaskImage(tester, ImageSource.gallery);
       await tester.pumpAndSettle();
       expect(picker.sources.last, ImageSource.gallery);
       expect(find.text('2/5 ảnh'), findsOneWidget);
@@ -223,7 +223,7 @@ void main() {
         'https://images.test/evidence-2.jpg',
       ]);
       expect(find.byTooltip('Bỏ ảnh minh chứng 1'), findsNothing);
-      expect(find.text('Chụp ảnh'), findsNothing);
+      expect(find.text('Thêm ảnh'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -244,8 +244,8 @@ void main() {
       picker: _TaskImagePicker(),
     );
     for (var index = 0; index < 2; index++) {
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
     }
     await tester.drag(find.byType(ListView).first, const Offset(0, 1500));
@@ -315,20 +315,20 @@ void main() {
         path: '/tasks/progress',
         picker: picker,
       );
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
       expect(repo.uploads, 0);
       picker.image = XFile.fromData(
         Uint8List.fromList([1, 2, 3]),
         name: 'fake.jpg',
       );
-      await tester.tap(find.text('Chụp ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
       expect(find.text('Chọn ảnh JPG, PNG hoặc WebP.'), findsOneWidget);
       expect(repo.uploads, 0);
       picker.failure = PlatformException(code: 'camera_access_denied');
-      await tester.tap(find.text('Chụp ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
       expect(
         find.text('Vui lòng cho phép truy cập camera trong cài đặt thiết bị.'),
@@ -350,8 +350,8 @@ void main() {
         path: '/tasks/progress',
         picker: _TaskImagePicker(),
       );
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pump();
       await tester.pump();
       expect(
@@ -368,8 +368,8 @@ void main() {
       expect(repo.tasks['progress']!.status, TaskStatus.inProgress);
       expect(repo.advances, 0);
       repo.pendingUpload = null;
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
       expect(find.text('1/5 ảnh'), findsOneWidget);
       repo.failure = const ApiException(
@@ -401,32 +401,25 @@ void main() {
       picker: picker,
     );
     for (var index = 0; index < 5; index++) {
-      await tester.ensureVisible(find.text('Chụp ảnh'));
-      await tester.tap(find.text('Chụp ảnh'));
+      await tester.ensureVisible(find.text('Thêm ảnh'));
+      await pickTaskImage(tester, ImageSource.camera);
       await tester.pumpAndSettle();
     }
     expect(find.text('5/5 ảnh'), findsOneWidget);
     expect(
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Chụp ảnh'))
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Thêm ảnh'))
           .onPressed,
       isNull,
     );
-    expect(
-      tester
-          .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Chọn từ thư viện'),
-          )
-          .onPressed,
-      isNull,
-    );
+    expect(find.text('Chọn từ thư viện'), findsNothing);
     await tester.ensureVisible(find.byTooltip('Bỏ ảnh minh chứng 1'));
     await tester.tap(find.byTooltip('Bỏ ảnh minh chứng 1'));
     await tester.pumpAndSettle();
     expect(find.text('4/5 ảnh'), findsOneWidget);
     expect(
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Chụp ảnh'))
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Thêm ảnh'))
           .onPressed,
       isNotNull,
     );
@@ -442,8 +435,8 @@ void main() {
       path: '/tasks/progress',
       picker: _TaskImagePicker(),
     );
-    await tester.ensureVisible(find.text('Chụp ảnh'));
-    await tester.tap(find.text('Chụp ảnh'));
+    await tester.ensureVisible(find.text('Thêm ảnh'));
+    await pickTaskImage(tester, ImageSource.camera);
     await tester.pump();
     await tester.pump();
     await tester.tap(find.byTooltip('Quay lại'));

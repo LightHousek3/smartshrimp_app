@@ -409,21 +409,10 @@ class _SeasonDetailContent extends ConsumerWidget {
       '/farms/$farmId/ponds/$pondId/seasons/${season.id}/personnel-assignments',
     );
     if (message == null || !context.mounted) return;
+    AppNoticeService.success(context, message);
     await ref
         .read(seasonDetailControllerProvider(season.id).notifier)
         .refresh();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: <Widget>[
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
-            const SizedBox(width: 9),
-            Expanded(child: Text(message)),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _protocol(BuildContext context) {

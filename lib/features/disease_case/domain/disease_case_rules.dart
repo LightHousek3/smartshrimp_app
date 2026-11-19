@@ -1,7 +1,26 @@
 import 'dart:typed_data';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'entities/disease_case.dart';
 
 abstract final class DiseaseCaseRules {
+  static const existingCaseMessage =
+      'Vụ đã có ca chưa giải quyết. Hãy mở ca hiện tại để bổ sung thông tin.';
+
+  /// Server eligibility is authoritative; a new reply belongs to the existing episode.
+  static ApiException? creationError(DiseaseCasePage page) {
+    if (page.existingCaseId != null ||
+        (!page.canCreate && page.ongoingCount > 0)) {
+      return const ApiException(existingCaseMessage, statusCode: 409);
+    }
+    if (!page.canCreate) {
+      return const ApiException(
+        'Vụ nuôi không còn đủ điều kiện tạo ca bệnh. Vui lòng kiểm tra lại.',
+        statusCode: 403,
+      );
+    }
+    return null;
+  }
+
   static const titleLimit = 500;
   static const textLimit = 500;
   static const maxImageBytes = 5 * 1024 * 1024;

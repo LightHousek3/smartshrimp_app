@@ -4,14 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/presentation/view_models/ai_diagnosis_controller.dart';
 import '../../domain/domain.dart';
 import '../view_models/disease_case_controller.dart';
 import '../widgets/case_ui.dart';
 import '../widgets/case_evidence_picker.dart';
 
 class DiseaseCaseFormPage extends ConsumerStatefulWidget {
-  const DiseaseCaseFormPage({super.key, required this.seasonId});
+  const DiseaseCaseFormPage({
+    super.key,
+    required this.seasonId,
+    this.initialAiDiagnosisId,
+  });
   final String seasonId;
+  final String? initialAiDiagnosisId;
   @override
   ConsumerState<DiseaseCaseFormPage> createState() =>
       _DiseaseCaseFormPageState();
@@ -27,8 +34,16 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
   bool _picking = false;
   bool _submitting = false;
   String? _aiDiagnosisId;
+  String? _linkedAiId;
   String? _relatedCaseId;
   bool _showAllAi = false;
+  @override
+  void initState() {
+    super.initState();
+    _aiDiagnosisId = widget.initialAiDiagnosisId;
+    _linkedAiId = widget.initialAiDiagnosisId;
+  }
+
   @override
   void dispose() {
     _title.dispose();
@@ -86,29 +101,76 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
 
   Future<void> _openAi({String? diagnosisId}) async {
     final path = '/seasons/${widget.seasonId}/ai-diagnoses';
-    await context.push(diagnosisId == null ? path : '$path/$diagnosisId');
-    if (mounted) ref.invalidate(caseCreationOptionsProvider(widget.seasonId));
+    final selected = await context.push<String>(
+      Uri(
+        path: diagnosisId == null ? path : '$path/$diagnosisId',
+        queryParameters: {'selectForCase': '1'},
+      ).toString(),
+    );
+    if (!mounted) return;
+    if (selected != null) {
+      setState(() {
+        _aiDiagnosisId = selected;
+        _linkedAiId = selected;
+      });
+    }
+    ref.invalidate(caseCreationOptionsProvider(widget.seasonId));
   }
 
   @override
   Widget build(BuildContext context) {
-    final busy =
-        ref.watch(diseaseCaseMutationProvider).isLoading ||
-        _picking ||
-        _submitting;
-    final contextData =
-        ref
-            .watch(
-              diseaseCaseListProvider((
-                seasonId: widget.seasonId,
-                page: 1,
-                status: null,
-                resolved: false,
-              )),
-            )
-            .value
-            ?.season ??
-        {};
+    final busy = ref.watch(diseaseCaseMutationProvider).isLoading || _picking || _submitting;
+    final scopeProvider = diseaseCaseListProvider((
+      seasonId: widget.seasonId,
+      page: 1,
+      status: null,
+      resolved: false,
+    ));
+    final scope = ref.watch(scopeProvider);
+    final page = scope.asData?.value;
+    final contextData = page?.season ?? {};
+    final eligibilityError = page == null
+        ? null
+        : DiseaseCaseRules.creationError(page);
+    if (page == null || eligibilityError != null) {
+      return CaseFrame(
+        title: 'Tạo ca bệnh',
+        subtitle: caseContext(contextData),
+        child: scope.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CaseFailure(
+                    error: eligibilityError ?? scope.error!,
+                    retry: () => ref.invalidate(scopeProvider),
+                  ),
+                  if (page?.existingCaseId != null)
+                    TextButton(
+                      onPressed: () => context.pushReplacement(
+                        '/seasons/${widget.seasonId}/disease-cases/${page!.existingCaseId}',
+                      ),
+                      child: const Text('Mở ca hiện tại'),
+                    ),
+                ],
+              ),
+      );
+    }
+    final linked = _linkedAiId == null
+        ? null
+        : ref.watch(
+            aiDiagnosisDetailProvider((
+              seasonId: widget.seasonId,
+              diagnosisId: _linkedAiId!,
+            )),
+          );
+    final linkedDetail = linked?.asData?.value;
+    final linkedValid =
+        linkedDetail?.runStatus == AiRunStatus.success &&
+        linkedDetail?.seasonId == widget.seasonId &&
+        linkedDetail?.id == _linkedAiId;
+    final canSubmit =
+        _aiDiagnosisId != _linkedAiId || _linkedAiId == null || linkedValid;
     return CaseFrame(
       title: 'Tạo ca bệnh',
       subtitle: caseContext(contextData),
@@ -283,6 +345,48 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  if (linked != null) ...[
+                    if (linked.isLoading)
+                      const LinearProgressIndicator(minHeight: 2)
+                    else if (linkedValid)
+                      _AiOption(
+                        ai: linkedDetail!.toJson(),
+                        selected: _aiDiagnosisId == _linkedAiId,
+                        onTap: busy
+                            ? null
+                            : () => setState(
+                                () => _aiDiagnosisId =
+                                    _aiDiagnosisId == _linkedAiId
+                                    ? null
+                                    : _linkedAiId,
+                              ),
+                        onView: busy
+                            ? null
+                            : () => _openAi(diagnosisId: _linkedAiId),
+                      )
+                    else
+                      Text(
+                        linked.hasError
+                            ? caseError(linked.error!)
+                            : 'Chỉ có thể liên kết kết quả AI thành công trong cùng vụ nuôi.',
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    TextButton(
+                      onPressed: busy
+                          ? null
+                          : () => setState(() {
+                              if (_aiDiagnosisId == _linkedAiId) {
+                                _aiDiagnosisId = null;
+                              }
+                              _linkedAiId = null;
+                            }),
+                      child: const Text('Bỏ liên kết này'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   ref
                       .watch(caseCreationOptionsProvider(widget.seasonId))
                       .when(
@@ -310,101 +414,108 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                             ),
                           ],
                         ),
-                        data: (options) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (options.aiDiagnoses.isEmpty)
-                              const Text(
-                                'Chưa có kết quả AI trong vụ này.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.inkSoft,
-                                ),
-                              ),
-                            if (options.aiDiagnoses.isNotEmpty) ...[
-                              for (final ai in options.aiDiagnoses.take(
-                                _showAllAi ? options.aiDiagnoses.length : 3,
-                              ))
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: _AiOption(
-                                    ai: ai,
-                                    selected: _aiDiagnosisId == ai['id'],
-                                    onView: busy
-                                        ? null
-                                        : () => _openAi(
-                                            diagnosisId: ai['id'] as String,
-                                          ),
-                                    onTap: busy
-                                        ? null
-                                        : () => setState(
-                                            () => _aiDiagnosisId =
-                                                _aiDiagnosisId == ai['id']
-                                                ? null
-                                                : ai['id'] as String,
-                                          ),
+                        data: (options) {
+                          final choices = options.aiDiagnoses
+                              .where((ai) => ai['id'] != _linkedAiId)
+                              .toList();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (choices.isEmpty && _linkedAiId == null)
+                                const Text(
+                                  'Chưa có kết quả AI trong vụ này.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.inkSoft,
                                   ),
                                 ),
-                              if (options.aiDiagnoses.length > 3)
-                                TextButton(
-                                  onPressed: () =>
-                                      setState(() => _showAllAi = !_showAllAi),
-                                  child: Text(
-                                    _showAllAi
-                                        ? 'Thu gọn'
-                                        : 'Xem thêm ${options.aiDiagnoses.length - 3} kết quả',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(fontSize: 12),
+                              if (choices.isNotEmpty) ...[
+                                for (final ai in choices.take(
+                                  _showAllAi ? choices.length : 3,
+                                ))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: _AiOption(
+                                      ai: ai,
+                                      selected: _aiDiagnosisId == ai['id'],
+                                      onView: busy
+                                          ? null
+                                          : () => _openAi(
+                                              diagnosisId: ai['id'] as String,
+                                            ),
+                                      onTap: busy
+                                          ? null
+                                          : () => setState(
+                                              () => _aiDiagnosisId =
+                                                  _aiDiagnosisId == ai['id']
+                                                  ? null
+                                                  : ai['id'] as String,
+                                            ),
+                                    ),
+                                  ),
+                                if (choices.length > 3)
+                                  TextButton(
+                                    onPressed: () => setState(
+                                      () => _showAllAi = !_showAllAi,
+                                    ),
+                                    child: Text(
+                                      _showAllAi
+                                          ? 'Thu gọn'
+                                          : 'Xem thêm ${choices.length - 3} kết quả',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(fontSize: 12),
+                                    ),
+                                  ),
+                              ],
+                              if (options.relatedCases.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: ExpansionTile(
+                                    tilePadding: const EdgeInsets.symmetric(
+                                      horizontal: 3,
+                                    ),
+                                    title: const Text(
+                                      'Liên kết ca trước (tùy chọn)',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    children: [
+                                      DropdownButtonFormField<String>(
+                                        initialValue: _relatedCaseId,
+                                        isExpanded: true,
+                                        decoration: caseInput(
+                                          'Chọn ca đã khép trong vụ',
+                                        ),
+                                        items: [
+                                          const DropdownMenuItem(
+                                            value: null,
+                                            child: Text(
+                                              'Không liên kết ca trước',
+                                            ),
+                                          ),
+                                          for (final old
+                                              in options.relatedCases)
+                                            DropdownMenuItem(
+                                              value: old['id'] as String,
+                                              child: Text(
+                                                old['title'] as String,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                        ],
+                                        onChanged: busy
+                                            ? null
+                                            : (value) => setState(
+                                                () => _relatedCaseId = value,
+                                              ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],
-                            if (options.relatedCases.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: ExpansionTile(
-                                  tilePadding: const EdgeInsets.symmetric(
-                                    horizontal: 3,
-                                  ),
-                                  title: const Text(
-                                    'Liên kết ca trước (tùy chọn)',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                  children: [
-                                    DropdownButtonFormField<String>(
-                                      initialValue: _relatedCaseId,
-                                      isExpanded: true,
-                                      decoration: caseInput(
-                                        'Chọn ca đã khép trong vụ',
-                                      ),
-                                      items: [
-                                        const DropdownMenuItem(
-                                          value: null,
-                                          child: Text(
-                                            'Không liên kết ca trước',
-                                          ),
-                                        ),
-                                        for (final old in options.relatedCases)
-                                          DropdownMenuItem(
-                                            value: old['id'] as String,
-                                            child: Text(
-                                              old['title'] as String,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                      ],
-                                      onChanged: busy
-                                          ? null
-                                          : (value) => setState(
-                                              () => _relatedCaseId = value,
-                                            ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -426,7 +537,7 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
             CasePrimaryButton(
               label: busy ? 'Đang gửi…' : 'Gửi cho chuyên gia',
               busy: busy,
-              onPressed: _submit,
+              onPressed: canSubmit ? _submit : null,
             ),
           ],
         ),

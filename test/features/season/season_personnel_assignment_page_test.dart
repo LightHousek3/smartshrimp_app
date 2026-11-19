@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -102,6 +103,19 @@ void main() {
       ),
       findsOneWidget,
     );
+    await tester.tap(find.byKey(const Key('assignment_candidate_personnel-1')));
+    final submit = find.byKey(const Key('submit_personnel_assignment'));
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+    expect(find.byType(SeasonPersonnelAssignmentPage), findsNothing);
+    expect(find.text('Đã phân công Nguyễn Văn Kỹ Thuật.'), findsOneWidget);
+    expect(
+      tester.widget<AppNoticeCard>(find.byType(AppNoticeCard)).level,
+      AppNoticeLevel.success,
+    );
+    AppNoticeService.hide();
+    await tester.pumpAndSettle();
   });
 }
 
@@ -167,15 +181,36 @@ final class _OwnerAuthRepository implements AuthRepository {
 }
 
 final class _SeasonRepository implements SeasonRepository {
+  AquacultureSeason _value = _season;
   @override
-  Future<AquacultureSeason> getSeason(String seasonId) async => _season;
+  Future<AquacultureSeason> getSeason(String seasonId) async => _value;
 
   @override
   Future<SeasonAssignment> assignPersonnel({
     required String seasonId,
     required String accountId,
     required AccountRole role,
-  }) => throw UnimplementedError();
+  }) async {
+    final person = role == AccountRole.technician ? _technician : _expert;
+    final assignment = SeasonAssignment(
+      id: 'assignment',
+      role: role == AccountRole.technician ? 'TECHNICIAN' : 'EXPERT',
+      assignedAt: DateTime.utc(2026, 11, 19),
+      account: SeasonAccount(
+        id: person.id,
+        email: person.email,
+        fullName: person.fullName!,
+        status: 'ACTIVE',
+      ),
+    );
+    _value = _value.copyWith(
+      personnel: SeasonPersonnel(
+        technician: role == AccountRole.technician ? assignment : null,
+        expert: role == AccountRole.expert ? assignment : null,
+      ),
+    );
+    return assignment;
+  }
 
   @override
   Future<AquacultureSeason> activateSeason(AquacultureSeason current) =>

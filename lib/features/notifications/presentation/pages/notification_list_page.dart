@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
@@ -296,44 +297,12 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
     }
   }
 
-  void _showNotice(String message, {bool isError = false}) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.white,
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          content: Row(
-            children: <Widget>[
-              Icon(
-                isError
-                    ? Icons.error_outline_rounded
-                    : Icons.check_circle_rounded,
-                color: isError ? AppColors.error : const Color(0xFF0F9B8E),
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  void _showNotice(String message, {bool isError = false}) =>
+      AppNoticeService.show(
+        context,
+        message: message,
+        level: isError ? AppNoticeLevel.danger : AppNoticeLevel.success,
       );
-  }
 
   static String _errorMessage(Object error) => error is AppException
       ? error.message

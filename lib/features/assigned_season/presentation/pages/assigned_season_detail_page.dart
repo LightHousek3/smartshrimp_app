@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -463,8 +464,9 @@ class _FeatureAction extends StatelessWidget {
       child: InkWell(
         onTap:
             onTap ??
-            () => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${data.label} đang được phát triển.')),
+            () => AppNoticeService.info(
+              context,
+              '${data.label} đang được phát triển.',
             ),
         borderRadius: BorderRadius.circular(18),
         child: Column(

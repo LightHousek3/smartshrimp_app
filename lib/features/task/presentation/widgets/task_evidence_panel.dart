@@ -11,8 +11,7 @@ class TaskEvidencePanel extends StatelessWidget {
   const TaskEvidencePanel({
     required this.urls,
     required this.status,
-    this.onCamera,
-    this.onLibrary,
+    this.onAdd,
     this.onRemove,
     this.busy = false,
     this.uploading = false,
@@ -20,7 +19,7 @@ class TaskEvidencePanel extends StatelessWidget {
   });
   final List<String> urls;
   final TaskStatus status;
-  final VoidCallback? onCamera, onLibrary;
+  final VoidCallback? onAdd;
   final ValueChanged<int>? onRemove;
   final bool busy;
   final bool uploading;
@@ -199,81 +198,21 @@ class TaskEvidencePanel extends StatelessWidget {
             ),
           if (editable) ...[
             const SizedBox(height: 12),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: canAdd ? onCamera : null,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: taskBlue,
-                        foregroundColor: AppColors.ocean,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: const Size.fromHeight(34.28),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          letterSpacing: 0,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AppSvgIcon(
-                            AppSvgIconName.cameraSmall,
-                            size: 15,
-                            color: AppColors.ocean,
-                          ),
-                          SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              'Chụp ảnh',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: canAdd ? onLibrary : null,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.inkSoft,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        minimumSize: const Size.fromHeight(34.28),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          letterSpacing: 0,
-                        ),
-                        side: const BorderSide(color: AppColors.line),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Chọn từ thư viện',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            FilledButton.icon(
+              onPressed: canAdd ? onAdd : null,
+              icon: const Icon(Icons.add_photo_alternate_outlined, size: 20),
+              label: const Text('Thêm ảnh'),
+              style: FilledButton.styleFrom(
+                backgroundColor: taskBlue,
+                foregroundColor: AppColors.ocean,
+                minimumSize: const Size.fromHeight(44),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             if (uploading) ...[

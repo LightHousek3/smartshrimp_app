@@ -62,6 +62,7 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
   int mutations = 0;
   int lists = 0;
   bool canCreate = true;
+  String? existingCaseId;
   bool empty = false;
   @override
   Future<DiseaseCasePage> list(
@@ -80,6 +81,7 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
       totalResults: empty ? 0 : 21,
       hasNextPage: !empty && page == 1,
       canCreate: canCreate,
+      existingCaseId: existingCaseId,
       ongoingCount: empty ? 0 : 21,
       resolvedCount: 0,
       season: const {'name': 'Vụ 1', 'pondName': 'Ao 1'},

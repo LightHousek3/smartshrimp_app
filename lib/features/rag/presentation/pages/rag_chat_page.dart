@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
@@ -33,14 +34,11 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
 
   void _error(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          error is AppException
-              ? error.message
-              : 'Không thể hoàn tất thao tác. Vui lòng thử lại.',
-        ),
-      ),
+    AppNoticeService.danger(
+      context,
+      error is AppException
+          ? error.message
+          : 'Không thể hoàn tất thao tác. Vui lòng thử lại.',
     );
   }
 
