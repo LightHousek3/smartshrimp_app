@@ -25,7 +25,7 @@ class DiseaseCaseApiService {
   }
 
   String _path(String seasonId) =>
-      '/me/seasons/${Uri.encodeComponent(seasonId)}/disease-cases';
+      '/technician/seasons/${Uri.encodeComponent(seasonId)}/disease-cases';
   Future<DiseaseCasePage> list(
     String seasonId,
     int page,

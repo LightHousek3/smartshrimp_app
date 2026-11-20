@@ -12,10 +12,10 @@ import 'package:smartshrimp_app/features/shrimp_health/domain/repositories/shrim
 final shrimpHealthRepositoryProvider = Provider<ShrimpHealthRepository>((ref) {
   final role = ref.watch(authControllerProvider).value?.role;
   final basePath = switch (role) {
-    AccountRole.technician => '/me/seasons',
+    AccountRole.technician => '/technician/seasons',
     AccountRole.expert => '/expert/seasons',
     AccountRole.farmOwner => '/owner/seasons',
-    _ => '/me/seasons',
+    _ => '/technician/seasons',
   };
   return ShrimpHealthRepositoryImpl(
     ShrimpHealthApiService(ref.watch(apiClientProvider), basePath: basePath),

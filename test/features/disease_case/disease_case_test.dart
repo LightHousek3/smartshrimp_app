@@ -424,10 +424,10 @@ void main() {
         '  Khẩn cấp  ',
       );
       expect(requests.map((r) => '${r.method} ${r.path}'), [
-        'GET /me/seasons/season/disease-cases',
-        'GET /me/seasons/season/disease-cases/case',
-        'POST /me/seasons/season/disease-cases',
-        'POST /me/seasons/season/disease-cases/case/responses',
+        'GET /technician/seasons/season/disease-cases',
+        'GET /technician/seasons/season/disease-cases/case',
+        'POST /technician/seasons/season/disease-cases',
+        'POST /technician/seasons/season/disease-cases/case/responses',
       ]);
       expect(requests.first.queryParameters, {
         'page': 2,
