@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
@@ -88,12 +89,16 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
   @override
   Widget build(BuildContext context) {
     final group = widget.group;
-    final title = group.mealNumber != null ? 'Cữ ${group.mealNumber}' : 'Cữ ăn';
+    final isTreatment = group.isTreatment;
+    final title = group.cardTitle;
 
-    // Header icon: Cữ vận hành dùng icon lịch trình với nền #DEEDFD và màu #319AE7
-    const headerBg = _blueBg;
-    const headerFg = _blueFg;
-    const headerIcon = Icons.event_note_rounded;
+    // Header icon: Cữ vận hành dùng icon lịch trình từ assets/icons/common/calendar-days.svg;
+    // Box Điều trị dùng icon lọ thuốc chữ thập từ assets/icons/common/medicine.svg
+    final headerBg = isTreatment ? const Color(0xFFFBE6EA) : _blueBg;
+    final headerFg = isTreatment ? const Color(0xFFD43B57) : _blueFg;
+    final headerSvg = isTreatment
+        ? AppSvgIconName.medicine
+        : AppSvgIconName.calendarDays;
 
     final primaryFeeding = group.primaryFeeding;
     final primarySchedule = group.activeSchedules.isNotEmpty
@@ -108,11 +113,11 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
             ? OperationOverdueBadge.cardSurface
             : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isGroupOverdue
-              ? OperationOverdueBadge.cardBorder.withValues(alpha: 0.85)
-              : AppColors.line.withValues(alpha: 0.6),
-        ),
+        border: isGroupOverdue
+            ? Border.all(
+                color: OperationOverdueBadge.cardBorder.withValues(alpha: 0.85),
+              )
+            : null,
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -145,7 +150,13 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                         color: headerBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(headerIcon, color: headerFg, size: 22),
+                      child: Center(
+                        child: AppSvgIcon(
+                          headerSvg,
+                          color: headerFg,
+                          size: 22,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -159,12 +170,33 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                             children: <Widget>[
                               Text(
                                 title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15.5,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
+                                  color: isTreatment
+                                      ? const Color(0xFF9F1239)
+                                      : AppColors.ink,
                                 ),
                               ),
+                              if (isTreatment)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7.5,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFBE6EA),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Phác đồ điều trị',
+                                    style: TextStyle(
+                                      color: Color(0xFFD43B57),
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
                               if (isGroupOverdue)
                                 const OperationOverdueBadge(compact: true),
                             ],
@@ -203,7 +235,7 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                           _isExpanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: _blueFg,
+                          color: headerFg,
                           size: 22,
                         ),
                       ),

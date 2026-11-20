@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -187,7 +186,7 @@ class _ShrimpHealthDetailSheetState
   );
 
   Future<void> _submitVoid() async {
-    if (!ref.read(assignedSeasonCanWriteProvider(widget.seasonId))) return;
+    if (!ref.read(shrimpHealthCanWriteProvider(widget.seasonId))) return;
     if (!_formKey.currentState!.validate()) return;
 
     final reason = _reasonController.text.trim();
@@ -420,7 +419,7 @@ class _ShrimpHealthDetailSheetState
                   ),
                 ),
               ] else if (ref.watch(
-                    assignedSeasonCanWriteProvider(widget.seasonId),
+                    shrimpHealthCanWriteProvider(widget.seasonId),
                   ) &&
                   !_isVoidingMode) ...<Widget>[
                 // Outlined Void Trigger Button (figma_detail.png)
@@ -496,7 +495,7 @@ class _ShrimpHealthDetailSheetState
                   },
                 ),
               ] else if (ref.watch(
-                assignedSeasonCanWriteProvider(widget.seasonId),
+                shrimpHealthCanWriteProvider(widget.seasonId),
               )) ...<Widget>[
                 // Inline Void Confirmation Flow (figma_void.png)
                 Form(

@@ -27,6 +27,7 @@ final backendDioProvider = Provider<Dio>((ref) {
       headers: const <String, Object>{
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
     ),
   );

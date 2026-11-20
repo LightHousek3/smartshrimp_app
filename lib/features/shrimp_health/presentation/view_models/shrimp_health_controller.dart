@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/data/repositories/shrimp_health_repository_impl.dart';
@@ -159,4 +160,17 @@ final shrimpHealthDetailProvider = FutureProvider.autoDispose
         }
       },
     );
+
+/// Quyền ghi nhật ký sức khỏe: chỉ dành riêng cho Kỹ thuật viên (Technician) phụ trách vụ nuôi đang ACTIVE.
+/// Chủ trại (Farm Owner) và Chuyên gia (Expert) chỉ có quyền xem (Read-only).
+final shrimpHealthCanWriteProvider = Provider.autoDispose.family<bool, String>(
+  (ref, seasonId) {
+    final role = ref.watch(authControllerProvider).value?.role;
+    // Nếu là Farm Owner hoặc bất kỳ vai trò nào không phải Technician thì không được ghi
+    if (role != null && role != AccountRole.technician) {
+      return false;
+    }
+    return ref.watch(assignedSeasonCanWriteProvider(seasonId));
+  },
+);
 

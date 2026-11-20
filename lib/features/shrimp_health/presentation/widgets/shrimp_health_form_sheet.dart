@@ -3,6 +3,7 @@ import 'package:smartshrimp_app/features/home/presentation/view_models/technicia
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/view_models/shrimp_health_controller.dart';
@@ -662,44 +663,15 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                 ),
                 const SizedBox(height: 20),
 
-                // Submit button
-                SizedBox(
-                  width: double.infinity,
+                // Submit button (đồng bộ GradientButton theo thiết kế hệ thống)
+                GradientButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  isLoading: _isSubmitting,
+                  label: 'Lưu bản ghi',
+                  icon: Icons.check_rounded,
+                  compact: true,
+                  borderRadius: 14,
                   height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD43B57),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Icon(Icons.check_rounded, color: Colors.white, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Lưu bản ghi',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
                 ),
               ],
             ),
