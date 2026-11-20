@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -98,7 +97,7 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canWrite = ref.watch(assignedSeasonCanWriteProvider(seasonId));
+    final canWrite = ref.watch(shrimpHealthCanWriteProvider(seasonId));
     final detailAsync = ref.watch(
       shrimpHealthDetailProvider((seasonId: seasonId, logId: logId)),
     );

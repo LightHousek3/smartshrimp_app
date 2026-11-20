@@ -54,9 +54,11 @@ class _OperationMealExecuteSheetState
           .where((s) => s.status == OperationStatus.planned)
           .toList(growable: false);
 
-  String get _mealLabel => widget.group.mealNumber != null
-      ? 'Cữ ${widget.group.mealNumber}'
-      : 'cữ ăn';
+  String get _mealLabel => widget.group.isTreatment
+      ? 'điều trị'
+      : (widget.group.mealNumber != null
+          ? 'Cữ ${widget.group.mealNumber}'
+          : 'cữ ăn');
 
   @override
   void initState() {

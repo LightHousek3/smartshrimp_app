@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
@@ -310,7 +311,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
   Widget build(BuildContext context) {
     final canWrite =
         widget.isSeasonActive &&
-        ref.watch(assignedSeasonCanWriteProvider(widget.seasonId));
+        ref.watch(shrimpHealthCanWriteProvider(widget.seasonId));
     final listAsync = ref.watch(shrimpHealthListProvider(widget.seasonId));
     final subtitle = [
       if (widget.pondName?.trim().isNotEmpty == true) widget.pondName!.trim(),
@@ -390,67 +391,41 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                 ),
               ),
 
-              // Full width Action Button: + Ghi nhận sức khỏe tôm (matching Figma figma_list.png)
+              // Full width Action Button: + Ghi nhận sức khỏe tôm (đồng bộ GradientButton theo thiết kế hệ thống)
               if (canWrite)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 6,
                   ),
-                  child: SizedBox(
-                    width: double.infinity,
+                  child: GradientButton(
+                    onPressed: () {
+                      final initialQuantity = ref
+                          .watch(
+                            assignedSeasonDetailProvider(widget.seasonId),
+                          )
+                          .value
+                          ?.initialQuantity;
+                      ShrimpHealthFormSheet.show(
+                        context,
+                        seasonId: widget.seasonId,
+                        initialQuantity: initialQuantity,
+                        onCreated: () {
+                          ref
+                              .read(
+                                shrimpHealthListProvider(
+                                  widget.seasonId,
+                                ).notifier,
+                              )
+                              .refresh();
+                        },
+                      );
+                    },
+                    label: 'Ghi nhận sức khỏe tôm',
+                    icon: Icons.add_rounded,
+                    compact: true,
+                    borderRadius: 14,
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final initialQuantity = ref
-                            .watch(
-                              assignedSeasonDetailProvider(widget.seasonId),
-                            )
-                            .value
-                            ?.initialQuantity;
-                        ShrimpHealthFormSheet.show(
-                          context,
-                          seasonId: widget.seasonId,
-                          initialQuantity: initialQuantity,
-                          onCreated: () {
-                            ref
-                                .read(
-                                  shrimpHealthListProvider(
-                                    widget.seasonId,
-                                  ).notifier,
-                                )
-                                .refresh();
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD43B57),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(
-                            Icons.add_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Ghi nhận sức khỏe tôm',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
 

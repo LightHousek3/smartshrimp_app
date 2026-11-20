@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_meal_group_card.dart';
@@ -28,15 +30,62 @@ class OperationListPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     DateTime currentDate,
-    DateTime maxDate,
+    DateTime today,
+    DateTime? seasonStartDate,
   ) async {
+    // 1. Chỉ cho phép ngày quá khứ: Giới hạn tối đa là ngày hôm qua (trước ngày hôm nay)
+    final yesterday = today.subtract(const Duration(days: 1));
+    final lastDate = DateTime(yesterday.year, yesterday.month, yesterday.day);
+
+    // 2. Giới hạn tối thiểu từ ngày bắt đầu vụ nuôi (stockingDate hoặc createdAt)
+    final normalizedSeasonStart = seasonStartDate != null
+        ? DateTime(
+            seasonStartDate.year,
+            seasonStartDate.month,
+            seasonStartDate.day,
+          )
+        : null;
+    final firstDate = normalizedSeasonStart ??
+        today.subtract(const Duration(days: 365));
+
+    // 3. Nếu vụ nuôi mới bắt đầu từ hôm nay hoặc trong tương lai (firstDate > lastDate)
+    if (firstDate.isAfter(lastDate)) {
+      final startFmt =
+          '${firstDate.day.toString().padLeft(2, '0')}/${firstDate.month.toString().padLeft(2, '0')}/${firstDate.year}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Vụ nuôi bắt đầu từ ngày $startFmt, chưa có lịch vận hành trong quá khứ.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // 4. Xác định initialDate an toàn nằm trong [firstDate, lastDate]
+    DateTime initialDate;
+    if (currentDate.isBefore(today)) {
+      if (currentDate.isBefore(firstDate)) {
+        initialDate = firstDate;
+      } else if (currentDate.isAfter(lastDate)) {
+        initialDate = lastDate;
+      } else {
+        initialDate = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+        );
+      }
+    } else {
+      initialDate = lastDate;
+    }
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: currentDate.isBefore(maxDate)
-          ? currentDate
-          : maxDate.subtract(const Duration(days: 1)),
-      firstDate: DateTime(2023, 1, 1),
-      lastDate: maxDate, // Giới hạn tối đa là hôm nay cho phần quá khứ
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
       helpText: 'CHỌN NGÀY VẬN HÀNH TRONG QUÁ KHỨ',
       cancelText: 'Hủy',
       confirmText: 'Xem lịch',
@@ -144,7 +193,8 @@ class OperationListPage extends ConsumerWidget {
   }
 
   Widget _buildSectionHeader({
-    required IconData icon,
+    IconData? icon,
+    AppSvgIconName? svgIcon,
     required String title,
     required Color iconColor,
     required Color iconBg,
@@ -157,7 +207,11 @@ class OperationListPage extends ConsumerWidget {
           color: iconBg,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: iconColor, size: 16),
+        child: Center(
+          child: svgIcon != null
+              ? AppSvgIcon(svgIcon, color: iconColor, size: 16)
+              : Icon(icon, color: iconColor, size: 16),
+        ),
       ),
       const SizedBox(width: 8),
       Text(
@@ -258,10 +312,20 @@ class OperationListPage extends ConsumerWidget {
         );
       }
 
-      // 1. Phân loại Thức ăn + Thuốc và Khoáng/Hóa chất
-      final feedingAndMedicineRaw = result.schedules
+      final seasonDetail =
+          ref.watch(assignedSeasonDetailProvider(seasonId)).asData?.value;
+      final seasonStartDate = result.seasonStartDate ??
+          seasonDetail?.stockingDate ??
+          seasonDetail?.assignedAt;
+
+      // 1. Phân loại theo cụm nghiệp vụ:
+      // - Toàn bộ lịch thuộc phác đồ điều trị (isTreatment) hoặc thức ăn/thuốc phác đồ nuôi
+      //   được đưa vào gom nhóm Cữ & Box Điều trị
+      // - Các lịch khoáng & hóa chất thông thường (phác đồ nuôi) hiển thị riêng
+      final mealAndTreatmentSchedules = result.schedules
           .where(
             (s) =>
+                s.isTreatment ||
                 s.operationType == OperationType.feeding ||
                 s.operationType == OperationType.medicine,
           )
@@ -270,38 +334,27 @@ class OperationListPage extends ConsumerWidget {
       final mineralAndChemicalRaw = result.schedules
           .where(
             (s) =>
-                s.operationType == OperationType.mineral ||
-                s.operationType == OperationType.chemical ||
-                s.operationType == OperationType.other,
+                !s.isTreatment &&
+                (s.operationType == OperationType.mineral ||
+                    s.operationType == OperationType.chemical ||
+                    s.operationType == OperationType.other),
           )
           .toList(growable: false);
 
-      // 2. Gom nhóm Thức ăn + Thuốc theo từng ngày và từng cữ
+      // 2. Gom nhóm Cữ ăn và Box Điều trị
       final allMealGroups =
-          FeedingMedicineMealGroup.group(feedingAndMedicineRaw);
+          FeedingMedicineMealGroup.group(mealAndTreatmentSchedules);
 
-      // 3. Lọc theo Tab trạng thái
+      // 3. Lọc theo Tab trạng thái (đồng bộ tuyệt đối với overallStatus của cữ)
       final filteredMealGroups = switch (activeTab) {
         'PLANNED' => allMealGroups
-            .where(
-              (g) => g.allSchedules.any(
-                (s) => s.status == OperationStatus.planned,
-              ),
-            )
+            .where((g) => g.overallStatus == OperationStatus.planned)
             .toList(growable: false),
         'COMPLETED' => allMealGroups
-            .where(
-              (g) => g.allSchedules.any(
-                (s) => s.status == OperationStatus.completed,
-              ),
-            )
+            .where((g) => g.overallStatus == OperationStatus.completed)
             .toList(growable: false),
         'CANCELLED' => allMealGroups
-            .where(
-              (g) => g.allSchedules.any(
-                (s) => s.status == OperationStatus.cancelled,
-              ),
-            )
+            .where((g) => g.overallStatus == OperationStatus.cancelled)
             .toList(growable: false),
         _ => allMealGroups,
       };
@@ -394,13 +447,9 @@ class OperationListPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    // 1. Top 3 stats cards (tap to open detailed stats)
-                    InkWell(
-                      onTap: () => context.push(
-                        '/seasons/$seasonId/operations/stats',
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      child: OperationStatsBar(summary: result.summary),
+                    // 1. Top 3 stats cards (chỉ hiển thị số liệu thống kê)
+                    OperationStatsBar(
+                      summary: result.summary,
                     ),
                     const SizedBox(height: 14),
 
@@ -547,6 +596,7 @@ class OperationListPage extends ConsumerWidget {
                               ref,
                               selectedDate,
                               today,
+                              seasonStartDate,
                             ),
                           ),
                         ],
@@ -571,7 +621,7 @@ class OperationListPage extends ConsumerWidget {
                             // Group 1: Cữ ăn & thuốc theo cữ (chỉ hiện khi có dữ liệu)
                             if (filteredMealGroups.isNotEmpty) ...<Widget>[
                               _buildSectionHeader(
-                                icon: Icons.event_note_rounded,
+                                svgIcon: AppSvgIconName.calendarDays,
                                 title: 'Cữ ăn & thuốc theo cữ',
                                 iconColor: _blueFg,
                                 iconBg: _blueBg,
@@ -599,7 +649,7 @@ class OperationListPage extends ConsumerWidget {
                             // Group 2: Xử lý khoáng / hóa chất (ẩn hoàn toàn khi không có)
                             if (filteredMineralAndChemical.isNotEmpty) ...<Widget>[
                               _buildSectionHeader(
-                                icon: Icons.science_rounded,
+                                svgIcon: AppSvgIconName.chemical,
                                 title: 'Xử lý khoáng / hóa chất',
                                 iconColor: const Color(0xFF0D9488),
                                 iconBg: const Color(0xFFE6FFFA),

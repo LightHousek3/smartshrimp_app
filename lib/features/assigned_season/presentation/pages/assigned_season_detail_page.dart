@@ -821,6 +821,7 @@ class _TodayOperations extends ConsumerWidget {
             final otherSchedules = schedules
                 .where(
                   (s) =>
+                      !s.isTreatment &&
                       s.operationType != OperationType.feeding &&
                       s.operationType != OperationType.medicine,
                 )

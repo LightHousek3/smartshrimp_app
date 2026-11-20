@@ -136,6 +136,7 @@ class OperationProtocol {
     this.versionNo,
     this.allowedVariancePct,
     this.protocolType,
+    this.diseaseCaseId,
   });
 
   final String id;
@@ -143,6 +144,7 @@ class OperationProtocol {
   final int? versionNo;
   final double? allowedVariancePct;
   final String? protocolType;
+  final String? diseaseCaseId;
 
   factory OperationProtocol.fromJson(Map<String, dynamic> json) =>
       OperationProtocol(
@@ -151,6 +153,7 @@ class OperationProtocol {
         versionNo: _asNullableInt(json['versionNo']),
         allowedVariancePct: _asNullableDouble(json['allowedVariancePct']),
         protocolType: json['protocolType'] as String?,
+        diseaseCaseId: json['diseaseCaseId'] as String?,
       );
 }
 
@@ -358,6 +361,21 @@ class OperationSchedule {
 
   bool get canExecute => canExecuteAt(DateTime.now());
 
+  /// Thuộc phác đồ điều trị (TREATMENT protocol hoặc gắn với ca bệnh)
+  bool get isTreatment {
+    final caseId = protocolItem?.protocol?.diseaseCaseId;
+    if (caseId != null && caseId.isNotEmpty) return true;
+    final type = protocolItem?.protocol?.protocolType?.toUpperCase();
+    if (type == 'TREATMENT') return true;
+    final title = protocolItem?.protocol?.title.toLowerCase();
+    if (title != null && (title.contains('điều trị') || title.contains('ca bệnh'))) {
+      return true;
+    }
+    final reason = cancellationReason?.toLowerCase();
+    if (reason != null && reason.contains('khỏi bệnh')) return true;
+    return false;
+  }
+
   String _fmtHm(DateTime dt) {
     final local = dt.toLocal();
     return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
@@ -466,6 +484,7 @@ class OperationListResult {
     required this.schedules,
     this.seasonName,
     this.pondName,
+    this.seasonStartDate,
   });
 
   final OperationSummary summary;
@@ -473,10 +492,20 @@ class OperationListResult {
   final List<OperationSchedule> schedules;
   final String? seasonName;
   final String? pondName;
+  final DateTime? seasonStartDate;
 
   factory OperationListResult.fromJson(Map<String, dynamic> json) {
     final season = json['season'] as Map<String, dynamic>?;
     final pond = season?['pond'] as Map<String, dynamic>?;
+    final rawStockingDate = season?['stockingDate'];
+    final rawCreatedAt = season?['createdAt'];
+    DateTime? startDate;
+    if (rawStockingDate is String && rawStockingDate.isNotEmpty) {
+      startDate = DateTime.tryParse(rawStockingDate);
+    }
+    startDate ??= (rawCreatedAt is String && rawCreatedAt.isNotEmpty)
+        ? DateTime.tryParse(rawCreatedAt)
+        : null;
 
     return OperationListResult(
       summary: json['summary'] is Map<String, dynamic>
@@ -501,6 +530,7 @@ class OperationListResult {
           .toList(growable: false),
       seasonName: season?['name'] as String?,
       pondName: pond?['name'] as String?,
+      seasonStartDate: startDate,
     );
   }
 
@@ -582,7 +612,10 @@ class FeedingMedicineMealGroup {
     required this.scheduledAt,
     required this.feedings,
     required this.medicines,
-  });
+    this.isTreatment = false,
+    this.treatmentTitle,
+    List<OperationSchedule>? otherItems,
+  }) : otherItems = otherItems ?? <OperationSchedule>[];
 
   final String key;
   int? mealNumber;
@@ -590,8 +623,14 @@ class FeedingMedicineMealGroup {
   final DateTime scheduledAt;
   final List<OperationSchedule> feedings;
   final List<OperationSchedule> medicines;
+  final bool isTreatment;
+  final String? treatmentTitle;
+  final List<OperationSchedule> otherItems;
 
-  /// Gom nhóm thức ăn và thuốc/men trộn theo CÙNG NGÀY và CÙNG CỮ (hoặc cùng giờ)
+  /// Gom nhóm cữ vận hành:
+  /// - Phác đồ điều trị: gom các thành phần CÙNG THỜI GIAN trong ngày thành box "Điều trị".
+  ///   Nếu khác thời gian, tách riêng hoàn toàn.
+  /// - Phác đồ nuôi thông thường: gom thức ăn + thuốc theo CÙNG NGÀY và CÙNG CỮ (hoặc cùng giờ).
   static List<FeedingMedicineMealGroup> group(
     List<OperationSchedule> schedules,
   ) {
@@ -601,7 +640,9 @@ class FeedingMedicineMealGroup {
       ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     for (final s in sorted) {
-      if (s.operationType != OperationType.feeding &&
+      final isTreat = s.isTreatment;
+      if (!isTreat &&
+          s.operationType != OperationType.feeding &&
           s.operationType != OperationType.medicine) {
         continue;
       }
@@ -611,60 +652,109 @@ class FeedingMedicineMealGroup {
           '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
       final timeStr =
           '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-      final mealNum = s.protocolItem?.mealNumber;
 
-      // Tìm nhóm đã tồn tại trong CÙNG 1 NGÀY
-      FeedingMedicineMealGroup? matchedGroup;
-      for (final g in groups) {
-        final gLocal = g.scheduledAt.toLocal();
-        final isSameDay = gLocal.year == local.year &&
-            gLocal.month == local.month &&
-            gLocal.day == local.day;
-
-        // BẮT BUỘC PHẢI CÙNG NGÀY
-        if (!isSameDay) continue;
-
-        // Cùng ngày: nếu cả hai đều có mealNumber thì so sánh mealNumber
-        if (mealNum != null && g.mealNumber != null) {
-          if (mealNum == g.mealNumber) {
+      if (isTreat) {
+        // === PHÁC ĐỒ ĐIỀU TRỊ ===
+        // Box "Điều trị" thay vì cữ.
+        // Gom các thành phần có CÙNG THỜI GIAN trong ngày. Nếu khác thời gian thì tách riêng hoàn toàn.
+        FeedingMedicineMealGroup? matchedGroup;
+        for (final g in groups) {
+          if (!g.isTreatment) continue;
+          final gLocal = g.scheduledAt.toLocal();
+          final isSameDay = gLocal.year == local.year &&
+              gLocal.month == local.month &&
+              gLocal.day == local.day;
+          if (isSameDay && g.time == timeStr) {
             matchedGroup = g;
             break;
           }
-        } else if (g.time == timeStr) {
-          // Hoặc cùng giờ trong ngày
-          matchedGroup = g;
-          break;
         }
-      }
 
-      if (matchedGroup != null) {
-        if (matchedGroup.mealNumber == null && mealNum != null) {
-          matchedGroup.mealNumber = mealNum;
-        }
-        if (s.operationType == OperationType.feeding) {
-          matchedGroup.feedings.add(s);
-        } else if (s.operationType == OperationType.medicine) {
-          matchedGroup.medicines.add(s);
+        if (matchedGroup != null) {
+          if (s.operationType == OperationType.feeding) {
+            matchedGroup.feedings.add(s);
+          } else if (s.operationType == OperationType.medicine) {
+            matchedGroup.medicines.add(s);
+          } else {
+            matchedGroup.otherItems.add(s);
+          }
+        } else {
+          final groupKey = '${dateStr}_treatment_$timeStr';
+          groups.add(
+            FeedingMedicineMealGroup(
+              key: groupKey,
+              mealNumber: null,
+              time: timeStr,
+              scheduledAt: s.scheduledAt,
+              isTreatment: true,
+              treatmentTitle: s.protocolItem?.protocol?.title,
+              feedings: s.operationType == OperationType.feeding
+                  ? <OperationSchedule>[s]
+                  : <OperationSchedule>[],
+              medicines: s.operationType == OperationType.medicine
+                  ? <OperationSchedule>[s]
+                  : <OperationSchedule>[],
+              otherItems: (s.operationType != OperationType.feeding &&
+                      s.operationType != OperationType.medicine)
+                  ? <OperationSchedule>[s]
+                  : <OperationSchedule>[],
+            ),
+          );
         }
       } else {
-        final groupKey = mealNum != null
-            ? '${dateStr}_meal_$mealNum'
-            : '${dateStr}_time_$timeStr';
+        // === PHÁC ĐỒ NUÔI THÔNG THƯỜNG ===
+        final mealNum = s.protocolItem?.mealNumber;
+        FeedingMedicineMealGroup? matchedGroup;
+        for (final g in groups) {
+          if (g.isTreatment) continue;
+          final gLocal = g.scheduledAt.toLocal();
+          final isSameDay = gLocal.year == local.year &&
+              gLocal.month == local.month &&
+              gLocal.day == local.day;
 
-        groups.add(
-          FeedingMedicineMealGroup(
-            key: groupKey,
-            mealNumber: mealNum,
-            time: timeStr,
-            scheduledAt: s.scheduledAt,
-            feedings: s.operationType == OperationType.feeding
-                ? <OperationSchedule>[s]
-                : <OperationSchedule>[],
-            medicines: s.operationType == OperationType.medicine
-                ? <OperationSchedule>[s]
-                : <OperationSchedule>[],
-          ),
-        );
+          if (!isSameDay) continue;
+
+          if (mealNum != null && g.mealNumber != null) {
+            if (mealNum == g.mealNumber) {
+              matchedGroup = g;
+              break;
+            }
+          } else if (g.time == timeStr) {
+            matchedGroup = g;
+            break;
+          }
+        }
+
+        if (matchedGroup != null) {
+          if (matchedGroup.mealNumber == null && mealNum != null) {
+            matchedGroup.mealNumber = mealNum;
+          }
+          if (s.operationType == OperationType.feeding) {
+            matchedGroup.feedings.add(s);
+          } else if (s.operationType == OperationType.medicine) {
+            matchedGroup.medicines.add(s);
+          }
+        } else {
+          final groupKey = mealNum != null
+              ? '${dateStr}_meal_$mealNum'
+              : '${dateStr}_time_$timeStr';
+
+          groups.add(
+            FeedingMedicineMealGroup(
+              key: groupKey,
+              mealNumber: mealNum,
+              time: timeStr,
+              scheduledAt: s.scheduledAt,
+              isTreatment: false,
+              feedings: s.operationType == OperationType.feeding
+                  ? <OperationSchedule>[s]
+                  : <OperationSchedule>[],
+              medicines: s.operationType == OperationType.medicine
+                  ? <OperationSchedule>[s]
+                  : <OperationSchedule>[],
+            ),
+          );
+        }
       }
     }
 
@@ -675,6 +765,7 @@ class FeedingMedicineMealGroup {
   List<OperationSchedule> get allSchedules => <OperationSchedule>[
     ...feedings,
     ...medicines,
+    ...otherItems,
   ];
 
   OperationSchedule? get primaryFeeding =>
@@ -728,9 +819,14 @@ class FeedingMedicineMealGroup {
     return latest;
   }
 
-  String get title => mealNumber != null
-      ? 'Cữ $mealNumber ($time)'
-      : 'Cữ $time';
+  String get cardTitle {
+    if (isTreatment) return 'Điều trị';
+    return mealNumber != null ? 'Cữ $mealNumber' : 'Cữ ăn';
+  }
+
+  String get title => isTreatment
+      ? 'Điều trị ($time)'
+      : (mealNumber != null ? 'Cữ $mealNumber ($time)' : 'Cữ $time');
 
   bool get hasFeeding => feedings.isNotEmpty;
   bool get hasMedicine => medicines.isNotEmpty;
@@ -787,12 +883,12 @@ class FeedingMedicineMealGroup {
   OperationStatus get overallStatus {
     if (allSchedules.isEmpty) return OperationStatus.planned;
     if (activeSchedules.isNotEmpty) return OperationStatus.planned;
-    if (allSchedules.every((s) => s.status == OperationStatus.completed)) {
+    if (allSchedules.any((s) => s.status == OperationStatus.completed)) {
       return OperationStatus.completed;
     }
     if (allSchedules.every((s) => s.status == OperationStatus.cancelled)) {
       return OperationStatus.cancelled;
     }
-    return OperationStatus.planned;
+    return OperationStatus.cancelled;
   }
 }

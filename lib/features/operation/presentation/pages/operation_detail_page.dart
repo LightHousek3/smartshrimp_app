@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
@@ -37,7 +38,6 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
   static const Color _blueFg = Color(0xFF1D7AD6);
 
   final Set<String> _expandedScheduleIds = <String>{};
-  bool _isMainCardExpanded = true;
 
   @override
   void initState() {
@@ -558,8 +558,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     return '$hh:$mm · $dd/$mo/${local.year}';
   }
 
-  /// Card tóm tắt "✓ Đã ghi nhận thực hiện" (đồng bộ phong cách tối giản, không ghi chú,
-  /// hiển thị đúng giờ / trễ hạn, lượng thực tế và lý do chênh lệch nếu có).
+  /// Card tóm tắt "✓ Đã ghi nhận thực hiện" (thiết kế cao cấp, đồng bộ, hiện đại)
+  /// Card tóm tắt "✓ Đã ghi nhận thực hiện" (thiết kế tinh tế, gọn gàng, không lặp lại component)
   Widget _buildCompletedSummaryCard(List<OperationSchedule> completedItems) {
     final itemsWithExec = completedItems
         .where((s) => s.execution != null)
@@ -580,52 +580,107 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         .where((s) => (s.execution?.varianceReason?.trim().isNotEmpty ?? false))
         .toList(growable: false);
 
+    final notes = itemsWithExec
+        .where((s) => (s.execution?.note?.trim().isNotEmpty ?? false))
+        .toList(growable: false);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFF0D9488).withValues(alpha: 0.16),
+          width: 1,
+        ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: const Color(0xFF0D9488).withValues(alpha: 0.04),
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // Header: Icon tròn tick xanh + Tiêu đề + Thời gian + Badge đúng giờ/trễ hạn
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              const Icon(
-                Icons.check_rounded,
-                size: 19,
-                color: Color(0xFF0D9488),
-              ),
-              const SizedBox(width: 7),
-              const Expanded(
-                child: Text(
-                  'Đã ghi nhận thực hiện',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6FFFA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
                     color: Color(0xFF0D9488),
                   ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      'Đã ghi nhận thực hiện',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F766E),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: <Widget>[
+                        const Icon(
+                          Icons.access_time_rounded,
+                          size: 11.5,
+                          color: AppColors.inkMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Thực hiện lúc ${_formatExecutedAt(latestExecutedAt)}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               if (hasDeadline)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 8.5,
+                    vertical: 3.5,
                   ),
                   decoration: BoxDecoration(
                     color: isLate
                         ? OperationOverdueBadge.bg
-                        : const Color(0xFFECFDF5),
+                        : const Color(0xFFE6FFFA),
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: isLate
+                          ? OperationOverdueBadge.cardBorder
+                          : const Color(0xFFA7F3D0),
+                      width: 0.8,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -636,11 +691,11 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                         decoration: BoxDecoration(
                           color: isLate
                               ? OperationOverdueBadge.fg
-                              : const Color(0xFF047857),
+                              : const Color(0xFF059669),
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 4.5),
                       Text(
                         isLate ? 'Trễ hạn' : 'Đúng giờ',
                         style: TextStyle(
@@ -656,66 +711,211 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Thực hiện lúc ${_formatExecutedAt(latestExecutedAt)}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.inkSoft,
+
+          const SizedBox(height: 10),
+          Divider(
+            height: 1,
+            color: AppColors.line.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 10),
+
+          // Danh sách số lượng thực tế ghi nhận (gọn gàng, tinh tế, không lặp lại ảnh/badge)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 9,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 0.8,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                for (var i = 0; i < itemsWithExec.length; i++) ...<Widget>[
+                  Builder(
+                    builder: (_) {
+                      final item = itemsWithExec[i];
+                      final unit = item.unit.toLowerCase();
+                      final actualVal = item.execution!.actualQuantity;
+                      final actualStr = formatOperationCompact(
+                        actualVal,
+                        maxDecimals: 3,
+                      );
+
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: i < itemsWithExec.length - 1 ? 6.0 : 0.0,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            Container(
+                              width: 5,
+                              height: 5,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0D9488),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.ink,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$actualStr $unit',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0D9488),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          if (itemsWithExec.length == 1) ...<Widget>[
-            Builder(
-              builder: (_) {
-                final item = itemsWithExec.first;
-                final unit = item.unit.toLowerCase();
-                final actualStr = formatOperationCompact(
-                  item.execution!.actualQuantity,
-                  maxDecimals: 3,
-                );
-                final plannedStr = formatOperationCompact(
-                  item.plannedQuantity,
-                  maxDecimals: 3,
-                );
-                return Text(
-                  'Số lượng thực tế: $actualStr $unit (kế hoạch $plannedStr $unit)',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.inkSoft,
-                  ),
-                );
-              },
-            ),
-          ] else ...<Widget>[
-            for (final item in itemsWithExec) ...<Widget>[
-              Text(
-                '• ${item.productName}: ${formatOperationCompact(item.execution!.actualQuantity, maxDecimals: 3)} ${item.unit.toLowerCase()}',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.inkSoft,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ],
+
+          // Lý do chênh lệch (nếu có - đóng khung màu hồng nhạt viền mềm trang nhã)
           if (reasons.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
-            for (final item in reasons) ...<Widget>[
-              Text(
-                reasons.length == 1
-                    ? 'Lý do chênh lệch: ${item.execution!.varianceReason!.trim()}'
-                    : 'Lý do (${item.productName}): ${item.execution!.varianceReason!.trim()}',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.error,
-                  height: 1.35,
+            for (var i = 0; i < reasons.length; i++) ...<Widget>[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFFECDD3),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1.5),
+                      child: Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: Color(0xFFE11D48),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF9F1239),
+                            height: 1.35,
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: reasons.length == 1
+                                  ? 'Lý do chênh lệch: '
+                                  : 'Lý do chênh lệch (${reasons[i].productName}): ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            TextSpan(
+                              text: reasons[i].execution!.varianceReason!.trim(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (i < reasons.length - 1) const SizedBox(height: 5),
+            ],
+          ],
+
+          // Ghi chú đính kèm (nếu có - đóng khung xám nhạt đồng bộ)
+          if (notes.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 6),
+            for (var i = 0; i < notes.length; i++) ...<Widget>[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7.5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1.5),
+                      child: Icon(
+                        Icons.notes_rounded,
+                        size: 14,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkSoft,
+                            height: 1.35,
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: notes.length == 1
+                                  ? 'Ghi chú: '
+                                  : 'Ghi chú (${notes[i].productName}): ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            TextSpan(
+                              text: notes[i].execution!.note!.trim(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (i < notes.length - 1) const SizedBox(height: 5),
             ],
           ],
         ],
@@ -723,17 +923,34 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     );
   }
 
-  /// Box Lớn (Cữ vận hành) chứa toàn bộ các box nhỏ thành phần & box descrip bên trong
+  /// Box Lớn (Cữ vận hành / Box Điều trị) chứa toàn bộ các box nhỏ thành phần & box descrip bên trong
   Widget _buildMainMealBox({
     required OperationSchedule schedule,
     required List<OperationSchedule> allItems,
     FeedingMedicineMealGroup? mealGroup,
   }) {
+    final isTreatment = schedule.isTreatment ||
+        (mealGroup?.isTreatment ?? false) ||
+        allItems.any((e) => e.isTreatment);
     final mealNumber =
         schedule.protocolItem?.mealNumber ?? mealGroup?.mealNumber;
-    final headerTitle = mealNumber != null
-        ? 'Cữ $mealNumber'
-        : schedule.operationType.displayName;
+    final headerTitle = isTreatment
+        ? 'Điều trị'
+        : (mealNumber != null
+            ? 'Cữ $mealNumber'
+            : schedule.operationType.displayName);
+
+    final (iconBg, iconFg, svgName) = isTreatment
+        ? (
+            const Color(0xFFFBE6EA),
+            const Color(0xFFD43B57),
+            AppSvgIconName.medicine,
+          )
+        : (
+            _blueBg,
+            _blueFg,
+            AppSvgIconName.calendarDays,
+          );
 
     // Khoảng giờ thực hiện của cữ (bao gồm deadline nếu có dueAtMinutes)
     final mealTimeStr = mealGroup?.timeRangeText ?? schedule.timeRangeText;
@@ -761,100 +978,103 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // 1. Header Box Lớn (Bấm để mở rộng / thu gọn toàn bộ Box Lớn)
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _isMainCardExpanded = !_isMainCardExpanded;
-                });
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: _blueBg,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.event_note_rounded,
-                      color: _blueFg,
+            // 1. Header Box Lớn (Cố định, không thu gọn trong màn hình chi tiết)
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: AppSvgIcon(
+                      svgName,
+                      color: iconFg,
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: <Widget>[
-                            Text(
-                              headerTitle,
-                              style: const TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            headerTitle,
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                              color: isTreatment
+                                  ? const Color(0xFF9F1239)
+                                  : AppColors.ink,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (isTreatment)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7.5,
+                                vertical: 2,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (hasAnyOverdue)
-                              const OperationOverdueBadge(compact: true),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: <Widget>[
-                            const Icon(
-                              Icons.access_time_rounded,
-                              size: 13,
-                              color: AppColors.inkMuted,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$mealTimeStr · ${allItems.length} thành phần',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.inkSoft,
-                                fontWeight: FontWeight.w600,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFBE6EA),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Phác đồ điều trị',
+                                style: TextStyle(
+                                  color: Color(0xFFD43B57),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          if (hasAnyOverdue)
+                            const OperationOverdueBadge(compact: true),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: <Widget>[
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$mealTimeStr · ${allItems.length} thành phần',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkSoft,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  AnimatedRotation(
-                    turns: _isMainCardExpanded ? 0.0 : 0.5,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Icon(
-                      Icons.keyboard_arrow_up_rounded,
-                      color: _blueFg,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
 
-            // 2. Nội dung bên trong Box Lớn
-            if (_isMainCardExpanded) ...<Widget>[
-              const SizedBox(height: 16),
+            // 2. Nội dung bên trong Box Lớn (luôn hiển thị trong màn chi tiết)
+            const SizedBox(height: 16),
 
-              // Danh sách các box nhỏ thành phần theo thứ tự phác đồ (box nhỏ thức ăn, box nhỏ thuốc...)
-              for (var i = 0; i < allItems.length; i++)
-                _buildSubComponentBox(
-                  allItems[i],
-                  isLast: i == allItems.length - 1,
-                ),
-            ],
+            // Danh sách các box nhỏ thành phần theo thứ tự phác đồ (box nhỏ thức ăn, box nhỏ thuốc...)
+            for (var i = 0; i < allItems.length; i++)
+              _buildSubComponentBox(
+                allItems[i],
+                isLast: i == allItems.length - 1,
+              ),
           ],
         ),
       ),
