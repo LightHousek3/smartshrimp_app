@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 
+import 'rag_latex_syntax.dart';
+import 'rag_math_builder.dart';
+
 class RagAnswerBody extends StatelessWidget {
   const RagAnswerBody({required this.text, super.key});
   final String text;
@@ -22,6 +25,12 @@ class RagAnswerBody extends StatelessWidget {
     return MarkdownBody(
       data: text,
       selectable: true,
+      inlineSyntaxes: [RagLatexInlineSyntax()],
+      blockSyntaxes: const [RagLatexBlockSyntax()],
+      builders: {
+        ragInlineMathTag: RagMathBuilder(block: false, style: body),
+        ragBlockMathTag: RagMathBuilder(block: true, style: body),
+      },
       styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
         p: body,
         listBullet: body,
