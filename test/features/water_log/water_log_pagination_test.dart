@@ -80,7 +80,7 @@ void main() {
       }
     },
   );
-  for (final scope in ['me', 'expert', 'owner']) {
+  for (final scope in ['technician', 'expert', 'owner']) {
     test(
       '$scope sends server filter/counts and preserves legacy latest request',
       () async {
@@ -137,7 +137,7 @@ void main() {
         {'all': 1, 'valid': 1, 'warning': 2, 'voided': 0},
       ]) {
         final api = _api(
-          'me',
+          'technician',
           (_) => {'totalResults': 0, 'hasNextPage': false, 'counts': ?counts},
         );
         await expectLater(
@@ -154,7 +154,7 @@ void main() {
   test('invalid/missing/nonprogressing next cursor is rejected', () async {
     for (final cursor in [null, '', ' ', 42, 'used']) {
       final api = _api(
-        'me',
+        'technician',
         (_) => {'totalResults': 2, 'hasNextPage': true, 'nextCursor': cursor},
       );
       await expectLater(

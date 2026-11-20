@@ -5,7 +5,7 @@ import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 final class RagApiService {
   RagApiService(this._client);
   final ApiClient _client;
-  static const _base = '/me/rag';
+  static const _base = '/technician/rag';
   Future<RagConversationPage> list(String seasonId, {int page = 1}) async {
     final response = await _client.get(
       '$_base/conversations',

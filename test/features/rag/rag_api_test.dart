@@ -28,7 +28,7 @@ void main() {
     'list parses real preview, message count and total pagination count',
     () async {
       final api = service((request) {
-        expect(request.path, '/me/rag/conversations');
+        expect(request.path, '/technician/rag/conversations');
         expect(request.queryParameters, {'seasonId': 'season', 'page': 2});
         return [
           {
@@ -68,7 +68,7 @@ void main() {
     () async {
       final api = service((request) {
         expect(request.method, 'POST');
-        expect(request.path, '/me/rag/queries');
+        expect(request.path, '/technician/rag/queries');
         expect(request.headers['Authorization'], 'Bearer access');
         expect(request.receiveTimeout, const Duration(seconds: 75));
         expect(request.data, {'seasonId': 'season', 'question': 'Q'});
@@ -83,7 +83,7 @@ void main() {
   test('PUT feedback updates rating and clears optional comment', () async {
     final api = service((request) {
       expect(request.method, 'PUT');
-      expect(request.path, '/me/rag/queries/query/feedback');
+      expect(request.path, '/technician/rag/queries/query/feedback');
       expect(request.data, {'rating': 5, 'comment': null});
       return {'id': 'feedback', 'rating': 5, 'comment': null};
     });
@@ -91,6 +91,7 @@ void main() {
   });
   test('detail requires season and parses pagination and canAsk', () async {
     final api = service((request) {
+      expect(request.path, '/technician/rag/conversations/conversation');
       expect(request.queryParameters, {'page': 2, 'limit': 50});
       return {
         'id': 'conversation',

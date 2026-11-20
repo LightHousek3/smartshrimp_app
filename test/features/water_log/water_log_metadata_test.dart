@@ -116,7 +116,11 @@ void main() {
       expect(metadata.warnings({'ph': ph.canonicalValue(8.504)}), isEmpty);
     },
   );
-  for (final path in ['/me/seasons', '/expert/seasons', '/owner/seasons']) {
+  for (final path in [
+    '/technician/seasons',
+    '/expert/seasons',
+    '/owner/seasons',
+  ]) {
     test('metadata uses authenticated GET and envelope for $path', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://smartshrimp.test'));
       dio.interceptors.add(
