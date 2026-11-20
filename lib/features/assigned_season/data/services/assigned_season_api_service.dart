@@ -9,7 +9,7 @@ final class AssignedSeasonApiService {
 
   Future<List<AssignedSeasonFarm>> getAssignedSeasonFarms() async {
     final response = await _client.get(
-      '/me/seasons/farms',
+      '/technician/seasons/farms',
       authenticated: true,
     );
     return response
@@ -31,7 +31,7 @@ final class AssignedSeasonApiService {
     Map<String, dynamic> query,
   ) async {
     final response = await _client.get(
-      '/me/seasons',
+      '/technician/seasons',
       authenticated: true,
       queryParameters: query,
     );
@@ -63,7 +63,7 @@ final class AssignedSeasonApiService {
 
   Future<AssignedSeasonDetail> getAssignedSeason(String id) async {
     final response = await _client.get(
-      '/me/seasons/${Uri.encodeComponent(id)}',
+      '/technician/seasons/${Uri.encodeComponent(id)}',
       authenticated: true,
     );
     return AssignedSeasonDetail.parse(response.requireMapData());

@@ -222,8 +222,15 @@ void main() {
       initialLocation: '/seasons/season/rag/new',
       routes: [
         GoRoute(
-          path: '/seasons/season/rag/:id',
+          path: '/seasons/season/rag/new',
           builder: (_, _) => const RagChatPage(seasonId: 'season'),
+        ),
+        GoRoute(
+          path: '/seasons/season/rag/:id',
+          builder: (_, state) => RagChatPage(
+            seasonId: 'season',
+            conversationId: state.pathParameters['id'],
+          ),
         ),
       ],
     );
@@ -243,7 +250,13 @@ void main() {
     repository.pending!.complete(
       repository.query.copyWith(question: 'Câu hỏi đầu tiên'),
     );
+    for (var frame = 0; frame < 25; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(TextField), findsAtLeastNWidgets(1));
+    }
     await tester.pumpAndSettle();
+    expect(repository.detailCalls, 0);
     expect(find.text('AI đang suy nghĩ…'), findsNothing);
     expect(find.text('Câu trả lời'), findsOneWidget);
     expect(find.text('Câu hỏi đầu tiên'), findsOneWidget);
@@ -255,6 +268,23 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       isEmpty,
     );
+    repository.pending = null;
+    await tester.enterText(find.byType(TextField), 'Follow-up question');
+    await tester.tap(find.byTooltip('Gửi câu hỏi'));
+    await tester.pumpAndSettle();
+    expect(repository.askedConversationIds, [null, 'conversation']);
+    expect(repository.detailCalls, 0);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('opening saved conversation still loads its detail', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    expect(repository.detailCalls, greaterThan(0));
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
   testWidgets(
@@ -378,6 +408,8 @@ final class _Repository implements RagRepository {
   final bool canAsk;
   int? rating;
   int askCount = 0;
+  int detailCalls = 0;
+  final askedConversationIds = <String?>[];
   Completer<RagQuery>? pending;
   List<RagQuery>? previewQueries;
   String seasonName = 'Vụ 1';
@@ -403,14 +435,17 @@ final class _Repository implements RagRepository {
     ],
   );
   @override
-  Future<RagChatState> detail(String conversationId, {int page = 1}) async =>
-      RagChatState(
-        seasonId: 'season',
-        seasonName: seasonName,
-        canAsk: canAsk,
-        conversationId: conversationId,
-        queries: previewQueries ?? [query],
-      );
+  Future<RagChatState> detail(String conversationId, {int page = 1}) async {
+    detailCalls++;
+    return RagChatState(
+      seasonId: 'season',
+      seasonName: seasonName,
+      canAsk: canAsk,
+      conversationId: conversationId,
+      queries: previewQueries ?? [query],
+    );
+  }
+
   @override
   Future<RagQuery> ask({
     required String seasonId,
@@ -418,6 +453,7 @@ final class _Repository implements RagRepository {
     String? conversationId,
   }) async {
     askCount++;
+    askedConversationIds.add(conversationId);
     return pending?.future ?? query;
   }
 

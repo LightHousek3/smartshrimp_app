@@ -230,7 +230,10 @@ void main() {
       expect(find.text('Không tải được ngưỡng Min/Max.'), findsNothing);
       expect(
         h.requests.where(
-          (r) => r.path.startsWith('/me/') || r.path.contains('/assigned'),
+          (r) =>
+              r.path.startsWith('/me/') ||
+              r.path.startsWith('/technician/') ||
+              r.path.contains('/assigned'),
         ),
         isEmpty,
       );

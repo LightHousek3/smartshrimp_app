@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -31,8 +33,23 @@ final class RagChatController extends AsyncNotifier<RagChatState> {
   RagChatController(this.key);
   final RagChatKey key;
   @override
-  Future<RagChatState> build() async {
+  FutureOr<RagChatState> build() {
     ref.watch(authControllerProvider);
+    if (key.conversationId != null) {
+      final draftProvider = ragChatProvider((
+        seasonId: key.seasonId,
+        conversationId: null,
+      ));
+      // Reuse the first response while /rag/new is replaced by its saved URL.
+      // Do not create a draft provider when opening a conversation directly.
+      if (ref.exists(draftProvider)) {
+        final draft = ref.read(draftProvider).asData?.value;
+        if (draft?.conversationId == key.conversationId &&
+            draft?.busy == false) {
+          return draft!;
+        }
+      }
+    }
     return _session(() async {
       if (key.conversationId != null) {
         final detail = await ref

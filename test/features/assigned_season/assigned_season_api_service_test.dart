@@ -56,7 +56,7 @@ void main() {
           ApiClient(
             _dioWithHandler((request, handler) {
               expect(request.method, 'GET');
-              expect(request.path, '/me/seasons/season-1');
+              expect(request.path, '/technician/seasons/season-1');
               handler.resolve(
                 _success(request, data: _detailJson(entry.key), meta: const {}),
               );
@@ -246,7 +246,7 @@ void main() {
         AssignedSeasonApiService(
           ApiClient(
             _dioWithHandler((request, handler) {
-              expect(request.path, '/me/seasons');
+              expect(request.path, '/technician/seasons');
               expect(request.headers['Authorization'], 'Bearer access-token');
               expect(request.queryParameters, {
                 'limit': 20,
@@ -277,7 +277,7 @@ void main() {
       final service = AssignedSeasonApiService(
         ApiClient(
           _dioWithHandler((request, handler) {
-            expect(request.path, '/me/seasons/farms');
+            expect(request.path, '/technician/seasons/farms');
             expect(request.headers['Authorization'], 'Bearer access-token');
             expect(request.queryParameters, isEmpty);
             handler.resolve(

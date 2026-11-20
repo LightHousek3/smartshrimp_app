@@ -9,7 +9,7 @@ final class WaterLogApiService {
 
   final ApiClient _client;
 
-  /// Base path theo role: '/me/seasons' | '/expert/seasons' | '/owner/seasons'.
+  /// Base path theo role: '/technician/seasons' | '/expert/seasons' | '/owner/seasons'.
   final String _basePath;
 
   String _path(String seasonId) =>

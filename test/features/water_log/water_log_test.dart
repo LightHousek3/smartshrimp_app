@@ -94,7 +94,10 @@ void main() {
         },
       ),
     );
-    final api = WaterLogApiService(ApiClient(dio, _Session()), '/me/seasons');
+    final api = WaterLogApiService(
+      ApiClient(dio, _Session()),
+      '/technician/seasons',
+    );
     final from = DateTime(2026, 1, 1, 8);
     final to = DateTime(2026, 1, 2, 8);
     await api.getWaterLogs('season', from: from, to: to, limit: 1);
@@ -106,7 +109,10 @@ void main() {
     }
     await api.getStatistics('season', to: to, granularity: 'day');
     expect(requests.last.method, 'GET');
-    expect(requests.last.path, '/me/seasons/season/water-logs/statistics');
+    expect(
+      requests.last.path,
+      '/technician/seasons/season/water-logs/statistics',
+    );
     expect(requests.last.queryParameters.containsKey('from'), isFalse);
     expect(requests.last.queryParameters['to'], to.toUtc().toIso8601String());
     expect(requests.last.queryParameters['granularity'], 'day');

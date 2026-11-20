@@ -16,7 +16,7 @@ import 'package:smartshrimp_app/features/water_log/presentation/view_models/wate
 final waterLogRepositoryProvider = Provider<WaterLogRepository>((ref) {
   final role = ref.watch(authControllerProvider).value?.role;
   final basePath = switch (role) {
-    AccountRole.technician => '/me/seasons',
+    AccountRole.technician => '/technician/seasons',
     AccountRole.expert => '/expert/seasons',
     AccountRole.farmOwner => '/owner/seasons',
     _ => throw const UnsupportedRoleException(),
