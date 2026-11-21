@@ -146,7 +146,7 @@ void main() {
                 data: {
                   'success': true,
                   'message': 'OK',
-                  'data': request.path == '/me/tasks'
+                  'data': request.path == '/technician/tasks'
                       ? [jsonTask()..remove('assignee')]
                       : assignedDetailJson(),
                   'meta': {
@@ -182,11 +182,11 @@ void main() {
         evidenceUrls: ['https://images.test/proof.jpg'],
       );
       expect(requests.map((r) => '${r.method} ${r.path}'), [
-        'GET /me/tasks',
-        'GET /me/tasks/task',
-        'PATCH /me/tasks/pending/status',
-        'PATCH /me/tasks/progress/status',
-        'PATCH /me/tasks/progress/status',
+        'GET /technician/tasks',
+        'GET /technician/tasks/task',
+        'PATCH /technician/tasks/pending/status',
+        'PATCH /technician/tasks/progress/status',
+        'PATCH /technician/tasks/progress/status',
       ]);
       expect(requests.first.queryParameters, {
         'group': 'ENDED',

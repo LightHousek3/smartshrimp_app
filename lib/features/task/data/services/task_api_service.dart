@@ -30,7 +30,7 @@ final class TaskApiService
   @override
   Future<TaskPage> listAssigned(String group, int page) async {
     final response = await _client.get(
-      '/me/tasks',
+      '/technician/tasks',
       authenticated: true,
       queryParameters: {'group': group, 'page': page, 'limit': 20},
     );
@@ -56,7 +56,10 @@ final class TaskApiService
 
   @override
   Future<TaskItem> assignedDetail(String id) async => _assignedDetail(
-    (await _client.get('/me/tasks/$id', authenticated: true)).requireMapData(),
+    (await _client.get(
+      '/technician/tasks/$id',
+      authenticated: true,
+    )).requireMapData(),
   );
 
   @override
@@ -66,7 +69,7 @@ final class TaskApiService
     List<String> evidenceUrls = const [],
   }) async => _assignedDetail(
     (await _client.patch(
-      '/me/tasks/$id/status',
+      '/technician/tasks/$id/status',
       authenticated: true,
       data: {
         'status': taskStatusApiValue(status),

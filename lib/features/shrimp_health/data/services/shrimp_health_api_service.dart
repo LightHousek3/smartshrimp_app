@@ -2,7 +2,7 @@ import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 
 class ShrimpHealthApiService {
-  ShrimpHealthApiService(this._client, {this.basePath = '/me/seasons'});
+  ShrimpHealthApiService(this._client, {this.basePath = '/technician/seasons'});
   final ApiClient _client;
   final String basePath;
 
