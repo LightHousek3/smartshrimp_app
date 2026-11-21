@@ -184,14 +184,20 @@ void main() {
     );
   });
   for (final code in [400, 403, 404, 409, 429, 500]) {
-    test('A: preserves $code and the backend message', () async {
+    test('A: preserves $code with safe localized copy', () async {
       status = code;
       await expectLater(
         service.detail('p'),
         throwsA(
           isA<AppException>()
               .having((e) => e.statusCode, 'status', code)
-              .having((e) => e.message, 'message', 'Thông báo nghiệp vụ'),
+              .having(
+                (e) => e.message,
+                'message',
+                code >= 500
+                    ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                    : 'Thông báo nghiệp vụ',
+              ),
         ),
       );
       expect(requests, hasLength(1));

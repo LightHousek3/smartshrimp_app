@@ -25,15 +25,57 @@ abstract final class ErrorMapper {
         : null;
     final statusCode =
         responseStatusCode ?? (bodyStatusCode is int ? bodyStatusCode : null);
-    final message = body is Map<String, dynamic> && body['message'] is String
-        ? body['message']! as String
-        : _fallbackMessage(statusCode);
+    final message =
+        statusCode != null &&
+            statusCode >= 400 &&
+            statusCode < 500 &&
+            body is Map<String, dynamic>
+        ? _businessMessage(body['message'])
+        : null;
     final details = body is Map<String, dynamic>
         ? body['errors'] ??
               (body['errorCode'] is String ? {'code': body['errorCode']} : null)
         : null;
 
-    return ApiException(message, statusCode: statusCode, details: details);
+    return ApiException(
+      message ?? _fallbackMessage(statusCode),
+      statusCode: statusCode,
+      details: details,
+    );
+  }
+
+  /// Keep localized business guidance and use app copy for technical failures.
+  static String displayMessage(Object? error, {String? fallback}) {
+    if (error is AppException) {
+      final statusCode = error.statusCode;
+      if (statusCode != null && statusCode >= 500) {
+        return _fallbackMessage(statusCode);
+      }
+      return _businessMessage(error.message) ??
+          (statusCode == null ? _businessMessage(fallback) : null) ??
+          _fallbackMessage(statusCode);
+    }
+    return _businessMessage(fallback) ?? _fallbackMessage(null);
+  }
+
+  static final _localized = RegExp(
+    r'[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]',
+    caseSensitive: false,
+  );
+  static final _diagnostic = RegExp(
+    r'\b(?:prismaclient\w*|sqlstate|stack trace|traceback|typeerror|syntaxerror|dioexception|socketexception|econn\w+|p20\d{2}|backend|api key|[a-z]+_[a-z_]+_key)\b|[<>{}\x00-\x1f]',
+    caseSensitive: false,
+  );
+
+  static String? _businessMessage(Object? value) {
+    if (value is! String) return null;
+    final message = value.trim();
+    if (message.length > 500 ||
+        !_localized.hasMatch(message) ||
+        _diagnostic.hasMatch(message)) {
+      return null;
+    }
+    return message;
   }
 
   static String _fallbackMessage(int? statusCode) {

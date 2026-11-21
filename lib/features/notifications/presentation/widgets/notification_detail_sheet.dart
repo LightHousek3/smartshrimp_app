@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/widgets/notification_visuals.dart';
@@ -111,26 +111,15 @@ class _NotificationDetailSheet extends ConsumerWidget {
         children: <Widget>[
           const _SheetHeader(),
           const Divider(height: 1, color: Color(0xFFEEF1F7)),
-          if (detail.hasError)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      current != null
-                          ? 'Chưa thể cập nhật trạng thái đã đọc.'
-                          : detail.error is AppException
-                          ? (detail.error! as AppException).message
-                          : 'Không thể tải chi tiết thông báo. Vui lòng thử lại.',
-                    ),
-                  ),
-                  TextButton(
-                    key: const Key('retry_notification_read'),
-                    onPressed: () => ref.invalidate(detailProvider),
-                    child: const Text('Thử lại'),
-                  ),
-                ],
+          if (detail.hasError && !detail.isLoading)
+            Flexible(
+              child: AppErrorState(
+                key: const Key('retry_notification_read'),
+                error: current == null ? detail.error : null,
+                message: current == null
+                    ? 'Không thể tải chi tiết thông báo. Vui lòng thử lại.'
+                    : 'Chưa thể cập nhật trạng thái đã đọc.',
+                onRetry: () => ref.invalidate(detailProvider),
               ),
             ),
           if (current != null)

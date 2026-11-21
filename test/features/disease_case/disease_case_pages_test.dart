@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -311,7 +311,7 @@ void main() {
   );
 
   testWidgets(
-    'detail deep link loads directly and retries using the shared notice',
+    'detail deep link loads directly and retries using the shared error state',
     (tester) async {
       final initial = Completer<DiseaseCaseDetail>();
       final repository = _Cases()..detailResponse = initial.future;
@@ -321,7 +321,7 @@ void main() {
         const ApiException('Không tìm thấy ca bệnh', statusCode: 404),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(AppFormMessageBanner), findsOneWidget);
+      expect(find.byType(AppErrorState), findsOneWidget);
       expect(find.text('Không tìm thấy ca bệnh'), findsOneWidget);
 
       repository.detailResponse = null;

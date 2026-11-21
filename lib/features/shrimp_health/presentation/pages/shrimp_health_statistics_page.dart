@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
@@ -745,39 +746,16 @@ class _ShrimpHealthStatisticsPageState
                   loading: () => const Center(
                     child: CircularProgressIndicator(color: AppColors.ocean),
                   ),
-                  error: (error, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            size: 48,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            error.toString().replaceAll('Exception: ', ''),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.ink),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              ref.invalidate(
-                                shrimpHealthStatsProvider((
-                                  seasonId: widget.seasonId,
-                                  days: 90,
-                                )),
-                              );
-                            },
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Tải lại'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  error: (error, _) => AppErrorState(
+                    error: error,
+                    onRetry: () {
+                      ref.invalidate(
+                        shrimpHealthStatsProvider((
+                          seasonId: widget.seasonId,
+                          days: 90,
+                        )),
+                      );
+                    },
                   ),
                   data: (data) {
                     final summary = data.summary;

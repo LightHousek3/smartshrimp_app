@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
@@ -49,10 +49,9 @@ class _OperationMealExecuteSheetState
 
   bool _isSubmitting = false;
 
-  List<OperationSchedule> get _executableSchedules =>
-      widget.group.allSchedules
-          .where((s) => s.status == OperationStatus.planned)
-          .toList(growable: false);
+  List<OperationSchedule> get _executableSchedules => widget.group.allSchedules
+      .where((s) => s.status == OperationStatus.planned)
+      .toList(growable: false);
 
   String get _mealLabel => widget.group.isTreatment
       ? 'điều trị'
@@ -91,8 +90,7 @@ class _OperationMealExecuteSheetState
 
   OperationVarianceEvaluation _evaluate(OperationSchedule schedule) {
     final raw = _quantityControllers[schedule.id]?.text ?? '';
-    final allowed =
-        schedule.protocolItem?.protocol?.allowedVariancePct ?? 10.0;
+    final allowed = schedule.protocolItem?.protocol?.allowedVariancePct ?? 10.0;
     return OperationVarianceEvaluation(
       planned: schedule.plannedQuantity,
       actual: parseOperationQuantity(raw),
@@ -161,8 +159,8 @@ class _OperationMealExecuteSheetState
               idempotencyKey: const Uuid().v4(),
               varianceReason:
                   eval.hasAnyDeviation && reason != null && reason.isNotEmpty
-                      ? reason
-                      : null,
+                  ? reason
+                  : null,
             );
           })
           .toList(growable: false);
@@ -173,20 +171,13 @@ class _OperationMealExecuteSheetState
 
       if (mounted) {
         ref.invalidate(technicianDashboardProvider);
-        AppNoticeService.success(
-          context,
-          'Đã ghi nhận hoàn tất $_mealLabel!',
-        );
+        AppNoticeService.success(context, 'Đã ghi nhận hoàn tất $_mealLabel!');
         Navigator.of(context).pop();
         widget.onSuccess();
       }
-    } on AppException catch (e) {
+    } on Object catch (error) {
       if (mounted) {
-        AppNoticeService.danger(context, e.message);
-      }
-    } catch (e) {
-      if (mounted) {
-        AppNoticeService.danger(context, 'Ghi nhận thất bại: $e');
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
       }
     } finally {
       if (mounted) {

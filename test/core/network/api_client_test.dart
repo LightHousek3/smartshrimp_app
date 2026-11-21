@@ -255,7 +255,7 @@ void main() {
             isA<SessionExpiredException>().having(
               (error) => error.message,
               'message',
-              'Invalid refresh token',
+              'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
             ),
           ),
         );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
 import 'package:flutter/services.dart';
@@ -536,7 +537,7 @@ class _InventoryProductFormPageState
       }
       if (detail.hasError && detail.value == null) {
         return _frame(
-          _LoadError(
+          AppErrorState(
             message: _errorMessage(detail.error),
             onRetry: () => ref
                 .read(
@@ -1104,24 +1105,11 @@ class _InventoryProductFormPageState
           ],
         ),
       ),
-      error: (error, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            error is AppException
-                ? error.message
-                : 'Không thể tải nhà sản xuất.',
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              textStyle: inventoryTextButtonTextStyle,
-            ),
-            onPressed: () =>
-                ref.invalidate(supplierListControllerProvider(widget.farmId)),
-            child: const Text('Thử lại'),
-          ),
-        ],
+      error: (error, _) => AppErrorState(
+        error: error,
+        message: 'Không thể tải nhà sản xuất.',
+        onRetry: () =>
+            ref.invalidate(supplierListControllerProvider(widget.farmId)),
       ),
       data: (all) {
         final items = all
@@ -1380,28 +1368,6 @@ class _SelectionChip extends StatelessWidget {
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
-      ),
-    ),
-  );
-}
-
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
       ),
     ),
   );

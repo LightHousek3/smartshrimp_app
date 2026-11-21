@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
@@ -43,7 +44,7 @@ class AssignedSeasonDetailPage extends ConsumerWidget {
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.ocean),
             ),
-            error: (error, _) => _Failure(
+            error: (error, _) => AppErrorState(
               error: error,
               onRetry: () => ref
                   .read(assignedSeasonDetailProvider(seasonId).notifier)
@@ -783,21 +784,10 @@ class _TodayOperations extends ConsumerWidget {
               child: CircularProgressIndicator(color: AppColors.ocean),
             ),
           ),
-          error: (error, _) => _Card(
-            child: Column(
-              children: [
-                Text(
-                  error is AppException
-                      ? error.message
-                      : 'Không thể tải cữ vận hành hôm nay.',
-                  style: const TextStyle(color: AppColors.error),
-                ),
-                TextButton(
-                  onPressed: () => ref.invalidate(provider),
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
+          error: (error, _) => AppErrorState(
+            error: error,
+            message: 'Không thể tải cữ vận hành hôm nay.',
+            onRetry: () => ref.invalidate(provider),
           ),
           data: (schedules) {
             if (schedules.isEmpty) {
@@ -1136,33 +1126,6 @@ class _Title extends StatelessWidget {
       color: AppColors.ink,
       fontSize: 16,
       fontWeight: FontWeight.w800,
-    ),
-  );
-}
-
-class _Failure extends StatelessWidget {
-  const _Failure({required this.error, required this.onRetry});
-  final Object error;
-  final Future<void> Function() onRetry;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(Icons.error_outline, size: 48),
-          const SizedBox(height: 12),
-          Text(
-            error is AppException
-                ? (error as AppException).message
-                : 'Không thể tải chi tiết vụ nuôi.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
-      ),
     ),
   );
 }

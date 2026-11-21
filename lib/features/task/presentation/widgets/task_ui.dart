@@ -194,24 +194,6 @@ class TaskDetailPanel extends StatelessWidget {
   );
 }
 
-class TaskLoadError extends StatelessWidget {
-  const TaskLoadError(this.error, this.retry, {super.key});
-  final Object error;
-  final VoidCallback retry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(taskError(error), textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: retry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
-}
-
 class TaskEmpty extends StatelessWidget {
   const TaskEmpty({this.canCreate = false, super.key});
   final bool canCreate;

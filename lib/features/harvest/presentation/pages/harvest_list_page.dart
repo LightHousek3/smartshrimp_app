@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -149,9 +150,9 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
             padding: EdgeInsets.all(40),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => HarvestErrorView(
+          error: (error, _) => AppErrorState(
             error: error,
-            retry: () => ref.invalidate(provider),
+            onRetry: () => ref.invalidate(provider),
           ),
           data: (data) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,

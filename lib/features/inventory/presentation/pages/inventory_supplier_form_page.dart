@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
@@ -99,9 +101,9 @@ class _InventorySupplierFormPageState
             : 'Đã cập nhật nhà cung cấp.',
       );
       context.pop(supplier);
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (mounted) {
-        AppNoticeService.danger(context, error.message);
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
         if (error is ApiException &&
             error.statusCode == 409 &&
             widget.supplierId != null) {
@@ -132,28 +134,14 @@ class _InventorySupplierFormPageState
         if (state.value == null) {
           content = state.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        state.error is AppException
-                            ? (state.error as AppException).message
-                            : 'Không thể tải nhà cung cấp.',
-                      ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          textStyle: inventoryTextButtonTextStyle,
-                        ),
-                        onPressed: () => ref.invalidate(
-                          supplierDetailProvider((
-                            farmId: widget.farmId,
-                            supplierId: widget.supplierId!,
-                          )),
-                        ),
-                        child: const Text('Thử lại'),
-                      ),
-                    ],
+              : AppErrorState(
+                  error: state.error,
+                  message: 'Không thể tải nhà cung cấp.',
+                  onRetry: () => ref.invalidate(
+                    supplierDetailProvider((
+                      farmId: widget.farmId,
+                      supplierId: widget.supplierId!,
+                    )),
                   ),
                 );
           return _frame(content);

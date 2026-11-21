@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/disease_case/presentation/presentation.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/verification_page.dart';
 import 'package:smartshrimp_app/features/auth/domain/verification_purpose.dart';
@@ -833,13 +834,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder: (_, _) => const Scaffold(
+    errorBuilder: (context, _) => Scaffold(
       body: AppGradientBackground(
-        child: Center(
-          child: Text(
-            'Không tìm thấy trang.',
-            style: TextStyle(color: AppColors.ink),
-          ),
+        child: AppErrorState(
+          message: 'Không tìm thấy trang.',
+          actionLabel: 'Về trang chủ',
+          actionIcon: Icons.home_outlined,
+          onRetry: () => context.go(AppRoutes.home),
         ),
       ),
     ),

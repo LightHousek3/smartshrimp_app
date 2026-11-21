@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
@@ -135,13 +136,10 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
               error: (error, _) => <Widget>[
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: _MessageState(
-                    icon: Icons.cloud_off_rounded,
-                    title: 'Không thể tải thông báo',
-                    message: _errorMessage(error),
-                    actionLabel: 'Thử lại',
-                    actionIcon: Icons.refresh_rounded,
-                    onAction: () => ref.read(provider.notifier).refresh(),
+                  child: AppErrorState(
+                    error: error,
+                    message: 'Không thể tải thông báo.',
+                    onRetry: ref.read(provider.notifier).refresh,
                   ),
                 ),
               ],
@@ -303,10 +301,6 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
         message: message,
         level: isError ? AppNoticeLevel.danger : AppNoticeLevel.success,
       );
-
-  static String _errorMessage(Object error) => error is AppException
-      ? error.message
-      : 'Có lỗi xảy ra. Vui lòng thử lại.';
 }
 
 class _MarkAllButton extends StatelessWidget {
@@ -613,17 +607,11 @@ class _MessageState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.actionIcon,
-    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final String? actionLabel;
-  final IconData? actionIcon;
-  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -658,14 +646,6 @@ class _MessageState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
             ),
-            if (onAction != null && actionLabel != null) ...<Widget>[
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: onAction,
-                icon: Icon(actionIcon ?? Icons.refresh_rounded),
-                label: Text(actionLabel!),
-              ),
-            ],
           ],
         ),
       ),

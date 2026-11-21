@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -27,16 +28,9 @@ class ProfileEditPage extends ConsumerWidget {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.ocean),
           ),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                error is AppException
-                    ? error.message
-                    : 'Không thể tải thông tin hồ sơ.',
-                textAlign: TextAlign.center,
-              ),
-            ),
+          error: (error, _) => AppErrorState(
+            error: error,
+            onRetry: ref.read(profileControllerProvider.notifier).refresh,
           ),
           data: (profile) => _ProfileEditForm(
             key: ValueKey<String>(profile.id),

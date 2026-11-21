@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'dart:async';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
@@ -123,7 +124,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
         : farmState!.when(
             data: (farm) => farm.name,
             loading: () => 'Đang tải tên trang trại…',
-            error: (_, _) => 'Không thể tải tên trang trại',
+            error: (_, _) => 'Trang trại',
           );
     final page = inventoryState.value;
     final readOnly =
@@ -157,7 +158,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: <Widget>[
-            if (farmState?.hasError == true)
+            if (!inventoryState.hasError && farmState?.hasError == true)
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -248,7 +249,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
             const SizedBox(height: 12),
             if (page == null)
               inventoryState.hasError
-                  ? _InventoryLoadError(
+                  ? AppErrorState(
                       message: _errorMessage(inventoryState.error),
                       onRetry: () => ref
                           .read(
@@ -496,28 +497,6 @@ class _HistoryButton extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
-}
-
-class _InventoryLoadError extends StatelessWidget {
-  const _InventoryLoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const Icon(Icons.error_outline, color: AppColors.error, size: 36),
-        const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
     ),
   );
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,7 +66,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
       ),
       error: (error, _) => SliverToBoxAdapter(
         child: AiCard(
-          child: AiFailure(
+          child: AppErrorState(
             error: error,
             onRetry: () => ref
                 .read(aiDiagnosisHistoryProvider(widget.seasonId).notifier)
@@ -97,7 +98,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
             );
           }
           if (state.paginationError != null) {
-            return AiFailure(
+            return AppErrorState(
               error: state.paginationError!,
               onRetry: () => ref
                   .read(aiDiagnosisHistoryProvider(widget.seasonId).notifier)
@@ -195,7 +196,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
                       season.when(
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),
-                        error: (error, _) => AiFailure(
+                        error: (error, _) => AppErrorState(
                           error: error,
                           onRetry: () => ref.invalidate(
                             assignedSeasonDetailProvider(widget.seasonId),

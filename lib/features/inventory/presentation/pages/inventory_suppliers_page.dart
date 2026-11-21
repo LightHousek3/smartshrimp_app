@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
@@ -67,8 +68,10 @@ class _InventorySuppliersPageState
           .read(supplierListControllerProvider(widget.farmId).notifier)
           .delete(supplier.id);
       if (mounted) AppNoticeService.success(context, 'Đã xóa nhà cung cấp.');
-    } on AppException catch (error) {
-      if (mounted) AppNoticeService.danger(context, error.message);
+    } on Object catch (error) {
+      if (mounted) {
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
+      }
     } finally {
       if (mounted) setState(() => _deleting = false);
     }
@@ -259,25 +262,11 @@ class _InventorySuppliersPageState
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (state.hasError)
-              InventorySurface(
-                child: Column(
-                  children: [
-                    Text(
-                      state.error is AppException
-                          ? (state.error as AppException).message
-                          : 'Không thể tải nhà cung cấp.',
-                      textAlign: TextAlign.center,
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        textStyle: inventoryTextButtonTextStyle,
-                      ),
-                      onPressed: () => ref.invalidate(
-                        supplierListControllerProvider(widget.farmId),
-                      ),
-                      child: const Text('Thử lại'),
-                    ),
-                  ],
+              AppErrorState(
+                error: state.error,
+                message: 'Không thể tải nhà cung cấp.',
+                onRetry: () => ref.invalidate(
+                  supplierListControllerProvider(widget.farmId),
                 ),
               )
             else if (items.isEmpty)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/harvest/domain/entities/harvest_event.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/view_models/harvest_controller.dart';
@@ -39,9 +40,9 @@ class HarvestDetailPage extends ConsumerWidget {
           error: (error, _) => HarvestScaffold(
             title: 'Chi tiết thu hoạch',
             children: [
-              HarvestErrorView(
+              AppErrorState(
                 error: error,
-                retry: () => ref.invalidate(provider),
+                onRetry: () => ref.invalidate(provider),
               ),
             ],
           ),

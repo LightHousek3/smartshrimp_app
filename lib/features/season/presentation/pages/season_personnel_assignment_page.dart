@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
@@ -43,7 +44,7 @@ class SeasonPersonnelAssignmentPage extends ConsumerWidget {
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.ocean),
             ),
-            error: (error, _) => _AssignmentLoadError(
+            error: (error, _) => AppErrorState(
               message: error is AppException
                   ? error.message
                   : 'Không thể tải thông tin vụ nuôi.',
@@ -271,7 +272,7 @@ class _AssignmentFormState extends ConsumerState<_AssignmentForm> {
                       );
                     },
                     loading: () => const _PersonnelLoading(),
-                    error: (error, _) => _PersonnelError(
+                    error: (error, _) => AppErrorState(
                       message: error is AppException
                           ? error.message
                           : 'Không thể tải danh sách nhân sự.',
@@ -745,37 +746,6 @@ class _PersonnelEmpty extends StatelessWidget {
   );
 }
 
-class _PersonnelError extends StatelessWidget {
-  const _PersonnelError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFFFCBD5)),
-    ),
-    child: Column(
-      children: <Widget>[
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.error, fontSize: 12),
-        ),
-        TextButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Thử lại'),
-        ),
-      ],
-    ),
-  );
-}
-
 class _SubmitError extends StatelessWidget {
   const _SubmitError({required this.message});
 
@@ -813,21 +783,6 @@ class _AssignmentUnavailable extends StatelessWidget {
     title: 'Không thể phân công',
     message: 'Chỉ vụ đang chuẩn bị hoặc đang nuôi mới được thay đổi nhân sự.',
     onRetry: null,
-  );
-}
-
-class _AssignmentLoadError extends StatelessWidget {
-  const _AssignmentLoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) => _AssignmentMessage(
-    icon: Icons.error_outline_rounded,
-    title: 'Không thể tải dữ liệu',
-    message: message,
-    onRetry: onRetry,
   );
 }
 

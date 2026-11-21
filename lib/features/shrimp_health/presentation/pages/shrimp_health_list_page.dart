@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
@@ -434,40 +435,15 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                 child: listAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            size: 48,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            error.toString().replaceAll('Exception: ', ''),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Color(0xFF0F1C2E)),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              ref
-                                  .read(
-                                    shrimpHealthListProvider(
-                                      widget.seasonId,
-                                    ).notifier,
-                                  )
-                                  .refresh();
-                            },
-                            icon: const Icon(Icons.refresh_rounded),
-                            label: const Text('Thử lại'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  error: (error, _) => AppErrorState(
+                    error: error,
+                    onRetry: () {
+                      ref
+                          .read(
+                            shrimpHealthListProvider(widget.seasonId).notifier,
+                          )
+                          .refresh();
+                    },
                   ),
                   data: (result) {
                     final counts = result.counts;

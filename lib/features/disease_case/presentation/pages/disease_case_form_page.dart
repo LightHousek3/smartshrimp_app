@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
@@ -119,7 +120,10 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(diseaseCaseMutationProvider).isLoading || _picking || _submitting;
+    final busy =
+        ref.watch(diseaseCaseMutationProvider).isLoading ||
+        _picking ||
+        _submitting;
     final scopeProvider = diseaseCaseListProvider((
       seasonId: widget.seasonId,
       page: 1,
@@ -141,9 +145,9 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CaseFailure(
+                  AppErrorState(
                     error: eligibilityError ?? scope.error!,
-                    retry: () => ref.invalidate(scopeProvider),
+                    onRetry: () => ref.invalidate(scopeProvider),
                   ),
                   if (page?.existingCaseId != null)
                     TextButton(
@@ -392,27 +396,12 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                       .when(
                         loading: () =>
                             const LinearProgressIndicator(minHeight: 2),
-                        error: (_, _) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Chưa tải được thông tin liên kết.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.inkMuted,
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () => ref.invalidate(
-                                caseCreationOptionsProvider(widget.seasonId),
-                              ),
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text(
-                                'Thử lại',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ],
+                        error: (error, _) => AppErrorState(
+                          error: error,
+                          message: 'Chưa tải được thông tin liên kết.',
+                          onRetry: () => ref.invalidate(
+                            caseCreationOptionsProvider(widget.seasonId),
+                          ),
                         ),
                         data: (options) {
                           final choices = options.aiDiagnoses

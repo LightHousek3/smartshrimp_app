@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -264,8 +265,6 @@ class OperationListPage extends ConsumerWidget {
     ),
   );
 
-
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final listState = ref.watch(operationListProvider(seasonId));
@@ -288,28 +287,12 @@ class OperationListPage extends ConsumerWidget {
     Widget buildBody() {
       if (result == null) {
         if (listState.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  'Lỗi: ${listState.error}',
-                  style: const TextStyle(color: AppColors.error),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => ref
-                      .read(operationListProvider(seasonId).notifier)
-                      .refresh(),
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
+          return AppErrorState(
+            error: listState.error,
+            onRetry: ref.read(operationListProvider(seasonId).notifier).refresh,
           );
         }
-        return const Center(
-          child: CircularProgressIndicator(color: _blueFg),
-        );
+        return const Center(child: CircularProgressIndicator(color: _blueFg));
       }
 
       final seasonDetail =
@@ -360,15 +343,18 @@ class OperationListPage extends ConsumerWidget {
       };
 
       final filteredMineralAndChemical = switch (activeTab) {
-        'PLANNED' => mineralAndChemicalRaw
-            .where((s) => s.status == OperationStatus.planned)
-            .toList(growable: false),
-        'COMPLETED' => mineralAndChemicalRaw
-            .where((s) => s.status == OperationStatus.completed)
-            .toList(growable: false),
-        'CANCELLED' => mineralAndChemicalRaw
-            .where((s) => s.status == OperationStatus.cancelled)
-            .toList(growable: false),
+        'PLANNED' =>
+          mineralAndChemicalRaw
+              .where((s) => s.status == OperationStatus.planned)
+              .toList(growable: false),
+        'COMPLETED' =>
+          mineralAndChemicalRaw
+              .where((s) => s.status == OperationStatus.completed)
+              .toList(growable: false),
+        'CANCELLED' =>
+          mineralAndChemicalRaw
+              .where((s) => s.status == OperationStatus.cancelled)
+              .toList(growable: false),
         _ => mineralAndChemicalRaw,
       };
 
@@ -384,9 +370,8 @@ class OperationListPage extends ConsumerWidget {
       ].join(' · ');
 
       return RefreshIndicator(
-        onRefresh: () => ref
-            .read(operationListProvider(seasonId).notifier)
-            .refresh(),
+        onRefresh: () =>
+            ref.read(operationListProvider(seasonId).notifier).refresh(),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
@@ -421,11 +406,7 @@ class OperationListPage extends ConsumerWidget {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(
-                        Icons.bar_chart_rounded,
-                        size: 18,
-                        color: _blueFg,
-                      ),
+                      Icon(Icons.bar_chart_rounded, size: 18, color: _blueFg),
                       SizedBox(width: 5),
                       Text(
                         'Thống kê',
@@ -464,9 +445,7 @@ class OperationListPage extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF5DB),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFF5D08A),
-                          ),
+                          border: Border.all(color: const Color(0xFFF5D08A)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,7 +606,8 @@ class OperationListPage extends ConsumerWidget {
                                 iconBg: _blueBg,
                               ),
                               const SizedBox(height: 10),
-                              for (final group in filteredMealGroups) ...<Widget>[
+                              for (final group
+                                  in filteredMealGroups) ...<Widget>[
                                 OperationMealGroupCard(
                                   key: ValueKey<String>(
                                     '${activeTab}_${group.key}',
@@ -647,7 +627,8 @@ class OperationListPage extends ConsumerWidget {
                             ],
 
                             // Group 2: Xử lý khoáng / hóa chất (ẩn hoàn toàn khi không có)
-                            if (filteredMineralAndChemical.isNotEmpty) ...<Widget>[
+                            if (filteredMineralAndChemical
+                                .isNotEmpty) ...<Widget>[
                               _buildSectionHeader(
                                 svgIcon: AppSvgIconName.chemical,
                                 title: 'Xử lý khoáng / hóa chất',
@@ -655,7 +636,8 @@ class OperationListPage extends ConsumerWidget {
                                 iconBg: const Color(0xFFE6FFFA),
                               ),
                               const SizedBox(height: 10),
-                              for (final s in filteredMineralAndChemical) ...<Widget>[
+                              for (final s
+                                  in filteredMineralAndChemical) ...<Widget>[
                                 OperationScheduleCard(
                                   schedule: s,
                                   onTap: () => context.push(
@@ -681,10 +663,7 @@ class OperationListPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
-        child: SafeArea(
-          bottom: false,
-          child: buildBody(),
-        ),
+        child: SafeArea(bottom: false, child: buildBody()),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/view_models/disease_case_controller.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -151,9 +152,7 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
         loading: () => const Center(
           child: CircularProgressIndicator(color: AiDiagnosisStyle.purple),
         ),
-        error: (error, _) => Center(
-          child: AiFailure(error: error, onRetry: refresh),
-        ),
+        error: (error, _) => AppErrorState(error: error, onRetry: refresh),
         data: (detail) => RefreshIndicator(
           onRefresh: refresh,
           child: ListView(
@@ -376,7 +375,7 @@ class _ResultCard extends StatelessWidget {
                 ] else ...[
                   const SizedBox(height: 12),
                   Text(
-                    detail.error!.message,
+                    'Không thể hoàn tất nhận diện. Vui lòng thử lại.',
                     style: const TextStyle(
                       color: AppColors.error,
                       fontSize: 12,

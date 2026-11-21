@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
@@ -162,7 +163,7 @@ class _FarmListPageState extends ConsumerState<FarmListPage> {
               error: (error, _) => <Widget>[
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: _FarmError(
+                  child: AppErrorState(
                     message: error is AppException
                         ? error.message
                         : 'Không thể tải danh sách trang trại.',
@@ -541,39 +542,4 @@ class _DashedRoundRectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _FarmError extends StatelessWidget {
-  const _FarmError({required this.message, required this.onRetry});
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(
-            Icons.cloud_off_rounded,
-            size: 42,
-            color: AppColors.inkMuted,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.inkSoft),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Thử lại'),
-          ),
-        ],
-      ),
-    ),
-  );
 }

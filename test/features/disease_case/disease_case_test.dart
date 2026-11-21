@@ -469,7 +469,7 @@ void main() {
     },
   );
   for (final status in [400, 403, 404, 409, 429, 500]) {
-    test('A: preserves HTTP $status and backend message', () async {
+    test('A: preserves HTTP $status with safe localized copy', () async {
       final dio = Dio();
       dio.interceptors.add(
         InterceptorsWrapper(
@@ -496,7 +496,13 @@ void main() {
         throwsA(
           isA<AppException>()
               .having((e) => e.statusCode, 'status', status)
-              .having((e) => e.message, 'message', 'Lỗi ca bệnh'),
+              .having(
+                (e) => e.message,
+                'message',
+                status >= 500
+                    ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                    : 'Lỗi ca bệnh',
+              ),
         ),
       );
       dio.close();

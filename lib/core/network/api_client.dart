@@ -159,7 +159,7 @@ final class ApiClient {
       final mappedError = ErrorMapper.fromDio(error);
       if (error.response?.statusCode == 401) {
         await _sessionStore.clear();
-        throw SessionExpiredException(message: mappedError.message);
+        throw const SessionExpiredException();
       }
       throw mappedError;
     }
@@ -242,12 +242,12 @@ final class ApiClient {
       final statusCode = error.response?.statusCode;
       if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
         await _sessionStore.clear();
-        throw SessionExpiredException(message: mappedError.message);
+        throw const SessionExpiredException();
       }
       throw mappedError;
-    } on InvalidResponseException catch (error) {
+    } on InvalidResponseException {
       await _sessionStore.clear();
-      throw SessionExpiredException(message: error.message);
+      throw const SessionExpiredException();
     }
   }
 }

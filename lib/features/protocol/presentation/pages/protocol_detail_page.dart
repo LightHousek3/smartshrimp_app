@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -56,7 +57,7 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
           : '${detail.card.pondName} · ${detail.card.seasonName}',
       child: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => ProtocolFailure(
+        error: (error, _) => AppErrorState(
           error: error,
           onRetry: () =>
               ref.invalidate(protocolDetailProvider(widget.protocolId)),
@@ -196,7 +197,7 @@ class _DetailContent extends ConsumerWidget {
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, _) => ProtocolSurface(
-                child: ProtocolFailure(
+                child: AppErrorState(
                   error: error,
                   onRetry: () => ref.invalidate(protocolDayProvider(dayScope)),
                 ),

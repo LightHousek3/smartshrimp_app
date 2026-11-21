@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import '../../domain/domain.dart';
 import '../view_models/disease_case_controller.dart';
@@ -69,9 +70,9 @@ class _DiseaseCaseListPageState extends ConsumerState<DiseaseCaseListPage> {
           Expanded(
             child: result.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => CaseFailure(
+              error: (error, _) => AppErrorState(
                 error: error,
-                retry: () => ref.invalidate(provider),
+                onRetry: () => ref.invalidate(provider),
               ),
               data: (page) => RefreshIndicator(
                 onRefresh: () async {

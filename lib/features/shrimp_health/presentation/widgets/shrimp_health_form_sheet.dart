@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,17 +27,16 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     required String seasonId,
     int? initialQuantity,
     VoidCallback? onCreated,
-  }) =>
-      showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => ShrimpHealthFormSheet(
-          seasonId: seasonId,
-          initialQuantity: initialQuantity,
-          onCreated: onCreated,
-        ),
-      );
+  }) => showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => ShrimpHealthFormSheet(
+      seasonId: seasonId,
+      initialQuantity: initialQuantity,
+      onCreated: onCreated,
+    ),
+  );
 
   @override
   ConsumerState<ShrimpHealthFormSheet> createState() =>
@@ -86,12 +86,15 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
 
   int? get _effectiveInitialQuantity =>
       widget.initialQuantity ??
-      ref.watch(assignedSeasonDetailProvider(widget.seasonId)).value?.initialQuantity;
+      ref
+          .watch(assignedSeasonDetailProvider(widget.seasonId))
+          .value
+          ?.initialQuantity;
 
   static String _formatNumber(int value) => value.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (Match m) => '${m[1]}.',
+  );
 
   static String _formatTimeDayMonth(DateTime dt) {
     final local = dt.toLocal();
@@ -184,16 +187,21 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     final note = _noteController.text.trim();
 
     final initialQty = _effectiveInitialQuantity;
-    if (initialQty != null && initialQty > 0 && estimatedPopulation != null && estimatedPopulation > initialQty) {
+    if (initialQty != null &&
+        initialQty > 0 &&
+        estimatedPopulation != null &&
+        estimatedPopulation > initialQty) {
       AppNoticeService.show(
         context,
-        message: 'Ước tính đàn (${_formatNumber(estimatedPopulation)} con) không được vượt quá số giống ban đầu (${_formatNumber(initialQty)} con)',
+        message:
+            'Ước tính đàn (${_formatNumber(estimatedPopulation)} con) không được vượt quá số giống ban đầu (${_formatNumber(initialQty)} con)',
         level: AppNoticeLevel.danger,
       );
       return;
     }
 
-    final hasAnyMetric = sampleSize != null ||
+    final hasAnyMetric =
+        sampleSize != null ||
         avgWeightG != null ||
         avgLengthCm != null ||
         mortalityCount > 0 ||
@@ -215,19 +223,21 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     try {
       final idempotencyKey = const Uuid().v4();
 
-      await ref.read(shrimpHealthRepositoryProvider).createLog(
-        widget.seasonId,
-        recordedAt: _recordedAt,
-        sampleSize: sampleSize,
-        avgWeightG: avgWeightG,
-        avgLengthCm: avgLengthCm,
-        mortalityCount: mortalityCount,
-        estimatedPopulation: estimatedPopulation,
-        estimatedBiomassKg: estimatedBiomassKg,
-        healthStatus: _healthStatus,
-        note: note.isNotEmpty ? note : null,
-        idempotencyKey: idempotencyKey,
-      );
+      await ref
+          .read(shrimpHealthRepositoryProvider)
+          .createLog(
+            widget.seasonId,
+            recordedAt: _recordedAt,
+            sampleSize: sampleSize,
+            avgWeightG: avgWeightG,
+            avgLengthCm: avgLengthCm,
+            mortalityCount: mortalityCount,
+            estimatedPopulation: estimatedPopulation,
+            estimatedBiomassKg: estimatedBiomassKg,
+            healthStatus: _healthStatus,
+            note: note.isNotEmpty ? note : null,
+            idempotencyKey: idempotencyKey,
+          );
 
       if (!mounted) return;
 
@@ -244,7 +254,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       if (!mounted) return;
       AppNoticeService.show(
         context,
-        message: e.toString().replaceAll('Exception: ', ''),
+        message: ErrorMapper.displayMessage(e),
         level: AppNoticeLevel.danger,
       );
     } finally {
@@ -259,84 +269,85 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     required String label,
     required String unit,
     required String hint,
-    TextInputType keyboardType = const TextInputType.numberWithOptions(decimal: true),
+    TextInputType keyboardType = const TextInputType.numberWithOptions(
+      decimal: true,
+    ),
     List<TextInputFormatter>? inputFormatters,
     void Function(String)? onChanged,
     String? Function(String?)? validator,
     String? subLabel,
-  }) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F1C2E),
-                ),
-              ),
-              Text(
-                unit,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6A7994),
-                ),
-              ),
-            ],
-          ),
-          if (subLabel != null) ...<Widget>[
-            const SizedBox(height: 2),
-            Text(
-              subLabel,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF6A7994),
-              ),
-            ),
-          ],
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            onChanged: onChanged,
-            validator: validator,
+          Text(
+            label,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF0F1C2E),
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(
-                color: Color(0xFF94A3B8),
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF1378D1), width: 1.5),
-              ),
+          ),
+          Text(
+            unit,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6A7994),
             ),
           ),
         ],
-      );
+      ),
+      if (subLabel != null) ...<Widget>[
+        const SizedBox(height: 2),
+        Text(
+          subLabel,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF6A7994)),
+        ),
+      ],
+      const SizedBox(height: 6),
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
+        validator: validator,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F1C2E),
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF1378D1), width: 1.5),
+          ),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildHealthStatusSelector() {
     const statuses = <HealthStatus, String>{
@@ -374,10 +385,14 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFEAF4FF) : Colors.white,
+                      color: isSelected
+                          ? const Color(0xFFEAF4FF)
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF0F62B4) : const Color(0xFFDDE3EA),
+                        color: isSelected
+                            ? const Color(0xFF0F62B4)
+                            : const Color(0xFFDDE3EA),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -385,8 +400,12 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                       label,
                       style: TextStyle(
                         fontSize: 12.5,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? const Color(0xFF0F62B4) : const Color(0xFF0F1C2E),
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF0F62B4)
+                            : const Color(0xFF0F1C2E),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -460,7 +479,10 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEEF1F6),
                       borderRadius: BorderRadius.circular(12),
@@ -521,9 +543,13 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         label: 'Trọng lượng TB',
                         unit: 'g',
                         hint: '12.4',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
                         ],
                       ),
                     ),
@@ -541,9 +567,13 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         label: 'Chiều dài TB',
                         unit: 'cm',
                         hint: '11.2',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
                         ],
                       ),
                     ),
@@ -589,7 +619,9 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                           if (parsed == null || parsed <= 0) {
                             return 'Số lượng không hợp lệ';
                           }
-                          if (initialQty != null && initialQty > 0 && parsed > initialQty) {
+                          if (initialQty != null &&
+                              initialQty > 0 &&
+                              parsed > initialQty) {
                             return 'Tối đa ${_formatNumber(initialQty)} con';
                           }
                           return null;
@@ -604,9 +636,13 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         subLabel: 'Tự động tính từ cỡ & đàn',
                         unit: 'kg',
                         hint: '1180',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
                         ],
                         onChanged: (val) {
                           _biomassManuallyEdited = true;
@@ -657,7 +693,10 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF1378D1), width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1378D1),
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),

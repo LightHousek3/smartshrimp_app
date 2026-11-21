@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
@@ -310,22 +310,11 @@ class _WaterLogStatisticsPageState
                                   child: CircularProgressIndicator(),
                                 ),
                               ),
-                              error: (error, _) => Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      error is AppException
-                                          ? error.message
-                                          : 'Không thể tải thống kê. Vui lòng thử lại.',
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    TextButton(
-                                      onPressed: refresh,
-                                      child: const Text('Thử lại'),
-                                    ),
-                                  ],
-                                ),
+                              error: (error, _) => AppErrorState(
+                                error: error,
+                                message:
+                                    'Không thể tải thống kê. Vui lòng thử lại.',
+                                onRetry: refresh,
                               ),
                               data: (data) => Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

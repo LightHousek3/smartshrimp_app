@@ -1,9 +1,8 @@
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
-import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 /// Offer active suppliers from the owner directory for a new receipt.
 /// Inactive suppliers remain managed in the directory, outside this picker.
@@ -54,25 +53,11 @@ class _InventorySupplierPickerState
             Expanded(
               child: state.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        error is AppException
-                            ? error.message
-                            : 'Không thể tải nhà cung cấp.',
-                      ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          textStyle: inventoryTextButtonTextStyle,
-                        ),
-                        onPressed: () => ref.invalidate(
-                          supplierListControllerProvider(widget.farmId),
-                        ),
-                        child: const Text('Thử lại'),
-                      ),
-                    ],
+                error: (error, _) => AppErrorState(
+                  error: error,
+                  message: 'Không thể tải nhà cung cấp.',
+                  onRetry: () => ref.invalidate(
+                    supplierListControllerProvider(widget.farmId),
                   ),
                 ),
                 data: (suppliers) {

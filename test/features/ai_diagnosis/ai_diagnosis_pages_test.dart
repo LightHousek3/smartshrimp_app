@@ -617,7 +617,10 @@ void main() {
         ..result = AiDiagnosisDetail.parse(diagnosisJson(error: true));
       await mount(tester, detail: true, repository: repo);
       expect(find.text('Nhận diện không thành công'), findsOneWidget);
-      expect(find.text('Dịch vụ nhận diện chưa sẵn sàng.'), findsOneWidget);
+      expect(
+        find.text('Không thể hoàn tất nhận diện. Vui lòng thử lại.'),
+        findsOneWidget,
+      );
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(find.text('Tạo ca bệnh từ kết quả này'), findsNothing);
       await capture(tester, 'detail-error');

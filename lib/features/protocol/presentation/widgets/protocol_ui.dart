@@ -190,34 +190,6 @@ class ProtocolFrame extends StatelessWidget {
   );
 }
 
-class ProtocolFailure extends StatelessWidget {
-  const ProtocolFailure({
-    required this.error,
-    required this.onRetry,
-    super.key,
-  });
-  final Object error;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            protocolError(error),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
-      ),
-    ),
-  );
-}
-
 class ProtocolCard extends StatelessWidget {
   const ProtocolCard({required this.data, required this.onTap, super.key});
   final ProtocolCardData data;

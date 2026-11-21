@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
@@ -225,27 +225,15 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                                 ),
                                 const SizedBox(height: 12),
                                 const _ImmutableNotice(),
-                                if (metadata.hasError)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          metadata.error is AppException
-                                              ? (metadata.error!
-                                                        as AppException)
-                                                    .message
-                                              : 'Không tải được ngưỡng Min/Max.',
-                                        ),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => ref.invalidate(
-                                          waterLogMetadataProvider(
-                                            widget.seasonId,
-                                          ),
-                                        ),
-                                        child: const Text('Thử lại ngưỡng'),
-                                      ),
-                                    ],
+                                if (state.asData != null && metadata.hasError)
+                                  AppErrorState(
+                                    error: metadata.error,
+                                    message: 'Không tải được ngưỡng Min/Max.',
+                                    compact: true,
+                                    actionLabel: 'Thử lại ngưỡng',
+                                    onRetry: () => ref.invalidate(
+                                      waterLogMetadataProvider(widget.seasonId),
+                                    ),
                                   ),
                                 const SizedBox(height: 12),
                                 Container(
@@ -290,8 +278,12 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                               child: Center(child: CircularProgressIndicator()),
                             ),
                           ),
-                          error: (error, _) => SliverToBoxAdapter(
-                            child: _Failure(error: error, onRetry: _refresh),
+                          error: (error, _) => SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: AppErrorState(
+                              error: error,
+                              onRetry: _refresh,
+                            ),
                           ),
                           data: (listState) => SliverPadding(
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
@@ -300,8 +292,9 @@ class _WaterLogListPageState extends ConsumerState<WaterLogListPage> {
                               itemBuilder: (context, index) {
                                 if (index == listState.page.items.length) {
                                   if (listState.paginationError != null) {
-                                    return _Failure(
+                                    return AppErrorState(
                                       error: listState.paginationError!,
+                                      compact: true,
                                       onRetry: _loadMore,
                                     );
                                   }
@@ -478,31 +471,6 @@ class _ImmutableNotice extends StatelessWidget {
     child: const Text(
       'Kết quả đo đã lưu không thể chỉnh sửa. Nếu ghi sai, KTV chỉ có thể hủy hiệu lực kèm lý do để vẫn giữ được lịch sử đối chiếu.',
       style: TextStyle(color: AppColors.ocean, fontSize: 11, height: 1.5),
-    ),
-  );
-}
-
-class _Failure extends StatelessWidget {
-  const _Failure({required this.error, required this.onRetry});
-
-  final Object error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-    child: Column(
-      children: <Widget>[
-        Text(
-          error is AppException
-              ? (error as AppException).message
-              : 'Đã xảy ra lỗi. Vui lòng thử lại.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
-        ),
-        const SizedBox(height: 12),
-        TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
     ),
   );
 }

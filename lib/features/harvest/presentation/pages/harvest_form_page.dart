@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
@@ -428,9 +429,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       return HarvestScaffold(
         title: 'Ghi nhận thu hoạch',
         children: [
-          HarvestErrorView(
+          AppErrorState(
             error: pendingState.error!,
-            retry: () =>
+            onRetry: () =>
                 ref.invalidate(pendingHarvestProvider(widget.seasonId)),
           ),
         ],
@@ -478,9 +479,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         error: (error, _) => HarvestScaffold(
           title: 'Ghi nhận thu hoạch',
           children: [
-            HarvestErrorView(
+            AppErrorState(
               error: error,
-              retry: () => ref.invalidate(
+              onRetry: () => ref.invalidate(
                 seasonDetailControllerProvider(widget.seasonId),
               ),
             ),
@@ -498,9 +499,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
             subtitle: '${season.pond.name} · ${season.name}',
             children: [
               if (populationState.hasError)
-                HarvestErrorView(
+                AppErrorState(
                   error: populationState.error!,
-                  retry: () => ref.invalidate(populationProvider),
+                  onRetry: () => ref.invalidate(populationProvider),
                 ),
               if (populationState.isLoading) const LinearProgressIndicator(),
               if (season.status != SeasonStatus.active)

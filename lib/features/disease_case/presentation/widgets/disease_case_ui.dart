@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
-import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 
 import '../../domain/entities/owner_disease_case.dart';
@@ -308,34 +307,6 @@ class DiseaseCaseTitleRow extends StatelessWidget {
           constraints: BoxConstraints(maxWidth: constraints.maxWidth * .42),
           child: badge,
         ),
-      ],
-    ),
-  );
-}
-
-class DiseaseCaseFailure extends StatelessWidget {
-  const DiseaseCaseFailure({
-    required this.error,
-    required this.onRetry,
-    super.key,
-  });
-
-  final Object error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AppFormMessageBanner(
-          title: 'Không thể tải ca bệnh',
-          message: caseErrorMessage(error),
-          level: AppNoticeLevel.danger,
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
       ],
     ),
   );

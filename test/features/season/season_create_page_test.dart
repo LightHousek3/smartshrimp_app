@@ -90,10 +90,7 @@ void main() {
     final fixture = await _mount(tester, conflict: true);
     await _submit(tester);
     expect(fixture.requests.where((r) => r.method == 'POST'), hasLength(1));
-    expect(
-      find.text('Server rejected concurrent season creation'),
-      findsOneWidget,
-    );
+    expect(find.text('Dữ liệu đã thay đổi hoặc bị trùng lặp.'), findsOneWidget);
     expect(find.byType(Form), findsOneWidget);
     expect(find.text('Created Season Detail'), findsNothing);
     expect(tester.takeException(), isNull);

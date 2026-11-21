@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
@@ -309,28 +310,11 @@ class _InventorySupplierDetailPageState
                   padding: EdgeInsets.all(16),
                   child: LinearProgressIndicator(),
                 ),
-              if (detail.hasError)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: InventorySurface(
-                    child: Column(
-                      children: [
-                        Text(
-                          detail.error is AppException
-                              ? (detail.error as AppException).message
-                              : 'Không thể tải thông tin liên quan. Kéo xuống để thử lại.',
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            textStyle: inventoryTextButtonTextStyle,
-                          ),
-                          onPressed: () =>
-                              ref.invalidate(supplierDetailProvider(key)),
-                          child: const Text('Thử lại'),
-                        ),
-                      ],
-                    ),
-                  ),
+              if (detail.hasError && !detail.isLoading)
+                AppErrorState(
+                  error: detail.error,
+                  message: 'Không thể tải thông tin liên quan.',
+                  onRetry: () => ref.invalidate(supplierDetailProvider(key)),
                 ),
               if (!supplier.readOnly)
                 _SupplierSection(

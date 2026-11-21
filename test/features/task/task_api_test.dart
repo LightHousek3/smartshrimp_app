@@ -107,37 +107,46 @@ void main() {
     },
   );
   for (final status in [400, 403, 404, 409, 429, 500]) {
-    test('A: task API preserves backend status $status and message', () async {
-      final dio = Dio(BaseOptions(baseUrl: 'https://task.test'));
-      dio.interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (request, handler) {
-            handler.reject(
-              DioException(
-                requestOptions: request,
-                type: DioExceptionType.badResponse,
-                response: Response(
+    test(
+      'A: task API preserves status $status with safe localized copy',
+      () async {
+        final dio = Dio(BaseOptions(baseUrl: 'https://task.test'));
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (request, handler) {
+              handler.reject(
+                DioException(
                   requestOptions: request,
-                  statusCode: status,
-                  data: {
-                    'success': false,
-                    'statusCode': status,
-                    'message': 'Lỗi nhiệm vụ',
-                  },
+                  type: DioExceptionType.badResponse,
+                  response: Response(
+                    requestOptions: request,
+                    statusCode: status,
+                    data: {
+                      'success': false,
+                      'statusCode': status,
+                      'message': 'Lỗi nhiệm vụ',
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      );
-      await expectLater(
-        TaskApiService(ApiClient(dio, TaskSessionStore())).detail('task'),
-        throwsA(
-          isA<AppException>()
-              .having((e) => e.message, 'message', 'Lỗi nhiệm vụ')
-              .having((e) => e.statusCode, 'statusCode', status),
-        ),
-      );
-    });
+              );
+            },
+          ),
+        );
+        await expectLater(
+          TaskApiService(ApiClient(dio, TaskSessionStore())).detail('task'),
+          throwsA(
+            isA<AppException>()
+                .having(
+                  (e) => e.message,
+                  'message',
+                  status >= 500
+                      ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                      : 'Lỗi nhiệm vụ',
+                )
+                .having((e) => e.statusCode, 'statusCode', status),
+          ),
+        );
+      },
+    );
   }
 }

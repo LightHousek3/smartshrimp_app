@@ -284,23 +284,3 @@ class CaseField extends StatelessWidget {
     ),
   );
 }
-
-class CaseFailure extends StatelessWidget {
-  const CaseFailure({super.key, required this.error, required this.retry});
-  final Object error;
-  final VoidCallback retry;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(caseError(error), textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: retry, child: const Text('Thử lại')),
-        ],
-      ),
-    ),
-  );
-}

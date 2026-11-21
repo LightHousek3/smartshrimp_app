@@ -205,7 +205,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(const NetworkException().message), findsOneWidget);
       repository.failDetail = false;
-      await tester.tap(find.byKey(const Key('retry_notification_read')));
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('retry_notification_read')),
+          matching: find.widgetWithText(FilledButton, 'Thử lại'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(repository.detailCalls, 2);
       expect(find.byType(BottomSheet), findsOneWidget);
@@ -279,7 +284,12 @@ void main() {
     final dot = find.byKey(const Key('notification_unread_notification-1'));
     expect(dot, findsOneWidget);
     repository.failDetail = false;
-    await tester.tap(find.byKey(const Key('retry_notification_read')));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('retry_notification_read')),
+        matching: find.widgetWithText(FilledButton, 'Thử lại'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(repository.detailCalls, 2);
     expect(find.text('Chưa thể cập nhật trạng thái đã đọc.'), findsNothing);
