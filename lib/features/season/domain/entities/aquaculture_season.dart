@@ -259,6 +259,10 @@ abstract class AquacultureSeason with _$AquacultureSeason {
     ActivationEligibility? activationEligibility,
     SeasonActions? availableActions,
     SeasonMaterialCosts? materialCosts,
+    int? productionProtocolsCount,
+    int? treatmentProtocolsCount,
+    int? activeDiseaseCasesCount,
+    int? totalDiseaseCasesCount,
   }) = _AquacultureSeason;
 
   factory AquacultureSeason.fromJson(Map<String, dynamic> json) {
@@ -269,6 +273,17 @@ abstract class AquacultureSeason with _$AquacultureSeason {
       final eligibility = _nullableMap(json['activationEligibility']);
       final actions = _nullableMap(json['availableActions']);
       final costs = _nullableMap(json['materialCosts']);
+      final protocolCounts = _nullableMap(json['protocolCounts']);
+      final diseaseCaseCounts = _nullableMap(json['diseaseCaseCounts']);
+      final prodCount = _nullableInt(json['productionProtocolsCount']) ??
+          _nullableInt(protocolCounts?['production']);
+      final treatCount = _nullableInt(json['treatmentProtocolsCount']) ??
+          _nullableInt(protocolCounts?['treatment']);
+      final activeCases = _nullableInt(json['activeDiseaseCasesCount']) ??
+          _nullableInt(diseaseCaseCounts?['active']);
+      final totalCases = _nullableInt(json['totalDiseaseCasesCount']) ??
+          _nullableInt(diseaseCaseCounts?['total']);
+
       return AquacultureSeason(
         id: _requiredString(json, 'id'),
         pondId: _requiredString(json, 'pondId'),
@@ -304,6 +319,10 @@ abstract class AquacultureSeason with _$AquacultureSeason {
         materialCosts: costs == null
             ? null
             : SeasonMaterialCosts.fromJson(costs),
+        productionProtocolsCount: prodCount ?? (protocol != null ? 1 : 0),
+        treatmentProtocolsCount: treatCount ?? 0,
+        activeDiseaseCasesCount: activeCases ?? 0,
+        totalDiseaseCasesCount: totalCases ?? 0,
       );
     } on InvalidResponseException {
       rethrow;
