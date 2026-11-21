@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 
 final class NotificationVisuals {
@@ -41,42 +42,48 @@ final class NotificationVisuals {
     NotificationType.system || NotificationType.unknown => 'Hệ thống',
   };
 
-  static IconData icon(NotificationType type) => switch (type) {
-    NotificationType.waterThresholdExceeded ||
-    NotificationType.scheduleGenerationFailed => Icons.warning_amber_rounded,
-    NotificationType.operationDue ||
-    NotificationType.operationOverdue ||
-    NotificationType.operationCancelled => Icons.event_note_rounded,
-    NotificationType.diseaseCaseCreated ||
-    NotificationType.diseaseCaseResponse ||
-    NotificationType.diseaseCaseWaitingInfo ||
-    NotificationType.diseaseCaseMonitoring ||
-    NotificationType.diseaseCaseResolved ||
-    NotificationType.emergencyCaseUpdate => Icons.health_and_safety_rounded,
-    NotificationType.taskAssigned ||
-    NotificationType.taskUpdated ||
-    NotificationType.taskDueSoon ||
-    NotificationType.taskOverdue ||
-    NotificationType.taskCompleted => Icons.checklist_rounded,
-    NotificationType.productionProtocolPending ||
-    NotificationType.productionProtocolReviewed ||
-    NotificationType.treatmentProtocolPending ||
-    NotificationType.treatmentProtocolReviewed ||
-    NotificationType.treatmentProtocolAborted ||
-    NotificationType.treatmentScheduleReady ||
-    NotificationType.treatmentScheduleCompleted => Icons.assignment_rounded,
-    NotificationType.inventoryLow ||
-    NotificationType.inventoryInsufficient => Icons.inventory_2_rounded,
-    NotificationType.seasonAssignmentCreated ||
-    NotificationType.seasonAssignmentReplaced ||
-    NotificationType.seasonStatusChanged ||
-    NotificationType.harvestDue ||
-    NotificationType.seasonCompleted => Icons.layers_rounded,
-    NotificationType.managedAccountActivated ||
-    NotificationType.accountStatusChanged => Icons.groups_rounded,
-    NotificationType.system ||
-    NotificationType.unknown => Icons.notifications_rounded,
-  };
+  static Widget icon(NotificationType type, {double size = 20, Color? color}) {
+    final iconData = switch (type) {
+      NotificationType.waterThresholdExceeded ||
+      NotificationType.scheduleGenerationFailed => Icons.warning_amber_rounded,
+      NotificationType.operationDue ||
+      NotificationType.operationOverdue ||
+      NotificationType.operationCancelled => Icons.event_note_rounded,
+      NotificationType.diseaseCaseCreated ||
+      NotificationType.diseaseCaseResponse ||
+      NotificationType.diseaseCaseWaitingInfo ||
+      NotificationType.diseaseCaseMonitoring ||
+      NotificationType.diseaseCaseResolved ||
+      NotificationType.emergencyCaseUpdate => Icons.health_and_safety_rounded,
+      NotificationType.taskAssigned ||
+      NotificationType.taskUpdated ||
+      NotificationType.taskDueSoon ||
+      NotificationType.taskOverdue ||
+      NotificationType.taskCompleted => Icons.checklist_rounded,
+      NotificationType.productionProtocolPending ||
+      NotificationType.productionProtocolReviewed ||
+      NotificationType.treatmentProtocolPending ||
+      NotificationType.treatmentProtocolReviewed ||
+      NotificationType.treatmentProtocolAborted ||
+      NotificationType.treatmentScheduleReady ||
+      NotificationType.treatmentScheduleCompleted => Icons.assignment_rounded,
+      NotificationType.inventoryLow ||
+      NotificationType.inventoryInsufficient => Icons.inventory_2_rounded,
+      NotificationType.seasonAssignmentCreated ||
+      NotificationType.seasonAssignmentReplaced ||
+      NotificationType.seasonStatusChanged ||
+      NotificationType.harvestDue ||
+      NotificationType.seasonCompleted => null,
+      NotificationType.managedAccountActivated ||
+      NotificationType.accountStatusChanged => Icons.groups_rounded,
+      NotificationType.system ||
+      NotificationType.unknown => Icons.notifications_rounded,
+    };
+    final accent = color ?? NotificationVisuals.color(type);
+    return iconData == null
+        ? AppSvgIcon(AppSvgIconName.shrimp, size: size, color: accent)
+        : Icon(iconData, size: size, color: accent);
+  }
 
   static Color color(NotificationType type) => switch (type) {
     NotificationType.waterThresholdExceeded ||

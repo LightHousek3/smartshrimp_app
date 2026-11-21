@@ -7,6 +7,7 @@ enum AppSvgIconName {
   dropdownChevron,
   home,
   farm,
+  pond,
   shrimp,
   shrimpFeed,
   tasks,

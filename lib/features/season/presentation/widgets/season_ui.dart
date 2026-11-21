@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
 class SeasonStatusBadge extends StatelessWidget {
@@ -76,7 +77,7 @@ class SeasonEmptyState extends StatelessWidget {
   const SeasonEmptyState({
     required this.title,
     required this.hint,
-    this.icon = Icons.layers_rounded,
+    this.icon,
     this.compact = false,
     this.showBackground = true,
     super.key,
@@ -84,7 +85,7 @@ class SeasonEmptyState extends StatelessWidget {
 
   final String title;
   final String hint;
-  final IconData icon;
+  final IconData? icon;
   final bool compact;
   final bool showBackground;
 
@@ -117,11 +118,18 @@ class SeasonEmptyState extends StatelessWidget {
               color: const Color(0xFFEEF1F6),
               borderRadius: BorderRadius.circular(compact ? 14 : 16),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF64748B),
-              size: compact ? 19 : 23,
-            ),
+            alignment: Alignment.center,
+            child: icon == null
+                ? AppSvgIcon(
+                    AppSvgIconName.shrimp,
+                    color: const Color(0xFF64748B),
+                    size: compact ? 19 : 23,
+                  )
+                : Icon(
+                    icon,
+                    color: const Color(0xFF64748B),
+                    size: compact ? 19 : 23,
+                  ),
           ),
           SizedBox(height: compact ? 10 : 12),
           Text(

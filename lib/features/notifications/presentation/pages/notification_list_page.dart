@@ -476,8 +476,9 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      NotificationVisuals.icon(notification.type),
+                    alignment: Alignment.center,
+                    child: NotificationVisuals.icon(
+                      notification.type,
                       color: accent,
                       size: 17,
                     ),

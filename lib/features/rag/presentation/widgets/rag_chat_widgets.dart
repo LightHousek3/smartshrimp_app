@@ -22,8 +22,8 @@ abstract final class RagAssets {
 class RagChatHeader extends StatelessWidget {
   const RagChatHeader({
     required this.onBack,
-    this.title = 'Hỏi chuyên gia AI',
-    this.subtitle = 'Trợ lý kỹ thuật (RAG)',
+    this.title = 'Hỏi trợ lý Aquabot',
+    this.subtitle = 'Trợ lý kỹ thuật',
     super.key,
   });
   final VoidCallback onBack;
@@ -306,7 +306,7 @@ class RagMessagePair extends StatelessWidget {
                         SvgPicture.asset(RagAssets.assistant),
                         const SizedBox(width: 6),
                         const Text(
-                          'Trợ lý AI',
+                          'Trợ lý Aquabot',
                           style: TextStyle(
                             color: Color(0xFF7B5BD6),
                             fontSize: 11,

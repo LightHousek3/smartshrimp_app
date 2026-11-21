@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -158,7 +159,13 @@ void main() {
       find.byKey(const Key('personnel_current_assignment_assignment-a5')),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.layers_rounded), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is AppSvgIcon && widget.icon == AppSvgIconName.shrimp,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('0912345678'), findsOneWidget);
     expect(repository.detailCalls, 1);
 
