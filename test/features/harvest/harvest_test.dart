@@ -347,7 +347,7 @@ void main() {
     );
   }
   for (final status in [400, 403, 404, 409, 429, 500]) {
-    test('API retains error status $status and server message', () async {
+    test('API retains error status $status with localized copy', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://smartshrimp.test'));
       dio.interceptors.add(
         InterceptorsWrapper(
@@ -361,7 +361,7 @@ void main() {
                 data: {
                   'success': false,
                   'statusCode': status,
-                  'message': 'Harvest error',
+                  'message': 'Không thể ghi nhận thu hoạch.',
                 },
               ),
             ),
@@ -373,7 +373,13 @@ void main() {
         throwsA(
           isA<AppException>()
               .having((e) => e.statusCode, 'status', status)
-              .having((e) => e.message, 'message', 'Harvest error'),
+              .having(
+                (e) => e.message,
+                'message',
+                status >= 500
+                    ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                    : 'Không thể ghi nhận thu hoạch.',
+              ),
         ),
       );
     });

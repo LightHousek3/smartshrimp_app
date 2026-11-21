@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 
 const dashboardTeal = Color(0xFF0D9D92);
@@ -220,32 +219,5 @@ class DashboardIconTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
     ),
     child: Center(child: AppSvgIcon(icon, color: color, size: 20)),
-  );
-}
-
-class DashboardFailure extends StatelessWidget {
-  const DashboardFailure({
-    required this.error,
-    required this.onRetry,
-    super.key,
-  });
-  final Object error;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          error is AppException
-              ? (error as AppException).message
-              : 'Không thể tải dữ liệu. Vui lòng thử lại.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
-    ),
   );
 }

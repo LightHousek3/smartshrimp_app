@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -409,21 +411,10 @@ class _SeasonDetailContent extends ConsumerWidget {
       '/farms/$farmId/ponds/$pondId/seasons/${season.id}/personnel-assignments',
     );
     if (message == null || !context.mounted) return;
+    AppNoticeService.success(context, message);
     await ref
         .read(seasonDetailControllerProvider(season.id).notifier)
         .refresh();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: <Widget>[
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
-            const SizedBox(width: 9),
-            Expanded(child: Text(message)),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _protocol(BuildContext context) {
@@ -558,11 +549,11 @@ class _SeasonDetailContent extends ConsumerWidget {
         context,
         'Vụ nuôi đã được kích hoạt và chuyển sang trạng thái đang nuôi.',
       );
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (context.mounted) {
         AppNoticeService.danger(
           context,
-          error.message,
+          ErrorMapper.displayMessage(error),
           title: 'Không thể kích hoạt vụ nuôi',
         );
       }
@@ -584,11 +575,11 @@ class _SeasonDetailContent extends ConsumerWidget {
           ? 'Vụ nuôi đã được hủy; ${result.cancelledScheduleCount} lịch vận hành đang chờ cũng đã được hủy.'
           : 'Vụ nuôi đã được hủy và giữ lại trong lịch sử.';
       AppNoticeService.success(context, scheduleMessage);
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (context.mounted) {
         AppNoticeService.danger(
           context,
-          error.message,
+          ErrorMapper.displayMessage(error),
           title: 'Không thể hủy vụ nuôi',
         );
       }
@@ -1288,21 +1279,7 @@ class _DetailError extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.error_outline_rounded, size: 44),
-                const SizedBox(height: 10),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: onRetry,
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
-          ),
+          child: AppErrorState(message: message, onRetry: onRetry),
         ),
       ],
     ),

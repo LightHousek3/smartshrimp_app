@@ -435,13 +435,13 @@ void main() {
         tester,
         repository,
         farms: (ref) async {
-          if (fail) throw const ApiException('farm options failed');
+          if (fail) throw const FormatException('farm options failed');
           return _farmChoices;
         },
       );
       repository.requests[0].result.complete(_listPage('initial'));
       await tester.pumpAndSettle();
-      expect(find.text('farm options failed'), findsOneWidget);
+      expect(find.text('Không thể tải danh sách trại.'), findsOneWidget);
       expect(find.byKey(const Key('assigned_season_search')), findsOneWidget);
       fail = false;
       await tester.tap(find.text('Thử lại trại'));
@@ -451,6 +451,59 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('one retry covers simultaneous list and farm failures', (
+    tester,
+  ) async {
+    final repository = _ControlledAssignedRepository();
+    var farmRequests = 0;
+    await _openList(
+      tester,
+      repository,
+      farms: (ref) async {
+        if (++farmRequests == 1) {
+          throw const ApiException('raw farm failure', statusCode: 503);
+        }
+        return _farmChoices;
+      },
+    );
+    repository.requests.single.result.completeError(
+      const ApiException('raw list failure', statusCode: 503),
+    );
+    await tester.pumpAndSettle();
+
+    final message = find.text('Máy chủ đang gặp sự cố. Vui lòng thử lại sau.');
+    expect(message, findsOneWidget);
+    expect(find.text('Thử lại trại'), findsNothing);
+    expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+
+    await tester.tap(find.text('Thử lại'));
+    await tester.pump();
+    expect(farmRequests, 2);
+    expect(repository.requests, hasLength(2));
+    repository.requests.last.result.complete(_listPage('recovered'));
+    await tester.pumpAndSettle();
+    expect(message, findsNothing);
+    expect(find.text('Ao recovered'), findsOneWidget);
+
+    final refresh = tester
+        .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+        .onRefresh();
+    await tester.pump();
+    repository.requests.last.result.completeError(const NetworkException());
+    await refresh;
+    await tester.pumpAndSettle();
+    expect(find.text('Ao recovered'), findsNothing);
+    expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+    expect(find.text('Thử lại'), findsOneWidget);
+
+    await tester.tap(find.text('Thử lại'));
+    await tester.pump();
+    expect(find.text('Ao recovered'), findsNothing);
+    repository.requests.last.result.complete(_listPage('online'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ao online'), findsOneWidget);
+  });
 
   testWidgets('empty search keeps controls and can reset its query', (
     tester,
@@ -675,7 +728,7 @@ void main() {
         .setActiveOnly(false);
     await container.pump();
     repository.requests[1].result.completeError(
-      const ApiException('filter failed'),
+      const ApiException('Không thể tải vụ nuôi theo bộ lọc.'),
     );
     await change;
     final state = container.read(assignedSeasonListProvider);
@@ -710,10 +763,10 @@ void main() {
     await tester.pump();
     expect(find.text('Ao active'), findsNothing);
     repository.requests[1].result.completeError(
-      const ApiException('filter failed'),
+      const ApiException('Không thể tải vụ nuôi theo bộ lọc.'),
     );
     await tester.pumpAndSettle();
-    expect(find.text('filter failed'), findsOneWidget);
+    expect(find.text('Không thể tải vụ nuôi theo bộ lọc.'), findsOneWidget);
     expect(find.text('Ao active'), findsNothing);
     await tester.tap(find.text('Thử lại'));
     await tester.pump();
@@ -863,7 +916,9 @@ void main() {
             assignedSeasonTodayOperationsProvider('season-1').overrideWith((
               ref,
             ) async {
-              if (fail) throw const ApiException('preview failed');
+              if (fail) {
+                throw const ApiException('Không thể tải cữ vận hành hôm nay.');
+              }
               return [];
             }),
           ],
@@ -875,13 +930,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('preview failed'), findsOneWidget);
+      expect(find.text('Không thể tải cữ vận hành hôm nay.'), findsOneWidget);
       expect(find.byIcon(Icons.emergency_outlined), findsOneWidget);
       expect(find.text('Ca bệnh'), findsOneWidget);
       fail = false;
       await tester.tap(find.text('Th\u1eed l\u1ea1i'));
       await tester.pumpAndSettle();
-      expect(find.text('preview failed'), findsNothing);
+      expect(find.text('Không thể tải cữ vận hành hôm nay.'), findsNothing);
       expect(
         find.text(
           'Ch\u01b0a c\u00f3 l\u1ecbch v\u1eadn h\u00e0nh n\u00e0o h\u00f4m nay',

@@ -238,7 +238,7 @@ void main() {
     );
   });
   for (final status in [403, 404, 429, 502, 503, 504]) {
-    test('A: preserves HTTP $status and the backend message', () async {
+    test('A: preserves HTTP $status with safe localized copy', () async {
       final transport = DiagnosisTransport()
         ..statusCode = status
         ..response = {
@@ -251,7 +251,13 @@ void main() {
         throwsA(
           isA<ApiException>()
               .having((e) => e.statusCode, 'status', status)
-              .having((e) => e.message, 'message', 'Không thể nhận diện.'),
+              .having(
+                (e) => e.message,
+                'message',
+                status >= 500
+                    ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                    : 'Không thể nhận diện.',
+              ),
         ),
       );
       expect(transport.requests.length, 1);

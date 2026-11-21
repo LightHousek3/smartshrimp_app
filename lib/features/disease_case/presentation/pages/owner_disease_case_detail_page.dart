@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart'
@@ -42,7 +43,7 @@ class DiseaseCaseDetailPage extends ConsumerWidget {
         ],
         error: (error, _) => [
           SliverToBoxAdapter(
-            child: DiseaseCaseFailure(
+            child: AppErrorState(
               error: error,
               onRetry: () => ref.invalidate(provider),
             ),

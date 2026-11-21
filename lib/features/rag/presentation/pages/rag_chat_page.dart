@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
@@ -33,14 +35,11 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
 
   void _error(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          error is AppException
-              ? error.message
-              : 'Không thể hoàn tất thao tác. Vui lòng thử lại.',
-        ),
-      ),
+    AppNoticeService.danger(
+      context,
+      error is AppException
+          ? error.message
+          : 'Không thể hoàn tất thao tác. Vui lòng thử lại.',
     );
   }
 
@@ -134,27 +133,9 @@ class _RagChatPageState extends ConsumerState<RagChatPage> {
                     loading: () => const Center(
                       child: CircularProgressIndicator(color: AppColors.ocean),
                     ),
-                    error: (error, _) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              error is AppException
-                                  ? error.message
-                                  : 'Không thể tải hội thoại.',
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            FilledButton(
-                              onPressed: () =>
-                                  ref.invalidate(ragChatProvider(_key)),
-                              child: const Text('Thử lại'),
-                            ),
-                          ],
-                        ),
-                      ),
+                    error: (error, _) => AppErrorState(
+                      error: error,
+                      onRetry: () => ref.invalidate(ragChatProvider(_key)),
                     ),
                     data: (data) => Column(
                       children: [

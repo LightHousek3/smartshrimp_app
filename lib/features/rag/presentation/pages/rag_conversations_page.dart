@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/rag/presentation/view_models/rag_controller.dart';
@@ -79,13 +79,13 @@ class _RagConversationsPageState extends ConsumerState<RagConversationsPage> {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (error, _) =>
-                        _HistoryError(error: error, onRetry: _refresh),
+                        AppErrorState(error: error, onRetry: _refresh),
                     data: (data) => ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
                       children: [
                         if (season.hasError)
-                          _HistoryError(error: season.error!, onRetry: _refresh)
+                          AppErrorState(error: season.error!, onRetry: _refresh)
                         else if (closed)
                           const Padding(
                             padding: EdgeInsets.only(bottom: 20),
@@ -147,27 +147,4 @@ class _RagConversationsPageState extends ConsumerState<RagConversationsPage> {
       ),
     );
   }
-}
-
-class _HistoryError extends StatelessWidget {
-  const _HistoryError({required this.error, required this.onRetry});
-  final Object error;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            error is AppException
-                ? (error as AppException).message
-                : 'Không thể tải hội thoại.',
-          ),
-          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
-      ),
-    ),
-  );
 }

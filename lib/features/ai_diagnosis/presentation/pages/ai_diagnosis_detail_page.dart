@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
+import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/view_models/disease_case_controller.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
@@ -13,10 +17,12 @@ class AiDiagnosisDetailPage extends ConsumerStatefulWidget {
   const AiDiagnosisDetailPage({
     required this.seasonId,
     required this.diagnosisId,
+    this.selectForCase = false,
     super.key,
   });
   final String seasonId;
   final String diagnosisId;
+  final bool selectForCase;
   @override
   ConsumerState<AiDiagnosisDetailPage> createState() =>
       _AiDiagnosisDetailPageState();
@@ -27,6 +33,43 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
   AiDiagnosisKey get diagnosisKey =>
       (seasonId: widget.seasonId, diagnosisId: widget.diagnosisId);
   bool openingImage = false;
+  bool _openingCase = false;
+
+  /// Recheck current case eligibility; the create transaction still handles later races.
+  Future<void> _createCase(AiDiagnosisDetail detail) async {
+    if (_openingCase || detail.runStatus != AiRunStatus.success) return;
+    setState(() => _openingCase = true);
+    try {
+      final page = await ref.refresh(
+        diseaseCaseListProvider((
+          seasonId: widget.seasonId,
+          page: 1,
+          status: null,
+          resolved: false,
+        )).future,
+      );
+      if (!mounted) return;
+      final error = DiseaseCaseRules.creationError(page);
+      if (error != null) throw error;
+      if (widget.selectForCase) {
+        context.pop(detail.id);
+      } else {
+        await context.push(
+          Uri(
+            path: '/seasons/${widget.seasonId}/disease-cases/create',
+            queryParameters: {'aiDiagnosisId': detail.id},
+          ).toString(),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        AppNoticeService.danger(context, AiDiagnosisText.message(error));
+      }
+    } finally {
+      if (mounted) setState(() => _openingCase = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -109,9 +152,7 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
         loading: () => const Center(
           child: CircularProgressIndicator(color: AiDiagnosisStyle.purple),
         ),
-        error: (error, _) => Center(
-          child: AiFailure(error: error, onRetry: refresh),
-        ),
+        error: (error, _) => AppErrorState(error: error, onRetry: refresh),
         data: (detail) => RefreshIndicator(
           onRefresh: refresh,
           child: ListView(
@@ -185,28 +226,32 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (season?.status == AssignedSeasonStatus.active)
-                  Tooltip(
-                    message: 'Chưa hỗ trợ tạo ca bệnh từ kết quả AI.',
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: null,
-                        icon: const AiIcon('case'),
-                        style: FilledButton.styleFrom(
-                          disabledBackgroundColor: AppColors.error.withValues(
-                            alpha: 0.45,
-                          ),
-                          disabledForegroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                if (season?.status == AssignedSeasonStatus.active &&
+                    detail.runStatus == AiRunStatus.success)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _openingCase
+                          ? null
+                          : () => _createCase(detail),
+                      icon: const AiIcon('case'),
+                      style: FilledButton.styleFrom(
+                        disabledBackgroundColor: AppColors.error.withValues(
+                          alpha: 0.45,
                         ),
-                        label: const Text(
-                          'Tạo ca bệnh từ kết quả này',
-                          textAlign: TextAlign.center,
+                        disabledForegroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                      ),
+                      label: Text(
+                        _openingCase
+                            ? 'Đang kiểm tra…'
+                            : widget.selectForCase
+                            ? 'Dùng kết quả này cho ca bệnh'
+                            : 'Tạo ca bệnh từ kết quả này',
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -330,7 +375,7 @@ class _ResultCard extends StatelessWidget {
                 ] else ...[
                   const SizedBox(height: 12),
                   Text(
-                    detail.error!.message,
+                    'Không thể hoàn tất nhận diện. Vui lòng thử lại.',
                     style: const TextStyle(
                       color: AppColors.error,
                       fontSize: 12,

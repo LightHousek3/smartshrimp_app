@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
@@ -141,13 +141,9 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
           'Ghi nhận thực hiện hoạt động thành công!',
         );
       }
-    } on AppException catch (e) {
+    } on Object catch (error) {
       if (mounted) {
-        AppNoticeService.danger(context, e.message);
-      }
-    } catch (e) {
-      if (mounted) {
-        AppNoticeService.danger(context, 'Lỗi: $e');
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
       }
     } finally {
       if (mounted) {

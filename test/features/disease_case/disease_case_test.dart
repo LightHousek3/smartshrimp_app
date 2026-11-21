@@ -62,6 +62,7 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
   int mutations = 0;
   int lists = 0;
   bool canCreate = true;
+  String? existingCaseId;
   bool empty = false;
   @override
   Future<DiseaseCasePage> list(
@@ -80,6 +81,7 @@ class CaseFixtureRepository implements DiseaseCaseRepository {
       totalResults: empty ? 0 : 21,
       hasNextPage: !empty && page == 1,
       canCreate: canCreate,
+      existingCaseId: existingCaseId,
       ongoingCount: empty ? 0 : 21,
       resolvedCount: 0,
       season: const {'name': 'Vụ 1', 'pondName': 'Ao 1'},
@@ -467,7 +469,7 @@ void main() {
     },
   );
   for (final status in [400, 403, 404, 409, 429, 500]) {
-    test('A: preserves HTTP $status and backend message', () async {
+    test('A: preserves HTTP $status with safe localized copy', () async {
       final dio = Dio();
       dio.interceptors.add(
         InterceptorsWrapper(
@@ -494,7 +496,13 @@ void main() {
         throwsA(
           isA<AppException>()
               .having((e) => e.statusCode, 'status', status)
-              .having((e) => e.message, 'message', 'Lỗi ca bệnh'),
+              .having(
+                (e) => e.message,
+                'message',
+                status >= 500
+                    ? 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+                    : 'Lỗi ca bệnh',
+              ),
         ),
       );
       dio.close();

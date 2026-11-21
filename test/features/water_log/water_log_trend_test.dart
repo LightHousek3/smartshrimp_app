@@ -264,7 +264,10 @@ void main() {
       const ApiException('Statistics unavailable', statusCode: 403),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Statistics unavailable'), findsOneWidget);
+    expect(
+      find.text('Bạn không có quyền thực hiện thao tác này.'),
+      findsOneWidget,
+    );
     repository.pending = null;
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();
@@ -281,7 +284,10 @@ void main() {
         statusCode: 403,
       );
     await _open(tester, repository);
-    expect(find.text('Metadata unavailable'), findsOneWidget);
+    expect(
+      find.text('Bạn không có quyền thực hiện thao tác này.'),
+      findsOneWidget,
+    );
     repository.metadataError = null;
     await tester.tap(find.text('Thử lại'));
     await tester.pumpAndSettle();

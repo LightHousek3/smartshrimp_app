@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/notifications/domain/entities/app_notification.dart';
 import 'package:smartshrimp_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
@@ -134,13 +136,10 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
               error: (error, _) => <Widget>[
                 SliverFillRemaining(
                   hasScrollBody: false,
-                  child: _MessageState(
-                    icon: Icons.cloud_off_rounded,
-                    title: 'Không thể tải thông báo',
-                    message: _errorMessage(error),
-                    actionLabel: 'Thử lại',
-                    actionIcon: Icons.refresh_rounded,
-                    onAction: () => ref.read(provider.notifier).refresh(),
+                  child: AppErrorState(
+                    error: error,
+                    message: 'Không thể tải thông báo.',
+                    onRetry: ref.read(provider.notifier).refresh,
                   ),
                 ),
               ],
@@ -296,48 +295,12 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
     }
   }
 
-  void _showNotice(String message, {bool isError = false}) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.white,
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          content: Row(
-            children: <Widget>[
-              Icon(
-                isError
-                    ? Icons.error_outline_rounded
-                    : Icons.check_circle_rounded,
-                color: isError ? AppColors.error : const Color(0xFF0F9B8E),
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  void _showNotice(String message, {bool isError = false}) =>
+      AppNoticeService.show(
+        context,
+        message: message,
+        level: isError ? AppNoticeLevel.danger : AppNoticeLevel.success,
       );
-  }
-
-  static String _errorMessage(Object error) => error is AppException
-      ? error.message
-      : 'Có lỗi xảy ra. Vui lòng thử lại.';
 }
 
 class _MarkAllButton extends StatelessWidget {
@@ -644,17 +607,11 @@ class _MessageState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.actionIcon,
-    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final String? actionLabel;
-  final IconData? actionIcon;
-  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -689,14 +646,6 @@ class _MessageState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
             ),
-            if (onAction != null && actionLabel != null) ...<Widget>[
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: onAction,
-                icon: Icon(actionIcon ?? Icons.refresh_rounded),
-                label: Text(actionLabel!),
-              ),
-            ],
           ],
         ),
       ),

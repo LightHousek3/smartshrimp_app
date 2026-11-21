@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart';
@@ -63,7 +64,7 @@ class FinancePanel extends ConsumerWidget {
                     height: 220,
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, _) => DashboardFailure(
+                  error: (error, _) => AppErrorState(
                     error: error,
                     onRetry: () => ref.invalidate(ownerFinanceProvider),
                   ),
@@ -218,7 +219,7 @@ class _FinanceFullscreenContent extends ConsumerWidget {
                               loading: () => const Center(
                                 child: CircularProgressIndicator(),
                               ),
-                              error: (error, _) => DashboardFailure(
+                              error: (error, _) => AppErrorState(
                                 error: error,
                                 onRetry: () =>
                                     ref.invalidate(ownerFinanceProvider),
@@ -250,7 +251,7 @@ class _FinanceFullscreenContent extends ConsumerWidget {
                           skipLoadingOnReload: false,
                           loading: () =>
                               const Center(child: CircularProgressIndicator()),
-                          error: (error, _) => DashboardFailure(
+                          error: (error, _) => AppErrorState(
                             error: error,
                             onRetry: () => ref.invalidate(ownerFinanceProvider),
                           ),

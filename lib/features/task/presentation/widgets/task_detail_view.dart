@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -70,8 +71,12 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   child: widget.detail.when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (error, _) =>
-                        Center(child: TaskLoadError(error, widget.onRetry)),
+                    error: (error, _) => Center(
+                      child: AppErrorState(
+                        error: error,
+                        onRetry: widget.onRetry,
+                      ),
+                    ),
                     data: (task) => RefreshIndicator(
                       onRefresh: widget.onRefresh,
                       child: ListView(

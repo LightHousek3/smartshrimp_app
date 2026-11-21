@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/core/widgets/app_select_field.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
@@ -34,9 +35,12 @@ class TaskFormPage extends ConsumerWidget {
                     title: 'Chỉnh sửa nhiệm vụ',
                     onBack: () => context.pop(),
                   ),
-                  TaskLoadError(
-                    e,
-                    () => ref.invalidate(taskDetailProvider(taskId!)),
+                  Expanded(
+                    child: AppErrorState(
+                      error: e,
+                      onRetry: () =>
+                          ref.invalidate(taskDetailProvider(taskId!)),
+                    ),
                   ),
                 ],
               ),
@@ -224,9 +228,9 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                     : options.when(
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),
-                        error: (e, _) => TaskLoadError(
-                          e,
-                          () => ref.invalidate(
+                        error: (e, _) => AppErrorState(
+                          error: e,
+                          onRetry: () => ref.invalidate(
                             taskOptionsProvider(_locked ? null : _farmId),
                           ),
                         ),

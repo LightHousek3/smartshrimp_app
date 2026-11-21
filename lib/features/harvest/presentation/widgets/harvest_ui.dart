@@ -77,22 +77,6 @@ class HarvestScaffold extends StatelessWidget {
   }
 }
 
-class HarvestErrorView extends StatelessWidget {
-  const HarvestErrorView({required this.error, required this.retry, super.key});
-  final Object error;
-  final VoidCallback retry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      children: [
-        Text(harvestError(error), textAlign: TextAlign.center),
-        TextButton(onPressed: retry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
-}
-
 class HarvestFact extends StatelessWidget {
   const HarvestFact(
     this.label,

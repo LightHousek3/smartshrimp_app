@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
@@ -33,31 +34,11 @@ class FarmEditPage extends ConsumerWidget {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.ocean),
           ),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    error is AppException
-                        ? error.message
-                        : 'Không thể tải trang trại.',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: ref
-                        .read(farmDetailControllerProvider(farmId).notifier)
-                        .refresh,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Thử lại'),
-                  ),
-                ],
-              ),
-            ),
+          error: (error, _) => AppErrorState(
+            error: error,
+            onRetry: ref
+                .read(farmDetailControllerProvider(farmId).notifier)
+                .refresh,
           ),
         ),
       ),
@@ -639,9 +620,9 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
       }
       _applyLocation(result);
       setState(() => _locationStatus = 'Đã cập nhật tọa độ theo địa chỉ.');
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (mounted && request == _locationRequest) {
-        setState(() => _locationError = error.message);
+        setState(() => _locationError = ErrorMapper.displayMessage(error));
       }
     } finally {
       if (mounted && request == _locationRequest) {
@@ -683,9 +664,9 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
         _addressController.text = address;
         _lastGeocodedAddress = FarmRules.normalizeText(address);
       }
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (mounted && request == _locationRequest) {
-        setState(() => _locationError = error.message);
+        setState(() => _locationError = ErrorMapper.displayMessage(error));
       }
     } finally {
       if (mounted && request == _locationRequest) {
@@ -758,9 +739,9 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
               : '/farms?created=1',
         );
       }
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (!mounted) return;
-      setState(() => _submitError = error.message);
+      setState(() => _submitError = ErrorMapper.displayMessage(error));
     }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
@@ -39,7 +41,7 @@ class FarmDetailPage extends ConsumerWidget {
           error: (error, _) => _FarmDetailStatePage(
             title: 'Trang trại',
             onBack: context.pop,
-            child: _DetailError(
+            child: AppErrorState(
               message: error is AppException
                   ? error.message
                   : 'Không thể tải thông tin trang trại.',
@@ -214,9 +216,9 @@ class _FarmDetailContent extends ConsumerWidget {
       if (!context.mounted) return;
       AppNoticeService.success(context, 'Đã xóa trang trại.');
       context.pop();
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (!context.mounted) return;
-      AppNoticeService.danger(context, error.message);
+      AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
     }
   }
 }
@@ -924,44 +926,6 @@ class _InventoryCard extends StatelessWidget {
           ],
         ),
       ),
-    ),
-  );
-}
-
-class _DetailError extends StatelessWidget {
-  const _DetailError({required this.message, required this.onRetry});
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(21),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(
-                  Icons.error_outline_rounded,
-                  color: AppColors.inkMuted,
-                  size: 42,
-                ),
-                const SizedBox(height: 12),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Thử lại'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     ),
   );
 }

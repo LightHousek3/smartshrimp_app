@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
@@ -138,7 +140,7 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
                       ),
                     ),
                   ),
-                  error: (error, _) => _InlineError(
+                  error: (error, _) => AppErrorState(
                     message: error is AppException
                         ? error.message
                         : 'Không thể tải danh sách vụ nuôi.',
@@ -439,11 +441,11 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
       if (!mounted) return;
       AppNoticeService.success(context, 'Đã xóa ao.');
       context.go('/farms/${pond.farmId}');
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         AppNoticeService.danger(
           context,
-          error.message,
+          ErrorMapper.displayMessage(error),
           title: 'Không thể xóa ao',
         );
       }
@@ -679,35 +681,6 @@ class _PondSeasonCard extends StatelessWidget {
   }
 }
 
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      children: <Widget>[
-        const Icon(Icons.error_outline_rounded, color: AppColors.error),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(color: AppColors.inkSoft, fontSize: 12),
-          ),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
-}
-
 Color _pondStatusBackground(PondStatus status) => switch (status) {
   PondStatus.available => const Color(0xFFE2F6F3),
   PondStatus.maintenance => const Color(0xFFFBF0DC),
@@ -733,21 +706,7 @@ class _DetailError extends StatelessWidget {
       Expanded(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.error_outline_rounded, size: 44),
-                const SizedBox(height: 10),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: onRetry,
-                  child: const Text('Thử lại'),
-                ),
-              ],
-            ),
-          ),
+          child: AppErrorState(message: message, onRetry: onRetry),
         ),
       ),
     ],

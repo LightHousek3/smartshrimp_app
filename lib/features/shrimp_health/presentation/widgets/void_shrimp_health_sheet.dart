@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/view_models/shrimp_health_controller.dart';
@@ -55,11 +56,9 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
     setState(() => _isSubmitting = true);
 
     try {
-      await ref.read(shrimpHealthRepositoryProvider).voidLog(
-        widget.seasonId,
-        widget.logId,
-        reason,
-      );
+      await ref
+          .read(shrimpHealthRepositoryProvider)
+          .voidLog(widget.seasonId, widget.logId, reason);
 
       if (!mounted) return;
 
@@ -75,7 +74,7 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
       if (!mounted) return;
       AppNoticeService.show(
         context,
-        message: e.toString().replaceAll('Exception: ', ''),
+        message: ErrorMapper.displayMessage(e),
         level: AppNoticeLevel.danger,
       );
     } finally {
@@ -197,8 +196,12 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
                     return null;
                   },
                   decoration: InputDecoration(
-                    hintText: 'Nhập lý do chi tiết (ví dụ: Nhầm số mẫu, sai số liệu cân tôm...)',
-                    hintStyle: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+                    hintText:
+                        'Nhập lý do chi tiết (ví dụ: Nhầm số mẫu, sai số liệu cân tôm...)',
+                    hintStyle: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 13,
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFF8FAFC),
                     contentPadding: const EdgeInsets.all(14),
@@ -212,7 +215,10 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFD43B57), width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFD43B57),
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -262,14 +268,14 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
                                   'Xác nhận hủy',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.w700),
                                 ),
                         ),
                       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -92,11 +94,11 @@ class _InventoryAdjustmentPageState
             : 'Đã điều chỉnh tồn kho thành công.',
       );
       context.pop();
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (!mounted) return;
       AppNoticeService.show(
         context,
-        message: error.message,
+        message: ErrorMapper.displayMessage(error),
         level: AppNoticeLevel.danger,
       );
     }
@@ -119,7 +121,7 @@ class _InventoryAdjustmentPageState
       onBack: context.pop,
       child: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _LoadError(
+        error: (error, _) => AppErrorState(
           message: _errorMessage(error),
           onRetry: () => ref
               .read(
@@ -312,28 +314,6 @@ class _InformationRow extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
-      ),
-    ),
   );
 }
 

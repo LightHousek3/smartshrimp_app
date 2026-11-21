@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
@@ -210,21 +211,14 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
                     ],
                   ),
                 ),
-                if (metadata.hasError)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Text('Không tải được ngưỡng Min/Max.'),
-                        ),
-                        TextButton(
-                          onPressed: () => ref.invalidate(
-                            waterLogMetadataProvider(widget.seasonId),
-                          ),
-                          child: const Text('Thử lại ngưỡng'),
-                        ),
-                      ],
+                if (state.asData != null && metadata.hasError)
+                  AppErrorState(
+                    error: metadata.error,
+                    message: 'Không tải được ngưỡng Min/Max.',
+                    compact: true,
+                    actionLabel: 'Thử lại ngưỡng',
+                    onRetry: () => ref.invalidate(
+                      waterLogMetadataProvider(widget.seasonId),
                     ),
                   ),
                 Expanded(
@@ -242,8 +236,12 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
                               child: Center(child: CircularProgressIndicator()),
                             ),
                           ),
-                          error: (error, _) => SliverToBoxAdapter(
-                            child: _Failure(error: error, retry: _refresh),
+                          error: (error, _) => SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: AppErrorState(
+                              error: error,
+                              onRetry: _refresh,
+                            ),
                           ),
                           data: (data) => SliverPadding(
                             padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -252,9 +250,10 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
                               itemBuilder: (context, index) {
                                 if (index == data.page.items.length) {
                                   if (data.paginationError != null) {
-                                    return _Failure(
+                                    return AppErrorState(
                                       error: data.paginationError!,
-                                      retry: _loadMore,
+                                      compact: true,
+                                      onRetry: _loadMore,
                                     );
                                   }
                                   if (data.loadingMore) {
@@ -307,25 +306,4 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
       ),
     );
   }
-}
-
-class _Failure extends StatelessWidget {
-  const _Failure({required this.error, required this.retry});
-  final Object error;
-  final VoidCallback retry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(32),
-    child: Column(
-      children: [
-        Text(
-          error is AppException
-              ? (error as AppException).message
-              : 'Đã xảy ra lỗi. Vui lòng thử lại.',
-          textAlign: TextAlign.center,
-        ),
-        TextButton(onPressed: retry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
 }

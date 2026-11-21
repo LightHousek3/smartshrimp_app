@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -212,7 +213,7 @@ class _ShrimpHealthDetailSheetState
       if (!mounted) return;
       AppNoticeService.show(
         context,
-        message: e.toString().replaceAll('Exception: ', ''),
+        message: ErrorMapper.displayMessage(e),
         level: AppNoticeLevel.danger,
       );
     } finally {

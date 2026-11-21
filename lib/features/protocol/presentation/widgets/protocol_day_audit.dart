@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
@@ -520,7 +521,7 @@ class _InventoryTrace extends ConsumerWidget {
             Expanded(
               child: state.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => ProtocolFailure(
+                error: (e, _) => AppErrorState(
                   error: e,
                   onRetry: () =>
                       ref.invalidate(protocolInventoryProvider(scope)),

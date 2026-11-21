@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'dart:async';
 
@@ -280,7 +281,7 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
             const SizedBox(height: 14),
             if (historyState.hasError)
               InventorySurface(
-                child: _HistoryError(
+                child: AppErrorState(
                   message: _errorMessage(historyState.error),
                   onRetry: _refreshHistory,
                 ),
@@ -584,26 +585,6 @@ class _Metadata extends StatelessWidget {
             style: const TextStyle(color: AppColors.inkSoft, fontSize: 11),
           ),
         ),
-      ],
-    ),
-  );
-}
-
-class _HistoryError extends StatelessWidget {
-  const _HistoryError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
       ],
     ),
   );

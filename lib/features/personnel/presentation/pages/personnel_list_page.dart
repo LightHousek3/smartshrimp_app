@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -100,7 +101,7 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
                 error: (error, _) => <Widget>[
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: _PersonnelError(
+                    child: AppErrorState(
                       message: _errorMessage(error),
                       onRetry: ref
                           .read(personnelListControllerProvider.notifier)
@@ -532,38 +533,6 @@ class _PersonnelEmpty extends StatelessWidget {
                 : 'Nhân sự do bạn quản lý sẽ xuất hiện tại đây.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _PersonnelError extends StatelessWidget {
-  const _PersonnelError({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(
-            Icons.cloud_off_rounded,
-            size: 44,
-            color: AppColors.inkMuted,
-          ),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Thử lại'),
           ),
         ],
       ),

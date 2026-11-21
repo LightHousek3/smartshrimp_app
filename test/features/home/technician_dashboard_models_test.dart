@@ -47,8 +47,9 @@ void main() {
         (json) => json['summary']['activeSeasonCount'] = 0,
         (json) => json['operationGroups'][0]['items'][0]['scheduledAt'] =
             '2026-11-08T17:00:00Z',
-        (json) => json['operationGroups'][0]['items'][0]['scheduledAt'] =
+        (json) => json['operationGroups'][0]['items'][0]['dueAt'] =
             '2026-11-08T07:59:59Z',
+        (json) => json['operationGroups'][0]['items'][0].remove('dueAt'),
         (json) => json['operationGroups'][0]['items'][0]['plannedQuantity'] = 0,
         (json) =>
             json['operationGroups'][0]['items'][1]['id'] = 'operation-a-0',
@@ -59,6 +60,27 @@ void main() {
         expect(
           () => TechnicianDashboard.parse(json),
           throwsA(isA<InvalidResponseException>()),
+        );
+      }
+    },
+  );
+
+  test(
+    'B: started windows remain valid through their exact deadline, including midnight',
+    () {
+      for (final time in [
+        '2026-11-08T07:45:00Z',
+        '2026-11-08T07:59:59Z',
+        '2026-11-07T16:50:00Z',
+      ]) {
+        final json = technicianDashboardJson();
+        json['operationGroups'][0]['items'][0]['scheduledAt'] = time;
+        json['operationGroups'][0]['items'][0]['dueAt'] =
+            '2026-11-08T08:00:00Z';
+        final dashboard = TechnicianDashboard.parse(json);
+        expect(
+          dashboard.operationGroups.first.items.first.scheduledAt,
+          DateTime.parse(time),
         );
       }
     },

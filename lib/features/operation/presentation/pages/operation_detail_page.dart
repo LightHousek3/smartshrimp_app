@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -1109,25 +1110,11 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
           child: state.when(
             loading: () =>
                 const Center(child: CircularProgressIndicator(color: _blueFg)),
-            error: (err, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Lỗi: $err',
-                    style: const TextStyle(color: AppColors.error),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => ref
-                        .read(
-                          operationDetailProvider(widget.scheduleId).notifier,
-                        )
-                        .refresh(),
-                    child: const Text('Thử lại'),
-                  ),
-                ],
-              ),
+            error: (err, _) => AppErrorState(
+              error: err,
+              onRetry: () => ref
+                  .read(operationDetailProvider(widget.scheduleId).notifier)
+                  .refresh(),
             ),
             data: (schedule) {
               // Toàn bộ các thành phần trong cữ (thay schedule mới nhất từ API detail vào danh sách)

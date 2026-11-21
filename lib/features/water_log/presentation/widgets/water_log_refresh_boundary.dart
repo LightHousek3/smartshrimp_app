@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 
 /// Refresh only the visible water screen on resume, coalescing lifecycle events.
 class WaterLogRefreshBoundary extends StatefulWidget {
@@ -33,14 +34,11 @@ class _WaterLogRefreshBoundaryState extends State<WaterLogRefreshBoundary> {
       await widget.onRefresh();
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(
-            error is AppException
-                ? error.message
-                : 'Không thể làm mới dữ liệu. Vui lòng thử lại.',
-          ),
-        ),
+      AppNoticeService.danger(
+        context,
+        error is AppException
+            ? error.message
+            : 'Không thể làm mới dữ liệu. Vui lòng thử lại.',
       );
     } finally {
       _refreshing = false;

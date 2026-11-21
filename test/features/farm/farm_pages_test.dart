@@ -232,7 +232,7 @@ void main() {
     await tester.tap(submit);
     await tester.pumpAndSettle();
     expect(repo.updateCalls, 1);
-    expect(find.text('Update rejected'), findsWidgets);
+    expect(find.text('Dữ liệu đã thay đổi hoặc bị trùng lặp.'), findsWidgets);
     expect(
       tester
           .widget<TextFormField>(find.byType(TextFormField).at(3))

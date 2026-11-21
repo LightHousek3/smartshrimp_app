@@ -4,6 +4,7 @@ import 'package:smartshrimp_app/features/disease_case/presentation/presentation.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/features/auth/presentation/pages/verification_page.dart';
 import 'package:smartshrimp_app/features/auth/domain/verification_purpose.dart';
@@ -239,6 +240,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) => AiDiagnosisPage(
                           seasonId: state.pathParameters['seasonId']!,
+                          selectForCase:
+                              state.uri.queryParameters['selectForCase'] == '1',
                         ),
                         routes: [
                           GoRoute(
@@ -247,6 +250,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             builder: (_, state) => AiDiagnosisDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
                               diagnosisId: state.pathParameters['diagnosisId']!,
+                              selectForCase:
+                                  state.uri.queryParameters['selectForCase'] ==
+                                  '1',
                             ),
                           ),
                         ],
@@ -261,6 +267,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             path: 'create',
                             builder: (_, state) => DiseaseCaseFormPage(
                               seasonId: state.pathParameters['seasonId']!,
+                              initialAiDiagnosisId:
+                                  state.uri.queryParameters['aiDiagnosisId'],
                             ),
                           ),
                           GoRoute(
@@ -374,7 +382,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             builder: (_, state) => OperationDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
                               scheduleId: state.pathParameters['scheduleId']!,
-                              mealGroup: state.extra is FeedingMedicineMealGroup ? state.extra as FeedingMedicineMealGroup : null,
+                              mealGroup: state.extra is FeedingMedicineMealGroup
+                                  ? state.extra as FeedingMedicineMealGroup
+                                  : null,
                             ),
                           ),
                         ],
@@ -824,13 +834,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder: (_, _) => const Scaffold(
+    errorBuilder: (context, _) => Scaffold(
       body: AppGradientBackground(
-        child: Center(
-          child: Text(
-            'Không tìm thấy trang.',
-            style: TextStyle(color: AppColors.ink),
-          ),
+        child: AppErrorState(
+          message: 'Không tìm thấy trang.',
+          actionLabel: 'Về trang chủ',
+          actionIcon: Icons.home_outlined,
+          onRetry: () => context.go(AppRoutes.home),
         ),
       ),
     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
@@ -72,7 +73,9 @@ class TaskListView extends StatelessWidget {
                 error: (error, _) => [
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(child: TaskLoadError(error, onRetry)),
+                    child: Center(
+                      child: AppErrorState(error: error, onRetry: onRetry),
+                    ),
                   ),
                 ],
                 data: (page) => [

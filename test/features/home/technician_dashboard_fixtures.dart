@@ -34,6 +34,8 @@ Map<String, dynamic> technicianDashboardJson() => {
               'operationType': 'FEEDING',
               'scheduledAt':
                   '2026-11-08T${(9 + i).toString().padLeft(2, '0')}:00:00Z',
+              'dueAt':
+                  '2026-11-08T${(9 + i).toString().padLeft(2, '0')}:30:00Z',
               'productName': 'Thức ăn $i',
               'plannedQuantity': i == 0 ? 0.00001 : 12.345,
               'unit': 'KG',

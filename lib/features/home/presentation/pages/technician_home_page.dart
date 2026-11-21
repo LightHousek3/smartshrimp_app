@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -38,7 +39,7 @@ class TechnicianHomePage extends ConsumerWidget {
               ),
               error: (error, _) => SliverFillRemaining(
                 child: Center(
-                  child: DashboardFailure(
+                  child: AppErrorState(
                     error: error,
                     onRetry: () => ref.invalidate(technicianDashboardProvider),
                   ),
@@ -74,7 +75,7 @@ class TechnicianHomePage extends ConsumerWidget {
                         tasks: dashboard.tasks,
                         now: dashboard.serverNow,
                       ),
-                    const DashboardSectionTitle('Cữ sắp tới hôm nay'),
+                    const DashboardSectionTitle('Cữ còn lại hôm nay'),
                     if (dashboard.operationGroups.isEmpty)
                       const _CompactEmpty(
                         'Không còn cữ đã lên lịch trong hôm nay.',

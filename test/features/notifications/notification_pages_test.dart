@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/features/home/presentation/view_models/technicia
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/app/app.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/features/assigned_season/domain/repositories/assigned_season_repository.dart';
@@ -204,7 +205,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(const NetworkException().message), findsOneWidget);
       repository.failDetail = false;
-      await tester.tap(find.byKey(const Key('retry_notification_read')));
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('retry_notification_read')),
+          matching: find.widgetWithText(FilledButton, 'Thử lại'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(repository.detailCalls, 2);
       expect(find.byType(BottomSheet), findsOneWidget);
@@ -278,7 +284,12 @@ void main() {
     final dot = find.byKey(const Key('notification_unread_notification-1'));
     expect(dot, findsOneWidget);
     repository.failDetail = false;
-    await tester.tap(find.byKey(const Key('retry_notification_read')));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('retry_notification_read')),
+        matching: find.widgetWithText(FilledButton, 'Thử lại'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(repository.detailCalls, 2);
     expect(find.text('Chưa thể cập nhật trạng thái đã đọc.'), findsNothing);
@@ -449,7 +460,7 @@ void main() {
     );
     expect(
       NotificationVisuals.icon(NotificationType.operationDue),
-      Icons.settings_rounded,
+      Icons.event_note_rounded,
     );
     expect(
       NotificationVisuals.icon(NotificationType.diseaseCaseCreated),
@@ -595,6 +606,10 @@ void main() {
         find.text('Đã đánh dấu tất cả thông báo là đã đọc.'),
         findsOneWidget,
       );
+      expect(
+        tester.widget<AppNoticeCard>(find.byType(AppNoticeCard)).level,
+        AppNoticeLevel.success,
+      );
       expect(tester.widget<ButtonStyleButton>(markAllButton).onPressed, isNull);
 
       await tester.tap(find.text('Chưa đọc'));
@@ -685,6 +700,10 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('1 thông báo chưa đọc'), findsOneWidget);
+        expect(
+          tester.widget<AppNoticeCard>(find.byType(AppNoticeCard)).level,
+          AppNoticeLevel.danger,
+        );
       },
     );
   }

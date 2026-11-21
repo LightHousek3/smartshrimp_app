@@ -169,27 +169,6 @@ class AiBadge extends StatelessWidget {
   );
 }
 
-class AiFailure extends StatelessWidget {
-  const AiFailure({required this.error, required this.onRetry, super.key});
-  final Object error;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          AiDiagnosisText.message(error),
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.error),
-        ),
-        TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
-}
-
 class AiDashedBox extends StatelessWidget {
   const AiDashedBox({
     required this.child,

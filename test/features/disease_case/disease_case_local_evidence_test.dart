@@ -122,7 +122,7 @@ Future<void> _pick(WidgetTester tester, {bool camera = false}) async {
   await tester.tap(add);
   await tester.pumpAndSettle();
   await tester.tap(
-    find.text(camera ? 'Chụp ảnh minh chứng' : 'Chọn ảnh từ thiết bị'),
+    find.text(camera ? 'Chụp ảnh mới' : 'Chọn ảnh từ thiết bị'),
   );
   await tester.pumpAndSettle();
 }

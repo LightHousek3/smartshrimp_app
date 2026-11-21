@@ -279,7 +279,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(more);
       await tester.pumpAndSettle();
-      expect(find.text('Owner water unavailable'), findsOneWidget);
+      expect(
+        find.text('Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'),
+        findsOneWidget,
+      );
       h.failNextPage = false;
       await tester.ensureVisible(find.text('Thử lại'));
       await tester.tap(find.text('Thử lại'));
@@ -328,7 +331,10 @@ void main() {
       h.pending!.complete();
       h.pending = null;
       await tester.pumpAndSettle();
-      expect(find.text('Owner water unavailable'), findsOneWidget);
+      expect(
+        find.text('Bạn không có quyền thực hiện thao tác này.'),
+        findsOneWidget,
+      );
       h.listError = null;
       h.empty = true;
       await tester.tap(find.text('Thử lại').last);

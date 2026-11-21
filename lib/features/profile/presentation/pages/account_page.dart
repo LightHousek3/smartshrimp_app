@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -48,7 +49,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             strokeWidth: 2.5,
           ),
         ),
-        error: (error, _) => _ProfileError(
+        error: (error, _) => AppErrorState(
           message: _messageFor(error),
           onRetry: () => ref.read(profileControllerProvider.notifier).refresh(),
         ),
@@ -867,40 +868,6 @@ class _SquareIcon extends StatelessWidget {
         child: asset == null
             ? Icon(icon, color: foreground, size: 16)
             : AppSvgIcon(asset, size: 16, color: foreground),
-      ),
-    );
-  }
-}
-
-class _ProfileError extends StatelessWidget {
-  const _ProfileError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(
-              Icons.cloud_off_outlined,
-              color: AppColors.inkMuted,
-              size: 42,
-            ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 14),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Thử lại'),
-            ),
-          ],
-        ),
       ),
     );
   }

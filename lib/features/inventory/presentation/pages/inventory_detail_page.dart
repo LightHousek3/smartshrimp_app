@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/errors/error_mapper.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
 import 'package:flutter/material.dart';
@@ -108,7 +110,7 @@ class InventoryDetailPage extends ConsumerWidget {
       child: product == null
           ? Center(
               child: productState.hasError
-                  ? _DetailError(
+                  ? AppErrorState(
                       message: _errorMessage(productState.error),
                       onRetry: () => ref
                           .read(inventoryDetailControllerProvider(key).notifier)
@@ -166,8 +168,10 @@ class InventoryDetailPage extends ConsumerWidget {
       if (context.mounted) {
         AppNoticeService.success(context, 'Đã tạm ngưng vật tư.');
       }
-    } on AppException catch (error) {
-      if (context.mounted) AppNoticeService.danger(context, error.message);
+    } on Object catch (error) {
+      if (context.mounted) {
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
+      }
     }
   }
 
@@ -228,8 +232,10 @@ class InventoryDetailPage extends ConsumerWidget {
       if (context.mounted) {
         AppNoticeService.success(context, 'Đã bổ sung hạn sử dụng.');
       }
-    } on AppException catch (error) {
-      if (context.mounted) AppNoticeService.danger(context, error.message);
+    } on Object catch (error) {
+      if (context.mounted) {
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
+      }
     }
   }
 
@@ -264,9 +270,9 @@ class InventoryDetailPage extends ConsumerWidget {
         );
         context.pop();
       }
-    } on AppException catch (error) {
+    } on Object catch (error) {
       if (context.mounted) {
-        if (error.statusCode == 409) {
+        if (error is AppException && error.statusCode == 409) {
           ref.invalidate(
             inventoryDetailControllerProvider((
               farmId: farmId,
@@ -274,7 +280,7 @@ class InventoryDetailPage extends ConsumerWidget {
             )),
           );
         }
-        AppNoticeService.danger(context, error.message);
+        AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
       }
     }
   }
@@ -1000,26 +1006,6 @@ class _LotCard extends StatelessWidget {
 String _compactMoney(double value) => value >= 1000000
     ? '${formatInventoryQuantity((value / 1000000 * 10).round() / 10)} tr ₫'
     : formatInventoryMoney(value);
-
-class _DetailError extends StatelessWidget {
-  const _DetailError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
-      ],
-    ),
-  );
-}
 
 String _errorMessage(Object? error) => error is AppException
     ? error.message

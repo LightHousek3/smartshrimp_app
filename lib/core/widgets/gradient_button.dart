@@ -87,15 +87,19 @@ class GradientButton extends StatelessWidget {
                               size: compact ? 18 : 22,
                             ),
                         SizedBox(width: compact ? 8 : 10),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: compact ? 14 : 17,
-                            height: 1,
-                            fontWeight: compact
-                                ? FontWeight.w600
-                                : FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: compact ? 14 : 17,
+                              height: 1,
+                              fontWeight: compact
+                                  ? FontWeight.w600
+                                  : FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
