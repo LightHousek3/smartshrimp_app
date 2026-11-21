@@ -234,8 +234,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     routes: [
                       GoRoute(
                         path: 'ai-diagnoses',
-                        // Case creation also opens on the root navigator. Keep
-                        // AI above that form instead of pushing its shell again.
+                        // Keep AI above the case form so returning preserves
+                        // the draft and its selected diagnosis.
                         parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) => AiDiagnosisPage(
                           seasonId: state.pathParameters['seasonId']!,
@@ -253,21 +253,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       ),
                       GoRoute(
                         path: 'disease-cases',
-                        parentNavigatorKey: rootNavigatorKey,
                         builder: (_, state) => DiseaseCaseListPage(
                           seasonId: state.pathParameters['seasonId']!,
                         ),
                         routes: [
                           GoRoute(
                             path: 'create',
-                            parentNavigatorKey: rootNavigatorKey,
                             builder: (_, state) => DiseaseCaseFormPage(
                               seasonId: state.pathParameters['seasonId']!,
                             ),
                           ),
                           GoRoute(
                             path: ':caseId',
-                            parentNavigatorKey: rootNavigatorKey,
                             builder: (_, state) => DiseaseCaseDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
                               caseId: state.pathParameters['caseId']!,
