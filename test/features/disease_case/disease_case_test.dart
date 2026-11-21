@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
@@ -16,6 +17,8 @@ import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_cont
 import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
 import 'package:smartshrimp_app/features/disease_case/data/data.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/presentation.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/view_models/disease_case_controller.dart'
+    show caseImagePickerProvider, caseEvidenceStorageProvider;
 import 'package:smartshrimp_app/features/notifications/data/services/notification_socket.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import '../home/owner_dashboard_fixtures.dart';
@@ -129,6 +132,8 @@ Future<ProviderContainer> containerFor(
   CaseFixtureRepository repo, {
   AccountRole role = AccountRole.technician,
   NotificationSocket? realtimeSocket,
+  ImagePicker? imagePicker,
+  CloudinaryImageStorage? evidenceStorage,
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -137,6 +142,10 @@ Future<ProviderContainer> containerFor(
       ),
       diseaseCaseRepositoryProvider.overrideWithValue(repo),
       notificationSocketProvider.overrideWithValue(realtimeSocket),
+      if (imagePicker != null)
+        caseImagePickerProvider.overrideWithValue(imagePicker),
+      if (evidenceStorage != null)
+        caseEvidenceStorageProvider.overrideWithValue(evidenceStorage),
     ],
   );
   await container.read(authControllerProvider.future);
@@ -149,9 +158,16 @@ Future<ProviderContainer> showCase(
   String path = '/cases',
   NotificationSocket? realtimeSocket,
   List<RouteBase> additionalRoutes = const [],
+  ImagePicker? imagePicker,
+  CloudinaryImageStorage? evidenceStorage,
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
-  final container = await containerFor(repo, realtimeSocket: realtimeSocket);
+  final container = await containerFor(
+    repo,
+    realtimeSocket: realtimeSocket,
+    imagePicker: imagePicker,
+    evidenceStorage: evidenceStorage,
+  );
   final router = GoRouter(
     initialLocation: path,
     routes: [

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +11,8 @@ import '../../domain/domain.dart';
 import '../view_models/disease_case_controller.dart';
 import 'case_ui.dart';
 
+typedef LocalCaseEvidence = ({Uint8List bytes, String fileName});
+
 class CaseEvidencePicker extends ConsumerStatefulWidget {
   const CaseEvidencePicker({
     super.key,
@@ -17,9 +21,24 @@ class CaseEvidencePicker extends ConsumerStatefulWidget {
     this.disabled = false,
     this.onBusyChanged,
     this.compact = false,
-  });
+  }) : localImages = const [],
+       onLocalChanged = null;
+
+  const CaseEvidencePicker.local({
+    super.key,
+    required this.localImages,
+    required ValueChanged<List<LocalCaseEvidence>> onChanged,
+    this.disabled = false,
+    this.onBusyChanged,
+    this.compact = false,
+  }) : urls = const [],
+       onChanged = null,
+       onLocalChanged = onChanged;
+
   final List<String> urls;
-  final ValueChanged<List<String>> onChanged;
+  final ValueChanged<List<String>>? onChanged;
+  final List<LocalCaseEvidence> localImages;
+  final ValueChanged<List<LocalCaseEvidence>>? onLocalChanged;
   final bool disabled;
   final ValueChanged<bool>? onBusyChanged;
   final bool compact;
@@ -29,8 +48,12 @@ class CaseEvidencePicker extends ConsumerStatefulWidget {
 
 class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
   bool _busy = false;
+  int get _imageCount => widget.urls.length + widget.localImages.length;
+  String get _busyLabel =>
+      widget.onLocalChanged == null ? 'Đang tải ảnh…' : 'Đang đọc ảnh…';
+
   Future<void> _pick(ImageSource source) async {
-    if (_busy || widget.disabled || widget.urls.length >= 5) return;
+    if (_busy || widget.disabled || _imageCount >= 5) return;
     setState(() => _busy = true);
     widget.onBusyChanged?.call(true);
     try {
@@ -43,10 +66,18 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
       }
       final bytes = await file.readAsBytes();
       if (!mounted) return;
+      DiseaseCaseRules.validateImage(bytes);
+      if (widget.onLocalChanged != null) {
+        widget.onLocalChanged!([
+          ...widget.localImages,
+          (bytes: bytes, fileName: file.name),
+        ]);
+        return;
+      }
       final url = await ref
           .read(diseaseCaseMutationProvider.notifier)
           .uploadEvidence(bytes, file.name);
-      if (mounted) widget.onChanged([...widget.urls, url]);
+      if (mounted) widget.onChanged!([...widget.urls, url]);
     } catch (error) {
       if (mounted) {
         AppNoticeService.danger(context, caseError(error));
@@ -150,7 +181,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final disabled = _busy || widget.disabled || widget.urls.length >= 5;
+    final disabled = _busy || widget.disabled || _imageCount >= 5;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -166,9 +197,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               ),
               label: Text(
-                _busy
-                    ? 'Đang tải ảnh…'
-                    : 'Đính kèm ảnh (${widget.urls.length}/5)',
+                _busy ? _busyLabel : 'Đính kèm ảnh ($_imageCount/5)',
                 style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontSize: 12,
                   color: AppColors.inkSoft,
@@ -198,7 +227,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _busy ? 'Đang tải ảnh…' : 'Thêm ảnh mẫu tôm / nhá',
+                      _busy ? _busyLabel : 'Thêm ảnh mẫu tôm / nhá',
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 12,
                         color: AppColors.inkMuted,
@@ -218,20 +247,35 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
               ),
             ),
           ),
-        if (widget.urls.isNotEmpty)
+        if (_imageCount > 0)
           Wrap(
             spacing: 7,
             runSpacing: 6,
             children: [
-              for (final url in widget.urls)
+              for (final preview in [
+                for (final url in widget.urls)
+                  (
+                    image: NetworkImage(url) as ImageProvider,
+                    remove: () => widget.onChanged!(
+                      widget.urls.where((v) => v != url).toList(),
+                    ),
+                  ),
+                for (final image in widget.localImages)
+                  (
+                    image: MemoryImage(image.bytes) as ImageProvider,
+                    remove: () => widget.onLocalChanged!(
+                      widget.localImages.where((v) => v != image).toList(),
+                    ),
+                  ),
+              ])
                 Stack(
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          url,
+                        child: Image(
+                          image: preview.image,
                           height: widget.compact ? 44 : 72,
                           width: widget.compact ? 58 : 78,
                           fit: BoxFit.cover,
@@ -261,9 +305,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                           ),
                           onPressed: _busy || widget.disabled
                               ? null
-                              : () => widget.onChanged(
-                                  widget.urls.where((v) => v != url).toList(),
-                                ),
+                              : preview.remove,
                           icon: const Icon(Icons.close, size: 14),
                         ),
                       ),

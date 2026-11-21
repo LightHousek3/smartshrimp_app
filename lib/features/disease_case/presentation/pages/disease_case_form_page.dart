@@ -22,8 +22,10 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   CaseSeverity _severity = CaseSeverity.medium;
-  List<String> _evidence = [];
-  bool _uploading = false;
+  List<LocalCaseEvidence> _evidence = [];
+  final _uploadedEvidence = <LocalCaseEvidence, String>{};
+  bool _picking = false;
+  bool _submitting = false;
   String? _aiDiagnosisId;
   String? _relatedCaseId;
   bool _showAllAi = false;
@@ -35,8 +37,28 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
   }
 
   Future<void> _submit() async {
+    if (_picking ||
+        _submitting ||
+        ref.read(diseaseCaseMutationProvider).isLoading) {
+      return;
+    }
     if (!(_form.currentState?.validate() ?? false)) return;
+    setState(() => _submitting = true);
     try {
+      final attachments = <String>[];
+      for (final image in _evidence) {
+        var url = _uploadedEvidence[image];
+        if (url == null) {
+          url = await ref
+              .read(diseaseCaseMutationProvider.notifier)
+              .uploadEvidence(image.bytes, image.fileName);
+          if (!mounted) return;
+          // Reuse completed uploads if a later upload or case creation fails.
+          _uploadedEvidence[image] = url;
+        }
+        attachments.add(url);
+      }
+      if (!mounted) return;
       final item = await ref
           .read(diseaseCaseMutationProvider.notifier)
           .create(
@@ -44,7 +66,7 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
             _title.text,
             _description.text,
             _severity,
-            attachments: _evidence,
+            attachments: attachments,
             aiDiagnosisId: _aiDiagnosisId,
             relatedCaseId: _relatedCaseId,
           );
@@ -57,6 +79,8 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
       if (mounted) {
         AppNoticeService.danger(context, caseError(error));
       }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -68,7 +92,10 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(diseaseCaseMutationProvider).isLoading || _uploading;
+    final busy =
+        ref.watch(diseaseCaseMutationProvider).isLoading ||
+        _picking ||
+        _submitting;
     final contextData =
         ref
             .watch(
@@ -203,14 +230,19 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                   CaseField(
                     'Ảnh minh chứng (tùy chọn)',
                     bottomGap: 0,
-                    child: CaseEvidencePicker(
-                      urls: _evidence,
-                      disabled: ref
-                          .watch(diseaseCaseMutationProvider)
-                          .isLoading,
-                      onChanged: (urls) => setState(() => _evidence = urls),
+                    child: CaseEvidencePicker.local(
+                      localImages: _evidence,
+                      disabled:
+                          _submitting ||
+                          ref.watch(diseaseCaseMutationProvider).isLoading,
+                      onChanged: (images) => setState(() {
+                        _evidence = images;
+                        _uploadedEvidence.removeWhere(
+                          (image, _) => !images.contains(image),
+                        );
+                      }),
                       onBusyChanged: (value) =>
-                          setState(() => _uploading = value),
+                          setState(() => _picking = value),
                     ),
                   ),
                 ],

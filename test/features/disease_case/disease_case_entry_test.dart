@@ -20,6 +20,7 @@ import 'package:smartshrimp_app/features/notifications/presentation/view_models/
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
+import 'package:smartshrimp_app/features/shell/presentation/pages/main_shell.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import '../home/technician_dashboard_fixtures.dart';
 import 'disease_case_test.dart' show CaseFixtureRepository;
@@ -27,6 +28,40 @@ import '../ai_diagnosis/ai_diagnosis_fixtures.dart'
     show DiagnosisFixtureRepository, summaryJson;
 import '../../support/load_app_fonts.dart';
 import '../../support/disabled_push_repository.dart';
+
+void expectCaseNavigation(WidgetTester tester, Type pageType) {
+  expect(
+    find.ancestor(of: find.byType(pageType), matching: find.byType(MainShell)),
+    findsOneWidget,
+  );
+  final shell = tester.widget<Scaffold>(
+    find
+        .descendant(of: find.byType(MainShell), matching: find.byType(Scaffold))
+        .first,
+  );
+  final navigation = find.byWidget(shell.bottomNavigationBar!);
+  for (final label in [
+    'Trang chủ',
+    'Vụ nuôi',
+    'Nhiệm vụ',
+    'Thông báo',
+    'Tài khoản',
+  ]) {
+    expect(
+      find.descendant(of: navigation, matching: find.text(label)).hitTestable(),
+      findsOneWidget,
+    );
+  }
+  final seasonsTab = tester.widget<Semantics>(
+    find.descendant(
+      of: navigation,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Semantics && widget.properties.label == 'Vụ nuôi',
+      ),
+    ),
+  );
+  expect(seasonsTab.properties.selected, isTrue);
+}
 
 void main() {
   setUpAll(loadAppFonts);
@@ -102,7 +137,7 @@ void main() {
           '/seasons/season/disease-cases',
         );
         expect(find.byType(DiseaseCaseListPage), findsOneWidget);
-        expect(find.byType(NavigationBar), findsNothing);
+        expectCaseNavigation(tester, DiseaseCaseListPage);
         expect(find.text('Tôm giảm ăn'), findsOneWidget);
         expect(cases.lists, 1);
         expect(find.text('Ca bệnh đang được phát triển.'), findsNothing);
@@ -110,6 +145,7 @@ void main() {
           await tester.tap(find.text('Tạo ca bệnh'));
           await tester.pumpAndSettle();
           expect(find.byType(DiseaseCaseFormPage), findsOneWidget);
+          expectCaseNavigation(tester, DiseaseCaseFormPage);
           expect(
             GoRouterState.of(
               tester.element(find.byType(DiseaseCaseFormPage)),
@@ -155,6 +191,7 @@ void main() {
           await tester.tap(find.byTooltip('Quay lại'));
           await tester.pumpAndSettle();
           expect(find.byType(DiseaseCaseFormPage), findsOneWidget);
+          expectCaseNavigation(tester, DiseaseCaseFormPage);
           expect(find.text('Ca đang soạn'), findsOneWidget);
           expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
 
@@ -175,13 +212,40 @@ void main() {
           await tester.tap(find.text('Tôm giảm ăn'));
           await tester.pumpAndSettle();
           expect(find.byType(DiseaseCaseDetailPage), findsOneWidget);
-          expect(find.byType(NavigationBar), findsNothing);
+          expectCaseNavigation(tester, DiseaseCaseDetailPage);
           await tester.tap(find.byTooltip('Quay lại'));
           await tester.pumpAndSettle();
           expect(find.byType(DiseaseCaseListPage), findsOneWidget);
         } else {
           expect(find.text('Tạo ca bệnh'), findsNothing);
         }
+        if (status == AssignedSeasonStatus.active) {
+          await tester.tap(find.text('Tạo ca bệnh'));
+          await tester.pumpAndSettle();
+          expectCaseNavigation(tester, DiseaseCaseFormPage);
+        }
+        await tester.tap(find.text('Trang chủ'));
+        await tester.pumpAndSettle();
+        expect(
+          container
+              .read(appRouterProvider)
+              .routeInformationProvider
+              .value
+              .uri
+              .path,
+          AppRoutes.home,
+        );
+        await tester.tap(find.text('Vụ nuôi'));
+        await tester.pumpAndSettle();
+        expect(
+          container
+              .read(appRouterProvider)
+              .routeInformationProvider
+              .value
+              .uri
+              .path,
+          AppRoutes.seasons,
+        );
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       },
