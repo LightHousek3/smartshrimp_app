@@ -5,6 +5,7 @@ import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/personnel/domain/entities/managed_personnel.dart';
@@ -184,7 +185,7 @@ class _KpiCard extends StatelessWidget {
     final metrics = technician
         ? <_KpiMetric>[
             _KpiMetric(
-              icon: Icons.layers_rounded,
+              svgIcon: AppSvgIconName.shrimp,
               label: 'Vụ đã tham gia',
               value: '${kpi.seasonsParticipated}',
               hint: 'Bao gồm lịch sử phân công',
@@ -218,7 +219,7 @@ class _KpiCard extends StatelessWidget {
           ]
         : <_KpiMetric>[
             _KpiMetric(
-              icon: Icons.layers_rounded,
+              svgIcon: AppSvgIconName.shrimp,
               label: 'Vụ đã tham gia',
               value: '${kpi.seasonsParticipated}',
               hint: 'Bao gồm lịch sử phân công',
@@ -351,15 +352,17 @@ class _KpiCard extends StatelessWidget {
 
 class _KpiMetric {
   const _KpiMetric({
-    required this.icon,
+    this.icon,
+    this.svgIcon,
     required this.label,
     required this.value,
     required this.hint,
     required this.background,
     required this.foreground,
-  });
+  }) : assert((icon == null) != (svgIcon == null));
 
-  final IconData icon;
+  final IconData? icon;
+  final AppSvgIconName? svgIcon;
   final String label;
   final String value;
   final String hint;
@@ -385,7 +388,10 @@ class _KpiMetricCard extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(metric.icon, size: 13, color: metric.foreground),
+            if (metric.svgIcon != null)
+              AppSvgIcon(metric.svgIcon!, size: 13, color: metric.foreground)
+            else
+              Icon(metric.icon!, size: 13, color: metric.foreground),
             const SizedBox(width: 5),
             Expanded(
               child: Text(

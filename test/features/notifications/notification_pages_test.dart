@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import '../../support/disabled_push_repository.dart';
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/push_repository_provider.dart';
 import 'dart:async';
@@ -455,35 +456,46 @@ void main() {
   }
   test('notification categories use the rounded icons from the UI sample', () {
     expect(
-      NotificationVisuals.icon(NotificationType.waterThresholdExceeded),
+      (NotificationVisuals.icon(NotificationType.waterThresholdExceeded)
+              as Icon)
+          .icon,
       Icons.warning_amber_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.operationDue),
+      (NotificationVisuals.icon(NotificationType.operationDue) as Icon).icon,
       Icons.event_note_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.diseaseCaseCreated),
+      (NotificationVisuals.icon(NotificationType.diseaseCaseCreated) as Icon)
+          .icon,
       Icons.health_and_safety_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.taskAssigned),
+      (NotificationVisuals.icon(NotificationType.taskAssigned) as Icon).icon,
       Icons.checklist_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.productionProtocolPending),
+      (NotificationVisuals.icon(NotificationType.productionProtocolPending)
+              as Icon)
+          .icon,
       Icons.assignment_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.inventoryLow),
+      (NotificationVisuals.icon(NotificationType.inventoryLow) as Icon).icon,
       Icons.inventory_2_rounded,
     );
     expect(
       NotificationVisuals.icon(NotificationType.seasonStatusChanged),
-      Icons.layers_rounded,
+      isA<AppSvgIcon>().having(
+        (icon) => icon.icon,
+        'asset',
+        AppSvgIconName.shrimp,
+      ),
     );
     expect(
-      NotificationVisuals.icon(NotificationType.managedAccountActivated),
+      (NotificationVisuals.icon(NotificationType.managedAccountActivated)
+              as Icon)
+          .icon,
       Icons.groups_rounded,
     );
   });

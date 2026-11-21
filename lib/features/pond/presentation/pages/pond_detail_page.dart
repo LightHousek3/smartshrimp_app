@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/farm/presentation/widgets/farm_ui.dart';
@@ -625,8 +626,9 @@ class _PondSeasonCard extends StatelessWidget {
                 color: seasonStatusColors(season.status).background,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                Icons.layers_rounded,
+              alignment: Alignment.center,
+              child: AppSvgIcon(
+                AppSvgIconName.shrimp,
                 size: 16,
                 color: seasonStatusColors(season.status).foreground,
               ),

@@ -370,7 +370,7 @@ class _FeatureActions extends ConsumerWidget {
       foreground: Color(0xFF7B5BD6),
     ),
     _FeatureActionData(
-      label: 'Trợ lý AI',
+      label: 'Trợ lý Aquabot',
       icon: Icons.chat_bubble_outline_rounded,
       background: Color(0xFFEAF4FF),
       foreground: Color(0xFF1378D1),
@@ -938,7 +938,11 @@ class _OtherAssignedSeasonCard extends StatelessWidget {
                 color: const Color(0xFFE8F3FF),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: const Icon(Icons.water_outlined, color: AppColors.ocean),
+              child: const AppSvgIcon(
+                AppSvgIconName.pond,
+                size: 24,
+                color: AppColors.ocean,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

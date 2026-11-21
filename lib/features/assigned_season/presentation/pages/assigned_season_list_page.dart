@@ -549,6 +549,21 @@ class _SeasonCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: seasonStatusColors(season.status).background,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: AppSvgIcon(
+                    AppSvgIconName.shrimp,
+                    size: 20,
+                    color: seasonStatusColors(season.status).foreground,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,8 +698,8 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const Icon(
-            Icons.layers_clear_outlined,
+          const AppSvgIcon(
+            AppSvgIconName.shrimp,
             size: 48,
             color: AppColors.inkMuted,
           ),

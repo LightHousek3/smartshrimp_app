@@ -222,8 +222,9 @@ class _NotificationInformation extends StatelessWidget {
                 color: NotificationVisuals.backgroundColor(notification.type),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(
-                NotificationVisuals.icon(notification.type),
+              alignment: Alignment.center,
+              child: NotificationVisuals.icon(
+                notification.type,
                 color: accent,
                 size: 20,
               ),

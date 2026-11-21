@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
@@ -736,9 +737,10 @@ class _PondCard extends StatelessWidget {
                       : const Color(0xFFEAF4FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.water_drop_outlined,
-                  size: 16,
+                alignment: Alignment.center,
+                child: AppSvgIcon(
+                  AppSvgIconName.pond,
+                  size: 24,
                   color: isTreatmentPond
                       ? const Color(0xFF0F9B8E)
                       : AppColors.ocean,
@@ -838,8 +840,8 @@ class _EmptyPonds extends StatelessWidget {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        const Icon(
-          Icons.water_drop_outlined,
+        const AppSvgIcon(
+          AppSvgIconName.pond,
           color: AppColors.inkMuted,
           size: 30,
         ),
