@@ -325,21 +325,44 @@ class _SeasonDetailContent extends ConsumerWidget {
 
   Widget _costCard() => SeasonMaterialCostCard(costs: season.materialCosts);
 
-  Widget _diseaseCard(BuildContext context) => _FeatureCard(
-    icon: Icons.health_and_safety_rounded,
-    iconBackground: const Color(0xFFFBE6EA),
-    iconForeground: AppColors.error,
-    title: 'Ca bệnh',
-    subtitle: 'Theo dõi chẩn đoán và diễn tiến xử lý',
-    badges: const [],
-    onTap: () => context.push(
-      Uri(
-        path: AppRoutes.diseaseCases,
-        queryParameters: {'seasonId': season.id},
-      ).toString(),
-      extra: '${season.pond.name} · ${season.name}',
-    ),
-  );
+  Widget _diseaseCard(BuildContext context) {
+    final activeCount = season.activeDiseaseCasesCount ?? 0;
+    final hasActive = activeCount > 0;
+    return _FeatureCard(
+      icon: Icons.health_and_safety_rounded,
+      iconBackground: hasActive
+          ? const Color(0xFFFBE6EA)
+          : const Color(0xFFEEF1F6),
+      iconForeground: hasActive
+          ? AppColors.error
+          : const Color(0xFF64748B),
+      title: 'Ca bệnh',
+      subtitle: 'Theo dõi chẩn đoán và diễn tiến xử lý',
+      badges: <Widget>[
+        if (hasActive)
+          _FeatureBadge(
+            dot: true,
+            label: '$activeCount đang xử lý',
+            background: const Color(0xFFFBE6EA),
+            foreground: AppColors.error,
+          )
+        else
+          const _FeatureBadge(
+            dot: false,
+            label: 'Không có ca mở',
+            background: Color(0xFFE2F6F3),
+            foreground: Color(0xFF0F9B8E),
+          ),
+      ],
+      onTap: () => context.push(
+        Uri(
+          path: AppRoutes.diseaseCases,
+          queryParameters: {'seasonId': season.id},
+        ).toString(),
+        extra: '${season.pond.name} · ${season.name}',
+      ),
+    );
+  }
 
   Widget _personnel(BuildContext context, WidgetRef ref, bool loading) {
     final personnel = season.personnelForDisplay;
@@ -418,23 +441,26 @@ class _SeasonDetailContent extends ConsumerWidget {
   }
 
   Widget _protocol(BuildContext context) {
-    final protocol = season.approvedProductionProtocol;
+    final prodCount = season.productionProtocolsCount ??
+        (season.approvedProductionProtocol != null ? 1 : 0);
+    final treatCount = season.treatmentProtocolsCount ?? 0;
     return _FeatureCard(
       icon: Icons.assignment_rounded,
       iconBackground: const Color(0xFFEAF4FF),
       iconForeground: AppColors.ocean,
       title: 'Phác đồ',
-      subtitle: protocol == null
-          ? 'Chưa có phác đồ nuôi được duyệt'
-          : '${protocol.title} · Phiên bản ${protocol.versionNo}',
+      subtitle: 'Xem kế hoạch nuôi, điều trị và từng cử thực hiện',
       badges: <Widget>[
-        if (protocol != null)
-          const _FeatureBadge(
-            label: 'Có phác đồ nuôi được duyệt',
-            background: Color(0xFFEAF4FF),
-            foreground: Color(0xFF0C4E8F),
-            dot: true,
-          ),
+        _FeatureBadge(
+          label: '$prodCount nuôi',
+          background: const Color(0xFFEAF4FF),
+          foreground: const Color(0xFF0C4E8F),
+        ),
+        _FeatureBadge(
+          label: '$treatCount điều trị',
+          background: const Color(0xFFFBE6EA),
+          foreground: AppColors.error,
+        ),
       ],
       onTap: () => context.push(
         '/protocols?seasonId=${Uri.encodeQueryComponent(season.id)}',
