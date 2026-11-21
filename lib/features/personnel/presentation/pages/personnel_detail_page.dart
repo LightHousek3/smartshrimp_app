@@ -292,7 +292,8 @@ class _KpiCard extends StatelessWidget {
                         'Tổng hợp từ dữ liệu đã ghi nhận trong hệ thống',
                         style: TextStyle(
                           color: AppColors.inkMuted,
-                          fontSize: 10,
+                          fontSize: 11,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -316,7 +317,7 @@ class _KpiCard extends StatelessWidget {
                       color: technician
                           ? const Color(0xFF0C4E8F)
                           : const Color(0xFF087F6B),
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -396,11 +397,10 @@ class _KpiMetricCard extends StatelessWidget {
             Expanded(
               child: Text(
                 metric.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: metric.foreground,
-                  fontSize: 10,
+                  fontSize: 12,
+                  height: 1.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -419,12 +419,10 @@ class _KpiMetricCard extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           metric.hint,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: metric.foreground.withValues(alpha: 0.7),
-            fontSize: 9,
-            height: 1.25,
+            fontSize: 11,
+            height: 1.5,
           ),
         ),
       ],
@@ -748,7 +746,11 @@ class _InfoRow extends StatelessWidget {
           children: <Widget>[
             Text(
               label,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 11,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 2),
             SelectableText(
