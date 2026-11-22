@@ -305,9 +305,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       'totalWeightKg': _value('weight')!.toDouble(),
       if (_value('count') != null) 'quantityCount': _value('count')!.toInt(),
       'estimatedRemainingCount': _final ? 0 : _value('remaining')!.toInt(),
-      if (_value('price') != null) 'pricePerKg': _value('price')!.toDouble(),
+      'pricePerKg': _value('price')!.toDouble(),
+      'buyerName': _fields['buyer']!.text.trim(),
       for (final entry in {
-        'buyerName': 'buyer',
         'buyerContact': 'contact',
         'note': 'note',
         'varianceReason': 'variance',
@@ -798,19 +798,30 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       ),
                       _field(
                         'price',
-                        'Giá bán (đ/kg)',
+                        'Giá bán (đ/kg) *',
                         busy,
                         hint: 'VD: 180000',
                         decimals: 2,
-                        zero: true,
+                        required: true,
                         max: 999999999999.99,
                       ),
                       _text(
                         'buyer',
-                        'Tên người mua',
+                        'Tên người mua *',
                         busy,
                         maxLength: 255,
-                        hint: 'Tùy chọn',
+                        hint: 'Nhập tên người mua',
+                        validator: (value) {
+                          final name = value?.trim() ?? '';
+                          if (name.isEmpty) {
+                            return 'Vui lòng nhập tên người mua.';
+                          }
+                          return validateHarvestTextLength(
+                            name,
+                            label: 'Tên người mua',
+                            maxLength: 255,
+                          );
+                        },
                       ),
                       _text(
                         'contact',
