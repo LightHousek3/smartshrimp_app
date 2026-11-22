@@ -286,7 +286,9 @@ void main() {
     await enterField(tester, 'Mã số tiếp nhận', '01-123456');
     await enterField(tester, 'Thành phần / hoạt chất', 'Thành phần theo nhãn');
     await enterField(tester, 'Hướng dẫn sử dụng', 'Hướng dẫn theo nhãn');
-    await select('Có chứa kháng sinh? *', 'Không có kháng sinh');
+    if (find.text('Có chứa kháng sinh? *').evaluate().isNotEmpty) {
+      await select('Có chứa kháng sinh? *', 'Không có kháng sinh');
+    }
     await enterField(tester, 'Thời gian ngừng', '0');
   }
 
@@ -529,7 +531,12 @@ void main() {
         const InventoryLabelResult(
           name: 'Tên OCR',
           ingredientsText: 'Đạm 40%',
-          evidence: {'name': 'Tên OCR', 'ingredientsText': 'Đạm 40%'},
+          containsAntibiotic: true,
+          evidence: {
+            'name': 'Tên OCR',
+            'ingredientsText': 'Đạm 40%',
+            'containsAntibiotic': 'Có kháng sinh',
+          },
         ),
       );
       await tester.pumpAndSettle();
@@ -546,7 +553,13 @@ void main() {
       await tester.ensureVisible(ingredientsChoice);
       await tester.tap(ingredientsChoice);
       await tester.pump();
-      await tester.tap(find.text('Xác nhận & điền 1 trường'));
+      final antibioticChoice = find.byKey(
+        const ValueKey('inventory-label-field-containsAntibiotic'),
+      );
+      await tester.ensureVisible(antibioticChoice);
+      await tester.tap(antibioticChoice);
+      await tester.pump();
+      await tester.tap(find.text('Xác nhận & điền 2 trường'));
       await tester.pumpAndSettle();
       expect(find.text('Kiểm tra kết quả đọc nhãn'), findsNothing);
       final ingredients = find.descendant(
@@ -565,6 +578,15 @@ void main() {
       expect(find.text('Tên tự nhập'), findsOneWidget);
       expect(repository.updateCalls, 0);
       expect(repository.createdProduct, isNull);
+      expect(find.text('Có chứa kháng sinh? *'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await submitForm(tester, 'Lưu thay đổi');
+      expect(repository.updateCalls, 1);
+      expect(
+        repository.updatedCompliance,
+        containsPair('containsAntibiotic', false),
+      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -593,13 +615,111 @@ void main() {
       expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsOneWidget);
       expect(find.text('Vui lòng nhập thành phần / hoạt chất'), findsOneWidget);
       expect(find.text('Vui lòng nhập hướng dẫn sử dụng'), findsOneWidget);
-      expect(find.text('Vui lòng xác nhận có chứa kháng sinh'), findsOneWidget);
+      expect(find.text('Vui lòng xác nhận có chứa kháng sinh'), findsNothing);
       expect(
         tester.getTopLeft(find.text('Mã số tiếp nhận *')).dy,
         greaterThan(tester.getTopLeft(find.text('Loại sản phẩm *')).dy),
       );
     },
   );
+
+  for (final entry in {
+    domain.InventoryProductCategory.feed: false,
+    domain.InventoryProductCategory.mineral: false,
+    domain.InventoryProductCategory.chemical: false,
+    domain.InventoryProductCategory.medicine: true,
+    domain.InventoryProductCategory.other: true,
+  }.entries) {
+    testWidgets(
+      '${entry.key.name} category controls antibiotic input and saved declaration',
+      (tester) async {
+        final product = _product().copyWith(
+          category: entry.key,
+          imageUrls: ['https://example.com/label.jpg'],
+          compliance: _product().compliance!.copyWith(
+            regulatoryType: 'medicine',
+            registrationNumber: 'VN-123456',
+            containsAntibiotic: true,
+          ),
+        );
+        final repository = _InventoryRepository(
+          product: product,
+          history: _history(),
+        );
+        await openForm(
+          tester,
+          const InventoryProductFormPage.edit(
+            farmId: 'farm-1',
+            productId: 'product-1',
+          ),
+          repository,
+        );
+        expect(
+          find.text('Có chứa kháng sinh? *'),
+          entry.value ? findsOneWidget : findsNothing,
+        );
+        await enterField(tester, 'Hướng dẫn sử dụng', 'Theo nhãn mới');
+        await submitForm(tester, 'Lưu thay đổi');
+        expect(repository.updateCalls, 1);
+        expect(
+          repository.updatedCompliance,
+          containsPair('containsAntibiotic', entry.value),
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('changing category clears an existing antibiotic declaration', (
+    tester,
+  ) async {
+    final repository = _InventoryRepository(
+      product: _product().copyWith(
+        category: domain.InventoryProductCategory.medicine,
+        imageUrls: ['https://example.com/label.jpg'],
+        compliance: _product().compliance!.copyWith(
+          regulatoryType: 'medicine',
+          registrationNumber: 'VN-123456',
+          containsAntibiotic: true,
+        ),
+      ),
+      history: _history(),
+    );
+    await openForm(
+      tester,
+      const InventoryProductFormPage.edit(
+        farmId: 'farm-1',
+        productId: 'product-1',
+      ),
+      repository,
+    );
+    expect(find.text('Có chứa kháng sinh? *'), findsOneWidget);
+    await tester.ensureVisible(find.text('Thức ăn'));
+    await tester.tap(find.text('Thức ăn'));
+    await tester.pumpAndSettle();
+    expect(find.text('Có chứa kháng sinh? *'), findsNothing);
+    await tester.ensureVisible(find.text('Khác'));
+    await tester.tap(find.text('Khác'));
+    await tester.pumpAndSettle();
+    expect(find.text('Có chứa kháng sinh? *'), findsOneWidget);
+    final antibiotic = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is InventoryField && widget.label == 'Có chứa kháng sinh? *',
+      ),
+      matching: find.byType(DropdownButtonFormField<String>),
+    );
+    expect(
+      tester.widget<DropdownButtonFormField<String>>(antibiotic).initialValue,
+      'false',
+    );
+    await submitForm(tester, 'Lưu thay đổi');
+    expect(
+      repository.updatedCompliance,
+      containsPair('containsAntibiotic', false),
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('banned manual ingredient prevents saving the product', (
     tester,
@@ -2558,6 +2678,10 @@ void main() {
         'unit': domain.InventoryProductUnit.kg,
         'minAlertQuantity': 100.5,
       });
+      expect(
+        repository.createdCompliance,
+        containsPair('containsAntibiotic', false),
+      );
       expect(find.text('Open inventory form'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -2910,6 +3034,7 @@ final class _InventoryRepository implements InventoryRepository {
   domain.InventoryProduct product;
   final domain.InventoryHistoryPage history;
   Map<String, Object?>? createdProduct;
+  Map<String, dynamic>? createdCompliance;
   String? createdManufacturerId;
   Map<String, dynamic>? createdProposal;
   String? createdRecommendationReason;
@@ -2989,6 +3114,7 @@ final class _InventoryRepository implements InventoryRepository {
     List<String>? imageUrls,
   }) async {
     createdManufacturerId = manufacturerId;
+    createdCompliance = compliance;
     createdProposal = protocolProposal;
     createdRecommendationReason = recommendationReason;
     createdProduct = <String, Object?>{

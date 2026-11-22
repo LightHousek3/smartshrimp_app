@@ -11,6 +11,7 @@ class InventoryComplianceEditor extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.imageSection,
+    required this.showAntibioticField,
     this.enabled = true,
     this.farmId,
     super.key,
@@ -19,6 +20,7 @@ class InventoryComplianceEditor extends StatelessWidget {
   final InventoryCompliance value;
   final ValueChanged<InventoryCompliance> onChanged;
   final Widget imageSection;
+  final bool showAntibioticField;
   final bool enabled;
   final String? farmId;
 
@@ -187,39 +189,45 @@ class InventoryComplianceEditor extends StatelessWidget {
           hint: 'Nhập cách dùng',
           multiline: true,
         ),
-        const SizedBox(height: 16),
-        InventoryField(
-          label: 'Có chứa kháng sinh? *',
-          labelSize: 12,
-          spacing: 6,
-          child: DropdownButtonFormField<String>(
-            initialValue: value.containsAntibiotic?.toString() ?? 'unknown',
-            isExpanded: true,
-            icon: _dropdownIcon,
-            style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
-            decoration: inventoryInputDecoration(),
-            validator: (text) => enabled && (text == null || text == 'unknown')
-                ? 'Vui lòng xác nhận có chứa kháng sinh'
-                : null,
-            items: const [
-              DropdownMenuItem(value: 'unknown', child: Text('Chưa xác định')),
-              DropdownMenuItem(value: 'true', child: Text('Có kháng sinh')),
-              DropdownMenuItem(
-                value: 'false',
-                child: Text('Không có kháng sinh'),
-              ),
-            ],
-            onChanged: enabled
-                ? (text) => onChanged(
-                    value.copyWith(
-                      containsAntibiotic: text == 'unknown'
-                          ? null
-                          : text == 'true',
-                    ),
-                  )
-                : null,
+        if (showAntibioticField) ...[
+          const SizedBox(height: 16),
+          InventoryField(
+            label: 'Có chứa kháng sinh? *',
+            labelSize: 12,
+            spacing: 6,
+            child: DropdownButtonFormField<String>(
+              initialValue: value.containsAntibiotic?.toString() ?? 'unknown',
+              isExpanded: true,
+              icon: _dropdownIcon,
+              style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
+              decoration: inventoryInputDecoration(),
+              validator: (text) =>
+                  enabled && (text == null || text == 'unknown')
+                  ? 'Vui lòng xác nhận có chứa kháng sinh'
+                  : null,
+              items: const [
+                DropdownMenuItem(
+                  value: 'unknown',
+                  child: Text('Chưa xác định'),
+                ),
+                DropdownMenuItem(value: 'true', child: Text('Có kháng sinh')),
+                DropdownMenuItem(
+                  value: 'false',
+                  child: Text('Không có kháng sinh'),
+                ),
+              ],
+              onChanged: enabled
+                  ? (text) => onChanged(
+                      value.copyWith(
+                        containsAntibiotic: text == 'unknown'
+                            ? null
+                            : text == 'true',
+                      ),
+                    )
+                  : null,
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 16),
         InventoryField(
           label: 'Thời gian ngừng (ngày) *',

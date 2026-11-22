@@ -87,6 +87,19 @@ class _InventoryProductFormPageState
 
   bool get _isEdit => widget.productId != null;
 
+  bool get _allowsAntibioticDeclaration =>
+      _category == InventoryProductCategory.medicine ||
+      _category == InventoryProductCategory.other;
+
+  void _updateCompliance(InventoryCompliance value) {
+    // Hidden declarations must also stay false after category changes or OCR.
+    final compliance = _allowsAntibioticDeclaration
+        ? value
+        : value.copyWith(containsAntibiotic: false);
+    if (compliance != _compliance) _complianceChanged = true;
+    _compliance = compliance;
+  }
+
   String get _alertUnitLabel =>
       _unit != null && InventoryRules.isPackaged(_unit!)
       ? _conversionUnit?.label ?? 'đơn vị quy đổi'
@@ -114,14 +127,16 @@ class _InventoryProductFormPageState
     _manufacturerId = proposal.manufacturerId;
     _manufacturerName = material.manufacturer?.name ?? '';
     final profile = material.productCompliance;
-    _compliance = InventoryCompliance(
-      regulatoryType: profile?.regulatoryType,
-      registrationNumber: profile?.registrationNumber,
-      ingredientsText: profile?.ingredientsText,
-      containsAntibiotic: profile?.containsAntibiotic,
-      usageInstructions: profile?.usageInstructions,
-      withdrawalDays: double.tryParse(profile?.withdrawalDays ?? '0'),
-      evidenceUrls: profile?.evidenceUrls ?? [],
+    _updateCompliance(
+      InventoryCompliance(
+        regulatoryType: profile?.regulatoryType,
+        registrationNumber: profile?.registrationNumber,
+        ingredientsText: profile?.ingredientsText,
+        containsAntibiotic: profile?.containsAntibiotic,
+        usageInstructions: profile?.usageInstructions,
+        withdrawalDays: double.tryParse(profile?.withdrawalDays ?? '0'),
+        evidenceUrls: profile?.evidenceUrls ?? [],
+      ),
     );
     _images.clear();
     _images.addAll(
@@ -203,6 +218,7 @@ class _InventoryProductFormPageState
         ? ''
         : _numberText(product.conversionQuantity!);
     _category = product.category;
+    if (!product.metadataLocked) _updateCompliance(_compliance);
     _unit = product.unit;
     _conversionUnit =
         product.metadataLocked ||
@@ -309,25 +325,27 @@ class _InventoryProductFormPageState
       if (!mounted || selected == null || selected.isEmpty) return;
       setState(() {
         if (selected.contains('name')) _nameController.text = result.name!;
-        _compliance = _compliance.copyWith(
-          regulatoryType: selected.contains('regulatoryType')
-              ? result.regulatoryType!
-              : _compliance.regulatoryType,
-          registrationNumber: selected.contains('registrationNumber')
-              ? result.registrationNumber
-              : _compliance.registrationNumber,
-          ingredientsText: selected.contains('ingredientsText')
-              ? result.ingredientsText
-              : _compliance.ingredientsText,
-          usageInstructions: selected.contains('usageInstructions')
-              ? result.usageInstructions
-              : _compliance.usageInstructions,
-          containsAntibiotic: selected.contains('containsAntibiotic')
-              ? result.containsAntibiotic
-              : _compliance.containsAntibiotic,
-          withdrawalDays: selected.contains('withdrawalDays')
-              ? result.withdrawalDays
-              : _compliance.withdrawalDays,
+        _updateCompliance(
+          _compliance.copyWith(
+            regulatoryType: selected.contains('regulatoryType')
+                ? result.regulatoryType!
+                : _compliance.regulatoryType,
+            registrationNumber: selected.contains('registrationNumber')
+                ? result.registrationNumber
+                : _compliance.registrationNumber,
+            ingredientsText: selected.contains('ingredientsText')
+                ? result.ingredientsText
+                : _compliance.ingredientsText,
+            usageInstructions: selected.contains('usageInstructions')
+                ? result.usageInstructions
+                : _compliance.usageInstructions,
+            containsAntibiotic: selected.contains('containsAntibiotic')
+                ? result.containsAntibiotic
+                : _compliance.containsAntibiotic,
+            withdrawalDays: selected.contains('withdrawalDays')
+                ? result.withdrawalDays
+                : _compliance.withdrawalDays,
+          ),
         );
         if (selected.any((field) => field != 'name')) {
           _complianceChanged = true;
@@ -646,7 +664,10 @@ class _InventoryProductFormPageState
                       label: 'Danh mục *',
                       child: _CategorySelector(
                         selected: _category,
-                        onChanged: (value) => setState(() => _category = value),
+                        onChanged: (value) => setState(() {
+                          _category = value;
+                          _updateCompliance(_compliance);
+                        }),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -741,9 +762,10 @@ class _InventoryProductFormPageState
                         'inventory-compliance-$_complianceRevision',
                       ),
                       value: _compliance,
+                      showAntibioticField: _allowsAntibioticDeclaration,
                       imageSection: _buildPhotoSection(),
                       onChanged: (value) => setState(() {
-                        _compliance = value;
+                        _updateCompliance(value);
                         _complianceChanged = true;
                       }),
                     ),
