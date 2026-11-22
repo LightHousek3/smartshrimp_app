@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
@@ -9,10 +10,13 @@ import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/harvest/domain/harvest_policy.dart';
+import 'package:smartshrimp_app/features/harvest/domain/entities/harvest_event.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/view_models/harvest_controller.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/widgets/harvest_ui.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
+
+typedef _QuantityValidationError = ({String message, Set<String> fields});
 
 class HarvestFormPage extends ConsumerStatefulWidget {
   const HarvestFormPage({required this.seasonId, super.key});
@@ -41,7 +45,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   bool _confirming = false;
   String? _error;
   String? _timeError;
-  String? _quantityError; // cross-field: mirrors backend INVALID_QUANTITY rule
+  _QuantityValidationError? _quantityError;
   bool _submitted = false;
   bool _remainingEdited = false;
   final _countFocus = FocusNode();
@@ -94,17 +98,23 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   }) {
     final raw = text?.trim() ?? '';
     if (raw.isEmpty) return required ? 'Vui lòng nhập giá trị.' : null;
-    final pattern = decimals == 0
-        ? RegExp(r'^\d+$')
-        : RegExp('^\\d+(?:[.,]\\d{1,$decimals})?\$');
-    final value = double.tryParse(raw.replaceAll(',', '.'));
-    if (!pattern.hasMatch(raw) ||
-        value == null ||
-        !value.isFinite ||
-        value > max ||
-        (zero ? value < 0 : value <= 0)) {
-      return 'Giá trị ${zero ? '≥ 0' : '> 0'}, tối đa $max${decimals > 0 ? ', $decimals chữ số thập phân' : ', số nguyên'}.';
+    if (!RegExp(r'^-?\d+(?:[.,]\d+)?$').hasMatch(raw)) {
+      return 'Vui lòng chỉ nhập số';
     }
+    final value = double.tryParse(raw.replaceAll(',', '.'));
+    if (value == null || !value.isFinite) return 'Giá trị quá lớn';
+    if (zero ? value < 0 : value <= 0) {
+      return zero
+          ? 'Giá trị phải lớn hơn hoặc bằng 0'
+          : 'Giá trị phải lớn hơn 0';
+    }
+    final fraction = raw.split(RegExp('[.,]'));
+    if (fraction.length > 1 && fraction.last.length > decimals) {
+      return decimals == 0
+          ? 'Vui lòng nhập số nguyên'
+          : 'Chỉ nhập tối đa $decimals chữ số sau dấu phẩy';
+    }
+    if (value > max) return 'Giá trị quá lớn';
     return null;
   }
 
@@ -113,6 +123,41 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
 
   String? _validateTime(AquacultureSeason season) =>
       validateHarvestTime(_time, season.stockingDate);
+
+  Widget _withdrawalStatus(HarvestWithdrawal state) {
+    final AppNoticeLevel level;
+    final String message;
+    if (!state.verified) {
+      level = AppNoticeLevel.warning;
+      message =
+          state.warning ??
+          'Chưa đủ dữ liệu xác nhận thời gian ngừng thuốc. Vui lòng kiểm tra lịch sử dùng vật tư trước khi thu hoạch.';
+    } else if (state.unknown) {
+      level = AppNoticeLevel.danger;
+      message =
+          'Thiếu dữ liệu ngừng thuốc bắt buộc — lần thu này sẽ không ghi được. Kiểm tra lại snapshot trước khi thu.';
+    } else if (state.blocked) {
+      level = AppNoticeLevel.danger;
+      final end = state.latestEndAt?.toUtc().add(const Duration(hours: 7));
+      String two(int value) => value.toString().padLeft(2, '0');
+      final date = end == null
+          ? 'chưa xác định'
+          : '${two(end.hour)}:${two(end.minute)} ${two(end.day)}/${two(end.month)}/${end.year} (giờ VN)';
+      message = 'Chưa đủ thời gian ngừng thuốc tới $date.';
+    } else {
+      level = AppNoticeLevel.success;
+      message = 'Đã đủ thời gian ngừng thuốc.';
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: AppNoticeCard(
+        key: const ValueKey('harvest-withdrawal-status'),
+        title: 'Thời gian ngừng thuốc',
+        message: message,
+        level: level,
+      ),
+    );
+  }
 
   void _syncRemaining(BigInt? available) {
     if (_remainingEdited) return;
@@ -126,23 +171,55 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     }
   }
 
-  /// Actual counts may exceed estimates; preserve the owner's correction.
-  String? _validateQuantity({required BigInt? available}) {
-    final weight = _value('weight');
-    final count = _value('count'); // optional
+  String? _quantityFieldError(String field) =>
+      _quantityError?.fields.contains(field) == true
+      ? _quantityError!.message
+      : null;
 
-    if (!_final) {
-      final raw = _fields['count']!.text.trim();
-      final q = BigInt.tryParse(raw);
-      if (!RegExp(r'^\d+$').hasMatch(raw) ||
-          q == null ||
-          q <= BigInt.zero ||
-          q > BigInt.from(9007199254740991)) {
-        return 'Vui lòng nhập số con thu hoạch hợp lệ khi thu tỉa.';
+  /// Actual counts may exceed estimates; preserve the owner's correction.
+  _QuantityValidationError? _validateQuantity({required BigInt? available}) {
+    // Field errors take priority over derived population/size errors.
+    for (final key in ['weight', 'count', if (!_final) 'remaining', 'price']) {
+      final raw = _fields[key]!.text.trim();
+      if (raw.isNotEmpty &&
+          _numeric(
+                raw,
+                required: true,
+                max: key == 'weight'
+                    ? 99999999999.999
+                    : key == 'price'
+                    ? 999999999999.99
+                    : 9007199254740991,
+                decimals: key == 'weight' || key == 'price' ? 2 : 0,
+              ) !=
+              null) {
+        return null;
       }
+    }
+    final weight = _value('weight');
+    final count = _value('count');
+
+    final raw = _fields['count']!.text.trim();
+    final harvestedCount = BigInt.tryParse(raw);
+    if (!RegExp(r'^\d+$').hasMatch(raw) ||
+        harvestedCount == null ||
+        harvestedCount <= BigInt.zero ||
+        harvestedCount > BigInt.from(9007199254740991)) {
+      return (
+        message: _final
+            ? 'Vui lòng nhập số con thu hoạch hợp lệ khi thu hoạch cuối.'
+            : 'Vui lòng nhập số con thu hoạch hợp lệ khi thu tỉa.',
+        fields: const {'count', 'remaining'},
+      );
+    }
+    if (!_final) {
       final r = BigInt.tryParse(_fields['remaining']!.text.trim());
       if (r == null || r <= BigInt.zero || r > BigInt.from(9007199254740991)) {
-        return 'Vui lòng nhập ước tính số con còn lại lớn hơn 0 khi thu tỉa.';
+        return (
+          message:
+              'Vui lòng nhập ước tính số con còn lại lớn hơn 0 khi thu tỉa.',
+          fields: const {'count', 'remaining'},
+        );
       }
     }
     if (available != null) {
@@ -151,16 +228,25 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           ? BigInt.zero
           : BigInt.tryParse(_fields['remaining']!.text.trim()) ?? BigInt.zero;
       if (q + r > available && _fields['variance']!.text.trim().isEmpty) {
-        return 'Số thu thực tế và số còn lại vượt ước tính. Vui lòng nhập lý do hiệu chỉnh.';
+        return (
+          message:
+              'Số thu thực tế và số còn lại vượt ước tính. Vui lòng nhập lý do hiệu chỉnh.',
+          fields: const {'count', 'remaining'},
+        );
       }
     }
 
-    // size = count / weight < 100_000_000 con/kg
+    // Mirror server limits after rounding size to two decimal places.
     if (count != null && weight != null && weight > 0) {
       final size = count.toDouble() / weight.toDouble();
       final rounded = (size * 100).round() / 100;
-      if (rounded >= 100000000 || rounded <= 0) {
-        return 'Mật độ tôm (số lượng / sản lượng) vô lý: ${size.toStringAsFixed(0)} con/kg. Kiểm tra lại sản lượng hoặc số lượng.';
+      if (rounded < 1 || rounded > 10000) {
+        final sizeLabel = size < 0.01 ? '< 0,01' : harvestNumber(rounded);
+        return (
+          message:
+              'Cỡ tôm (số lượng / sản lượng) vô lý: $sizeLabel con/kg. Kiểm tra lại sản lượng hoặc số lượng.',
+          fields: const {'weight', 'count'},
+        );
       }
     }
 
@@ -178,7 +264,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           description: message,
           level: AppNoticeLevel.danger,
           content: Text(
-            'Hiện có: ${ref.read(harvestPopulationProvider(_populationQuery)).value ?? 'Chưa xác định'} con\n'
+            'Hiện có: ${ref.read(harvestPopulationProvider(_populationQuery)).value?.availableQuantityCount ?? 'Chưa xác định'} con\n'
             'Số lượng thu hoạch: ${_fields['count']!.text.isEmpty ? 'Chưa nhập' : _fields['count']!.text} con\n'
             'Số lượng còn lại: ${_final
                 ? '0'
@@ -256,10 +342,11 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     });
     final valid = _form.currentState!.validate();
     if (_quantityError != null) {
-      await _showQuantityAlert(_quantityError!);
+      await _showQuantityAlert(_quantityError!.message);
       return;
     }
     if (!valid || _timeError != null) return;
+    if (!await _confirmUnusualSize() || !mounted) return;
 
     final body = <String, dynamic>{
       'harvestType': _final ? 'FINAL' : 'PARTIAL',
@@ -267,9 +354,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       'totalWeightKg': _value('weight')!.toDouble(),
       if (_value('count') != null) 'quantityCount': _value('count')!.toInt(),
       'estimatedRemainingCount': _final ? 0 : _value('remaining')!.toInt(),
-      if (_value('price') != null) 'pricePerKg': _value('price')!.toDouble(),
+      'pricePerKg': _value('price')!.toDouble(),
+      'buyerName': _fields['buyer']!.text.trim(),
       for (final entry in {
-        'buyerName': 'buyer',
         'buyerContact': 'contact',
         'note': 'note',
         'varianceReason': 'variance',
@@ -279,6 +366,29 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     };
     if (!await _confirm(body)) return;
     await _save(body);
+  }
+
+  Future<bool> _confirmUnusualSize() async {
+    final size = _value('count')! / _value('weight')!;
+    if (size >= 10 && size <= 500) return true;
+    setState(() => _confirming = true);
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AppConfirmDialog(
+          title: 'Cỡ tôm ngoài khoảng thường gặp',
+          description:
+              'Cỡ tôm tính từ số lượng và sản lượng nằm ngoài khoảng 10–500 con/kg. Vui lòng kiểm tra lại trước khi lưu.',
+          cancelLabel: 'Kiểm tra lại',
+          confirmLabel: 'Vẫn lưu',
+          onCancel: () => Navigator.of(dialogContext).pop(false),
+          onConfirm: () => Navigator.of(dialogContext).pop(true),
+        ),
+      );
+      return mounted && confirmed == true;
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
   }
 
   Future<bool> _confirm(
@@ -369,6 +479,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           context,
           event.warnings.join('\n'),
           title: 'Đã ghi nhận thu hoạch',
+          messageMaxLines: 6,
         );
       }
       context.pop();
@@ -392,7 +503,10 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         }
         if (populationError) {
           _submitted = true;
-          _quantityError = _error;
+          _quantityError = (
+            message: _error!,
+            fields: const {'count', 'remaining'},
+          );
         }
       });
       if (error is AppException && [400, 409].contains(error.statusCode)) {
@@ -414,7 +528,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     final populationProvider = harvestPopulationProvider(_populationQuery);
     final populationState = ref.watch(populationProvider);
     ref.listen(populationProvider, (_, next) {
-      final raw = next.isLoading || next.hasError ? null : next.value;
+      final raw = next.isLoading || next.hasError
+          ? null
+          : next.value?.availableQuantityCount;
       _syncRemaining(raw == null ? null : BigInt.parse(raw));
     });
     final pendingState = ref.watch(pendingHarvestProvider(widget.seasonId));
@@ -490,8 +606,15 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         data: (season) {
           final raw = populationState.isLoading || populationState.hasError
               ? null
-              : populationState.value;
+              : populationState.value?.availableQuantityCount;
           final available = raw == null ? null : BigInt.parse(raw);
+          final withdrawal =
+              populationState.isLoading || populationState.hasError
+              ? null
+              : populationState.value?.withdrawal;
+          final withdrawalBlocked =
+              withdrawal?.verified == true &&
+              (withdrawal!.unknown || withdrawal.blocked);
           final warning = earlyHarvestWarning(season, _time);
 
           return HarvestScaffold(
@@ -673,14 +796,16 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                             key: const ValueKey('harvest-available-count'),
                           ),
                         ),
+                      if (withdrawal != null) _withdrawalStatus(withdrawal),
                       _field(
                         'weight',
                         'Sản lượng (kg) *',
                         busy,
                         hint: 'VD: 480',
-                        decimals: 3,
+                        decimals: 2,
                         required: true,
                         max: 99999999999.999,
+                        fieldError: _quantityFieldError('weight'),
                         onChangedExtra: _submitted
                             ? () => setState(
                                 () => _quantityError = _validateQuantity(
@@ -691,16 +816,15 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       ),
                       _field(
                         'count',
-                        _final
-                            ? 'Số lượng thu hoạch (con)'
-                            : 'Số lượng thu hoạch (con) *',
+                        'Số lượng thu hoạch (con) *',
                         busy,
-                        hint: _final ? 'Tùy chọn' : 'Nhập số con thu hoạch',
-                        required: !_final,
-                        fieldError: _quantityError,
+                        hint: 'Nhập số con thu hoạch',
+                        required: true,
+                        fieldError: _quantityFieldError('count'),
                         focusNode: _countFocus,
                         max: 9007199254740991,
                         onChangedExtra: () {
+                          _remainingEdited = false;
                           _syncRemaining(available);
                           if (_submitted) {
                             setState(
@@ -719,7 +843,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                           hint:
                               'Gợi ý từ ước tính; có thể hiệu chỉnh theo thực tế',
                           required: true,
-                          fieldError: _quantityError,
+                          fieldError: _quantityFieldError('remaining'),
                           onChangedExtra: () {
                             _remainingEdited = true;
                             if (_submitted) {
@@ -737,7 +861,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         busy,
                         maxLength: 500,
                         lines: 2,
-                        hint: 'Bắt buộc khi số thu và số còn lại vượt ước tính',
+                        hint: _final
+                            ? 'Bắt buộc khi số thu và số còn lại vượt ước tính, hoặc khi thu cuối còn ca bệnh đang mở/đang điều trị'
+                            : 'Bắt buộc khi số thu và số còn lại vượt ước tính',
                         onChangedExtra: () {
                           if (_submitted) {
                             setState(
@@ -750,19 +876,30 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       ),
                       _field(
                         'price',
-                        'Giá bán (đ/kg)',
+                        'Giá bán (đ/kg) *',
                         busy,
                         hint: 'VD: 180000',
                         decimals: 2,
-                        zero: true,
+                        required: true,
                         max: 999999999999.99,
                       ),
                       _text(
                         'buyer',
-                        'Tên người mua',
+                        'Tên người mua *',
                         busy,
                         maxLength: 255,
-                        hint: 'Tùy chọn',
+                        hint: 'Nhập tên người mua',
+                        validator: (value) {
+                          final name = value?.trim() ?? '';
+                          if (name.isEmpty) {
+                            return 'Vui lòng nhập tên người mua.';
+                          }
+                          return validateHarvestTextLength(
+                            name,
+                            label: 'Tên người mua',
+                            maxLength: 255,
+                          );
+                        },
                       ),
                       _text(
                         'contact',
@@ -815,7 +952,8 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         onPressed:
                             busy ||
                                 populationState.isLoading ||
-                                populationState.hasError
+                                populationState.hasError ||
+                                withdrawalBlocked
                             ? null
                             : () => _submit(season, available: available),
                       ),
@@ -857,6 +995,14 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           forceErrorText: fieldError,
           enabled: !busy,
           keyboardType: TextInputType.numberWithOptions(decimal: decimals > 0),
+          inputFormatters: [
+            TextInputFormatter.withFunction(
+              (oldValue, newValue) =>
+                  RegExp(r'^[0-9.,]*$').hasMatch(newValue.text)
+                  ? newValue
+                  : oldValue,
+            ),
+          ],
           style: const TextStyle(fontSize: 13, color: AppColors.ink),
           decoration: InputDecoration(
             hintText: hint,

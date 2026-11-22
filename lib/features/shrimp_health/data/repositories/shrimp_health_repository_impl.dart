@@ -7,6 +7,10 @@ final class ShrimpHealthRepositoryImpl implements ShrimpHealthRepository {
   final ShrimpHealthApiService _apiService;
 
   @override
+  Future<int?> getAvailablePopulation(String seasonId, DateTime at) =>
+      _apiService.getAvailablePopulation(seasonId, at);
+
+  @override
   Future<ShrimpHealthListResult> listLogs(
     String seasonId, {
     DateTime? from,

@@ -1,6 +1,8 @@
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 
 abstract interface class ShrimpHealthRepository {
+  Future<int?> getAvailablePopulation(String seasonId, DateTime at);
+
   Future<ShrimpHealthListResult> listLogs(
     String seasonId, {
     DateTime? from,

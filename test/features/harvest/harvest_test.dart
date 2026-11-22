@@ -553,10 +553,10 @@ void main() {
       final oldFuture = container.read(oldProvider.future);
       final newFuture = container.read(newProvider.future);
       newer.complete(page().copyWith(availableQuantityCount: '900'));
-      expect(await newFuture, '900');
+      expect((await newFuture).availableQuantityCount, '900');
       older.complete(page().copyWith(availableQuantityCount: '1000'));
-      expect(await oldFuture, '1000');
-      expect(container.read(newProvider).value, '900');
+      expect((await oldFuture).availableQuantityCount, '1000');
+      expect(container.read(newProvider).value?.availableQuantityCount, '900');
       expect(
         repo.queries.every(
           (query) => query['limit'] == 1 && query.containsKey('populationAt'),
@@ -585,7 +585,10 @@ void main() {
       await failure;
       repo.listWait = null;
       container.invalidate(provider);
-      expect(await container.read(provider.future), '100000');
+      expect(
+        (await container.read(provider.future)).availableQuantityCount,
+        '100000',
+      );
       expect(repo.queries, hasLength(2));
     });
   }
@@ -1092,6 +1095,154 @@ void main() {
     });
   }
 
+  testWidgets('numeric errors are specific and fields reject letters', (
+    tester,
+  ) async {
+    await mount(tester, _HarvestRepo(), route: '/harvests/create');
+    await tester.pumpAndSettle();
+    for (final key in ['weight', 'count', 'remaining', 'price']) {
+      final finder = find.byKey(ValueKey('harvest-field-$key'));
+      final field = tester.widget<TextFormField>(finder);
+      expect(field.validator!('abc'), 'Vui lòng chỉ nhập số');
+      expect(field.validator!('0'), 'Giá trị phải lớn hơn 0');
+      expect(field.validator!('99999999999999999999'), 'Giá trị quá lớn');
+      if (key == 'weight' || key == 'price') {
+        expect(
+          field.validator!('1.234'),
+          'Chỉ nhập tối đa 2 chữ số sau dấu phẩy',
+        );
+        expect(field.validator!('1,23'), isNull);
+      } else {
+        expect(field.validator!('1.2'), 'Vui lòng nhập số nguyên');
+      }
+      await tester.enterText(finder, '12');
+      await tester.enterText(finder, '12abc');
+      expect(field.controller!.text, '12');
+      await tester.enterText(finder, '1e3');
+      expect(field.controller!.text, '12');
+      await tester.enterText(finder, '');
+      expect(field.controller!.text, isEmpty);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final finalHarvest in [false, true]) {
+    for (final count in [999, 1000, 50000, 50001]) {
+      testWidgets(
+        'size warning before save: final=$finalHarvest count=$count',
+        (tester) async {
+          final repo = _HarvestRepo();
+          await mount(tester, repo, route: '/harvests/create');
+          await tester.pumpAndSettle();
+          if (finalHarvest) {
+            await tester.tap(find.text('Thu hoạch cuối'));
+            await tester.pumpAndSettle();
+          }
+          for (final entry in {
+            'weight': '100',
+            'count': '$count',
+            'price': '180000',
+            'buyer': 'Người mua',
+          }.entries) {
+            await tester.enterText(
+              find.byKey(ValueKey('harvest-field-${entry.key}')),
+              entry.value,
+            );
+          }
+          FocusManager.instance.primaryFocus?.unfocus();
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.text('Chọn ngày và giờ...'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Chọn ngày và giờ...'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('OK'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('OK'));
+          await tester.pumpAndSettle();
+          final submit = find.text(
+            finalHarvest ? 'Ghi nhận thu hoạch cuối' : 'Ghi nhận thu tỉa',
+          );
+          await tester.ensureVisible(submit);
+          await tester.pumpAndSettle();
+          await tester.tap(submit);
+          await tester.pumpAndSettle();
+          if (count < 1000 || count > 50000) {
+            expect(find.text('Cỡ tôm ngoài khoảng thường gặp'), findsOneWidget);
+            expect(repo.bodies, isEmpty);
+            await tester.tap(find.text('Kiểm tra lại'));
+            await tester.pumpAndSettle();
+            expect(repo.bodies, isEmpty);
+            expect(
+              tester
+                  .widget<TextFormField>(
+                    find.byKey(const ValueKey('harvest-field-count')),
+                  )
+                  .controller!
+                  .text,
+              '$count',
+            );
+            await tester.ensureVisible(submit);
+            await tester.pumpAndSettle();
+            await tester.tap(submit);
+            await tester.pumpAndSettle();
+            await tester.tap(find.text('Vẫn lưu'));
+            await tester.pumpAndSettle();
+          } else {
+            expect(find.text('Cỡ tôm ngoài khoảng thường gặp'), findsNothing);
+          }
+          expect(
+            find.text(
+              finalHarvest ? 'Xác nhận thu hoạch cuối' : 'Xác nhận thu tỉa',
+            ),
+            findsOneWidget,
+          );
+          expect(repo.bodies, isEmpty);
+          await tester.tap(find.text('Xác nhận'));
+          await tester.pumpAndSettle();
+          expect(repo.bodies, hasLength(1));
+          expect(repo.bodies.single['quantityCount'], count);
+          expect(repo.bodies.single['totalWeightKg'], 100);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
+  testWidgets(
+    'editing harvested count recalculates manually edited remaining',
+    (tester) async {
+      await mount(tester, _HarvestRepo(), route: '/harvests/create');
+      await tester.pumpAndSettle();
+      final count = find.byKey(const ValueKey('harvest-field-count'));
+      final remaining = find.byKey(const ValueKey('harvest-field-remaining'));
+      String remainingText() =>
+          tester.widget<TextFormField>(remaining).controller!.text;
+
+      await tester.enterText(count, '10000');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '90000');
+      await tester.enterText(remaining, '85000');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '85000');
+      await tester.enterText(count, '20000');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '80000');
+      await tester.enterText(count, '30000');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '70000');
+      await tester.enterText(count, '100001');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '0');
+      await tester.enterText(count, '');
+      await tester.pumpAndSettle();
+      expect(remainingText(), isEmpty);
+      await tester.enterText(count, '5000');
+      await tester.pumpAndSettle();
+      expect(remainingText(), '95000');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('list loading, server error, retry and empty state', (
     tester,
   ) async {
@@ -1207,7 +1358,8 @@ void main() {
       );
       expect(weight('0'), isNotNull);
       expect(weight('1.0001'), isNotNull);
-      expect(weight('1,125'), isNull);
+      expect(weight('1,125'), 'Chỉ nhập tối đa 2 chữ số sau dấu phẩy');
+      expect(weight('1,12'), isNull);
       expect(
         tester
             .widget<TextField>(
@@ -1319,8 +1471,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Ghi nhận thu tỉa'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Kiểm tra lại'));
-      await tester.pumpAndSettle();
+      expect(find.text('Giá trị phải lớn hơn 0'), findsOneWidget);
       await tester.ensureVisible(find.text('Thu hoạch cuối'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Thu hoạch cuối'));
@@ -1643,6 +1794,112 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final (weight, expectedSize) in [('100', '0,01'), ('1000', '< 0,01')]) {
+    testWidgets(
+      'invalid small shrimp size displays $expectedSize instead of zero',
+      (tester) async {
+        final repo = _HarvestRepo();
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const ValueKey('harvest-field-weight')),
+          weight,
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('harvest-field-count')),
+          '1',
+        );
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        for (final field in ['weight', 'count']) {
+          final error = tester
+              .widget<TextFormField>(
+                find.byKey(ValueKey('harvest-field-$field')),
+              )
+              .forceErrorText;
+          expect(error, contains('Cỡ tôm'));
+          expect(error, contains('$expectedSize con/kg'));
+          expect(error, isNot(contains(': 0 con/kg')));
+        }
+        expect(repo.bodies, isEmpty);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final sizeError in [true, false]) {
+    testWidgets(
+      'quantity validation marks only related fields; sizeError=$sizeError',
+      (tester) async {
+        final repo = _HarvestRepo()
+          ..result = page().copyWith(availableQuantityCount: '200000');
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        for (final entry in {
+          'weight': sizeError ? '1' : '1000',
+          'count': '100000',
+          'remaining': sizeError ? '16700' : '120000',
+          'price': '180000',
+          'buyer': 'Buyer A',
+        }.entries) {
+          await tester.enterText(
+            find.byKey(ValueKey('harvest-field-${entry.key}')),
+            entry.value,
+          );
+        }
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        for (final field in ['weight', 'count', 'remaining']) {
+          final error = tester
+              .widget<TextFormField>(
+                find.byKey(ValueKey('harvest-field-$field')),
+              )
+              .forceErrorText;
+          final affected = sizeError
+              ? {'weight', 'count'}.contains(field)
+              : {'count', 'remaining'}.contains(field);
+          expect(error, affected ? isNotNull : isNull, reason: field);
+          if (affected) {
+            expect(error, contains(sizeError ? 'vô lý' : 'vượt ước tính'));
+          }
+        }
+        expect(repo.bodies, isEmpty);
+        await tester.tap(find.text('Kiểm tra lại'));
+        await tester.pumpAndSettle();
+        final correctedField = sizeError ? 'weight' : 'remaining';
+        await tester.ensureVisible(
+          find.byKey(ValueKey('harvest-field-$correctedField')),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(ValueKey('harvest-field-$correctedField')),
+          sizeError ? '1000' : '100000',
+        );
+        await tester.pumpAndSettle();
+        for (final field in ['weight', 'count', 'remaining']) {
+          expect(
+            tester
+                .widget<TextFormField>(
+                  find.byKey(ValueKey('harvest-field-$field')),
+                )
+                .forceErrorText,
+            isNull,
+            reason: field,
+          );
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   for (final (invalidCount, capacity) in [
     ('', '200000'),
     ('200000', '200000'),
@@ -1650,7 +1907,7 @@ void main() {
     ('1', '9007199254740993'),
   ]) {
     testWidgets(
-      'invalid partial count "$invalidCount" marks both fields and opens one modal',
+      'invalid partial count "$invalidCount" shows field or quantity errors',
       (tester) async {
         final repo = _HarvestRepo()
           ..result = page().copyWith(availableQuantityCount: capacity);
@@ -1675,7 +1932,11 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Ghi nhận thu tỉa'));
         await tester.pumpAndSettle();
-        expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsOneWidget);
+        final quantityAlert = invalidCount.isEmpty;
+        expect(
+          find.text('Số lượng thu hoạch chưa hợp lệ'),
+          quantityAlert ? findsOneWidget : findsNothing,
+        );
         expect(repo.keys, isEmpty);
         for (final field in ['count', 'remaining']) {
           expect(
@@ -1684,14 +1945,26 @@ void main() {
                   find.byKey(ValueKey('harvest-field-$field')),
                 )
                 .forceErrorText,
-            isNotNull,
+            quantityAlert ? isNotNull : isNull,
+          );
+        }
+        if (!quantityAlert) {
+          expect(
+            find.text(
+              invalidCount == '1'
+                  ? 'Giá trị quá lớn'
+                  : 'Giá trị phải lớn hơn 0',
+            ),
+            findsOneWidget,
           );
         }
         if (invalidCount == '200000') {
           await capture(tester, 'strict-partial-modal');
         }
-        await tester.tap(find.text('Kiểm tra lại'));
-        await tester.pumpAndSettle();
+        if (quantityAlert) {
+          await tester.tap(find.text('Kiểm tra lại'));
+          await tester.pumpAndSettle();
+        }
         await tester.ensureVisible(
           find.byKey(const ValueKey('harvest-field-count')),
         );

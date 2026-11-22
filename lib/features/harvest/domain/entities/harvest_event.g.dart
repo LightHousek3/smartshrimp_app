@@ -98,6 +98,26 @@ const _$HarvestTypeEnumMap = {
   HarvestType.unknown: 'unknown',
 };
 
+_HarvestWithdrawal _$HarvestWithdrawalFromJson(Map<String, dynamic> json) =>
+    _HarvestWithdrawal(
+      verified: json['verified'] as bool,
+      unknown: json['unknown'] as bool,
+      blocked: json['blocked'] as bool? ?? false,
+      latestEndAt: json['latestEndAt'] == null
+          ? null
+          : DateTime.parse(json['latestEndAt'] as String),
+      warning: json['warning'] as String?,
+    );
+
+Map<String, dynamic> _$HarvestWithdrawalToJson(_HarvestWithdrawal instance) =>
+    <String, dynamic>{
+      'verified': instance.verified,
+      'unknown': instance.unknown,
+      'blocked': instance.blocked,
+      'latestEndAt': instance.latestEndAt?.toIso8601String(),
+      'warning': instance.warning,
+    };
+
 _PendingHarvestSubmission _$PendingHarvestSubmissionFromJson(
   Map<String, dynamic> json,
 ) => _PendingHarvestSubmission(
