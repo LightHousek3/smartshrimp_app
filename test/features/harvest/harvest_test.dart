@@ -1646,6 +1646,75 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final sizeError in [true, false]) {
+    testWidgets(
+      'quantity validation marks only related fields; sizeError=$sizeError',
+      (tester) async {
+        final repo = _HarvestRepo()
+          ..result = page().copyWith(availableQuantityCount: '200000');
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        for (final entry in {
+          'weight': sizeError ? '1' : '1000',
+          'count': '100000',
+          'remaining': sizeError ? '16700' : '120000',
+          'price': '180000',
+          'buyer': 'Buyer A',
+        }.entries) {
+          await tester.enterText(
+            find.byKey(ValueKey('harvest-field-${entry.key}')),
+            entry.value,
+          );
+        }
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Ghi nhận thu tỉa'));
+        await tester.pumpAndSettle();
+        for (final field in ['weight', 'count', 'remaining']) {
+          final error = tester
+              .widget<TextFormField>(
+                find.byKey(ValueKey('harvest-field-$field')),
+              )
+              .forceErrorText;
+          final affected = sizeError
+              ? {'weight', 'count'}.contains(field)
+              : {'count', 'remaining'}.contains(field);
+          expect(error, affected ? isNotNull : isNull, reason: field);
+          if (affected) {
+            expect(error, contains(sizeError ? 'vô lý' : 'vượt ước tính'));
+          }
+        }
+        expect(repo.bodies, isEmpty);
+        await tester.tap(find.text('Kiểm tra lại'));
+        await tester.pumpAndSettle();
+        final correctedField = sizeError ? 'weight' : 'remaining';
+        await tester.ensureVisible(
+          find.byKey(ValueKey('harvest-field-$correctedField')),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(ValueKey('harvest-field-$correctedField')),
+          sizeError ? '1000' : '100000',
+        );
+        await tester.pumpAndSettle();
+        for (final field in ['weight', 'count', 'remaining']) {
+          expect(
+            tester
+                .widget<TextFormField>(
+                  find.byKey(ValueKey('harvest-field-$field')),
+                )
+                .forceErrorText,
+            isNull,
+            reason: field,
+          );
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   for (final (invalidCount, capacity) in [
     ('', '200000'),
     ('200000', '200000'),
