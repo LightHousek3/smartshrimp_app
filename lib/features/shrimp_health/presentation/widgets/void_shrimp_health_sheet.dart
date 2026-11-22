@@ -68,6 +68,7 @@ class _VoidShrimpHealthSheetState extends ConsumerState<VoidShrimpHealthSheet> {
         level: AppNoticeLevel.success,
       );
 
+      ref.invalidate(shrimpHealthDetailProvider);
       widget.onVoided?.call();
       Navigator.of(context).pop(true);
     } catch (e) {

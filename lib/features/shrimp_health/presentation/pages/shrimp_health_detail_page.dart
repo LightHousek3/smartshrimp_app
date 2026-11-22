@@ -552,10 +552,11 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                             Builder(
                               builder: (_) {
                                 final now = DateTime.now();
+                                final local = log.recordedAt.toLocal();
                                 final isRecordedToday =
-                                    log.recordedAt.year == now.year &&
-                                    log.recordedAt.month == now.month &&
-                                    log.recordedAt.day == now.day;
+                                    local.year == now.year &&
+                                    local.month == now.month &&
+                                    local.day == now.day;
 
                                 return Column(
                                   crossAxisAlignment:

@@ -1042,10 +1042,13 @@ class _LineChartPainter extends CustomPainter {
     final isSameDay =
         points.length > 1 &&
         points.every(
-          (p) =>
-              p.recordedAt.year == points.first.recordedAt.year &&
-              p.recordedAt.month == points.first.recordedAt.month &&
-              p.recordedAt.day == points.first.recordedAt.day,
+          (p) {
+            final pLocal = p.recordedAt.toLocal();
+            final fLocal = points.first.recordedAt.toLocal();
+            return pLocal.year == fLocal.year &&
+                pLocal.month == fLocal.month &&
+                pLocal.day == fLocal.day;
+          },
         );
 
     for (var i = 0; i < points.length; i++) {

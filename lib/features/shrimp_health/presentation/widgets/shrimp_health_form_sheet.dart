@@ -14,18 +14,21 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
   const ShrimpHealthFormSheet({
     required this.seasonId,
     this.initialQuantity,
+    this.previousPopulation,
     this.onCreated,
     super.key,
   });
 
   final String seasonId;
   final int? initialQuantity;
+  final int? previousPopulation;
   final VoidCallback? onCreated;
 
   static Future<bool?> show(
     BuildContext context, {
     required String seasonId,
     int? initialQuantity,
+    int? previousPopulation,
     VoidCallback? onCreated,
   }) => showModalBottomSheet<bool>(
     context: context,
@@ -34,6 +37,7 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     builder: (_) => ShrimpHealthFormSheet(
       seasonId: seasonId,
       initialQuantity: initialQuantity,
+      previousPopulation: previousPopulation,
       onCreated: onCreated,
     ),
   );
@@ -50,6 +54,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   HealthStatus _healthStatus = HealthStatus.good;
 
   final _sampleSizeController = TextEditingController();
+  final _sampleWeightController = TextEditingController();
   final _avgWeightController = TextEditingController();
   final _avgLengthController = TextEditingController();
   final _mortalityController = TextEditingController();
@@ -58,23 +63,31 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   final _noteController = TextEditingController();
 
   bool _isSubmitting = false;
-  bool _biomassManuallyEdited = false;
 
   @override
   void initState() {
     super.initState();
     _recordedAt = DateTime.now();
 
-    _avgWeightController.addListener(_onWeightOrPopulationChanged);
-    _populationController.addListener(_onWeightOrPopulationChanged);
+    _sampleSizeController.addListener(_recalculateAll);
+    _sampleWeightController.addListener(_recalculateAll);
+    _mortalityController.addListener(_recalculateAll);
+    _populationController.addListener(_recalculateAll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recalculateAll();
+    });
   }
 
   @override
   void dispose() {
-    _avgWeightController.removeListener(_onWeightOrPopulationChanged);
-    _populationController.removeListener(_onWeightOrPopulationChanged);
+    _sampleSizeController.removeListener(_recalculateAll);
+    _sampleWeightController.removeListener(_recalculateAll);
+    _mortalityController.removeListener(_recalculateAll);
+    _populationController.removeListener(_recalculateAll);
 
     _sampleSizeController.dispose();
+    _sampleWeightController.dispose();
     _avgWeightController.dispose();
     _avgLengthController.dispose();
     _mortalityController.dispose();
@@ -91,10 +104,44 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
           .value
           ?.initialQuantity;
 
+  int? get _basePopulation {
+    if (widget.previousPopulation != null && widget.previousPopulation! > 0) {
+      return widget.previousPopulation;
+    }
+    final logs = ref
+        .watch(shrimpHealthListProvider(widget.seasonId))
+        .value
+        ?.logs;
+    final latestValidLog = logs
+        ?.where((l) => !l.isVoided && l.estimatedPopulation != null)
+        .firstOrNull;
+    if (latestValidLog?.estimatedPopulation != null &&
+        latestValidLog!.estimatedPopulation! > 0) {
+      return latestValidLog.estimatedPopulation;
+    }
+    return _effectiveInitialQuantity;
+  }
+
+  static double? _parseDouble(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return null;
+    final normalized = trimmed.replaceAll(',', '.');
+    return double.tryParse(normalized);
+  }
+
   static String _formatNumber(int value) => value.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
     (Match m) => '${m[1]}.',
   );
+
+  static String _formatWeight(double val) {
+    if (val == val.roundToDouble()) {
+      return val.toStringAsFixed(0);
+    }
+    if (val >= 100) return val.toStringAsFixed(0);
+    if (val >= 10) return val.toStringAsFixed(1);
+    return val.toStringAsFixed(2);
+  }
 
   static String _formatTimeDayMonth(DateTime dt) {
     final local = dt.toLocal();
@@ -105,20 +152,72 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     return '$hour:$minute  •  Hôm nay ($day/$month)';
   }
 
-  void _onWeightOrPopulationChanged() {
-    if (_biomassManuallyEdited) return;
+  double? get _calculatedAvgWeight {
+    final weightKg = _parseDouble(_sampleWeightController.text);
+    if (weightKg == null || weightKg <= 0) return null;
 
-    final weight = double.tryParse(_avgWeightController.text.trim());
-    final population = int.tryParse(_populationController.text.trim());
+    final sampleSize = int.tryParse(_sampleSizeController.text.trim());
+    if (sampleSize != null && sampleSize > 0) {
+      // (weight in kg * 1000) / sampleSize = grams per shrimp
+      return (weightKg * 1000) / sampleSize;
+    }
+    return null;
+  }
 
-    if (weight != null && weight > 0 && population != null && population > 0) {
-      final calculatedBiomass = (population * weight) / 1000;
-      final formatted = calculatedBiomass == calculatedBiomass.roundToDouble()
+  int? get _calculatedPopulation {
+    final basePop = _basePopulation;
+    final mortality = int.tryParse(_mortalityController.text.trim()) ?? 0;
+    if (basePop != null && basePop > 0) {
+      final remaining = basePop - mortality;
+      return remaining < 0 ? 0 : remaining;
+    }
+    final raw = _populationController.text.replaceAll('.', '').trim();
+    return int.tryParse(raw);
+  }
+
+  void _recalculateAll() {
+    final basePop = _basePopulation;
+    final population = _calculatedPopulation;
+    if (basePop != null && basePop > 0) {
+      if (population != null) {
+        final formattedPop = _formatNumber(population);
+        if (_populationController.text != formattedPop) {
+          _populationController.text = formattedPop;
+        }
+      } else {
+        if (_populationController.text.isNotEmpty) {
+          _populationController.clear();
+        }
+      }
+    }
+
+    final avgWeight = _calculatedAvgWeight;
+    if (avgWeight != null) {
+      final formattedWeight = _formatWeight(avgWeight);
+      if (_avgWeightController.text != formattedWeight) {
+        _avgWeightController.text = formattedWeight;
+      }
+    } else {
+      if (_avgWeightController.text.isNotEmpty) {
+        _avgWeightController.clear();
+      }
+    }
+
+    if (avgWeight != null && avgWeight > 0 && population != null && population > 0) {
+      final calculatedBiomass = (population * avgWeight) / 1000;
+      final formattedBiomass = calculatedBiomass == calculatedBiomass.roundToDouble()
           ? calculatedBiomass.toStringAsFixed(0)
           : calculatedBiomass.toStringAsFixed(1);
-
-      _biomassController.text = formatted;
+      if (_biomassController.text != formattedBiomass) {
+        _biomassController.text = formattedBiomass;
+      }
+    } else {
+      if (_biomassController.text.isNotEmpty) {
+        _biomassController.clear();
+      }
     }
+
+    if (mounted) setState(() {});
   }
 
   Future<void> _pickDateTime() async {
@@ -179,11 +278,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     }
 
     final sampleSize = int.tryParse(_sampleSizeController.text.trim());
-    final avgWeightG = double.tryParse(_avgWeightController.text.trim());
-    final avgLengthCm = double.tryParse(_avgLengthController.text.trim());
+    final avgWeightG = _calculatedAvgWeight;
+    final avgLengthCm = _parseDouble(_avgLengthController.text);
     final mortalityCount = int.tryParse(_mortalityController.text.trim()) ?? 0;
-    final estimatedPopulation = int.tryParse(_populationController.text.trim());
-    final estimatedBiomassKg = double.tryParse(_biomassController.text.trim());
+    final estimatedPopulation = _calculatedPopulation;
+    final estimatedBiomassKg = _parseDouble(_biomassController.text);
     final note = _noteController.text.trim();
 
     final initialQty = _effectiveInitialQuantity;
@@ -268,14 +367,14 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     required TextEditingController controller,
     required String label,
     required String unit,
-    required String hint,
+    String? hint,
     TextInputType keyboardType = const TextInputType.numberWithOptions(
       decimal: true,
     ),
     List<TextInputFormatter>? inputFormatters,
     void Function(String)? onChanged,
     String? Function(String?)? validator,
-    String? subLabel,
+    bool readOnly = false,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
@@ -300,24 +399,19 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
           ),
         ],
       ),
-      if (subLabel != null) ...<Widget>[
-        const SizedBox(height: 2),
-        Text(
-          subLabel,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF6A7994)),
-        ),
-      ],
       const SizedBox(height: 6),
       TextFormField(
         controller: controller,
+        readOnly: readOnly,
+        enableInteractiveSelection: !readOnly,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         onChanged: onChanged,
         validator: validator,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0F1C2E),
+          color: readOnly ? const Color(0xFF334155) : const Color(0xFF0F1C2E),
         ),
         decoration: InputDecoration(
           hintText: hint,
@@ -327,22 +421,29 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
             fontWeight: FontWeight.w400,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: readOnly ? const Color(0xFFF1F5F9) : Colors.white,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+            borderSide: BorderSide(
+              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFFDDE3EA),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFDDE3EA)),
+            borderSide: BorderSide(
+              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFFDDE3EA),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF1378D1), width: 1.5),
+            borderSide: BorderSide(
+              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFF1378D1),
+              width: readOnly ? 1 : 1.5,
+            ),
           ),
         ),
       ),
@@ -422,7 +523,18 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final initialQty = _effectiveInitialQuantity;
+
+    ref.listen(assignedSeasonDetailProvider(widget.seasonId), (prev, next) {
+      if (prev?.value?.initialQuantity != next.value?.initialQuantity) {
+        _recalculateAll();
+      }
+    });
+
+    ref.listen(shrimpHealthListProvider(widget.seasonId), (prev, next) {
+      if (prev?.value != next.value) {
+        _recalculateAll();
+      }
+    });
 
     return Container(
       decoration: const BoxDecoration(
@@ -520,7 +632,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                 ),
                 const SizedBox(height: 16),
 
-                // 2-Column Grid: Row 1
+                // 2-Column Grid: Row 1 (Nhập: Số mẫu + Tổng KL mẫu)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -534,30 +646,43 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.digitsOnly,
                         ],
+                        onChanged: (_) => _recalculateAll(),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildField(
-                        controller: _avgWeightController,
-                        label: 'Trọng lượng TB',
-                        unit: 'g',
-                        hint: '12.4',
+                        controller: _sampleWeightController,
+                        label: 'Tổng khối lượng mẫu',
+                        unit: 'kg',
+                        hint: '1.2',
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*'),
+                            RegExp(r'^\d*[,.]?\d*'),
                           ),
                         ],
+                        onChanged: (_) => _recalculateAll(),
+                        validator: (val) {
+                          if (val != null && val.trim().isNotEmpty) {
+                            final sampleSize = int.tryParse(
+                              _sampleSizeController.text.trim(),
+                            );
+                            if (sampleSize == null || sampleSize <= 0) {
+                              return 'Vui lòng nhập số mẫu';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                // 2-Column Grid: Row 2
+                // 2-Column Grid: Row 2 (Nhập: Chiều dài TB + Số hao hụt)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -572,7 +697,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         ),
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*'),
+                            RegExp(r'^\d*[,.]?\d*'),
                           ),
                         ],
                       ),
@@ -588,68 +713,56 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         inputFormatters: <TextInputFormatter>[
                           FilteringTextInputFormatter.digitsOnly,
                         ],
+                        onChanged: (_) => _recalculateAll(),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) return null;
+                          final mortality = int.tryParse(val.trim());
+                          if (mortality == null || mortality < 0) {
+                            return 'Số lượng không hợp lệ';
+                          }
+                          final base = _basePopulation;
+                          if (base != null && base > 0 && mortality > base) {
+                            return 'Hao hụt vượt quá số tôm hiện có';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                // 2-Column Grid: Row 3
+                // 2-Column Grid: Row 3 (Tự sinh: Trọng lượng TB + Ước tính đàn)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Expanded(
                       child: _buildField(
-                        controller: _populationController,
-                        label: 'Ước tính đàn',
-                        subLabel: initialQty != null && initialQty > 0
-                            ? 'Tối đa: ${_formatNumber(initialQty)} con'
-                            : 'Số tôm hiện có trong ao',
-                        unit: 'con',
-                        hint: initialQty != null && initialQty > 0
-                            ? _formatNumber(initialQty)
-                            : '200000',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) return null;
-                          final parsed = int.tryParse(val.trim());
-                          if (parsed == null || parsed <= 0) {
-                            return 'Số lượng không hợp lệ';
-                          }
-                          if (initialQty != null &&
-                              initialQty > 0 &&
-                              parsed > initialQty) {
-                            return 'Tối đa ${_formatNumber(initialQty)} con';
-                          }
-                          return null;
-                        },
+                        controller: _avgWeightController,
+                        readOnly: true,
+                        label: 'Trọng lượng TB',
+                        unit: 'g',
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildField(
-                        controller: _biomassController,
-                        label: 'Sinh khối ước tính',
-                        subLabel: 'Tự động tính từ cỡ & đàn',
-                        unit: 'kg',
-                        hint: '1180',
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*'),
-                          ),
-                        ],
-                        onChanged: (val) {
-                          _biomassManuallyEdited = true;
-                        },
+                        controller: _populationController,
+                        readOnly: _basePopulation != null && _basePopulation! > 0,
+                        label: 'Ước tính đàn',
+                        unit: 'con',
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+
+                // Row 4 (Tự sinh: Sinh khối ước tính)
+                _buildField(
+                  controller: _biomassController,
+                  readOnly: true,
+                  label: 'Sinh khối ước tính',
+                  unit: 'kg',
                 ),
                 const SizedBox(height: 16),
 

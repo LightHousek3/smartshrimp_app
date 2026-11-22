@@ -213,6 +213,92 @@ void main() {
   });
 
   testWidgets(
+    'ShrimpHealthFormSheet auto-calculates population and biomass as read-only',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ShrimpHealthFormSheet(
+                  seasonId: 'season-1',
+                  initialQuantity: 300000,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Check initial population is auto-filled to 300.000
+      expect(find.text('300.000'), findsOneWidget);
+
+      // Verify TextField for avg weight, population and biomass are read-only
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      final readOnlyFields = textFields.where((f) => f.readOnly == true).toList();
+      expect(readOnlyFields.length, 3); // avg weight, population & biomass
+
+      // Enter mortality = 1000
+      final mortalityField = find.widgetWithText(TextFormField, '0');
+      await tester.enterText(mortalityField, '1000');
+      await tester.pumpAndSettle();
+
+      // Population auto-updates to 299.000
+      expect(find.text('299.000'), findsOneWidget);
+
+      // Enter sample size = 100
+      final sampleField = find.widgetWithText(TextFormField, '120');
+      await tester.enterText(sampleField, '100');
+      await tester.pumpAndSettle();
+
+      // Enter sample weight = 1.2 (kg)
+      final weightField = find.widgetWithText(TextFormField, '1.2');
+      await tester.enterText(weightField, '1.2');
+      await tester.pumpAndSettle();
+
+      // Avg weight box shows 12
+      expect(find.text('12'), findsOneWidget);
+
+      // Biomass is auto-calculated: 299000 * 12 / 1000 = 3588 kg
+      expect(find.text('3588'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShrimpHealthFormSheet inherits previous population for subsequent recording',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ShrimpHealthFormSheet(
+                  seasonId: 'season-1',
+                  initialQuantity: 300000,
+                  previousPopulation: 295000,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Check initial population is based on previousPopulation (295.000)
+      expect(find.text('295.000'), findsOneWidget);
+
+      // Enter mortality = 1000
+      final mortalityField = find.widgetWithText(TextFormField, '0');
+      await tester.enterText(mortalityField, '1000');
+      await tester.pumpAndSettle();
+
+      // Population updates to 294.000 (295.000 - 1.000)
+      expect(find.text('294.000'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'Renders ShrimpHealthStatisticsPage with empty stats without crashing',
     (tester) async {
       final emptyStats = ShrimpHealthStatsResult(
