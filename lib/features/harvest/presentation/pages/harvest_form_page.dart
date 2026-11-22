@@ -165,17 +165,19 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   /// Actual counts may exceed estimates; preserve the owner's correction.
   String? _validateQuantity({required BigInt? available}) {
     final weight = _value('weight');
-    final count = _value('count'); // optional
+    final count = _value('count');
 
+    final raw = _fields['count']!.text.trim();
+    final harvestedCount = BigInt.tryParse(raw);
+    if (!RegExp(r'^\d+$').hasMatch(raw) ||
+        harvestedCount == null ||
+        harvestedCount <= BigInt.zero ||
+        harvestedCount > BigInt.from(9007199254740991)) {
+      return _final
+          ? 'Vui lòng nhập số con thu hoạch hợp lệ khi thu hoạch cuối.'
+          : 'Vui lòng nhập số con thu hoạch hợp lệ khi thu tỉa.';
+    }
     if (!_final) {
-      final raw = _fields['count']!.text.trim();
-      final q = BigInt.tryParse(raw);
-      if (!RegExp(r'^\d+$').hasMatch(raw) ||
-          q == null ||
-          q <= BigInt.zero ||
-          q > BigInt.from(9007199254740991)) {
-        return 'Vui lòng nhập số con thu hoạch hợp lệ khi thu tỉa.';
-      }
       final r = BigInt.tryParse(_fields['remaining']!.text.trim());
       if (r == null || r <= BigInt.zero || r > BigInt.from(9007199254740991)) {
         return 'Vui lòng nhập ước tính số con còn lại lớn hơn 0 khi thu tỉa.';
@@ -737,12 +739,10 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       ),
                       _field(
                         'count',
-                        _final
-                            ? 'Số lượng thu hoạch (con)'
-                            : 'Số lượng thu hoạch (con) *',
+                        'Số lượng thu hoạch (con) *',
                         busy,
-                        hint: _final ? 'Tùy chọn' : 'Nhập số con thu hoạch',
-                        required: !_final,
+                        hint: 'Nhập số con thu hoạch',
+                        required: true,
                         fieldError: _quantityError,
                         focusNode: _countFocus,
                         max: 9007199254740991,
@@ -783,7 +783,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         busy,
                         maxLength: 500,
                         lines: 2,
-                        hint: 'Bắt buộc khi số thu và số còn lại vượt ước tính',
+                        hint: _final
+                            ? 'Bắt buộc khi số thu và số còn lại vượt ước tính, hoặc khi thu cuối còn ca bệnh đang mở/đang điều trị'
+                            : 'Bắt buộc khi số thu và số còn lại vượt ước tính',
                         onChangedExtra: () {
                           if (_submitted) {
                             setState(
