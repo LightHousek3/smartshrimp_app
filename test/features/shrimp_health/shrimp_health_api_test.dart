@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/data/services/shrimp_health_api_service.dart';
@@ -12,7 +13,10 @@ import '../home/owner_dashboard_fixtures.dart';
 import '../task/task_api_test.dart' show TaskSessionStore;
 
 void main() {
-  ApiClient client(List<RequestOptions> requests) {
+  ApiClient client(
+    List<RequestOptions> requests, {
+    Object? population = '105000',
+  }) {
     final dio = Dio(BaseOptions(baseUrl: 'https://health.test'));
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -28,7 +32,9 @@ void main() {
               data: {
                 'success': true,
                 'message': 'OK',
-                'data': list
+                'data': request.path.endsWith('/population')
+                    ? {'availableQuantityCount': population}
+                    : list
                     ? []
                     : {
                         'id': 'log',
@@ -45,6 +51,42 @@ void main() {
       ),
     );
     return ApiClient(dio, TaskSessionStore());
+  }
+
+  for (final population in ['105000', '0', null]) {
+    test(
+      'population preview preserves zero/null, scope, time and auth: $population',
+      () async {
+        final requests = <RequestOptions>[];
+        final api = ShrimpHealthApiService(
+          client(requests, population: population),
+        );
+        final at = DateTime.utc(2026, 11, 22, 2);
+        expect(
+          await api.getAvailablePopulation('season', at),
+          population == null ? null : int.parse(population),
+        );
+        expect(
+          requests.single.path,
+          '/technician/seasons/season/shrimp-health-logs/population',
+        );
+        expect(requests.single.queryParameters, {'at': at.toIso8601String()});
+        expect(requests.single.headers['Authorization'], 'Bearer access-token');
+      },
+    );
+  }
+
+  for (final population in [-1, '-1', '1.2', '9007199254740992', 'abc']) {
+    test(
+      'population preview rejects malformed/unsafe counts: $population',
+      () async {
+        final api = ShrimpHealthApiService(client([], population: population));
+        await expectLater(
+          api.getAvailablePopulation('season', DateTime.utc(2026, 11, 22)),
+          throwsA(isA<InvalidResponseException>()),
+        );
+      },
+    );
   }
 
   test(

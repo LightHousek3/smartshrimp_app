@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
-import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 import 'package:smartshrimp_app/features/shrimp_health/presentation/view_models/shrimp_health_controller.dart';
 import 'package:uuid/uuid.dart';
@@ -97,30 +96,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     super.dispose();
   }
 
-  int? get _effectiveInitialQuantity =>
-      widget.initialQuantity ??
-      ref
-          .watch(assignedSeasonDetailProvider(widget.seasonId))
-          .value
-          ?.initialQuantity;
+  ShrimpHealthPopulationQuery get _populationQuery =>
+      (seasonId: widget.seasonId, at: _recordedAt.toUtc());
 
-  int? get _basePopulation {
-    if (widget.previousPopulation != null && widget.previousPopulation! > 0) {
-      return widget.previousPopulation;
-    }
-    final logs = ref
-        .watch(shrimpHealthListProvider(widget.seasonId))
-        .value
-        ?.logs;
-    final latestValidLog = logs
-        ?.where((l) => !l.isVoided && l.estimatedPopulation != null)
-        .firstOrNull;
-    if (latestValidLog?.estimatedPopulation != null &&
-        latestValidLog!.estimatedPopulation! > 0) {
-      return latestValidLog.estimatedPopulation;
-    }
-    return _effectiveInitialQuantity;
-  }
+  int? get _basePopulation =>
+      ref.read(shrimpHealthPopulationProvider(_populationQuery)).value;
 
   static double? _parseDouble(String text) {
     final trimmed = text.trim();
@@ -167,7 +147,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   int? get _calculatedPopulation {
     final basePop = _basePopulation;
     final mortality = int.tryParse(_mortalityController.text.trim()) ?? 0;
-    if (basePop != null && basePop > 0) {
+    if (basePop != null) {
       final remaining = basePop - mortality;
       return remaining < 0 ? 0 : remaining;
     }
@@ -178,7 +158,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   void _recalculateAll() {
     final basePop = _basePopulation;
     final population = _calculatedPopulation;
-    if (basePop != null && basePop > 0) {
+    if (basePop != null) {
       if (population != null) {
         final formattedPop = _formatNumber(population);
         if (_populationController.text != formattedPop) {
@@ -203,9 +183,13 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       }
     }
 
-    if (avgWeight != null && avgWeight > 0 && population != null && population > 0) {
+    if (avgWeight != null &&
+        avgWeight > 0 &&
+        population != null &&
+        population > 0) {
       final calculatedBiomass = (population * avgWeight) / 1000;
-      final formattedBiomass = calculatedBiomass == calculatedBiomass.roundToDouble()
+      final formattedBiomass =
+          calculatedBiomass == calculatedBiomass.roundToDouble()
           ? calculatedBiomass.toStringAsFixed(0)
           : calculatedBiomass.toStringAsFixed(1);
       if (_biomassController.text != formattedBiomass) {
@@ -252,6 +236,14 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   }
 
   Future<void> _submit() async {
+    final populationState = ref.read(
+      shrimpHealthPopulationProvider(_populationQuery),
+    );
+    if (_isSubmitting ||
+        populationState.isLoading ||
+        populationState.hasError) {
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     final now = DateTime.now();
@@ -285,20 +277,6 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     final estimatedBiomassKg = _parseDouble(_biomassController.text);
     final note = _noteController.text.trim();
 
-    final initialQty = _effectiveInitialQuantity;
-    if (initialQty != null &&
-        initialQty > 0 &&
-        estimatedPopulation != null &&
-        estimatedPopulation > initialQty) {
-      AppNoticeService.show(
-        context,
-        message:
-            'Ước tính đàn (${_formatNumber(estimatedPopulation)} con) không được vượt quá số giống ban đầu (${_formatNumber(initialQty)} con)',
-        level: AppNoticeLevel.danger,
-      );
-      return;
-    }
-
     final hasAnyMetric =
         sampleSize != null ||
         avgWeightG != null ||
@@ -322,7 +300,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     try {
       final idempotencyKey = const Uuid().v4();
 
-      await ref
+      final created = await ref
           .read(shrimpHealthRepositoryProvider)
           .createLog(
             widget.seasonId,
@@ -342,8 +320,14 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
 
       AppNoticeService.show(
         context,
-        message: 'Ghi nhận sức khỏe tôm thành công',
+        message:
+            created.estimatedPopulation != null &&
+                created.estimatedPopulation != estimatedPopulation
+            ? 'Đã ghi nhận sức khỏe tôm. Ước tính đàn được cập nhật theo dữ liệu mới nhất: '
+                  '${_formatNumber(created.estimatedPopulation!)} con.'
+            : 'Ghi nhận sức khỏe tôm thành công',
         level: AppNoticeLevel.success,
+        messageMaxLines: 6,
       );
 
       ref.invalidate(technicianDashboardProvider);
@@ -429,19 +413,25 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFFDDE3EA),
+              color: readOnly
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFDDE3EA),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFFDDE3EA),
+              color: readOnly
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFDDE3EA),
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: readOnly ? const Color(0xFFE2E8F0) : const Color(0xFF1378D1),
+              color: readOnly
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFF1378D1),
               width: readOnly ? 1 : 1.5,
             ),
           ),
@@ -523,17 +513,12 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final populationState = ref.watch(
+      shrimpHealthPopulationProvider(_populationQuery),
+    );
 
-    ref.listen(assignedSeasonDetailProvider(widget.seasonId), (prev, next) {
-      if (prev?.value?.initialQuantity != next.value?.initialQuantity) {
-        _recalculateAll();
-      }
-    });
-
-    ref.listen(shrimpHealthListProvider(widget.seasonId), (prev, next) {
-      if (prev?.value != next.value) {
-        _recalculateAll();
-      }
+    ref.listen(shrimpHealthPopulationProvider(_populationQuery), (_, next) {
+      _recalculateAll();
     });
 
     return Container(
@@ -556,14 +541,17 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    const Text(
-                      'Ghi nhận sức khỏe tôm',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F1C2E),
+                    const Expanded(
+                      child: Text(
+                        'Ghi nhận sức khỏe tôm',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F1C2E),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -601,26 +589,28 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                     ),
                     child: Row(
                       children: <Widget>[
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF6A7994),
-                              fontFamily: 'PlusJakartaSans',
-                            ),
-                            children: <TextSpan>[
-                              const TextSpan(text: 'Thời điểm ghi nhận: '),
-                              TextSpan(
-                                text: _formatTimeDayMonth(_recordedAt),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F1C2E),
-                                ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6A7994),
+                                fontFamily: 'PlusJakartaSans',
                               ),
-                            ],
+                              children: <TextSpan>[
+                                const TextSpan(text: 'Thời điểm ghi nhận: '),
+                                TextSpan(
+                                  text: _formatTimeDayMonth(_recordedAt),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F1C2E),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         const Icon(
                           Icons.edit_calendar_rounded,
                           size: 16,
@@ -721,7 +711,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                             return 'Số lượng không hợp lệ';
                           }
                           final base = _basePopulation;
-                          if (base != null && base > 0 && mortality > base) {
+                          if (base != null && mortality > base) {
                             return 'Hao hụt vượt quá số tôm hiện có';
                           }
                           return null;
@@ -732,6 +722,44 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                 ),
                 const SizedBox(height: 12),
 
+                if (populationState.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LinearProgressIndicator(),
+                  ),
+                if (populationState.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ErrorMapper.displayMessage(populationState.error!),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        TextButton(
+                          onPressed: () => ref.invalidate(
+                            shrimpHealthPopulationProvider(_populationQuery),
+                          ),
+                          child: const Text('Tải lại số tôm còn lại'),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (!populationState.isLoading &&
+                    !populationState.hasError &&
+                    _basePopulation != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Số còn lại tham chiếu: ${_formatNumber(_basePopulation!)} con. '
+                      'Đã tính thu hoạch và hao hụt đã ghi; ước tính đàn trừ thêm hao hụt lần này.',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
                 // 2-Column Grid: Row 3 (Tự sinh: Trọng lượng TB + Ước tính đàn)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,7 +776,10 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                     Expanded(
                       child: _buildField(
                         controller: _populationController,
-                        readOnly: _basePopulation != null && _basePopulation! > 0,
+                        readOnly:
+                            populationState.isLoading ||
+                            populationState.hasError ||
+                            _basePopulation != null,
                         label: 'Ước tính đàn',
                         unit: 'con',
                       ),
@@ -817,7 +848,12 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
 
                 // Submit button (đồng bộ GradientButton theo thiết kế hệ thống)
                 GradientButton(
-                  onPressed: _isSubmitting ? null : _submit,
+                  onPressed:
+                      _isSubmitting ||
+                          populationState.isLoading ||
+                          populationState.hasError
+                      ? null
+                      : _submit,
                   isLoading: _isSubmitting,
                   label: 'Lưu bản ghi',
                   icon: Icons.check_rounded,

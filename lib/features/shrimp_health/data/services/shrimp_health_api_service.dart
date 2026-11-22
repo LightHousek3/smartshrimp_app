@@ -1,10 +1,33 @@
 import 'package:smartshrimp_app/core/network/api_client.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 
 class ShrimpHealthApiService {
   ShrimpHealthApiService(this._client, {this.basePath = '/technician/seasons'});
   final ApiClient _client;
   final String basePath;
+
+  Future<int?> getAvailablePopulation(String seasonId, DateTime at) async {
+    final response = await _client.get(
+      '$basePath/${Uri.encodeComponent(seasonId)}/shrimp-health-logs/population',
+      authenticated: true,
+      queryParameters: {'at': at.toUtc().toIso8601String()},
+    );
+    final data = response.requireMapData();
+    if (!data.containsKey('availableQuantityCount')) {
+      throw const InvalidResponseException();
+    }
+    final raw = data['availableQuantityCount'];
+    if (raw == null) return null;
+    if (raw is! String || !RegExp(r'^\d+$').hasMatch(raw)) {
+      throw const InvalidResponseException();
+    }
+    final value = int.tryParse(raw);
+    if (value == null || value > 9007199254740991) {
+      throw const InvalidResponseException();
+    }
+    return value;
+  }
 
   Future<ShrimpHealthListResult> listLogs(
     String seasonId, {

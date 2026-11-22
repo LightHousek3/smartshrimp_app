@@ -425,77 +425,31 @@ class _ShrimpHealthDetailSheetState
                   ) &&
                   !_isVoidingMode) ...<Widget>[
                 // Outlined Void Trigger Button (figma_detail.png)
-                Builder(
-                  builder: (_) {
-                    final now = DateTime.now();
-                    final local = log.recordedAt.toLocal();
-                    final isRecordedToday =
-                        local.year == now.year &&
-                        local.month == now.month &&
-                        local.day == now.day;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: isRecordedToday
-                                ? () => setState(() => _isVoidingMode = true)
-                                : null,
-                            style: OutlinedButton.styleFrom(
-                              disabledForegroundColor: const Color(0xFF94A3B8),
-                              side: BorderSide(
-                                color: isRecordedToday
-                                    ? const Color(0xFFDDE3EA)
-                                    : const Color(0xFFE2E8F0),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.cancel_outlined,
-                                  size: 18,
-                                  color: isRecordedToday
-                                      ? const Color(0xFF0F1C2E)
-                                      : const Color(0xFF94A3B8),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Hủy hiệu lực bản ghi',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: isRecordedToday
-                                        ? const Color(0xFF0F1C2E)
-                                        : const Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (!isRecordedToday) ...<Widget>[
-                          const SizedBox(height: 6),
-                          const Center(
-                            child: Text(
-                              'Chỉ được hủy hiệu lực bản ghi trong ngày',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF94A3B8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () => setState(() => _isVoidingMode = true),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFDDE3EA)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: Color(0xFF0F1C2E),
+                    ),
+                    label: const Text(
+                      'Hủy hiệu lực bản ghi',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F1C2E),
+                      ),
+                    ),
+                  ),
                 ),
               ] else if (ref.watch(
                 shrimpHealthCanWriteProvider(widget.seasonId),

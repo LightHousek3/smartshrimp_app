@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
@@ -97,17 +98,23 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   }) {
     final raw = text?.trim() ?? '';
     if (raw.isEmpty) return required ? 'Vui lòng nhập giá trị.' : null;
-    final pattern = decimals == 0
-        ? RegExp(r'^\d+$')
-        : RegExp('^\\d+(?:[.,]\\d{1,$decimals})?\$');
-    final value = double.tryParse(raw.replaceAll(',', '.'));
-    if (!pattern.hasMatch(raw) ||
-        value == null ||
-        !value.isFinite ||
-        value > max ||
-        (zero ? value < 0 : value <= 0)) {
-      return 'Giá trị ${zero ? '≥ 0' : '> 0'}, tối đa $max${decimals > 0 ? ', $decimals chữ số thập phân' : ', số nguyên'}.';
+    if (!RegExp(r'^-?\d+(?:[.,]\d+)?$').hasMatch(raw)) {
+      return 'Vui lòng chỉ nhập số';
     }
+    final value = double.tryParse(raw.replaceAll(',', '.'));
+    if (value == null || !value.isFinite) return 'Giá trị quá lớn';
+    if (zero ? value < 0 : value <= 0) {
+      return zero
+          ? 'Giá trị phải lớn hơn hoặc bằng 0'
+          : 'Giá trị phải lớn hơn 0';
+    }
+    final fraction = raw.split(RegExp('[.,]'));
+    if (fraction.length > 1 && fraction.last.length > decimals) {
+      return decimals == 0
+          ? 'Vui lòng nhập số nguyên'
+          : 'Chỉ nhập tối đa $decimals chữ số sau dấu phẩy';
+    }
+    if (value > max) return 'Giá trị quá lớn';
     return null;
   }
 
@@ -171,6 +178,24 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
 
   /// Actual counts may exceed estimates; preserve the owner's correction.
   _QuantityValidationError? _validateQuantity({required BigInt? available}) {
+    // Field errors take priority over derived population/size errors.
+    for (final key in ['weight', 'count', if (!_final) 'remaining', 'price']) {
+      final raw = _fields[key]!.text.trim();
+      if (raw.isNotEmpty &&
+          _numeric(
+                raw,
+                required: true,
+                max: key == 'weight'
+                    ? 99999999999.999
+                    : key == 'price'
+                    ? 999999999999.99
+                    : 9007199254740991,
+                decimals: key == 'weight' || key == 'price' ? 2 : 0,
+              ) !=
+              null) {
+        return null;
+      }
+    }
     final weight = _value('weight');
     final count = _value('count');
 
@@ -216,9 +241,10 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       final size = count.toDouble() / weight.toDouble();
       final rounded = (size * 100).round() / 100;
       if (rounded < 1 || rounded > 10000) {
+        final sizeLabel = size < 0.01 ? '< 0,01' : harvestNumber(rounded);
         return (
           message:
-              'Mật độ tôm (số lượng / sản lượng) vô lý: ${size.toStringAsFixed(0)} con/kg. Kiểm tra lại sản lượng hoặc số lượng.',
+              'Cỡ tôm (số lượng / sản lượng) vô lý: $sizeLabel con/kg. Kiểm tra lại sản lượng hoặc số lượng.',
           fields: const {'weight', 'count'},
         );
       }
@@ -320,6 +346,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       return;
     }
     if (!valid || _timeError != null) return;
+    if (!await _confirmUnusualSize() || !mounted) return;
 
     final body = <String, dynamic>{
       'harvestType': _final ? 'FINAL' : 'PARTIAL',
@@ -339,6 +366,29 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     };
     if (!await _confirm(body)) return;
     await _save(body);
+  }
+
+  Future<bool> _confirmUnusualSize() async {
+    final size = _value('count')! / _value('weight')!;
+    if (size >= 10 && size <= 500) return true;
+    setState(() => _confirming = true);
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AppConfirmDialog(
+          title: 'Cỡ tôm ngoài khoảng thường gặp',
+          description:
+              'Cỡ tôm tính từ số lượng và sản lượng nằm ngoài khoảng 10–500 con/kg. Vui lòng kiểm tra lại trước khi lưu.',
+          cancelLabel: 'Kiểm tra lại',
+          confirmLabel: 'Vẫn lưu',
+          onCancel: () => Navigator.of(dialogContext).pop(false),
+          onConfirm: () => Navigator.of(dialogContext).pop(true),
+        ),
+      );
+      return mounted && confirmed == true;
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
   }
 
   Future<bool> _confirm(
@@ -429,6 +479,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           context,
           event.warnings.join('\n'),
           title: 'Đã ghi nhận thu hoạch',
+          messageMaxLines: 6,
         );
       }
       context.pop();
@@ -751,7 +802,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         'Sản lượng (kg) *',
                         busy,
                         hint: 'VD: 480',
-                        decimals: 3,
+                        decimals: 2,
                         required: true,
                         max: 99999999999.999,
                         fieldError: _quantityFieldError('weight'),
@@ -773,6 +824,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         focusNode: _countFocus,
                         max: 9007199254740991,
                         onChangedExtra: () {
+                          _remainingEdited = false;
                           _syncRemaining(available);
                           if (_submitted) {
                             setState(
@@ -943,6 +995,14 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           forceErrorText: fieldError,
           enabled: !busy,
           keyboardType: TextInputType.numberWithOptions(decimal: decimals > 0),
+          inputFormatters: [
+            TextInputFormatter.withFunction(
+              (oldValue, newValue) =>
+                  RegExp(r'^[0-9.,]*$').hasMatch(newValue.text)
+                  ? newValue
+                  : oldValue,
+            ),
+          ],
           style: const TextStyle(fontSize: 13, color: AppColors.ink),
           decoration: InputDecoration(
             hintText: hint,

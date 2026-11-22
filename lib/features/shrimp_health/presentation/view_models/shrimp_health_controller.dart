@@ -22,6 +22,22 @@ final shrimpHealthRepositoryProvider = Provider<ShrimpHealthRepository>((ref) {
   );
 });
 
+typedef ShrimpHealthPopulationQuery = ({String seasonId, DateTime at});
+
+final shrimpHealthPopulationProvider = FutureProvider.autoDispose
+    .family<int?, ShrimpHealthPopulationQuery>((ref, query) async {
+      try {
+        return await ref
+            .watch(shrimpHealthRepositoryProvider)
+            .getAvailablePopulation(query.seasonId, query.at);
+      } on SessionExpiredException {
+        if (ref.mounted) {
+          await ref.read(authControllerProvider.notifier).expireSession();
+        }
+        rethrow;
+      }
+    }, retry: (retryCount, error) => null);
+
 /// State filter for tab selection: 'all', 'valid', 'voided'
 final shrimpHealthFilterTabProvider =
     NotifierProvider.autoDispose<ShrimpHealthFilterTabController, String>(
@@ -40,7 +56,8 @@ final shrimpHealthListProvider = AsyncNotifierProvider.autoDispose
       ShrimpHealthListController.new,
     );
 
-final class ShrimpHealthListController extends AsyncNotifier<ShrimpHealthListResult> {
+final class ShrimpHealthListController
+    extends AsyncNotifier<ShrimpHealthListResult> {
   ShrimpHealthListController(this.seasonId);
   final String seasonId;
 
@@ -57,15 +74,17 @@ final class ShrimpHealthListController extends AsyncNotifier<ShrimpHealthListRes
 
   Future<ShrimpHealthListResult> _fetch({String? cursor}) async {
     try {
-      return await ref.read(shrimpHealthRepositoryProvider).listLogs(
-        seasonId,
-        filter: _filter,
-        healthStatus: _healthStatus,
-        from: _from,
-        to: _to,
-        cursor: cursor,
-        includeCounts: true,
-      );
+      return await ref
+          .read(shrimpHealthRepositoryProvider)
+          .listLogs(
+            seasonId,
+            filter: _filter,
+            healthStatus: _healthStatus,
+            from: _from,
+            to: _to,
+            cursor: cursor,
+            includeCounts: true,
+          );
     } on SessionExpiredException {
       await ref.read(authControllerProvider.notifier).expireSession();
       rethrow;
@@ -88,7 +107,10 @@ final class ShrimpHealthListController extends AsyncNotifier<ShrimpHealthListRes
 
   Future<void> loadMore() async {
     final current = state.asData?.value;
-    if (current == null || !current.hasNext || current.nextCursor == null || _isLoadingMore) {
+    if (current == null ||
+        !current.hasNext ||
+        current.nextCursor == null ||
+        _isLoadingMore) {
       return;
     }
 
@@ -114,63 +136,57 @@ final class ShrimpHealthListController extends AsyncNotifier<ShrimpHealthListRes
   }
 }
 
-typedef ShrimpHealthStatsQuery = ({
-  String seasonId,
-  int days,
-});
+typedef ShrimpHealthStatsQuery = ({String seasonId, int days});
 
 final shrimpHealthStatsProvider = FutureProvider.autoDispose
-    .family<ShrimpHealthStatsResult, ShrimpHealthStatsQuery>(
-      (ref, query) async {
-        final now = DateTime.now();
-        final to = now;
-        final from = now.subtract(Duration(days: query.days));
-        final granularity = query.days <= 14 ? 'day' : 'day';
+    .family<ShrimpHealthStatsResult, ShrimpHealthStatsQuery>((
+      ref,
+      query,
+    ) async {
+      final now = DateTime.now();
+      final to = now;
+      final from = now.subtract(Duration(days: query.days));
+      final granularity = query.days <= 14 ? 'day' : 'day';
 
-        try {
-          return await ref.read(shrimpHealthRepositoryProvider).getStatistics(
-            query.seasonId,
-            from: from,
-            to: to,
-            granularity: granularity,
-          );
-        } on SessionExpiredException {
-          await ref.read(authControllerProvider.notifier).expireSession();
-          rethrow;
-        }
-      },
-    );
+      try {
+        return await ref
+            .read(shrimpHealthRepositoryProvider)
+            .getStatistics(
+              query.seasonId,
+              from: from,
+              to: to,
+              granularity: granularity,
+            );
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
 
-typedef ShrimpHealthDetailQuery = ({
-  String seasonId,
-  String logId,
-});
+typedef ShrimpHealthDetailQuery = ({String seasonId, String logId});
 
 final shrimpHealthDetailProvider = FutureProvider.autoDispose
-    .family<ShrimpHealthLog, ShrimpHealthDetailQuery>(
-      (ref, query) async {
-        try {
-          return await ref.watch(shrimpHealthRepositoryProvider).getLogDetail(
-            query.seasonId,
-            query.logId,
-          );
-        } on SessionExpiredException {
-          await ref.read(authControllerProvider.notifier).expireSession();
-          rethrow;
-        }
-      },
-    );
+    .family<ShrimpHealthLog, ShrimpHealthDetailQuery>((ref, query) async {
+      try {
+        return await ref
+            .watch(shrimpHealthRepositoryProvider)
+            .getLogDetail(query.seasonId, query.logId);
+      } on SessionExpiredException {
+        await ref.read(authControllerProvider.notifier).expireSession();
+        rethrow;
+      }
+    });
 
 /// Quyền ghi nhật ký sức khỏe: chỉ dành riêng cho Kỹ thuật viên (Technician) phụ trách vụ nuôi đang ACTIVE.
 /// Chủ trại (Farm Owner) và Chuyên gia (Expert) chỉ có quyền xem (Read-only).
-final shrimpHealthCanWriteProvider = Provider.autoDispose.family<bool, String>(
-  (ref, seasonId) {
-    final role = ref.watch(authControllerProvider).value?.role;
-    // Nếu là Farm Owner hoặc bất kỳ vai trò nào không phải Technician thì không được ghi
-    if (role != null && role != AccountRole.technician) {
-      return false;
-    }
-    return ref.watch(assignedSeasonCanWriteProvider(seasonId));
-  },
-);
-
+final shrimpHealthCanWriteProvider = Provider.autoDispose.family<bool, String>((
+  ref,
+  seasonId,
+) {
+  final role = ref.watch(authControllerProvider).value?.role;
+  // Nếu là Farm Owner hoặc bất kỳ vai trò nào không phải Technician thì không được ghi
+  if (role != null && role != AccountRole.technician) {
+    return false;
+  }
+  return ref.watch(assignedSeasonCanWriteProvider(seasonId));
+});

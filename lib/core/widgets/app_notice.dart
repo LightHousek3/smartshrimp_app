@@ -65,6 +65,7 @@ abstract final class AppNoticeService {
     String? actionLabel,
     VoidCallback? onAction,
     Duration? duration,
+    int messageMaxLines = 3,
   }) {
     assert(
       actionLabel == null || onAction != null,
@@ -92,6 +93,7 @@ abstract final class AppNoticeService {
         content: AppNoticeCard(
           title: title ?? appNoticeDefaultTitle(level),
           message: message,
+          messageMaxLines: messageMaxLines,
           level: level,
           actionLabel: actionLabel,
           onActionPressed: () => onAction?.call(),
@@ -121,13 +123,18 @@ abstract final class AppNoticeService {
   static void info(BuildContext context, String message, {String? title}) =>
       show(context, message: message, title: title);
 
-  static void warning(BuildContext context, String message, {String? title}) =>
-      show(
-        context,
-        message: message,
-        title: title,
-        level: AppNoticeLevel.warning,
-      );
+  static void warning(
+    BuildContext context,
+    String message, {
+    String? title,
+    int messageMaxLines = 3,
+  }) => show(
+    context,
+    message: message,
+    title: title,
+    messageMaxLines: messageMaxLines,
+    level: AppNoticeLevel.warning,
+  );
 
   static void danger(BuildContext context, String message, {String? title}) =>
       show(
@@ -149,6 +156,7 @@ class AppNoticeCard extends StatelessWidget {
     required this.title,
     required this.message,
     required this.level,
+    this.messageMaxLines = 3,
     this.actionLabel,
     this.onActionPressed,
     super.key,
@@ -157,6 +165,7 @@ class AppNoticeCard extends StatelessWidget {
   final String title;
   final String message;
   final AppNoticeLevel level;
+  final int messageMaxLines;
   final String? actionLabel;
   final VoidCallback? onActionPressed;
 
@@ -218,7 +227,7 @@ class AppNoticeCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         message,
-                        maxLines: 3,
+                        maxLines: messageMaxLines,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: AppColors.inkSoft,

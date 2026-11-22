@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -15,6 +18,130 @@ import 'package:smartshrimp_app/features/shrimp_health/domain/repositories/shrim
 import 'package:smartshrimp_app/features/shrimp_health/presentation/widgets/shrimp_health_form_sheet.dart';
 
 void main() {
+  testWidgets(
+    'health form waits for the server baseline before allowing save',
+    (tester) async {
+      final pending = Completer<int?>();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith(
+              (ref, query) => pending.future,
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: ShrimpHealthFormSheet(
+                seasonId: 'season-1',
+                initialQuantity: 240000,
+                previousPopulation: 200000,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNull,
+      );
+      expect(find.text('200.000'), findsNothing);
+      pending.complete(105000);
+      await tester.pumpAndSettle();
+      expect(find.text('105.000'), findsOneWidget);
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNotNull,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'failed population load can retry while preserving observation notes',
+    (tester) async {
+      var attempts = 0;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith((ref, query) async {
+              if (attempts++ == 0) throw Exception('Không tải được số còn lại');
+              return 105000;
+            }),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: ShrimpHealthFormSheet(seasonId: 'season-1')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNull,
+      );
+      final note = find.widgetWithText(
+        TextFormField,
+        'Màu sắc, đường ruột, phân, vỏ...',
+      );
+      await tester.enterText(note, 'Tôm ăn tốt');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      final retry = find.text('Tải lại số tôm còn lại');
+      await tester.ensureVisible(retry);
+      await tester.pumpAndSettle();
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(find.text('105.000'), findsOneWidget);
+      expect(find.text('Tôm ăn tốt'), findsOneWidget);
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNotNull,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'known zero population stays read-only and does not fall back to initial stock',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith(
+              (ref, query) async => 0,
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: ShrimpHealthFormSheet(
+                seasonId: 'season-1',
+                initialQuantity: 240000,
+                previousPopulation: 200000,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('240.000'), findsNothing);
+      expect(find.text('200.000'), findsNothing);
+      expect(
+        tester
+            .widgetList<TextField>(find.byType(TextField))
+            .where((field) => field.readOnly && field.controller?.text == '0'),
+        hasLength(1),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '0').first,
+        '1',
+      );
+      tester.state<FormState>(find.byType(Form)).validate();
+      await tester.pumpAndSettle();
+      expect(find.text('Hao hụt vượt quá số tôm hiện có'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   final sampleLog = ShrimpHealthLog(
     id: '51210af0-318a-47ac-874d-6f29fc04b0bf',
     seasonId: 'season-1',
@@ -30,6 +157,92 @@ void main() {
     healthStatus: HealthStatus.good,
     note: 'Tôm ăn khỏe, vỏ bóng đẹp',
     createdAt: DateTime.now(),
+  );
+
+  testWidgets('server rejection preserves the health form and entered facts', (
+    tester,
+  ) async {
+    final repository = _FakeShrimpHealthRepository(
+      listResult: ShrimpHealthListResult(logs: [sampleLog]),
+      createError: const ApiException(
+        'Dữ liệu vụ nuôi vừa thay đổi',
+        statusCode: 409,
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shrimpHealthPopulationProvider.overrideWith(
+            (ref, query) async => 105000,
+          ),
+          shrimpHealthRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: ShrimpHealthFormSheet(seasonId: 'season-1')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Màu sắc, đường ruột, phân, vỏ...'),
+      'Tôm ăn tốt',
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Lưu bản ghi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lưu bản ghi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dữ liệu vụ nuôi vừa thay đổi'), findsOneWidget);
+    expect(find.text('Tôm ăn tốt'), findsOneWidget);
+    expect(find.text('105.000'), findsOneWidget);
+    expect(find.byType(ShrimpHealthFormSheet), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'save reports a population updated by the server during recording',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith(
+              (ref, query) async => 400000,
+            ),
+            shrimpHealthRepositoryProvider.overrideWithValue(
+              _FakeShrimpHealthRepository(
+                listResult: ShrimpHealthListResult(logs: [sampleLog]),
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () =>
+                      ShrimpHealthFormSheet.show(context, seasonId: 'season-1'),
+                  child: const Text('Mở form'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Mở form'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Lưu bản ghi'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lưu bản ghi'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ShrimpHealthFormSheet), findsNothing);
+      expect(
+        find.textContaining(
+          'Ước tính đàn được cập nhật theo dữ liệu mới nhất: 391.200 con.',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
   );
 
   testWidgets('Renders ShrimpHealthCard without crashing', (tester) async {
@@ -73,53 +286,105 @@ void main() {
     expect(button.onPressed, isNotNull);
   });
 
-  testWidgets('ShrimpHealthDetailSheet disables void button for past logs', (
-    tester,
-  ) async {
-    final pastLog = ShrimpHealthLog(
-      id: 'past-log-1',
-      seasonId: 'season-1',
-      recordedBy: 'user-1',
-      recordedByName: 'Nguyen Van A',
-      recordedAt: DateTime.now().subtract(const Duration(days: 2)),
-      sampleSize: 120,
-      avgWeightG: 12.4,
-      avgLengthCm: 11.2,
-      mortalityCount: 0,
-      estimatedPopulation: 391200,
-      estimatedBiomassKg: 4851,
-      healthStatus: HealthStatus.good,
-      note: 'Tôm ăn khỏe, vỏ bóng đẹp',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          assignedSeasonCanWriteProvider(
-            'season-1',
-          ).overrideWith((ref) => true),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: ShrimpHealthDetailSheet(seasonId: 'season-1', log: pastLog),
+  testWidgets(
+    'ShrimpHealthDetailSheet allows voiding past logs with a reason',
+    (tester) async {
+      final pastLog = ShrimpHealthLog(
+        id: 'past-log-1',
+        seasonId: 'season-1',
+        recordedBy: 'user-1',
+        recordedByName: 'Nguyen Van A',
+        recordedAt: DateTime.now().subtract(const Duration(days: 2)),
+        sampleSize: 120,
+        avgWeightG: 12.4,
+        avgLengthCm: 11.2,
+        mortalityCount: 0,
+        estimatedPopulation: 391200,
+        estimatedBiomassKg: 4851,
+        healthStatus: HealthStatus.good,
+        note: 'Tôm ăn khỏe, vỏ bóng đẹp',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => true),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ShrimpHealthDetailSheet(seasonId: 'season-1', log: pastLog),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    final voidButtonFinder = find.widgetWithText(
-      OutlinedButton,
-      'Hủy hiệu lực bản ghi',
-    );
-    expect(voidButtonFinder, findsOneWidget);
-    final button = tester.widget<OutlinedButton>(voidButtonFinder);
-    expect(button.onPressed, isNull);
-    expect(
-      find.text('Chỉ được hủy hiệu lực bản ghi trong ngày'),
-      findsOneWidget,
-    );
-  });
+      final voidButtonFinder = find.widgetWithText(
+        OutlinedButton,
+        'Hủy hiệu lực bản ghi',
+      );
+      expect(voidButtonFinder, findsOneWidget);
+      final button = tester.widget<OutlinedButton>(voidButtonFinder);
+      expect(button.onPressed, isNotNull);
+      expect(
+        find.text('Chỉ được hủy hiệu lực bản ghi trong ngày'),
+        findsNothing,
+      );
+      await tester.ensureVisible(voidButtonFinder);
+      await tester.tap(voidButtonFinder);
+      await tester.pumpAndSettle();
+      expect(find.text('Lý do hủy hiệu lực (bắt buộc)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'health detail page allows voiding an old log in a writable season',
+    (tester) async {
+      final old = ShrimpHealthLog(
+        id: 'old-log',
+        seasonId: 'season-1',
+        recordedBy: 'previous-technician',
+        recordedAt: DateTime.now().subtract(const Duration(days: 30)),
+        createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        healthStatus: HealthStatus.good,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => true),
+            shrimpHealthRepositoryProvider.overrideWithValue(
+              _FakeShrimpHealthRepository(
+                listResult: ShrimpHealthListResult(logs: [old]),
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            home: ShrimpHealthDetailPage(
+              seasonId: 'season-1',
+              logId: 'old-log',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final button = find.widgetWithText(OutlinedButton, 'Hủy bản ghi này');
+      expect(tester.widget<OutlinedButton>(button).onPressed, isNotNull);
+      expect(
+        find.text('Chỉ được hủy hiệu lực bản ghi trong ngày'),
+        findsNothing,
+      );
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.byType(TextFormField), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('read-only health sheet preserves observations and hides void', (
     tester,
@@ -203,6 +468,11 @@ void main() {
   testWidgets('Renders ShrimpHealthFormSheet without crashing', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          shrimpHealthPopulationProvider.overrideWith(
+            (ref, query) async => null,
+          ),
+        ],
         child: MaterialApp(
           home: Scaffold(body: ShrimpHealthFormSheet(seasonId: 'season-1')),
         ),
@@ -217,6 +487,11 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith(
+              (ref, query) async => 300000,
+            ),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: SingleChildScrollView(
@@ -235,8 +510,12 @@ void main() {
       expect(find.text('300.000'), findsOneWidget);
 
       // Verify TextField for avg weight, population and biomass are read-only
-      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
-      final readOnlyFields = textFields.where((f) => f.readOnly == true).toList();
+      final textFields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      final readOnlyFields = textFields
+          .where((f) => f.readOnly == true)
+          .toList();
       expect(readOnlyFields.length, 3); // avg weight, population & biomass
 
       // Enter mortality = 1000
@@ -266,10 +545,15 @@ void main() {
   );
 
   testWidgets(
-    'ShrimpHealthFormSheet inherits previous population for subsequent recording',
+    'ShrimpHealthFormSheet uses server population after harvest instead of stale previous population',
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            shrimpHealthPopulationProvider.overrideWith(
+              (ref, query) async => 105000,
+            ),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: SingleChildScrollView(
@@ -285,16 +569,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Check initial population is based on previousPopulation (295.000)
-      expect(find.text('295.000'), findsOneWidget);
+      // The server baseline includes the harvest; previousPopulation is stale.
+      expect(find.text('105.000'), findsOneWidget);
 
       // Enter mortality = 1000
       final mortalityField = find.widgetWithText(TextFormField, '0');
       await tester.enterText(mortalityField, '1000');
       await tester.pumpAndSettle();
 
-      // Population updates to 294.000 (295.000 - 1.000)
-      expect(find.text('294.000'), findsOneWidget);
+      // Apply only the mortality from this new observation.
+      expect(find.text('104.000'), findsOneWidget);
     },
   );
 
@@ -697,9 +981,14 @@ void main() {
 }
 
 class _FakeShrimpHealthRepository implements ShrimpHealthRepository {
-  _FakeShrimpHealthRepository({required this.listResult});
+  _FakeShrimpHealthRepository({required this.listResult, this.createError});
 
   final ShrimpHealthListResult listResult;
+  final Object? createError;
+
+  @override
+  Future<int?> getAvailablePopulation(String seasonId, DateTime at) async =>
+      null;
 
   @override
   Future<ShrimpHealthListResult> listLogs(
@@ -730,7 +1019,10 @@ class _FakeShrimpHealthRepository implements ShrimpHealthRepository {
     HealthStatus healthStatus = HealthStatus.good,
     String? note,
     String? idempotencyKey,
-  }) async => listResult.logs.first;
+  }) async {
+    if (createError != null) throw createError!;
+    return listResult.logs.first;
+  }
 
   @override
   Future<ShrimpHealthLog> voidLog(

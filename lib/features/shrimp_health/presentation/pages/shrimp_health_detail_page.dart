@@ -549,99 +549,54 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
 
                           // Void Button (if not voided)
                           if (canWrite && !log.isVoided) ...<Widget>[
-                            Builder(
-                              builder: (_) {
-                                final now = DateTime.now();
-                                final local = log.recordedAt.toLocal();
-                                final isRecordedToday =
-                                    local.year == now.year &&
-                                    local.month == now.month &&
-                                    local.day == now.day;
-
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: <Widget>[
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 48,
-                                      child: OutlinedButton.icon(
-                                        onPressed: isRecordedToday
-                                            ? () {
-                                                VoidShrimpHealthSheet.show(
-                                                  context,
-                                                  seasonId: seasonId,
-                                                  logId: logId,
-                                                  onVoided: () {
-                                                    ref.invalidate(
-                                                      shrimpHealthDetailProvider(
-                                                        (
-                                                          seasonId: seasonId,
-                                                          logId: logId,
-                                                        ),
-                                                      ),
-                                                    );
-                                                    ref
-                                                        .read(
-                                                          shrimpHealthListProvider(
-                                                            seasonId,
-                                                          ).notifier,
-                                                        )
-                                                        .refresh();
-                                                  },
-                                                );
-                                              }
-                                            : null,
-                                        icon: Icon(
-                                          Icons.cancel_outlined,
-                                          color: isRecordedToday
-                                              ? const Color(0xFFDC2626)
-                                              : const Color(0xFF94A3B8),
-                                          size: 18,
-                                        ),
-                                        label: Text(
-                                          'Hủy bản ghi này',
-                                          style: TextStyle(
-                                            color: isRecordedToday
-                                                ? const Color(0xFFDC2626)
-                                                : const Color(0xFF94A3B8),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          disabledForegroundColor: const Color(
-                                            0xFF94A3B8,
-                                          ),
-                                          side: BorderSide(
-                                            color: isRecordedToday
-                                                ? const Color(0xFFFCA5A5)
-                                                : const Color(0xFFE2E8F0),
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    if (!isRecordedToday) ...<Widget>[
-                                      const SizedBox(height: 6),
-                                      const Center(
-                                        child: Text(
-                                          'Chỉ được hủy hiệu lực bản ghi trong ngày',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF94A3B8),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                );
-                              },
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  VoidShrimpHealthSheet.show(
+                                    context,
+                                    seasonId: seasonId,
+                                    logId: logId,
+                                    onVoided: () {
+                                      ref.invalidate(
+                                        shrimpHealthDetailProvider((
+                                          seasonId: seasonId,
+                                          logId: logId,
+                                        )),
+                                      );
+                                      ref
+                                          .read(
+                                            shrimpHealthListProvider(
+                                              seasonId,
+                                            ).notifier,
+                                          )
+                                          .refresh();
+                                    },
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.cancel_outlined,
+                                  color: Color(0xFFDC2626),
+                                  size: 18,
+                                ),
+                                label: const Text(
+                                  'Hủy bản ghi này',
+                                  style: TextStyle(
+                                    color: Color(0xFFDC2626),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: Color(0xFFFCA5A5),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 30),
                           ],
