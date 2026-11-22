@@ -155,11 +155,11 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       }
     }
 
-    // size = count / weight < 100_000_000 con/kg
+    // Mirror server limits after rounding size to two decimal places.
     if (count != null && weight != null && weight > 0) {
       final size = count.toDouble() / weight.toDouble();
       final rounded = (size * 100).round() / 100;
-      if (rounded >= 100000000 || rounded <= 0) {
+      if (rounded < 1 || rounded > 10000) {
         return 'Mật độ tôm (số lượng / sản lượng) vô lý: ${size.toStringAsFixed(0)} con/kg. Kiểm tra lại sản lượng hoặc số lượng.';
       }
     }
