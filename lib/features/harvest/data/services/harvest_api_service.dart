@@ -32,6 +32,11 @@ final class HarvestApiService implements HarvestRepository {
         totalWeightKg: (meta['totalWeightKg'] as num).toDouble(),
         totalRevenue: (meta['totalRevenue'] as num).toDouble(),
         availableQuantityCount: meta['availableQuantityCount'] as String?,
+        withdrawal: meta['withdrawal'] == null
+            ? null
+            : HarvestWithdrawal.fromJson(
+                meta['withdrawal'] as Map<String, dynamic>,
+              ),
       );
       if (page.limit < 1 ||
           page.limit > 50 ||

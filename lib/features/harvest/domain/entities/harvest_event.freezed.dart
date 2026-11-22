@@ -935,10 +935,285 @@ $HarvestSeasonCopyWith<$Res> get season {
 }
 }
 
+
+/// @nodoc
+mixin _$HarvestWithdrawal {
+
+ bool get verified; bool get unknown; bool get blocked; DateTime? get latestEndAt; String? get warning;
+/// Create a copy of HarvestWithdrawal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$HarvestWithdrawalCopyWith<HarvestWithdrawal> get copyWith => _$HarvestWithdrawalCopyWithImpl<HarvestWithdrawal>(this as HarvestWithdrawal, _$identity);
+
+  /// Serializes this HarvestWithdrawal to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestWithdrawal&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.unknown, unknown) || other.unknown == unknown)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.latestEndAt, latestEndAt) || other.latestEndAt == latestEndAt)&&(identical(other.warning, warning) || other.warning == warning));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,verified,unknown,blocked,latestEndAt,warning);
+
+@override
+String toString() {
+  return 'HarvestWithdrawal(verified: $verified, unknown: $unknown, blocked: $blocked, latestEndAt: $latestEndAt, warning: $warning)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $HarvestWithdrawalCopyWith<$Res>  {
+  factory $HarvestWithdrawalCopyWith(HarvestWithdrawal value, $Res Function(HarvestWithdrawal) _then) = _$HarvestWithdrawalCopyWithImpl;
+@useResult
+$Res call({
+ bool verified, bool unknown, bool blocked, DateTime? latestEndAt, String? warning
+});
+
+
+
+
+}
+/// @nodoc
+class _$HarvestWithdrawalCopyWithImpl<$Res>
+    implements $HarvestWithdrawalCopyWith<$Res> {
+  _$HarvestWithdrawalCopyWithImpl(this._self, this._then);
+
+  final HarvestWithdrawal _self;
+  final $Res Function(HarvestWithdrawal) _then;
+
+/// Create a copy of HarvestWithdrawal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? verified = null,Object? unknown = null,Object? blocked = null,Object? latestEndAt = freezed,Object? warning = freezed,}) {
+  return _then(_self.copyWith(
+verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as bool,unknown: null == unknown ? _self.unknown : unknown // ignore: cast_nullable_to_non_nullable
+as bool,blocked: null == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as bool,latestEndAt: freezed == latestEndAt ? _self.latestEndAt : latestEndAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,warning: freezed == warning ? _self.warning : warning // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [HarvestWithdrawal].
+extension HarvestWithdrawalPatterns on HarvestWithdrawal {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _HarvestWithdrawal value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _HarvestWithdrawal() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _HarvestWithdrawal value)  $default,){
+final _that = this;
+switch (_that) {
+case _HarvestWithdrawal():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _HarvestWithdrawal value)?  $default,){
+final _that = this;
+switch (_that) {
+case _HarvestWithdrawal() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool verified,  bool unknown,  bool blocked,  DateTime? latestEndAt,  String? warning)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _HarvestWithdrawal() when $default != null:
+return $default(_that.verified,_that.unknown,_that.blocked,_that.latestEndAt,_that.warning);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool verified,  bool unknown,  bool blocked,  DateTime? latestEndAt,  String? warning)  $default,) {final _that = this;
+switch (_that) {
+case _HarvestWithdrawal():
+return $default(_that.verified,_that.unknown,_that.blocked,_that.latestEndAt,_that.warning);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool verified,  bool unknown,  bool blocked,  DateTime? latestEndAt,  String? warning)?  $default,) {final _that = this;
+switch (_that) {
+case _HarvestWithdrawal() when $default != null:
+return $default(_that.verified,_that.unknown,_that.blocked,_that.latestEndAt,_that.warning);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _HarvestWithdrawal implements HarvestWithdrawal {
+  const _HarvestWithdrawal({required this.verified, required this.unknown, this.blocked = false, this.latestEndAt, this.warning});
+  factory _HarvestWithdrawal.fromJson(Map<String, dynamic> json) => _$HarvestWithdrawalFromJson(json);
+
+@override final  bool verified;
+@override final  bool unknown;
+@override@JsonKey() final  bool blocked;
+@override final  DateTime? latestEndAt;
+@override final  String? warning;
+
+/// Create a copy of HarvestWithdrawal
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$HarvestWithdrawalCopyWith<_HarvestWithdrawal> get copyWith => __$HarvestWithdrawalCopyWithImpl<_HarvestWithdrawal>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$HarvestWithdrawalToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestWithdrawal&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.unknown, unknown) || other.unknown == unknown)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.latestEndAt, latestEndAt) || other.latestEndAt == latestEndAt)&&(identical(other.warning, warning) || other.warning == warning));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,verified,unknown,blocked,latestEndAt,warning);
+
+@override
+String toString() {
+  return 'HarvestWithdrawal(verified: $verified, unknown: $unknown, blocked: $blocked, latestEndAt: $latestEndAt, warning: $warning)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$HarvestWithdrawalCopyWith<$Res> implements $HarvestWithdrawalCopyWith<$Res> {
+  factory _$HarvestWithdrawalCopyWith(_HarvestWithdrawal value, $Res Function(_HarvestWithdrawal) _then) = __$HarvestWithdrawalCopyWithImpl;
+@override @useResult
+$Res call({
+ bool verified, bool unknown, bool blocked, DateTime? latestEndAt, String? warning
+});
+
+
+
+
+}
+/// @nodoc
+class __$HarvestWithdrawalCopyWithImpl<$Res>
+    implements _$HarvestWithdrawalCopyWith<$Res> {
+  __$HarvestWithdrawalCopyWithImpl(this._self, this._then);
+
+  final _HarvestWithdrawal _self;
+  final $Res Function(_HarvestWithdrawal) _then;
+
+/// Create a copy of HarvestWithdrawal
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? verified = null,Object? unknown = null,Object? blocked = null,Object? latestEndAt = freezed,Object? warning = freezed,}) {
+  return _then(_HarvestWithdrawal(
+verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as bool,unknown: null == unknown ? _self.unknown : unknown // ignore: cast_nullable_to_non_nullable
+as bool,blocked: null == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as bool,latestEndAt: freezed == latestEndAt ? _self.latestEndAt : latestEndAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,warning: freezed == warning ? _self.warning : warning // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
 /// @nodoc
 mixin _$HarvestPage {
 
- List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; String? get availableQuantityCount;
+ List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; String? get availableQuantityCount; HarvestWithdrawal? get withdrawal;
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -949,16 +1224,16 @@ $HarvestPageCopyWith<HarvestPage> get copyWith => _$HarvestPageCopyWithImpl<Harv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount,withdrawal);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount, withdrawal: $withdrawal)';
 }
 
 
@@ -969,11 +1244,11 @@ abstract mixin class $HarvestPageCopyWith<$Res>  {
   factory $HarvestPageCopyWith(HarvestPage value, $Res Function(HarvestPage) _then) = _$HarvestPageCopyWithImpl;
 @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount, HarvestWithdrawal? withdrawal
 });
 
 
-
+$HarvestWithdrawalCopyWith<$Res>? get withdrawal;
 
 }
 /// @nodoc
@@ -986,7 +1261,7 @@ class _$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,Object? withdrawal = freezed,}) {
   return _then(_self.copyWith(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -996,10 +1271,23 @@ as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ign
 as String?,totalWeightKg: null == totalWeightKg ? _self.totalWeightKg : totalWeightKg // ignore: cast_nullable_to_non_nullable
 as double,totalRevenue: null == totalRevenue ? _self.totalRevenue : totalRevenue // ignore: cast_nullable_to_non_nullable
 as double,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
+as HarvestWithdrawal?,
   ));
 }
+/// Create a copy of HarvestPage
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$HarvestWithdrawalCopyWith<$Res>? get withdrawal {
+    if (_self.withdrawal == null) {
+    return null;
+  }
 
+  return $HarvestWithdrawalCopyWith<$Res>(_self.withdrawal!, (value) {
+    return _then(_self.copyWith(withdrawal: value));
+  });
+}
 }
 
 
@@ -1081,10 +1369,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal);case _:
   return orElse();
 
 }
@@ -1102,10 +1390,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal)  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage():
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1122,10 +1410,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal)?  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal);case _:
   return null;
 
 }
@@ -1137,7 +1425,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 
 class _HarvestPage implements HarvestPage {
-  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.availableQuantityCount}): _items = items;
+  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.availableQuantityCount, this.withdrawal}): _items = items;
   
 
  final  List<HarvestEvent> _items;
@@ -1154,6 +1442,7 @@ class _HarvestPage implements HarvestPage {
 @override final  double totalWeightKg;
 @override final  double totalRevenue;
 @override final  String? availableQuantityCount;
+@override final  HarvestWithdrawal? withdrawal;
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
@@ -1165,16 +1454,16 @@ _$HarvestPageCopyWith<_HarvestPage> get copyWith => __$HarvestPageCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount,withdrawal);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount, withdrawal: $withdrawal)';
 }
 
 
@@ -1185,11 +1474,11 @@ abstract mixin class _$HarvestPageCopyWith<$Res> implements $HarvestPageCopyWith
   factory _$HarvestPageCopyWith(_HarvestPage value, $Res Function(_HarvestPage) _then) = __$HarvestPageCopyWithImpl;
 @override @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount, HarvestWithdrawal? withdrawal
 });
 
 
-
+@override $HarvestWithdrawalCopyWith<$Res>? get withdrawal;
 
 }
 /// @nodoc
@@ -1202,7 +1491,7 @@ class __$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,Object? withdrawal = freezed,}) {
   return _then(_HarvestPage(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -1212,11 +1501,24 @@ as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ign
 as String?,totalWeightKg: null == totalWeightKg ? _self.totalWeightKg : totalWeightKg // ignore: cast_nullable_to_non_nullable
 as double,totalRevenue: null == totalRevenue ? _self.totalRevenue : totalRevenue // ignore: cast_nullable_to_non_nullable
 as double,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
+as HarvestWithdrawal?,
   ));
 }
 
+/// Create a copy of HarvestPage
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$HarvestWithdrawalCopyWith<$Res>? get withdrawal {
+    if (_self.withdrawal == null) {
+    return null;
+  }
 
+  return $HarvestWithdrawalCopyWith<$Res>(_self.withdrawal!, (value) {
+    return _then(_self.copyWith(withdrawal: value));
+  });
+}
 }
 
 

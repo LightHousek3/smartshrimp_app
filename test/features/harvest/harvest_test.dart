@@ -553,10 +553,10 @@ void main() {
       final oldFuture = container.read(oldProvider.future);
       final newFuture = container.read(newProvider.future);
       newer.complete(page().copyWith(availableQuantityCount: '900'));
-      expect(await newFuture, '900');
+      expect((await newFuture).availableQuantityCount, '900');
       older.complete(page().copyWith(availableQuantityCount: '1000'));
-      expect(await oldFuture, '1000');
-      expect(container.read(newProvider).value, '900');
+      expect((await oldFuture).availableQuantityCount, '1000');
+      expect(container.read(newProvider).value?.availableQuantityCount, '900');
       expect(
         repo.queries.every(
           (query) => query['limit'] == 1 && query.containsKey('populationAt'),
@@ -585,7 +585,10 @@ void main() {
       await failure;
       repo.listWait = null;
       container.invalidate(provider);
-      expect(await container.read(provider.future), '100000');
+      expect(
+        (await container.read(provider.future)).availableQuantityCount,
+        '100000',
+      );
       expect(repo.queries, hasLength(2));
     });
   }

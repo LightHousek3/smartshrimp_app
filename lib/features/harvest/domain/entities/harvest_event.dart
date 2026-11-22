@@ -91,6 +91,20 @@ abstract class HarvestEvent with _$HarvestEvent {
 }
 
 @freezed
+abstract class HarvestWithdrawal with _$HarvestWithdrawal {
+  const factory HarvestWithdrawal({
+    required bool verified,
+    required bool unknown,
+    @Default(false) bool blocked,
+    DateTime? latestEndAt,
+    String? warning,
+  }) = _HarvestWithdrawal;
+
+  factory HarvestWithdrawal.fromJson(Map<String, dynamic> json) =>
+      _$HarvestWithdrawalFromJson(json);
+}
+
+@freezed
 abstract class HarvestPage with _$HarvestPage {
   const factory HarvestPage({
     required List<HarvestEvent> items,
@@ -101,6 +115,7 @@ abstract class HarvestPage with _$HarvestPage {
     required double totalWeightKg,
     required double totalRevenue,
     String? availableQuantityCount,
+    HarvestWithdrawal? withdrawal,
   }) = _HarvestPage;
 }
 

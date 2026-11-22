@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/harvest/domain/harvest_policy.dart';
+import 'package:smartshrimp_app/features/harvest/domain/entities/harvest_event.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/view_models/harvest_controller.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/widgets/harvest_ui.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -114,6 +115,41 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   String? _validateTime(AquacultureSeason season) =>
       validateHarvestTime(_time, season.stockingDate);
 
+  Widget _withdrawalStatus(HarvestWithdrawal state) {
+    final AppNoticeLevel level;
+    final String message;
+    if (!state.verified) {
+      level = AppNoticeLevel.warning;
+      message =
+          state.warning ??
+          'Chưa đủ dữ liệu xác nhận thời gian ngừng thuốc. Vui lòng kiểm tra lịch sử dùng vật tư trước khi thu hoạch.';
+    } else if (state.unknown) {
+      level = AppNoticeLevel.danger;
+      message =
+          'Thiếu dữ liệu ngừng thuốc bắt buộc — lần thu này sẽ không ghi được. Kiểm tra lại snapshot trước khi thu.';
+    } else if (state.blocked) {
+      level = AppNoticeLevel.danger;
+      final end = state.latestEndAt?.toUtc().add(const Duration(hours: 7));
+      String two(int value) => value.toString().padLeft(2, '0');
+      final date = end == null
+          ? 'chưa xác định'
+          : '${two(end.hour)}:${two(end.minute)} ${two(end.day)}/${two(end.month)}/${end.year} (giờ VN)';
+      message = 'Chưa đủ thời gian ngừng thuốc tới $date.';
+    } else {
+      level = AppNoticeLevel.success;
+      message = 'Đã đủ thời gian ngừng thuốc.';
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: AppNoticeCard(
+        key: const ValueKey('harvest-withdrawal-status'),
+        title: 'Thời gian ngừng thuốc',
+        message: message,
+        level: level,
+      ),
+    );
+  }
+
   void _syncRemaining(BigInt? available) {
     if (_remainingEdited) return;
     final count = BigInt.tryParse(_fields['count']!.text.trim());
@@ -178,7 +214,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           description: message,
           level: AppNoticeLevel.danger,
           content: Text(
-            'Hiện có: ${ref.read(harvestPopulationProvider(_populationQuery)).value ?? 'Chưa xác định'} con\n'
+            'Hiện có: ${ref.read(harvestPopulationProvider(_populationQuery)).value?.availableQuantityCount ?? 'Chưa xác định'} con\n'
             'Số lượng thu hoạch: ${_fields['count']!.text.isEmpty ? 'Chưa nhập' : _fields['count']!.text} con\n'
             'Số lượng còn lại: ${_final
                 ? '0'
@@ -414,7 +450,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     final populationProvider = harvestPopulationProvider(_populationQuery);
     final populationState = ref.watch(populationProvider);
     ref.listen(populationProvider, (_, next) {
-      final raw = next.isLoading || next.hasError ? null : next.value;
+      final raw = next.isLoading || next.hasError
+          ? null
+          : next.value?.availableQuantityCount;
       _syncRemaining(raw == null ? null : BigInt.parse(raw));
     });
     final pendingState = ref.watch(pendingHarvestProvider(widget.seasonId));
@@ -490,8 +528,15 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         data: (season) {
           final raw = populationState.isLoading || populationState.hasError
               ? null
-              : populationState.value;
+              : populationState.value?.availableQuantityCount;
           final available = raw == null ? null : BigInt.parse(raw);
+          final withdrawal =
+              populationState.isLoading || populationState.hasError
+              ? null
+              : populationState.value?.withdrawal;
+          final withdrawalBlocked =
+              withdrawal?.verified == true &&
+              (withdrawal!.unknown || withdrawal.blocked);
           final warning = earlyHarvestWarning(season, _time);
 
           return HarvestScaffold(
@@ -673,6 +718,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                             key: const ValueKey('harvest-available-count'),
                           ),
                         ),
+                      if (withdrawal != null) _withdrawalStatus(withdrawal),
                       _field(
                         'weight',
                         'Sản lượng (kg) *',
@@ -815,7 +861,8 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         onPressed:
                             busy ||
                                 populationState.isLoading ||
-                                populationState.hasError
+                                populationState.hasError ||
+                                withdrawalBlocked
                             ? null
                             : () => _submit(season, available: available),
                       ),
