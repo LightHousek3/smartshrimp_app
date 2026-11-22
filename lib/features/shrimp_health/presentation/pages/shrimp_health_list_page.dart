@@ -407,10 +407,19 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                           )
                           .value
                           ?.initialQuantity;
+                      final logs = listAsync.value?.logs;
+                      final previousPopulation = logs
+                          ?.where(
+                            (l) => !l.isVoided && l.estimatedPopulation != null,
+                          )
+                          .firstOrNull
+                          ?.estimatedPopulation;
+
                       ShrimpHealthFormSheet.show(
                         context,
                         seasonId: widget.seasonId,
                         initialQuantity: initialQuantity,
+                        previousPopulation: previousPopulation,
                         onCreated: () {
                           ref
                               .read(
@@ -449,11 +458,13 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                     final counts = result.counts;
                     final now = DateTime.now();
                     final hasLogToday = result.logs.any(
-                      (l) =>
-                          !l.isVoided &&
-                          l.recordedAt.year == now.year &&
-                          l.recordedAt.month == now.month &&
-                          l.recordedAt.day == now.day,
+                      (l) {
+                        final local = l.recordedAt.toLocal();
+                        return !l.isVoided &&
+                            local.year == now.year &&
+                            local.month == now.month &&
+                            local.day == now.day;
+                      },
                     );
                     final showMissingToday = canWrite && !hasLogToday;
 
