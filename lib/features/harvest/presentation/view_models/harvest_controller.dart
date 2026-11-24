@@ -151,7 +151,11 @@ final harvestListProvider = AsyncNotifierProvider.autoDispose
 // Keep historical estimates separate from the current list and its pagination.
 final harvestPopulationProvider = FutureProvider.autoDispose
     .family<
-      ({String? availableQuantityCount, HarvestWithdrawal? withdrawal}),
+      ({
+        String? availableQuantityCount,
+        HarvestWithdrawal? withdrawal,
+        bool finalReasonRequired,
+      }),
       ({String seasonId, DateTime? at})
     >((ref, query) {
       return _authenticated(ref, () async {
@@ -165,6 +169,7 @@ final harvestPopulationProvider = FutureProvider.autoDispose
         return (
           availableQuantityCount: page.availableQuantityCount,
           withdrawal: page.withdrawal,
+          finalReasonRequired: page.finalReasonRequired,
         );
       });
     }, retry: (retryCount, error) => null);

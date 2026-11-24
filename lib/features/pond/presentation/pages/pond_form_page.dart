@@ -330,23 +330,50 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                       const SizedBox(height: 18),
                       SizedBox(
                         height: 50,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1976D2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(13),
-                            ),
-                          ),
-                          onPressed: loading || !_hasChanges ? null : _submit,
-                          child: loading
-                              ? const SizedBox.square(
-                                  dimension: 19,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: loading || !_hasChanges
+                                ? null
+                                : const LinearGradient(
+                                    colors: <Color>[
+                                      AppColors.oceanLight,
+                                      AppColors.tealLight,
+                                    ],
                                   ),
-                                )
-                              : Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                            color: loading || !_hasChanges
+                                ? AppColors.line
+                                : null,
+                            borderRadius: BorderRadius.circular(13),
+                            boxShadow: loading || !_hasChanges
+                                ? null
+                                : const <BoxShadow>[
+                                    BoxShadow(
+                                      color: Color(0x3377A1D3),
+                                      blurRadius: 13,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                          ),
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              disabledBackgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            onPressed: loading || !_hasChanges ? null : _submit,
+                            child: loading
+                                ? const SizedBox.square(
+                                    dimension: 19,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                          ),
                         ),
                       ),
                     ],

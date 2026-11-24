@@ -10,12 +10,14 @@ import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_circle_button.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/domain/season_rules.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_ui.dart';
+import 'package:smartshrimp_app/features/season/presentation/widgets/season_progress.dart';
 import 'package:smartshrimp_app/features/season/presentation/widgets/season_material_cost_card.dart';
 
 class SeasonDetailPage extends ConsumerWidget {
@@ -109,6 +111,15 @@ class _SeasonDetailContent extends ConsumerWidget {
             sliver: SliverList.list(
               children: <Widget>[
                 _overview(),
+                const SizedBox(height: 16),
+                SeasonSectionCard(
+                  child: SeasonProgress(
+                    status: season.status,
+                    stockingDate: season.stockingDate,
+                    expectedEndDate: season.expectedEndDate,
+                    dayOfCulture: season.dayOfCulture,
+                  ),
+                ),
                 if (season.status == SeasonStatus.active) ...<Widget>[
                   const SizedBox(height: 16),
                   _historyShortcuts(context),
@@ -301,7 +312,7 @@ class _SeasonDetailContent extends ConsumerWidget {
       const SizedBox(width: 8),
       Expanded(
         child: _HistoryShortcut(
-          icon: Icons.agriculture_rounded,
+          svgIcon: AppSvgIconName.harvest,
           label: 'Thu hoạch',
           background: const Color(0xFFE2F6F3),
           foreground: const Color(0xFF0F9B8E),
@@ -316,7 +327,7 @@ class _SeasonDetailContent extends ConsumerWidget {
   );
 
   Widget _harvestShortcut(BuildContext context) => _HistoryShortcut(
-    icon: Icons.agriculture_rounded,
+    svgIcon: AppSvgIconName.harvest,
     label: 'Lịch sử thu hoạch',
     background: const Color(0xFFE2F6F3),
     foreground: const Color(0xFF0F9B8E),
@@ -333,9 +344,7 @@ class _SeasonDetailContent extends ConsumerWidget {
       iconBackground: hasActive
           ? const Color(0xFFFBE6EA)
           : const Color(0xFFEEF1F6),
-      iconForeground: hasActive
-          ? AppColors.error
-          : const Color(0xFF64748B),
+      iconForeground: hasActive ? AppColors.error : const Color(0xFF64748B),
       title: 'Ca bệnh',
       subtitle: 'Theo dõi chẩn đoán và diễn tiến xử lý',
       badges: <Widget>[
@@ -441,7 +450,8 @@ class _SeasonDetailContent extends ConsumerWidget {
   }
 
   Widget _protocol(BuildContext context) {
-    final prodCount = season.productionProtocolsCount ??
+    final prodCount =
+        season.productionProtocolsCount ??
         (season.approvedProductionProtocol != null ? 1 : 0);
     final treatCount = season.treatmentProtocolsCount ?? 0;
     return _FeatureCard(
@@ -1025,14 +1035,16 @@ class _PersonRow extends StatelessWidget {
 
 class _HistoryShortcut extends StatelessWidget {
   const _HistoryShortcut({
-    required this.icon,
+    this.icon,
+    this.svgIcon,
     required this.label,
     required this.background,
     required this.foreground,
     required this.onTap,
-  });
+  }) : assert((icon == null) != (svgIcon == null));
 
-  final IconData icon;
+  final IconData? icon;
+  final AppSvgIconName? svgIcon;
   final String label;
   final Color background;
   final Color foreground;
@@ -1060,7 +1072,11 @@ class _HistoryShortcut extends StatelessWidget {
                 color: background,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: foreground, size: 18),
+              child: Center(
+                child: svgIcon != null
+                    ? AppSvgIcon(svgIcon!, color: foreground, size: 18)
+                    : Icon(icon, color: foreground, size: 18),
+              ),
             ),
             const SizedBox(height: 8),
             Text(

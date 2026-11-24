@@ -90,7 +90,7 @@ class _RagConversationsPageState extends ConsumerState<RagConversationsPage> {
                           const Padding(
                             padding: EdgeInsets.only(bottom: 20),
                             child: Text(
-                              'Vụ nuôi đã kết thúc. Bạn vẫn có thể xem hội thoại và đánh giá câu trả lời.',
+                              'Vụ nuôi đã kết thúc. Bạn chỉ có thể xem lại hội thoại.',
                             ),
                           )
                         else

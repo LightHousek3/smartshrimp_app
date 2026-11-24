@@ -9,6 +9,7 @@ enum AppSvgIconName {
   farm,
   pond,
   shrimp,
+  harvest,
   shrimpFeed,
   tasks,
   notifications,
