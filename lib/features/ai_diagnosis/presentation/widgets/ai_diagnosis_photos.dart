@@ -24,22 +24,27 @@ class AiNetworkPhoto extends StatelessWidget {
     loadingBuilder: (_, child, progress) => progress == null
         ? child
         : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-    errorBuilder: (_, _, _) => Center(
-      child: TextButton(
-        onPressed: onRetry,
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.broken_image_outlined, size: 20),
-            SizedBox(height: 4),
-            Text(
-              'Tải lại ảnh',
-              style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 10),
+    errorBuilder: (_, _, _) => onRetry == null
+        ? const Center(child: Icon(Icons.broken_image_outlined, size: 20))
+        : Center(
+            child: TextButton(
+              onPressed: onRetry,
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.broken_image_outlined, size: 20),
+                  SizedBox(height: 4),
+                  Text(
+                    'Tải lại ảnh',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-    ),
+          ),
   );
 }
 

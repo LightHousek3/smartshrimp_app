@@ -11,6 +11,7 @@ import '../../domain/entities/owner_disease_case.dart';
 import '../view_models/owner_disease_case_controller.dart';
 import '../widgets/disease_case_detail_sections.dart';
 import '../widgets/disease_case_ui.dart';
+import '../widgets/case_ai_assessment_card.dart';
 import '../widgets/case_care_notice.dart';
 
 /// Display the server-provided case timeline and submitted treatment versions for the Owner.
@@ -34,7 +35,7 @@ class DiseaseCaseDetailPage extends ConsumerWidget {
         await AsyncValue.guard(() => ref.refresh(provider.future));
       },
       slivers: state.when(
-        skipLoadingOnRefresh: false,
+        skipError: detail != null,
         loading: () => const [
           SliverFillRemaining(
             hasScrollBody: false,
@@ -63,10 +64,17 @@ class DiseaseCaseDetailPage extends ConsumerWidget {
                 _CaseSummary(detail: detail),
                 const SizedBox(height: 16),
                 _CaseResponsibilities(detail: detail),
-                if (detail.snapshot case final snapshot?) ...[
+                if (detail.aiAssessment != null ||
+                    detail.card.aiDiagnosis != null) ...[
                   const SizedBox(height: 16),
-                  CaseOpeningSnapshot(snapshot: snapshot),
+                  CaseAiAssessmentCard(
+                    caseId: caseId,
+                    assessment: detail.aiAssessment,
+                    legacyLabel: detail.card.aiDiagnosis,
+                  ),
                 ],
+                const SizedBox(height: 16),
+                CaseOpeningSnapshot(snapshot: detail.snapshot),
                 if (detail.attachments.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   CaseEvidence(attachments: detail.attachments),
@@ -153,39 +161,6 @@ class _CaseSummary extends StatelessWidget {
               ],
             ),
           ),
-          if (card.aiDiagnosis case final diagnosis?) ...[
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: casePurple.background,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFEDE9FE)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'CHẨN ĐOÁN AI',
-                    style: caseMetadataStyle.copyWith(
-                      color: casePurple.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    diagnosis,
-                    style: const TextStyle(
-                      color: Color(0xFF7000F5),
-                      fontSize: 12,
-                      height: 1.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
           if (conclusion != null &&
               conclusion.trim().isNotEmpty &&
               !hasResolutionResponse) ...[

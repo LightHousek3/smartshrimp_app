@@ -24,7 +24,7 @@ class WaterParamTiles extends StatelessWidget {
     super.key,
   });
 
-  final WaterLog log;
+  final WaterMeasurements log;
   final WaterLogMetadata? metadata;
   final bool showThresholds;
   final bool boxed;
@@ -35,39 +35,45 @@ class WaterParamTiles extends StatelessWidget {
   Widget build(BuildContext context) {
     final params = includeH2s ? waterLogFormParams : waterLogCardParams;
     if (boxed) {
-      return Column(
-        children: <Widget>[
-          for (var row = 0; row < 2; row++) ...<Widget>[
-            if (row > 0) const SizedBox(height: 8),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  for (var column = 0; column < 4; column++) ...<Widget>[
-                    if (column > 0) const SizedBox(width: 8),
-                    Expanded(
-                      child: row * 4 + column < params.length
-                          ? _BoxedParamTile(
-                              log: log,
-                              param: params[row * 4 + column],
-                              showThresholds: showThresholds,
-                              metric: metadata?.metrics
-                                  .where(
-                                    (metric) =>
-                                        metric.field ==
-                                        params[row * 4 + column].field,
-                                  )
-                                  .firstOrNull,
-                              roomy: roomy,
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 8.0;
+          final minWidth = MediaQuery.textScalerOf(context).scale(64);
+          final columns = ((constraints.maxWidth + gap) / (minWidth + gap))
+              .floor()
+              .clamp(1, 4);
+          return Column(
+            spacing: gap,
+            children: [
+              for (var start = 0; start < params.length; start += columns)
+                IntrinsicHeight(
+                  child: Row(
+                    spacing: gap,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var index = start; index < start + columns; index++)
+                        Expanded(
+                          child: index < params.length
+                              ? _BoxedParamTile(
+                                  log: log,
+                                  param: params[index],
+                                  showThresholds: showThresholds,
+                                  metric: metadata?.metrics
+                                      .where(
+                                        (metric) =>
+                                            metric.field == params[index].field,
+                                      )
+                                      .firstOrNull,
+                                  roomy: roomy,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+        },
       );
     }
     final first = waterLogCardParams.take(4).toList(growable: false);
@@ -91,7 +97,7 @@ class _BoxedParamTile extends StatelessWidget {
     this.roomy = false,
   });
 
-  final WaterLog log;
+  final WaterMeasurements log;
   final WaterLogParam param;
   final bool showThresholds;
   final WaterMetricMetadata? metric;
@@ -177,7 +183,7 @@ class _BoxedParamTile extends StatelessWidget {
 class _TileRow extends StatelessWidget {
   const _TileRow({required this.log, required this.params});
 
-  final WaterLog log;
+  final WaterMeasurements log;
   final List<WaterLogParam> params;
 
   @override
@@ -199,7 +205,7 @@ class _TileRow extends StatelessWidget {
 class _ParamTile extends StatelessWidget {
   const _ParamTile({required this.log, required this.param});
 
-  final WaterLog log;
+  final WaterMeasurements log;
   final WaterLogParam param;
 
   @override

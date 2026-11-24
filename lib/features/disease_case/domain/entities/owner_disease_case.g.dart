@@ -132,6 +132,12 @@ _DiseaseCaseDetail _$DiseaseCaseDetailFromJson(
           ? null
           : DiseaseCaseSnapshot.fromJson(v as Map<String, dynamic>),
     ),
+    aiAssessment: $checkedConvert(
+      'aiAssessment',
+      (v) => v == null
+          ? null
+          : DiseaseCaseAiAssessment.fromJson(v as Map<String, dynamic>),
+    ),
     resolutionSummary: $checkedConvert(
       'resolutionSummary',
       (v) => v as String?,
@@ -157,44 +163,65 @@ Map<String, dynamic> _$DiseaseCaseDetailToJson(_DiseaseCaseDetail instance) =>
       'protocols': instance.protocols,
       'timeline': instance.timeline,
       'snapshot': instance.snapshot,
+      'aiAssessment': instance.aiAssessment,
       'resolutionSummary': instance.resolutionSummary,
       'productionPaused': instance.productionPaused,
     };
 
-_DiseaseCaseSnapshot _$DiseaseCaseSnapshotFromJson(Map<String, dynamic> json) =>
-    $checkedCreate('_DiseaseCaseSnapshot', json, ($checkedConvert) {
-      final val = _DiseaseCaseSnapshot(
-        exceededWaterMetrics: $checkedConvert(
-          'exceededWaterMetrics',
-          (v) => (v as List<dynamic>).map((e) => e as String).toList(),
-        ),
-        capturedAt: $checkedConvert(
-          'capturedAt',
-          (v) => v == null ? null : DateTime.parse(v as String),
-        ),
-        healthStatus: $checkedConvert(
-          'healthStatus',
-          (v) => $enumDecodeNullable(
-            _$OpeningHealthStatusEnumMap,
-            v,
-            unknownValue: JsonKey.nullForUndefinedEnumValue,
-          ),
-        ),
-        note: $checkedConvert('note', (v) => v as String?),
-        avgWeightG: $checkedConvert('avgWeightG', (v) => v as num?),
-        mortalityCount: $checkedConvert('mortalityCount', (v) => v as num?),
-        ph: $checkedConvert('ph', (v) => v as num?),
-        no2MgL: $checkedConvert('no2MgL', (v) => v as num?),
-        nh3MgL: $checkedConvert('nh3MgL', (v) => v as num?),
-      );
-      return val;
-    });
+_DiseaseCaseSnapshot _$DiseaseCaseSnapshotFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_DiseaseCaseSnapshot', json, ($checkedConvert) {
+  final val = _DiseaseCaseSnapshot(
+    exceededWaterMetrics: $checkedConvert(
+      'exceededWaterMetrics',
+      (v) => (v as List<dynamic>).map((e) => e as String).toList(),
+    ),
+    capturedAt: $checkedConvert(
+      'capturedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    healthRecordedAt: $checkedConvert(
+      'healthRecordedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    healthStatus: $checkedConvert(
+      'healthStatus',
+      (v) => $enumDecodeNullable(
+        _$OpeningHealthStatusEnumMap,
+        v,
+        unknownValue: JsonKey.nullForUndefinedEnumValue,
+      ),
+    ),
+    note: $checkedConvert('note', (v) => v as String?),
+    avgWeightG: $checkedConvert('avgWeightG', (v) => v as num?),
+    mortalityCount: $checkedConvert('mortalityCount', (v) => v as num?),
+    ph: $checkedConvert('ph', (v) => v as num?),
+    no2MgL: $checkedConvert('no2MgL', (v) => v as num?),
+    nh3MgL: $checkedConvert('nh3MgL', (v) => v as num?),
+    temperatureC: $checkedConvert('temperatureC', (v) => v as num?),
+    dissolvedOxygenMgL: $checkedConvert('dissolvedOxygenMgL', (v) => v as num?),
+    salinityPpt: $checkedConvert('salinityPpt', (v) => v as num?),
+    alkalinityMgLCaCO3: $checkedConvert('alkalinityMgLCaCO3', (v) => v as num?),
+    h2sMgL: $checkedConvert('h2sMgL', (v) => v as num?),
+    waterRecordedAt: $checkedConvert(
+      'waterRecordedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    waterRecordedByName: $checkedConvert(
+      'waterRecordedByName',
+      (v) => v as String?,
+    ),
+    waterNote: $checkedConvert('waterNote', (v) => v as String?),
+  );
+  return val;
+});
 
 Map<String, dynamic> _$DiseaseCaseSnapshotToJson(
   _DiseaseCaseSnapshot instance,
 ) => <String, dynamic>{
   'exceededWaterMetrics': instance.exceededWaterMetrics,
   'capturedAt': instance.capturedAt?.toIso8601String(),
+  'healthRecordedAt': instance.healthRecordedAt?.toIso8601String(),
   'healthStatus': _$OpeningHealthStatusEnumMap[instance.healthStatus],
   'note': instance.note,
   'avgWeightG': instance.avgWeightG,
@@ -202,6 +229,14 @@ Map<String, dynamic> _$DiseaseCaseSnapshotToJson(
   'ph': instance.ph,
   'no2MgL': instance.no2MgL,
   'nh3MgL': instance.nh3MgL,
+  'temperatureC': instance.temperatureC,
+  'dissolvedOxygenMgL': instance.dissolvedOxygenMgL,
+  'salinityPpt': instance.salinityPpt,
+  'alkalinityMgLCaCO3': instance.alkalinityMgLCaCO3,
+  'h2sMgL': instance.h2sMgL,
+  'waterRecordedAt': instance.waterRecordedAt?.toIso8601String(),
+  'waterRecordedByName': instance.waterRecordedByName,
+  'waterNote': instance.waterNote,
 };
 
 const _$OpeningHealthStatusEnumMap = {
@@ -209,6 +244,61 @@ const _$OpeningHealthStatusEnumMap = {
   OpeningHealthStatus.good: 'GOOD',
   OpeningHealthStatus.warning: 'WARNING',
   OpeningHealthStatus.critical: 'CRITICAL',
+};
+
+_DiseaseCaseAiAssessment _$DiseaseCaseAiAssessmentFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_DiseaseCaseAiAssessment', json, ($checkedConvert) {
+  final val = _DiseaseCaseAiAssessment(
+    predictedLabel: $checkedConvert('predictedLabel', (v) => v as String?),
+    recognitionStatus: $checkedConvert(
+      'recognitionStatus',
+      (v) => $enumDecodeNullable(
+        _$AiRecognitionStatusEnumMap,
+        v,
+        unknownValue: AiRecognitionStatus.unknown,
+      ),
+    ),
+    confidence: $checkedConvert('confidence', (v) => _probability(v)),
+    recommendation: $checkedConvert('recommendation', (v) => v as String?),
+    createdAt: $checkedConvert(
+      'createdAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    processingTimeMs: $checkedConvert(
+      'processingTimeMs',
+      (v) => (v as num?)?.toInt(),
+    ),
+    imageUrls: $checkedConvert(
+      'imageUrls',
+      (v) =>
+          (v as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+    ),
+    imageUrlsExpireAt: $checkedConvert(
+      'imageUrlsExpireAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+  );
+  return val;
+});
+
+Map<String, dynamic> _$DiseaseCaseAiAssessmentToJson(
+  _DiseaseCaseAiAssessment instance,
+) => <String, dynamic>{
+  'predictedLabel': instance.predictedLabel,
+  'recognitionStatus': _$AiRecognitionStatusEnumMap[instance.recognitionStatus],
+  'confidence': instance.confidence,
+  'recommendation': instance.recommendation,
+  'createdAt': instance.createdAt?.toIso8601String(),
+  'processingTimeMs': instance.processingTimeMs,
+  'imageUrls': instance.imageUrls,
+  'imageUrlsExpireAt': instance.imageUrlsExpireAt?.toIso8601String(),
+};
+
+const _$AiRecognitionStatusEnumMap = {
+  AiRecognitionStatus.recognized: 'RECOGNIZED',
+  AiRecognitionStatus.unrecognized: 'UNRECOGNIZED',
+  AiRecognitionStatus.unknown: 'unknown',
 };
 
 _DiseaseCaseAttachment _$DiseaseCaseAttachmentFromJson(

@@ -10,11 +10,15 @@ import 'package:smartshrimp_app/app/router/app_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/entities/owner_disease_case.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/repositories/owner_disease_case_repository.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/view_models/owner_disease_case_controller.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/widgets/disease_case_detail_sections.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/widgets/disease_case_ui.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/owner_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/home/domain/entities/owner_dashboard.dart'
     as dashboard;
@@ -66,6 +70,7 @@ DiseaseCaseDetail _detail() {
     snapshot: DiseaseCaseSnapshot(
       exceededWaterMetrics: const ['no2MgL', 'nh3MgL'],
       capturedAt: openedAt.subtract(const Duration(minutes: 10)),
+      healthRecordedAt: openedAt.subtract(const Duration(minutes: 20)),
       healthStatus: OpeningHealthStatus.warning,
       avgWeightG: 11.9,
       mortalityCount: 38,
@@ -247,7 +252,12 @@ void main() {
       expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
       expect(find.text('Trang trại'), findsOneWidget);
       expect(find.text('Mở ca: 17:20 05/09/2026'), findsOneWidget);
-      expect(find.text('CHẨN ĐOÁN AI'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Chẩn đoán AI'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text(_case.aiDiagnosis!), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -329,17 +339,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.detailIds, ['case-a3', 'case-a3']);
       expect(repository.requests, isEmpty);
-      expect(find.text('Hiện trạng khi mở ca'), findsOneWidget);
       final header = find.text('Chi tiết ca bệnh');
       final position = tester.getTopLeft(header);
-      await tester.scrollUntilVisible(
-        find.text('Chỉ dẫn chuyên gia'),
-        350,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.text('Phác đồ điều trị'), findsOneWidget);
-      expect(find.text('Diễn tiến và trách nhiệm'), findsOneWidget);
-      expect(tester.getTopLeft(header), position);
+      final scrollable = find.byType(Scrollable).first;
+      for (final label in [
+        'Hiện trạng khi mở ca',
+        'Phác đồ điều trị',
+        'Chỉ dẫn chuyên gia',
+      ]) {
+        await tester.scrollUntilVisible(
+          find.text(label),
+          150,
+          scrollable: scrollable,
+        );
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Diễn biến và trách nhiệm'), findsOneWidget);
+      expect(header.hitTestable(), findsOneWidget);
+      expect(tester.getTopLeft(header).dx, position.dx);
       expect(tester.takeException(), isNull);
     },
   );
@@ -376,11 +393,181 @@ void main() {
     final wire = jsonDecode(jsonEncode(_detail())) as Map<String, dynamic>;
     final detail = DiseaseCaseDetail.parse(wire);
     expect(detail.snapshot?.no2MgL, 1.7);
+    expect(detail.snapshot?.healthRecordedAt, DateTime.utc(2026, 9, 5, 10));
+    expect(detail.snapshot?.temperatureC, isNull);
+    expect(detail.aiAssessment, isNull);
     expect(detail.attachments.single.caption, 'Ảnh nhá có phân trắng');
     expect(detail.protocols.single.status, ProtocolStatus.pendingApproval);
     expect(detail.timeline.first, isA<DiseaseCaseStatusChange>());
     expect(detail.timeline.last, isA<DiseaseCaseResponse>());
   });
+
+  testWidgets(
+    'owner detail shows AI, all water measurements and the full technician role',
+    (tester) async {
+      final base = _detail();
+      final detail = base.copyWith(
+        aiAssessment: DiseaseCaseAiAssessment(
+          predictedLabel: 'Mang đen',
+          recognitionStatus: AiRecognitionStatus.recognized,
+          confidence: .92,
+          recommendation: 'Đối chiếu dấu hiệu với chuyên gia.',
+          createdAt: base.createdAt,
+          processingTimeMs: 1200,
+        ),
+        snapshot: base.snapshot!.copyWith(
+          temperatureC: 29.5,
+          dissolvedOxygenMgL: 5.8,
+          salinityPpt: 15,
+          alkalinityMgLCaCO3: 120,
+          h2sMgL: .002,
+          waterRecordedAt: base.createdAt.subtract(const Duration(minutes: 15)),
+          waterRecordedByName: 'Người ghi nhật ký',
+          waterNote: 'Mẫu nước lấy trước khi báo ca.',
+        ),
+        timeline: [
+          ...base.timeline,
+          DiseaseCaseEvent.response(
+            at: base.updatedAt,
+            authorName: 'Cô Thái Bảo',
+            authorRole: AccountRole.technician,
+            responseType: DiseaseCaseResponseType.monitoringResult,
+            message: 'Đã ghi nhận mẫu sáng.',
+          ),
+        ],
+      );
+      final wire = jsonDecode(jsonEncode(detail)) as Map<String, dynamic>;
+      final repository = _Cases()
+        ..detailResponse = Future.value(DiseaseCaseDetail.parse(wire));
+      await _open(tester, repository, '/disease-cases/case-a3');
+      await tester.pumpAndSettle();
+      final scrollable = find.byType(Scrollable).first;
+
+      await tester.scrollUntilVisible(
+        find.text('Độ tin cậy'),
+        120,
+        scrollable: scrollable,
+      );
+      expect(find.text('Mang đen'), findsOneWidget);
+      expect(find.text('92%'), findsOneWidget);
+      expect(find.text('Khuyến nghị từ AI'), findsOneWidget);
+      expect(find.text('Thời gian xử lý'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('H2S'),
+        120,
+        scrollable: scrollable,
+      );
+      for (final label in [
+        'Nhiệt độ',
+        'pH',
+        'DO',
+        'Độ mặn',
+        'NH3',
+        'NO2',
+        'Kiềm',
+        'H2S',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.text('2 chỉ số bất thường'), findsOneWidget);
+      expect(find.text('Sức khỏe'), findsOneWidget);
+      final healthBadge = find.widgetWithText(DiseaseCaseBadge, 'Cần chú ý');
+      final waterBadge = find.widgetWithText(
+        WaterLogStatusBadge,
+        '2 chỉ số bất thường',
+      );
+      final healthTitle = find.text('Sức khỏe');
+      final waterTitle = find.text('Nhật ký đo nước');
+      for (final (title, badge) in [
+        (healthTitle, healthBadge),
+        (waterTitle, waterBadge),
+      ]) {
+        expect(
+          tester.getCenter(badge).dy,
+          closeTo(tester.getCenter(title).dy, 1),
+        );
+        expect(
+          tester.getTopLeft(badge).dx,
+          greaterThan(tester.getTopLeft(title).dx),
+        );
+      }
+      expect(
+        tester.getTopRight(healthBadge).dx,
+        tester.getTopRight(waterBadge).dx,
+      );
+      expect(find.text('Ghi nhận lúc 17:00 05/09/2026'), findsOneWidget);
+      expect(find.text('Đo lúc 17:05 05/09/2026'), findsOneWidget);
+      expect(find.text('Người ghi nhật ký'), findsNothing);
+      expect(find.text('Chưa cập nhật tên'), findsNothing);
+      expect(find.byIcon(Icons.water_drop_outlined), findsNothing);
+      expect(find.text('Mẫu nước lấy trước khi báo ca.'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Kỹ Thuật Viên'),
+        120,
+        scrollable: scrollable,
+      );
+      expect(find.text('Đổi trạng thái'), findsNothing);
+      expect(find.text('KTV'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('opening snapshot shows only the notice without a reading', (
+    tester,
+  ) async {
+    for (final snapshot in [
+      null,
+      DiseaseCaseSnapshot(
+        capturedAt: DateTime.utc(2026, 9, 5),
+        note: 'Ghi chú của ca, chưa có nhật ký.',
+        exceededWaterMetrics: const [],
+      ),
+    ]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: CaseOpeningSnapshot(snapshot: snapshot)),
+        ),
+      );
+
+      expect(find.text('Hiện trạng khi mở ca'), findsOneWidget);
+      expect(
+        find.text('Chưa có thông tin ghi nhận khi mở ca.'),
+        findsOneWidget,
+      );
+      expect(find.text('Sức khỏe'), findsNothing);
+      expect(find.text('Nhật ký đo nước'), findsNothing);
+      expect(find.text('Ghi chú của ca, chưa có nhật ký.'), findsNothing);
+    }
+  });
+
+  testWidgets(
+    'opening snapshot shows only the available group for older cases',
+    (tester) async {
+      const healthOnly = DiseaseCaseSnapshot(
+        mortalityCount: 0,
+        exceededWaterMetrics: [],
+      );
+      const waterOnly = DiseaseCaseSnapshot(ph: 7.8, exceededWaterMetrics: []);
+      for (final (snapshot, visible, hidden) in [
+        (healthOnly, 'Sức khỏe', 'Nhật ký đo nước'),
+        (waterOnly, 'Nhật ký đo nước', 'Sức khỏe'),
+      ]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: CaseOpeningSnapshot(snapshot: snapshot)),
+          ),
+        );
+
+        expect(find.text(visible), findsOneWidget);
+        expect(find.text(hidden), findsNothing);
+        expect(find.text('Chưa lưu thời điểm ghi nhận'), findsOneWidget);
+        expect(
+          find.text('Chưa có thông tin ghi nhận khi mở ca.'),
+          findsNothing,
+        );
+      }
+    },
+  );
 }
 
 class _DashboardCases extends DashboardFixtureRepository {

@@ -41,7 +41,36 @@ String waterLogParamLabel(String field) {
   return field;
 }
 
-class WaterLog {
+/// Values and threshold flags shared by a log and an archived case snapshot.
+mixin WaterMeasurements {
+  num? get temperatureC;
+  num? get ph;
+  num? get dissolvedOxygenMgL;
+  num? get salinityPpt;
+  num? get nh3MgL;
+  num? get no2MgL;
+  num? get alkalinityMgLCaCO3;
+  num? get h2sMgL;
+  List<String> get exceededParameters;
+  bool get isVoided;
+
+  double? valueOf(String field) => (switch (field) {
+    'temperatureC' => temperatureC,
+    'ph' => ph,
+    'dissolvedOxygenMgL' => dissolvedOxygenMgL,
+    'salinityPpt' => salinityPpt,
+    'nh3MgL' => nh3MgL,
+    'no2MgL' => no2MgL,
+    'alkalinityMgLCaCO3' => alkalinityMgLCaCO3,
+    'h2sMgL' => h2sMgL,
+    _ => null,
+  })?.toDouble();
+
+  bool get hasMeasurements =>
+      waterLogFormParams.any((param) => valueOf(param.field) != null);
+}
+
+class WaterLog with WaterMeasurements {
   const WaterLog({
     required this.id,
     required this.seasonId,
@@ -71,15 +100,24 @@ class WaterLog {
   final String? recordedBy;
   final String? recordedByName;
   final DateTime recordedAt;
+  @override
   final double? temperatureC;
+  @override
   final double? ph;
+  @override
   final double? dissolvedOxygenMgL;
+  @override
   final double? salinityPpt;
+  @override
   final double? nh3MgL;
+  @override
   final double? no2MgL;
+  @override
   final double? alkalinityMgLCaCO3;
+  @override
   final double? h2sMgL;
   final String? note;
+  @override
   final bool isVoided;
   final String? voidedBy;
   final DateTime? voidedAt;
@@ -87,22 +125,11 @@ class WaterLog {
   final DateTime createdAt;
 
   /// Key camelCase các chỉ số vượt ngưỡng do backend tính sẵn.
+  @override
   final List<String> exceededParameters;
 
   /// Optional additive contract; older servers only return exceededParameters.
   final List<WaterLogExceedance> exceededParameterDetails;
-
-  double? valueOf(String field) => switch (field) {
-    'temperatureC' => temperatureC,
-    'ph' => ph,
-    'dissolvedOxygenMgL' => dissolvedOxygenMgL,
-    'salinityPpt' => salinityPpt,
-    'nh3MgL' => nh3MgL,
-    'no2MgL' => no2MgL,
-    'alkalinityMgLCaCO3' => alkalinityMgLCaCO3,
-    'h2sMgL' => h2sMgL,
-    _ => null,
-  };
 
   static WaterLog parse(Map<String, dynamic> json) {
     try {

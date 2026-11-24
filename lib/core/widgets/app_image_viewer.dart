@@ -29,6 +29,7 @@ class AppImageViewer extends StatefulWidget {
     this.titleStyle,
     this.closeIcon,
     this.footer,
+    this.footerBuilder,
     super.key,
   }) : assert(itemCount >= 0),
        assert(initialIndex >= 0);
@@ -40,6 +41,7 @@ class AppImageViewer extends StatefulWidget {
   final TextStyle? titleStyle;
   final Widget? closeIcon;
   final Widget? footer;
+  final Widget Function(int index)? footerBuilder;
 
   @override
   State<AppImageViewer> createState() => _AppImageViewerState();
@@ -121,7 +123,10 @@ class _AppImageViewerState extends State<AppImageViewer> {
                 ),
               ),
             ),
-            if (widget.footer != null) widget.footer!,
+            if (widget.itemCount > 0 && widget.footerBuilder != null)
+              widget.footerBuilder!(index)
+            else if (widget.footer != null)
+              widget.footer!,
             if (widget.itemCount > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),

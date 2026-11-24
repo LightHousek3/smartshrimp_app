@@ -23,7 +23,7 @@ String formatWaterDay(DateTime value) {
 class WaterLogStatusBadge extends StatelessWidget {
   const WaterLogStatusBadge({required this.log, super.key});
 
-  final WaterLog log;
+  final WaterMeasurements log;
 
   @override
   Widget build(BuildContext context) {

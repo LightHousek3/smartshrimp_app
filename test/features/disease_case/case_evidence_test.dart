@@ -84,15 +84,30 @@ void main() {
     (tester) async {
       const first = 'https://images.test/report.jpg?version=1';
       const second = 'https://images.test/upload/opaque-image-id';
+      const third = 'https://images.test/sample-3.jpg';
+      const fourth = 'https://images.test/sample-4.jpg';
+      const fifth = 'https://images.test/sample-5.jpg';
       await cachePhoto(tester, first, const Color(0xFF5EAFBA));
       await cachePhoto(tester, second, const Color(0xFFBBA677));
+      await cachePhoto(tester, third, Colors.teal);
+      await cachePhoto(tester, fourth, Colors.lightBlue);
+      await cachePhoto(tester, fifth, Colors.indigo);
       await openEvidence(tester, [
         attachment(first, caption: 'Ảnh tôm khi mở ca'),
         attachment(second),
+        attachment(third),
+        attachment(fourth),
+        attachment(fifth),
       ]);
-      expect(find.text('2 ảnh'), findsOneWidget);
+      expect(find.text('5 ảnh'), findsOneWidget);
       expect(find.text('Tệp đính kèm'), findsNothing);
-      expect(find.byType(Image), findsNWidgets(2));
+      expect(find.byType(Image), findsNWidgets(5));
+      final firstTop = tester.getTopLeft(find.text('Minh chứng 1')).dy;
+      expect(tester.getTopLeft(find.text('Minh chứng 3')).dy, firstTop);
+      expect(
+        tester.getTopLeft(find.text('Minh chứng 4')).dy,
+        greaterThan(firstTop),
+      );
       for (final element in find.byType(RawImage).evaluate()) {
         expect((element.widget as RawImage).image, isNotNull);
       }
@@ -103,7 +118,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('case-evidence-image-1')));
       await tester.pumpAndSettle();
       expect(find.byType(AppImageViewer), findsOneWidget);
-      expect(find.text('Ảnh 2/2'), findsOneWidget);
+      expect(find.text('Ảnh 2/5'), findsOneWidget);
       expect(
         tester
             .widget<InteractiveViewer>(find.byType(InteractiveViewer))
@@ -118,7 +133,8 @@ void main() {
         find.bySemanticsLabel(RegExp('^Xem ảnh 1 trong thư viện')),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Ảnh 1/2'), findsOneWidget);
+      expect(find.text('Ảnh 1/5'), findsOneWidget);
+      expect(find.text('Ảnh tôm khi mở ca'), findsOneWidget);
       await tester.tap(find.byTooltip('Đóng'));
       await tester.pumpAndSettle();
       expect(find.byType(AppImageViewer), findsNothing);
