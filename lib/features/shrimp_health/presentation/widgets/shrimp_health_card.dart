@@ -19,11 +19,26 @@ class ShrimpHealthCard extends StatelessWidget {
     return '$hour:$minute';
   }
 
-  static String _formatDayMonth(DateTime dt) {
+  static String _formatDateLabel(DateTime dt) {
     final local = dt.toLocal();
     final day = local.day.toString().padLeft(2, '0');
     final month = local.month.toString().padLeft(2, '0');
-    return '$day-$month';
+
+    final now = DateTime.now();
+    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+      return 'Hôm nay ($day/$month)';
+    }
+
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (local.year == yesterday.year && local.month == yesterday.month && local.day == yesterday.day) {
+      return 'Hôm qua ($day/$month)';
+    }
+
+    if (local.year == now.year) {
+      return '$day/$month';
+    }
+
+    return '$day/$month/${local.year}';
   }
 
   static String _formatNumber(num? value, {int fractionDigits = 1}) {
@@ -148,8 +163,6 @@ class ShrimpHealthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shortId = log.id.length >= 4 ? log.id.substring(0, 3).toUpperCase() : log.id;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -211,16 +224,17 @@ class ShrimpHealthCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            'H-$shortId · ${_formatDayMonth(log.recordedAt)}',
+                            _formatDateLabel(log.recordedAt),
                             style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               color: Color(0xFF6A7994),
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     _buildStatusBadge(),
                   ],
                 ),

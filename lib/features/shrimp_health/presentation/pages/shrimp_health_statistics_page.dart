@@ -389,6 +389,7 @@ class _ShrimpHealthStatisticsPageState
                     child: _GrowthLineChart(
                       series: validPoints,
                       metric: _selectedMetric,
+                      selectedDays: _selectedDays,
                     ),
                   ),
           ),
@@ -809,10 +810,6 @@ class _ShrimpHealthStatisticsPageState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            // Segmented Date Range Filter
-                            _buildDaysSegmentedFilter(),
-                            const SizedBox(height: 14),
-
                             // 2x2 KPI Metrics Grid matching Assigned Season _Metric cards
                             Row(
                               children: <Widget>[
@@ -861,7 +858,7 @@ class _ShrimpHealthStatisticsPageState
                                   label: 'SỐ HAO HỤT',
                                   value: '$mortalityInRange',
                                   unit: 'con',
-                                  hint: 'Chết trong khoảng chọn',
+                                  hint: 'Trong $_selectedDays ngày qua',
                                   icon: Icons.heart_broken_outlined,
                                   iconColor: mortalityInRange > 0
                                       ? const Color(0xFFDC2626)
@@ -871,6 +868,10 @@ class _ShrimpHealthStatisticsPageState
                               ],
                             ),
                             const SizedBox(height: 16),
+
+                            // Segmented Date Range Filter placed right above charts
+                            _buildDaysSegmentedFilter(),
+                            const SizedBox(height: 14),
 
                             // Growth Line Chart Card
                             _buildGrowthChartCard(displaySeries),
@@ -894,10 +895,15 @@ class _ShrimpHealthStatisticsPageState
 }
 
 class _GrowthLineChart extends StatelessWidget {
-  const _GrowthLineChart({required this.series, required this.metric});
+  const _GrowthLineChart({
+    required this.series,
+    required this.metric,
+    required this.selectedDays,
+  });
 
   final List<ShrimpGrowthPoint> series;
   final String metric;
+  final int selectedDays;
 
   @override
   Widget build(BuildContext context) {
@@ -938,6 +944,7 @@ class _GrowthLineChart extends StatelessWidget {
         maxVal: maxVal,
         range: range,
         isBiomass: metric == 'biomass',
+        selectedDays: selectedDays,
       ),
     );
   }
@@ -951,6 +958,7 @@ class _LineChartPainter extends CustomPainter {
     required this.maxVal,
     required this.range,
     required this.isBiomass,
+    required this.selectedDays,
   });
 
   final List<ShrimpGrowthPoint> points;
@@ -959,6 +967,7 @@ class _LineChartPainter extends CustomPainter {
   final double maxVal;
   final double range;
   final bool isBiomass;
+  final int selectedDays;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1039,18 +1048,6 @@ class _LineChartPainter extends CustomPainter {
     final areaPath = Path();
     final pointOffsets = <Offset>[];
 
-    final isSameDay =
-        points.length > 1 &&
-        points.every(
-          (p) {
-            final pLocal = p.recordedAt.toLocal();
-            final fLocal = points.first.recordedAt.toLocal();
-            return pLocal.year == fLocal.year &&
-                pLocal.month == fLocal.month &&
-                pLocal.day == fLocal.day;
-          },
-        );
-
     for (var i = 0; i < points.length; i++) {
       final x = leftPadding + (chartWidth / (points.length - 1)) * i;
       final normalized = maxVal == minVal
@@ -1076,44 +1073,76 @@ class _LineChartPainter extends CustomPainter {
     canvas.drawPath(areaPath, areaPaint);
     canvas.drawPath(path, linePaint);
 
-    // Draw Points and X-Axis labels
-    for (var i = 0; i < pointOffsets.length; i++) {
-      final offset = pointOffsets[i];
-      canvas.drawCircle(offset, 4.5, pointInnerPaint);
-      canvas.drawCircle(offset, 4.5, pointBorderPaint);
-
-      // Label below (Time if same day, otherwise DOC or Date)
-      final doc = points[i].dayOfCulture;
-      final localTime = points[i].recordedAt.toLocal();
-      final timeStr =
-          '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
-      final label = isSameDay
-          ? timeStr
-          : (doc != null ? 'D$doc' : points[i].date.substring(5));
-
-      final textSpan = TextSpan(
-        text: label,
-        style: const TextStyle(
-          color: Color(0xFF6A7994),
-          fontSize: 9.5,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(
-        canvas,
-        Offset(
-          offset.dx - (textPainter.width / 2),
-          size.height - bottomPadding + 6,
-        ),
-      );
+    // Draw Points: keep circles for 7 days view; remove for 30/90 days to avoid clutter
+    if (selectedDays <= 7) {
+      for (var i = 0; i < pointOffsets.length; i++) {
+        final offset = pointOffsets[i];
+        canvas.drawCircle(offset, 4.0, pointInnerPaint);
+        canvas.drawCircle(offset, 4.0, pointBorderPaint);
+      }
     }
+
+    // X-Axis Start & End milestone labels by calendar date
+    final now = DateTime.now();
+    final filterStartDate = now.subtract(Duration(days: selectedDays));
+    final startDateStr =
+        '${filterStartDate.day.toString().padLeft(2, '0')}/${filterStartDate.month.toString().padLeft(2, '0')}';
+
+    final lastPoint = points.last;
+    final lastLocal = lastPoint.recordedAt.toLocal();
+    final isRecordedToday = lastLocal.year == now.year &&
+        lastLocal.month == now.month &&
+        lastLocal.day == now.day;
+    final endDt = isRecordedToday ? now : lastLocal;
+    final endDateStr =
+        '${endDt.day.toString().padLeft(2, '0')}/${endDt.month.toString().padLeft(2, '0')}';
+
+    // Left milestone: Start of filter range (e.g. 17/11)
+    final startTextSpan = TextSpan(
+      text: startDateStr,
+      style: const TextStyle(
+        color: Color(0xFF6A7994),
+        fontSize: 9.5,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    final startPainter = TextPainter(
+      text: startTextSpan,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    startPainter.paint(
+      canvas,
+      Offset(
+        leftPadding,
+        size.height - bottomPadding + 6,
+      ),
+    );
+
+    // Right milestone: Today if recorded, or latest recorded date (e.g. 24/11)
+    final endTextSpan = TextSpan(
+      text: endDateStr,
+      style: const TextStyle(
+        color: Color(0xFF6A7994),
+        fontSize: 9.5,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    final endPainter = TextPainter(
+      text: endTextSpan,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    endPainter.paint(
+      canvas,
+      Offset(
+        leftPadding + chartWidth - endPainter.width,
+        size.height - bottomPadding + 6,
+      ),
+    );
   }
 
   @override
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
-      oldDelegate.points != points || oldDelegate.isBiomass != isBiomass;
+      oldDelegate.points != points ||
+      oldDelegate.isBiomass != isBiomass ||
+      oldDelegate.selectedDays != selectedDays;
 }
