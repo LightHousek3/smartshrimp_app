@@ -247,6 +247,9 @@ abstract class AquacultureSeason with _$AquacultureSeason {
     required DateTime updatedAt,
     required Pond pond,
     DateTime? stockingDate,
+    DateTime? plannedStockingDate,
+    DateTime? activatedAt,
+    String? activationDelayReason,
     DateTime? expectedEndDate,
     DateTime? actualEndDate,
     int? initialQuantity,
@@ -275,13 +278,17 @@ abstract class AquacultureSeason with _$AquacultureSeason {
       final costs = _nullableMap(json['materialCosts']);
       final protocolCounts = _nullableMap(json['protocolCounts']);
       final diseaseCaseCounts = _nullableMap(json['diseaseCaseCounts']);
-      final prodCount = _nullableInt(json['productionProtocolsCount']) ??
+      final prodCount =
+          _nullableInt(json['productionProtocolsCount']) ??
           _nullableInt(protocolCounts?['production']);
-      final treatCount = _nullableInt(json['treatmentProtocolsCount']) ??
+      final treatCount =
+          _nullableInt(json['treatmentProtocolsCount']) ??
           _nullableInt(protocolCounts?['treatment']);
-      final activeCases = _nullableInt(json['activeDiseaseCasesCount']) ??
+      final activeCases =
+          _nullableInt(json['activeDiseaseCasesCount']) ??
           _nullableInt(diseaseCaseCounts?['active']);
-      final totalCases = _nullableInt(json['totalDiseaseCasesCount']) ??
+      final totalCases =
+          _nullableInt(json['totalDiseaseCasesCount']) ??
           _nullableInt(diseaseCaseCounts?['total']);
 
       return AquacultureSeason(
@@ -290,6 +297,9 @@ abstract class AquacultureSeason with _$AquacultureSeason {
         name: _requiredString(json, 'name'),
         shrimpType: shrimpTypeFromJson(json['shrimpType']),
         stockingDate: _nullableDateOnly(json['stockingDate']),
+        plannedStockingDate: _nullableDateOnly(json['plannedStockingDate']),
+        activatedAt: _nullableDateTime(json['activatedAt']),
+        activationDelayReason: _nullableString(json['activationDelayReason']),
         expectedEndDate: _nullableDateOnly(json['expectedEndDate']),
         actualEndDate: _nullableDateOnly(json['actualEndDate']),
         initialQuantity: _nullableInt(json['initialQuantity']),

@@ -20,6 +20,7 @@ abstract interface class OperationRepository {
     String? note,
     String? varianceReason,
     DateTime? executedAt,
+    HistoricalFeedingOccurrence? historicalOccurrence,
   });
 
   Future<List<OperationExecution>> executeSchedulesBatch(

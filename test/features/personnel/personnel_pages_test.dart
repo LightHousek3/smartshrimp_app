@@ -67,7 +67,7 @@ void main() {
     expect(find.text('Nhân sự'), findsNothing);
     await tester.tap(find.text('Tài khoản'));
     await tester.pumpAndSettle();
-    expect(find.text('1 KTV · 0 Chuyên gia'), findsOneWidget);
+    expect(find.text('1 Kỹ thuật viên · 0 Chuyên gia'), findsOneWidget);
     expect(find.text('1 đang hoạt động'), findsOneWidget);
     expect(
       find.descendant(
@@ -87,7 +87,7 @@ void main() {
 
     expect(find.byType(PersonnelListPage), findsOneWidget);
     expect(find.byIcon(Icons.groups_outlined), findsOneWidget);
-    expect(find.text('KTV'), findsWidgets);
+    expect(find.text('Kỹ thuật viên'), findsWidgets);
     expect(find.text('Chuyên gia'), findsOneWidget);
     expect(find.text('Mọi trạng thái'), findsOneWidget);
     expect(

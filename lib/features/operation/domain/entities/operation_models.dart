@@ -160,6 +160,7 @@ class OperationProtocol {
 class OperationProtocolItem {
   const OperationProtocolItem({
     required this.id,
+    this.productionMealId,
     this.mealNumber,
     this.plannedTime,
     this.dueAtMinutes,
@@ -168,6 +169,7 @@ class OperationProtocolItem {
   });
 
   final String id;
+  final String? productionMealId;
   final int? mealNumber;
   final String? plannedTime;
   final int? dueAtMinutes;
@@ -177,6 +179,7 @@ class OperationProtocolItem {
   factory OperationProtocolItem.fromJson(Map<String, dynamic> json) =>
       OperationProtocolItem(
         id: json['id'] as String,
+        productionMealId: json['productionMealId'] as String?,
         mealNumber: _asNullableInt(json['mealNumber']),
         plannedTime: json['plannedTime'] as String?,
         dueAtMinutes: _asNullableInt(json['dueAtMinutes']),
@@ -233,6 +236,7 @@ class OperationExecuteBatchItem {
     this.note,
     this.varianceReason,
     this.executedAt,
+    this.historicalOccurrence,
   });
 
   final String scheduleId;
@@ -242,18 +246,26 @@ class OperationExecuteBatchItem {
   final String? note;
   final String? varianceReason;
   final DateTime? executedAt;
+  final HistoricalFeedingOccurrence? historicalOccurrence;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'scheduleId': scheduleId,
     'actualQuantity': actualQuantity,
     'idempotencyKey': idempotencyKey,
     'actualProductId': ?actualProductId,
+    if (historicalOccurrence case final occurrence?)
+      'historicalOccurrence': {
+        'seasonId': occurrence.seasonId,
+        'scheduledAt': occurrence.scheduledAt.toUtc().toIso8601String(),
+      },
     if (note != null && note!.isNotEmpty) 'note': note,
     if (varianceReason != null && varianceReason!.isNotEmpty)
       'varianceReason': varianceReason,
     if (executedAt != null) 'executedAt': executedAt!.toUtc().toIso8601String(),
   };
 }
+
+typedef HistoricalFeedingOccurrence = ({String seasonId, DateTime scheduledAt});
 
 class OperationSchedule {
   const OperationSchedule({
@@ -280,6 +292,7 @@ class OperationSchedule {
     this.pondName,
     this.availableStock,
     this.hasSufficientStock,
+    this.activatedAt,
   });
 
   final String id;
@@ -305,6 +318,7 @@ class OperationSchedule {
   final String? pondName;
   final double? availableStock;
   final bool? hasSufficientStock;
+  final DateTime? activatedAt;
 
   static const double _stockEpsilon = 1e-9;
 
@@ -334,19 +348,22 @@ class OperationSchedule {
   /// Khớp chính xác `timingComparison` ở BE (`protocolExecution.js`):
   /// lịch đang ở trạng thái `PLANNED` và đã vượt quá mốc `scheduledAt + dueAtMinutes`.
   bool isOverdueAt(DateTime now) {
+    if (activatedAt != null) return false;
     if (status != OperationStatus.planned) return false;
-    final deadline = deadlineAt;
-    return deadline != null && now.isAfter(deadline);
+    return isLateAt(now);
   }
 
   bool get isOverdue => isOverdueAt(DateTime.now());
 
+  bool isLateAt(DateTime time) => deadlineAt?.isBefore(time) ?? false;
+
+  bool requiresExecutionNote(DateTime executedAt) =>
+      activatedAt != null || isLateAt(executedAt);
+
   /// Khớp `timingComparison` ở BE: bản ghi đã thực hiện sau mốc `scheduledAt + dueAtMinutes`.
   bool get wasExecutedLate {
     final execAt = execution?.executedAt;
-    final deadline = deadlineAt;
-    if (execAt == null || deadline == null) return false;
-    return execAt.isAfter(deadline);
+    return execAt != null && isLateAt(execAt);
   }
 
   /// Chỉ cho phép ghi nhận từ đúng giờ dự kiến trở đi (đúng giờ hoặc trễ hạn),
@@ -368,7 +385,8 @@ class OperationSchedule {
     final type = protocolItem?.protocol?.protocolType?.toUpperCase();
     if (type == 'TREATMENT') return true;
     final title = protocolItem?.protocol?.title.toLowerCase();
-    if (title != null && (title.contains('điều trị') || title.contains('ca bệnh'))) {
+    if (title != null &&
+        (title.contains('điều trị') || title.contains('ca bệnh'))) {
       return true;
     }
     final reason = cancellationReason?.toLowerCase();
@@ -438,6 +456,9 @@ class OperationSchedule {
       pondName: (pond?['name'] ?? json['pondName']) as String?,
       availableStock: _asNullableDouble(json['availableStock']),
       hasSufficientStock: json['hasSufficientStock'] as bool?,
+      activatedAt: json['beforeActivation'] == true
+          ? DateTime.parse(json['activatedAt'] as String)
+          : null,
     );
   }
 }
@@ -462,6 +483,21 @@ class OperationSummary {
         cancelled: _asInt(json['cancelled']),
         total: _asInt(json['total']),
       );
+
+  factory OperationSummary.fromStatuses(Iterable<OperationStatus> statuses) {
+    final counts = <OperationStatus, int>{};
+    var total = 0;
+    for (final status in statuses) {
+      counts.update(status, (count) => count + 1, ifAbsent: () => 1);
+      total++;
+    }
+    return OperationSummary(
+      planned: counts[OperationStatus.planned] ?? 0,
+      completed: counts[OperationStatus.completed] ?? 0,
+      cancelled: counts[OperationStatus.cancelled] ?? 0,
+      total: total,
+    );
+  }
 }
 
 class OperationBanner {
@@ -485,6 +521,9 @@ class OperationListResult {
     this.seasonName,
     this.pondName,
     this.seasonStartDate,
+    this.historicalFeedingAvailable = false,
+    this.historicalSchedules = const [],
+    this.nextPage,
   });
 
   final OperationSummary summary;
@@ -493,10 +532,15 @@ class OperationListResult {
   final String? seasonName;
   final String? pondName;
   final DateTime? seasonStartDate;
+  final bool historicalFeedingAvailable;
+  final List<OperationSchedule> historicalSchedules;
+  final int? nextPage;
 
   factory OperationListResult.fromJson(Map<String, dynamic> json) {
     final season = json['season'] as Map<String, dynamic>?;
     final pond = season?['pond'] as Map<String, dynamic>?;
+    final meta = json['meta'] as Map<String, dynamic>?;
+    final page = _asInt(meta?['page'], 1);
     final rawStockingDate = season?['stockingDate'];
     final rawCreatedAt = season?['createdAt'];
     DateTime? startDate;
@@ -531,6 +575,15 @@ class OperationListResult {
       seasonName: season?['name'] as String?,
       pondName: pond?['name'] as String?,
       seasonStartDate: startDate,
+      historicalFeedingAvailable: json['historicalFeedingAvailable'] == true,
+      nextPage: page < _asInt(meta?['totalPages']) ? page + 1 : null,
+      historicalSchedules:
+          (json['historicalSchedules'] as List<dynamic>? ?? const [])
+              .map(
+                (row) =>
+                    OperationSchedule.fromJson(row as Map<String, dynamic>),
+              )
+              .toList(growable: false),
     );
   }
 
@@ -603,7 +656,6 @@ class OperationStats {
   }
 }
 
-
 class FeedingMedicineMealGroup {
   FeedingMedicineMealGroup({
     required this.key,
@@ -653,6 +705,11 @@ class FeedingMedicineMealGroup {
       final timeStr =
           '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 
+      final mealId = s.protocolItem?.productionMealId;
+      final occurrenceKey = mealId == null
+          ? null
+          : '${dateStr}_${timeStr}_$mealId';
+
       if (isTreat) {
         // === PHÁC ĐỒ ĐIỀU TRỊ ===
         // Box "Điều trị" thay vì cữ.
@@ -661,10 +718,13 @@ class FeedingMedicineMealGroup {
         for (final g in groups) {
           if (!g.isTreatment) continue;
           final gLocal = g.scheduledAt.toLocal();
-          final isSameDay = gLocal.year == local.year &&
+          final isSameDay =
+              gLocal.year == local.year &&
               gLocal.month == local.month &&
               gLocal.day == local.day;
-          if (isSameDay && g.time == timeStr) {
+          if (occurrenceKey != null
+              ? g.key == occurrenceKey
+              : isSameDay && g.time == timeStr) {
             matchedGroup = g;
             break;
           }
@@ -679,7 +739,7 @@ class FeedingMedicineMealGroup {
             matchedGroup.otherItems.add(s);
           }
         } else {
-          final groupKey = '${dateStr}_treatment_$timeStr';
+          final groupKey = occurrenceKey ?? '${dateStr}_treatment_$timeStr';
           groups.add(
             FeedingMedicineMealGroup(
               key: groupKey,
@@ -694,7 +754,8 @@ class FeedingMedicineMealGroup {
               medicines: s.operationType == OperationType.medicine
                   ? <OperationSchedule>[s]
                   : <OperationSchedule>[],
-              otherItems: (s.operationType != OperationType.feeding &&
+              otherItems:
+                  (s.operationType != OperationType.feeding &&
                       s.operationType != OperationType.medicine)
                   ? <OperationSchedule>[s]
                   : <OperationSchedule>[],
@@ -707,8 +768,14 @@ class FeedingMedicineMealGroup {
         FeedingMedicineMealGroup? matchedGroup;
         for (final g in groups) {
           if (g.isTreatment) continue;
+          if (occurrenceKey != null) {
+            if (g.key != occurrenceKey) continue;
+            matchedGroup = g;
+            break;
+          }
           final gLocal = g.scheduledAt.toLocal();
-          final isSameDay = gLocal.year == local.year &&
+          final isSameDay =
+              gLocal.year == local.year &&
               gLocal.month == local.month &&
               gLocal.day == local.day;
 
@@ -735,9 +802,11 @@ class FeedingMedicineMealGroup {
             matchedGroup.medicines.add(s);
           }
         } else {
-          final groupKey = mealNum != null
-              ? '${dateStr}_meal_$mealNum'
-              : '${dateStr}_time_$timeStr';
+          final groupKey =
+              occurrenceKey ??
+              (mealNum != null
+                  ? '${dateStr}_meal_$mealNum'
+                  : '${dateStr}_time_$timeStr');
 
           groups.add(
             FeedingMedicineMealGroup(
@@ -788,7 +857,13 @@ class FeedingMedicineMealGroup {
     final localEnd = latestDeadline.toLocal();
     final endStr =
         '${localEnd.hour.toString().padLeft(2, '0')}:${localEnd.minute.toString().padLeft(2, '0')}';
-    return '$time - $endStr';
+    final localStart = scheduledAt.toLocal();
+    final days = DateTime.utc(localEnd.year, localEnd.month, localEnd.day)
+        .difference(
+          DateTime.utc(localStart.year, localStart.month, localStart.day),
+        )
+        .inDays;
+    return '$time - $endStr${days > 0 ? ' (+$days ngày)' : ''}';
   }
 
   bool isOverdueAt(DateTime now) => allSchedules.any((s) => s.isOverdueAt(now));

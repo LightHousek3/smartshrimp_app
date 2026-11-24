@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
+import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 import 'package:uuid/uuid.dart';
 
 class OperationExecuteSheet extends ConsumerStatefulWidget {
-  const OperationExecuteSheet({
-    required this.schedule,
-    required this.onSuccess,
-    super.key,
-  });
+  const OperationExecuteSheet({required this.schedules, super.key});
 
-  final OperationSchedule schedule;
-  final VoidCallback onSuccess;
+  final List<OperationSchedule> schedules;
 
-  static Future<void> show(
+  static Future<bool?> show(
     BuildContext context, {
-    required OperationSchedule schedule,
-    required VoidCallback onSuccess,
-  }) => showModalBottomSheet(
+    required List<OperationSchedule> schedules,
+  }) => showModalBottomSheet<bool>(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) =>
-        OperationExecuteSheet(schedule: schedule, onSuccess: onSuccess),
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: Colors.white,
+    showDragHandle: false,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) => OperationExecuteSheet(schedules: schedules),
   );
 
   @override
@@ -37,182 +41,376 @@ class OperationExecuteSheet extends ConsumerStatefulWidget {
 }
 
 class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
-  late final TextEditingController _quantityController;
-  late final TextEditingController _varianceReasonController;
-  late final Listenable _formListenable;
-  late final DateTime _openedAt;
-  final _formKey = GlobalKey<FormState>();
+  static const _activationNote = 'Ghi bổ sung do vụ nuôi kích hoạt muộn';
 
-  bool _isSubmitting = false;
+  final _form = GlobalKey<FormState>();
+  late final _items = widget.schedules.map(_ExecutionItem.new).toList();
+  late final _earliest = widget.schedules
+      .map((row) => row.scheduledAt)
+      .reduce((left, right) => left.isAfter(right) ? left : right);
+  DateTime? get _activation => widget.schedules.first.activatedAt;
 
-  @override
-  void initState() {
-    super.initState();
-    _openedAt = DateTime.now();
-    _quantityController = TextEditingController(
-      text: formatOperationCompact(
-        widget.schedule.plannedQuantity,
-        maxDecimals: 3,
-      ),
-    );
-    _varianceReasonController = TextEditingController();
-    _formListenable = Listenable.merge(<Listenable>[
-      _quantityController,
-      _varianceReasonController,
-    ]);
+  static DateTime _vietnamTime(DateTime instant) =>
+      instant.toUtc().add(AssignedSeasonRules.vietnamOffset);
+
+  late DateTime _date = DateUtils.dateOnly(_vietnamTime(_earliest));
+  late final _note = TextEditingController(
+    text: _activation == null ? null : _activationNote,
+  );
+  TimeOfDay? _time;
+  String? _timeError;
+  bool _sending = false;
+
+  DateTime? get _executedAt {
+    final time = _time;
+    if (time == null) return null;
+    return DateTime.utc(
+      _date.year,
+      _date.month,
+      _date.day,
+      time.hour,
+      time.minute,
+    ).subtract(AssignedSeasonRules.vietnamOffset);
+  }
+
+  bool get _needsNote {
+    final actual = _executedAt;
+    return _activation != null ||
+        (actual != null &&
+            widget.schedules.any((row) => row.requiresExecutionNote(actual)));
+  }
+
+  bool get _checkCurrentStock =>
+      DateUtils.isSameDay(_date, _vietnamTime(DateTime.now()));
+
+  bool _requiresLateReason(DateTime actual) {
+    final activation = _activation;
+    return (activation == null || !actual.isBefore(activation)) &&
+        widget.schedules.any((row) => row.isLateAt(actual));
   }
 
   @override
   void dispose() {
-    _quantityController.dispose();
-    _varianceReasonController.dispose();
+    for (final item in _items) {
+      item.quantity.dispose();
+      item.reason.dispose();
+    }
+    _note.dispose();
     super.dispose();
   }
 
-  double get _allowedVariancePct =>
-      widget.schedule.protocolItem?.protocol?.allowedVariancePct ?? 10.0;
-
-  OperationVarianceEvaluation get _eval => OperationVarianceEvaluation(
-    planned: widget.schedule.plannedQuantity,
-    actual: parseOperationQuantity(_quantityController.text),
-    allowedPct: _allowedVariancePct,
-  );
-
-  bool get _canSubmit {
-    if (!widget.schedule.canExecute) return false;
-    final eval = _eval;
-    if (!eval.isValidPositive) return false;
-    if (widget.schedule.isStockInsufficientFor(eval.actual!)) return false;
-    if (eval.hasAnyDeviation && _varianceReasonController.text.trim().isEmpty) {
-      return false;
+  Future<void> _pickDate() async {
+    final first = DateUtils.dateOnly(_vietnamTime(_earliest));
+    final last = DateUtils.dateOnly(_vietnamTime(DateTime.now()));
+    if (first.isAfter(last)) return;
+    final result = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: first,
+      lastDate: last,
+      helpText: 'Ngày thực hiện thực tế',
+    );
+    if (mounted && result != null) {
+      setState(() {
+        _date = result;
+        _timeError = null;
+      });
     }
-    return true;
   }
 
-  Future<void> _handleSubmit() async {
-    if (!widget.schedule.canExecute) {
-      AppNoticeService.warning(
-        context,
-        'Chưa đến thời gian dự kiến thực hiện lịch vận hành.',
-      );
-      return;
+  Future<void> _pickTime() async {
+    final current = _vietnamTime(DateTime.now());
+    final start = _vietnamTime(_earliest);
+    final result = await showTimePicker(
+      context: context,
+      initialTime:
+          _time ??
+          TimeOfDay.fromDateTime(
+            DateUtils.isSameDay(_date, current) ? current : start,
+          ),
+      helpText: 'Giờ thực hiện thực tế',
+    );
+    if (mounted && result != null) {
+      setState(() {
+        _time = result;
+        _timeError = null;
+        if (_activation != null) {
+          final note = _note.text.trim();
+          if (_requiresLateReason(_executedAt!)) {
+            if (note == _activationNote) _note.clear();
+          } else if (note.isEmpty) {
+            _note.text = _activationNote;
+          }
+        }
+      });
     }
-    if (!_formKey.currentState!.validate()) return;
+  }
 
-    final eval = _eval;
-    if (!eval.isValidPositive) return;
-
-    if (widget.schedule.isStockInsufficientFor(eval.actual!)) {
-      AppNoticeService.danger(
-        context,
-        'Số lượng vật tư trong kho không đủ để thực hiện (${widget.schedule.productName}).',
-      );
-      return;
+  String? _validateTime(DateTime? actual, DateTime now) {
+    if (actual == null) return 'Vui lòng chọn giờ thực hiện.';
+    if (actual.isAfter(now)) {
+      return 'Giờ thực hiện không được sau thời điểm hiện tại.';
     }
-
-    final reason = _varianceReasonController.text.trim();
-    if (eval.hasAnyDeviation && reason.isEmpty) {
-      AppNoticeService.danger(
-        context,
-        'Vui lòng nhập lý do khi số lượng thực tế khác kế hoạch.',
-      );
-      return;
+    if (actual.isBefore(_earliest)) {
+      return 'Giờ thực hiện phải từ giờ đã lên lịch.';
     }
+    return null;
+  }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+  Future<void> _submit() async {
+    if (_sending || widget.schedules.any((row) => !row.canExecute)) return;
+    final actual = _executedAt;
+    final timeError = _validateTime(actual, DateTime.now());
+    setState(() => _timeError = timeError);
+    final valid = _form.currentState!.validate();
+    if (!valid || timeError != null || actual == null) return;
 
-    try {
-      final idempotencyKey = const Uuid().v4();
-      await ref
-          .read(operationDetailProvider(widget.schedule.id).notifier)
-          .execute(
-            actualQuantity: eval.actual!,
-            idempotencyKey: idempotencyKey,
-            varianceReason: eval.hasAnyDeviation ? reason : null,
-          );
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        widget.onSuccess();
-        AppNoticeService.success(
+    final entries = <OperationExecuteBatchItem>[];
+    for (final item in _items) {
+      final evaluation = item.evaluate();
+      final quantity = evaluation.actual!;
+      if (_checkCurrentStock &&
+          item.schedule.isStockInsufficientFor(quantity)) {
+        AppNoticeService.danger(
           context,
-          'Ghi nhận thực hiện hoạt động thành công!',
+          'Không đủ tồn kho cho ${item.schedule.productName}.',
         );
+        return;
       }
+      entries.add(
+        item.prepare(
+          quantity: quantity,
+          actual: actual,
+          note: item.schedule.requiresExecutionNote(actual)
+              ? _note.text.trim()
+              : null,
+          reason: evaluation.exceedsAllowed ? item.reason.text.trim() : null,
+        ),
+      );
+    }
+    setState(() => _sending = true);
+    try {
+      final repo = ref.read(operationRepositoryProvider);
+      if (entries.length == 1) {
+        final entry = entries.single;
+        await repo.executeSchedule(
+          entry.scheduleId,
+          actualQuantity: entry.actualQuantity,
+          idempotencyKey: entry.idempotencyKey,
+          executedAt: entry.executedAt,
+          note: entry.note,
+          varianceReason: entry.varianceReason,
+          historicalOccurrence: entry.historicalOccurrence,
+        );
+      } else {
+        await repo.executeSchedulesBatch(entries);
+      }
+      if (!mounted) return;
+      ref.invalidate(technicianDashboardProvider);
+      Navigator.of(context).pop(true);
     } on Object catch (error) {
-      if (mounted) {
+      if (!mounted) return;
+      if (error is SessionExpiredException) {
+        await ref.read(authControllerProvider.notifier).expireSession();
+      } else {
         AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      if (mounted) setState(() => _sending = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.88;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 20),
+    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    final locale = MaterialLocalizations.of(context);
+    final actual = _executedAt;
+    final requiresLateReason = actual != null && _requiresLateReason(actual);
+    final enabled =
+        !_sending && widget.schedules.every((row) => row.canExecute);
+    return PopScope(
+      canPop: !_sending,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: inset),
         child: SafeArea(
           top: false,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                OperationExecuteSheetHeader(
-                  title: 'Ghi nhận thực hiện',
-                  recordedAt: _openedAt,
-                  onClose: () => Navigator.of(context).pop(),
-                ),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: OperationExecuteItemCard(
-                      schedule: widget.schedule,
-                      quantityController: _quantityController,
-                      varianceReasonController: _varianceReasonController,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * .88 - inset * .55,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Ghi nhận thực hiện',
+                          style: TextStyle(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Đóng',
+                        onPressed: _sending
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Thời gian thực hiện thực tế',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                OutlinedButton.icon(
+                                  icon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(locale.formatCompactDate(_date)),
+                                  onPressed: enabled && _activation == null
+                                      ? _pickDate
+                                      : null,
+                                ),
+                                OutlinedButton.icon(
+                                  icon: const Icon(Icons.access_time, size: 17),
+                                  label: Text(
+                                    _time?.format(context) ??
+                                        'Chọn giờ thực hiện',
+                                  ),
+                                  onPressed: enabled ? _pickTime : null,
+                                ),
+                              ],
+                            ),
+                            if (_timeError case final error?) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                error,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ],
+                            if (_needsNote) ...[
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _note,
+                                enabled: !_sending,
+                                maxLength: 500,
+                                minLines: 2,
+                                maxLines: 3,
+                                decoration: InputDecoration(
+                                  labelText: requiresLateReason
+                                      ? 'Lý do thực hiện quá hạn *'
+                                      : 'Lý do ghi bổ sung *',
+                                  alignLabelWithHint: true,
+                                  border: const OutlineInputBorder(),
+                                ),
+                                validator: (value) =>
+                                    (value?.trim().isEmpty ?? true)
+                                    ? 'Vui lòng nhập lý do.'
+                                    : null,
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            for (var index = 0; index < _items.length; index++)
+                              OperationExecuteItemCard(
+                                schedule: _items[index].schedule,
+                                quantityController: _items[index].quantity,
+                                varianceReasonController: _items[index].reason,
+                                checkCurrentStock: _checkCurrentStock,
+                                showDivider: index < _items.length - 1,
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                ListenableBuilder(
-                  listenable: _formListenable,
-                  builder: (_, _) {
-                    final enabled = _canSubmit && !_isSubmitting;
-                    return GradientButton(
-                      label: _isSubmitting
-                          ? 'Đang ghi nhận...'
-                          : 'Xác nhận ghi nhận',
-                      compact: true,
-                      height: 48,
-                      borderRadius: 16,
-                      icon: Icons.check_rounded,
-                      isLoading: _isSubmitting,
-                      onPressed: enabled ? _handleSubmit : null,
-                    );
-                  },
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  GradientButton(
+                    label: _sending ? 'Đang ghi nhận...' : 'Xác nhận ghi nhận',
+                    compact: true,
+                    height: 48,
+                    borderRadius: 16,
+                    icon: Icons.check_rounded,
+                    isLoading: _sending,
+                    onPressed: enabled ? _submit : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ExecutionItem {
+  _ExecutionItem(this.schedule);
+
+  final OperationSchedule schedule;
+  late final quantity = TextEditingController(
+    text: formatOperationCompact(schedule.plannedQuantity, maxDecimals: 9),
+  );
+  final reason = TextEditingController();
+  ({double quantity, DateTime actual, String? note, String? reason})?
+  _lastInput;
+  String? _requestKey;
+
+  OperationVarianceEvaluation evaluate() => OperationVarianceEvaluation(
+    planned: schedule.plannedQuantity,
+    actual: parseOperationQuantity(quantity.text),
+    allowedPct: schedule.protocolItem?.protocol?.allowedVariancePct ?? 10,
+  );
+
+  OperationExecuteBatchItem prepare({
+    required double quantity,
+    required DateTime actual,
+    String? note,
+    String? reason,
+  }) {
+    final input = (
+      quantity: quantity,
+      actual: actual,
+      note: note,
+      reason: reason,
+    );
+    if (input != _lastInput) {
+      _lastInput = input;
+      _requestKey = const Uuid().v4();
+    }
+    return OperationExecuteBatchItem(
+      scheduleId: schedule.id,
+      actualQuantity: quantity,
+      idempotencyKey: _requestKey!,
+      executedAt: actual,
+      note: note,
+      varianceReason: reason,
+      historicalOccurrence: schedule.activatedAt == null
+          ? null
+          : (seasonId: schedule.seasonId, scheduledAt: schedule.scheduledAt),
     );
   }
 }

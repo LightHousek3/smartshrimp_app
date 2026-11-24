@@ -69,10 +69,16 @@ final class SeasonRepositoryImpl implements SeasonRepository {
   });
 
   @override
-  Future<AquacultureSeason> activateSeason(AquacultureSeason current) =>
-      _remote.activateSeason(current.id, <String, dynamic>{
-        'expectedUpdatedAt': current.updatedAt.toUtc().toIso8601String(),
-      });
+  Future<AquacultureSeason> activateSeason(
+    AquacultureSeason current, {
+    required DateTime actualStockingDate,
+    String? activationDelayReason,
+  }) => _remote.activateSeason(current.id, <String, dynamic>{
+    'expectedUpdatedAt': current.updatedAt.toUtc().toIso8601String(),
+    'actualStockingDate': SeasonRules.dateOnly(actualStockingDate),
+    if (activationDelayReason != null)
+      'activationDelayReason': SeasonRules.normalizeText(activationDelayReason),
+  });
 
   @override
   Future<SeasonCancellationResult> cancelSeason({
@@ -124,7 +130,7 @@ final class SeasonRepositoryImpl implements SeasonRepository {
     'pondId': ?pondId,
     'name': SeasonRules.normalizeText(name),
     'shrimpType': shrimpTypeApiValue(shrimpType),
-    'stockingDate': stockingDate == null
+    'plannedStockingDate': stockingDate == null
         ? null
         : SeasonRules.dateOnly(stockingDate),
     'expectedEndDate': expectedEndDate == null

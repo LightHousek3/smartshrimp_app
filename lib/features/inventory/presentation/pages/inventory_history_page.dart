@@ -17,9 +17,14 @@ import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventor
 /// Keep draft history filters separate until the user applies them.
 /// Use unfiltered history for stable material and season choices.
 class InventoryHistoryPage extends ConsumerStatefulWidget {
-  const InventoryHistoryPage({required this.farmId, super.key});
+  const InventoryHistoryPage({
+    required this.farmId,
+    this.scheduleId,
+    super.key,
+  });
 
   final String farmId;
+  final String? scheduleId;
 
   @override
   ConsumerState<InventoryHistoryPage> createState() =>
@@ -31,7 +36,7 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
   final _scrollController = ScrollController();
   Timer? _searchDebounce;
   var _searchQuery = '';
-  var _filtersExpanded = true;
+  var _filtersExpanded = false;
   var _draftFilters = const domain.InventoryHistoryFilters();
   var _appliedFilters = const domain.InventoryHistoryFilters();
   String? _filterError;
@@ -111,6 +116,9 @@ class _InventoryHistoryPageState extends ConsumerState<InventoryHistoryPage> {
   @override
   void initState() {
     super.initState();
+    _draftFilters = _appliedFilters = domain.InventoryHistoryFilters(
+      scheduleId: widget.scheduleId,
+    );
     _searchController.addListener(_refreshSearch);
     _scrollController.addListener(_handleScroll);
   }

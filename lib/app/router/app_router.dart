@@ -641,7 +641,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                           GoRoute(
                             path: 'history',
                             builder: (_, state) => InventoryHistoryPage(
+                              key: ValueKey(state.uri),
                               farmId: state.pathParameters['farmId']!,
+                              scheduleId:
+                                  state.uri.queryParameters['scheduleId'],
                             ),
                           ),
                           GoRoute(

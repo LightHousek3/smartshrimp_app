@@ -5,6 +5,18 @@ import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 abstract final class SeasonRules {
   static const nameMaxLength = 255;
   static const replacementReasonMaxLength = 2000;
+  static const activationReasonMaxLength = 500;
+
+  static DateTime vietnamCalendarDate(DateTime instant) {
+    final vietnam = instant.toUtc().add(const Duration(hours: 7));
+    return DateTime(vietnam.year, vietnam.month, vietnam.day);
+  }
+
+  static int cultureDay(DateTime stocking, DateTime today) =>
+      DateTime.utc(today.year, today.month, today.day)
+          .difference(DateTime.utc(stocking.year, stocking.month, stocking.day))
+          .inDays +
+      1;
 
   static bool canCreateForPond(Pond pond) =>
       !pond.hasOpenSeason &&

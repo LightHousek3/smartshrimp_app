@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InventoryHistoryFilters {
 
- String get search; DateTime? get fromDate; DateTime? get toDate; InventoryTransactionType? get transactionType; String? get productId; String? get seasonId;
+ String get search; DateTime? get fromDate; DateTime? get toDate; InventoryTransactionType? get transactionType; String? get productId; String? get seasonId; String? get scheduleId;
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $InventoryHistoryFiltersCopyWith<InventoryHistoryFilters> get copyWith => _$Inve
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId);
+int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId,scheduleId);
 
 @override
 String toString() {
-  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
+  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId, scheduleId: $scheduleId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $InventoryHistoryFiltersCopyWith<$Res>  {
   factory $InventoryHistoryFiltersCopyWith(InventoryHistoryFilters value, $Res Function(InventoryHistoryFilters) _then) = _$InventoryHistoryFiltersCopyWithImpl;
 @useResult
 $Res call({
- String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
+ String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId, String? scheduleId
 });
 
 
@@ -62,7 +62,7 @@ class _$InventoryHistoryFiltersCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,Object? scheduleId = freezed,}) {
   return _then(_self.copyWith(
 search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String,fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
@@ -70,6 +70,7 @@ as DateTime?,toDate: freezed == toDate ? _self.toDate : toDate // ignore: cast_n
 as DateTime?,transactionType: freezed == transactionType ? _self.transactionType : transactionType // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionType?,productId: freezed == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String?,seasonId: freezed == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
+as String?,scheduleId: freezed == scheduleId ? _self.scheduleId : scheduleId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -155,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId,  String? scheduleId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters() when $default != null:
-return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId,_that.scheduleId);case _:
   return orElse();
 
 }
@@ -176,10 +177,10 @@ return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId,  String? scheduleId)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters():
-return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId,_that.scheduleId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +197,10 @@ return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String search,  DateTime? fromDate,  DateTime? toDate,  InventoryTransactionType? transactionType,  String? productId,  String? seasonId,  String? scheduleId)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryHistoryFilters() when $default != null:
-return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId);case _:
+return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_that.productId,_that.seasonId,_that.scheduleId);case _:
   return null;
 
 }
@@ -211,7 +212,7 @@ return $default(_that.search,_that.fromDate,_that.toDate,_that.transactionType,_
 
 
 class _InventoryHistoryFilters extends InventoryHistoryFilters {
-  const _InventoryHistoryFilters({this.search = '', this.fromDate, this.toDate, this.transactionType, this.productId, this.seasonId}): super._();
+  const _InventoryHistoryFilters({this.search = '', this.fromDate, this.toDate, this.transactionType, this.productId, this.seasonId, this.scheduleId}): super._();
 
 
 @override@JsonKey() final  String search;
@@ -220,6 +221,7 @@ class _InventoryHistoryFilters extends InventoryHistoryFilters {
 @override final  InventoryTransactionType? transactionType;
 @override final  String? productId;
 @override final  String? seasonId;
+@override final  String? scheduleId;
 
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +233,16 @@ _$InventoryHistoryFiltersCopyWith<_InventoryHistoryFilters> get copyWith => __$I
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryHistoryFilters&&(identical(other.search, search) || other.search == search)&&(identical(other.fromDate, fromDate) || other.fromDate == fromDate)&&(identical(other.toDate, toDate) || other.toDate == toDate)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId);
+int get hashCode => Object.hash(runtimeType,search,fromDate,toDate,transactionType,productId,seasonId,scheduleId);
 
 @override
 String toString() {
-  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId)';
+  return 'InventoryHistoryFilters(search: $search, fromDate: $fromDate, toDate: $toDate, transactionType: $transactionType, productId: $productId, seasonId: $seasonId, scheduleId: $scheduleId)';
 }
 
 
@@ -251,7 +253,7 @@ abstract mixin class _$InventoryHistoryFiltersCopyWith<$Res> implements $Invento
   factory _$InventoryHistoryFiltersCopyWith(_InventoryHistoryFilters value, $Res Function(_InventoryHistoryFilters) _then) = __$InventoryHistoryFiltersCopyWithImpl;
 @override @useResult
 $Res call({
- String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId
+ String search, DateTime? fromDate, DateTime? toDate, InventoryTransactionType? transactionType, String? productId, String? seasonId, String? scheduleId
 });
 
 
@@ -268,7 +270,7 @@ class __$InventoryHistoryFiltersCopyWithImpl<$Res>
 
 /// Create a copy of InventoryHistoryFilters
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? search = null,Object? fromDate = freezed,Object? toDate = freezed,Object? transactionType = freezed,Object? productId = freezed,Object? seasonId = freezed,Object? scheduleId = freezed,}) {
   return _then(_InventoryHistoryFilters(
 search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String,fromDate: freezed == fromDate ? _self.fromDate : fromDate // ignore: cast_nullable_to_non_nullable
@@ -276,6 +278,7 @@ as DateTime?,toDate: freezed == toDate ? _self.toDate : toDate // ignore: cast_n
 as DateTime?,transactionType: freezed == transactionType ? _self.transactionType : transactionType // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionType?,productId: freezed == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String?,seasonId: freezed == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
+as String?,scheduleId: freezed == scheduleId ? _self.scheduleId : scheduleId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

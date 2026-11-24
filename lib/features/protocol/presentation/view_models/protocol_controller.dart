@@ -17,7 +17,6 @@ typedef ProtocolListScope = ({
   bool pendingOnly,
 });
 typedef ProtocolDayScope = ({String id, int day});
-typedef ProtocolInventoryScope = ({String id, String scheduleId});
 typedef ProtocolMaterialScope = ({String id, String itemId, String search});
 final protocolMaterialOptionsProvider = FutureProvider.autoDispose
     .family<List<ProtocolMaterialOption>, ProtocolMaterialScope>((ref, scope) {
@@ -84,16 +83,6 @@ final protocolListProvider = AsyncNotifierProvider.autoDispose
     .family<ProtocolListController, ProtocolPage, ProtocolListScope>(
       ProtocolListController.new,
     );
-final protocolInventoryProvider = FutureProvider.autoDispose
-    .family<List<ProtocolInventoryEntry>, ProtocolInventoryScope>((ref, scope) {
-      _watchOwner(ref);
-      return _session(
-        ref,
-        () => ref
-            .watch(protocolRepositoryProvider)
-            .inventory(scope.id, scope.scheduleId),
-      );
-    }, retry: (count, error) => null);
 
 class ProtocolListController extends AsyncNotifier<ProtocolPage> {
   ProtocolListController(this.scope);

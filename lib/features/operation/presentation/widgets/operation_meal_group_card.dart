@@ -30,60 +30,7 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
   @override
   void initState() {
     super.initState();
-    // Mặc định mở nếu cữ có nhiều hơn 1 thành phần (ví dụ có cả thức ăn và thuốc) hoặc được chỉ định
     _isExpanded = widget.initiallyExpanded ?? widget.group.hasBoth;
-  }
-
-  (Color dot, Color text, Color bg) _statusVisuals(OperationStatus status) =>
-      switch (status) {
-        OperationStatus.planned => (
-          _blueFg,
-          _blueFg,
-          _blueBg,
-        ),
-        OperationStatus.completed => (
-          const Color(0xFF10B981),
-          const Color(0xFF047857),
-          const Color(0xFFECFDF5),
-        ),
-        OperationStatus.cancelled => (
-          AppColors.inkMuted,
-          AppColors.inkMuted,
-          const Color(0xFFF1F5F9),
-        ),
-      };
-
-  Widget _buildStatusBadge(OperationStatus status) {
-    final (dot, text, bg) = _statusVisuals(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.5, vertical: 3.5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: dot,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            status.displayName,
-            style: TextStyle(
-              color: text,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -92,8 +39,6 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
     final isTreatment = group.isTreatment;
     final title = group.cardTitle;
 
-    // Header icon: Cữ vận hành dùng icon lịch trình từ assets/icons/common/calendar-days.svg;
-    // Box Điều trị dùng icon lọ thuốc chữ thập từ assets/icons/common/medicine.svg
     final headerBg = isTreatment ? const Color(0xFFFBE6EA) : _blueBg;
     final headerFg = isTreatment ? const Color(0xFFD43B57) : _blueFg;
     final headerSvg = isTreatment
@@ -104,7 +49,9 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
     final primarySchedule = group.activeSchedules.isNotEmpty
         ? group.activeSchedules.first
         : (primaryFeeding ??
-              (group.allSchedules.isNotEmpty ? group.allSchedules.first : null));
+              (group.allSchedules.isNotEmpty
+                  ? group.allSchedules.first
+                  : null));
     final isGroupOverdue = group.isOverdue;
 
     return Container(
@@ -131,7 +78,6 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
         borderRadius: BorderRadius.circular(20),
         child: Column(
           children: <Widget>[
-            // 1. Header accordion: Nhấn vào toàn bộ header để xem chi tiết cữ
             InkWell(
               onTap: () {
                 if (widget.onTapDetail != null && primarySchedule != null) {
@@ -140,82 +86,107 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
               },
               borderRadius: BorderRadius.circular(20),
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.fromLTRB(14, 7, 14, 14),
                 child: Row(
-                  children: <Widget>[
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: headerBg,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: AppSvgIcon(
-                          headerSvg,
-                          color: headerFg,
-                          size: 22,
-                        ),
+                        child: AppSvgIcon(headerSvg, color: headerFg, size: 19),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: <Widget>[
-                              Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: isTreatment
-                                      ? const Color(0xFF9F1239)
-                                      : AppColors.ink,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: isTreatment
+                                        ? const Color(0xFF9F1239)
+                                        : AppColors.ink,
+                                  ),
                                 ),
                               ),
-                              if (isTreatment)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7.5,
-                                    vertical: 2,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                flex: 7,
+                                child: OperationStatusLine(
+                                  badge: OperationStatusBadge(
+                                    status: group.overallStatus,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFBE6EA),
-                                    borderRadius: BorderRadius.circular(6),
+                                  label:
+                                      group.activeSchedules.any(
+                                        (row) => row.activatedAt != null,
+                                      )
+                                      ? const OperationUnrecordedBadge()
+                                      : isGroupOverdue &&
+                                            group.overallStatus ==
+                                                OperationStatus.planned
+                                      ? const OperationOverdueBadge(
+                                          compact: true,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              SizedBox(
+                                width: 32,
+                                height: 36,
+                                child: IconButton(
+                                  tooltip: _isExpanded
+                                      ? 'Thu gọn cữ'
+                                      : 'Mở danh sách vật tư',
+                                  style: IconButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text(
-                                    'Phác đồ điều trị',
-                                    style: TextStyle(
-                                      color: Color(0xFFD43B57),
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  onPressed: () => setState(
+                                    () => _isExpanded = !_isExpanded,
+                                  ),
+                                  icon: Icon(
+                                    _isExpanded
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    color: headerFg,
+                                    size: 22,
                                   ),
                                 ),
-                              if (isGroupOverdue)
-                                const OperationOverdueBadge(compact: true),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
                           Row(
-                            children: <Widget>[
+                            children: [
                               const Icon(
                                 Icons.access_time_rounded,
                                 size: 13,
                                 color: AppColors.inkMuted,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                group.timeRangeText,
-                                style: const TextStyle(
-                                  color: AppColors.inkSoft,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                              Flexible(
+                                child: Text(
+                                  group.timeRangeText,
+                                  style: const TextStyle(
+                                    color: AppColors.inkSoft,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
@@ -223,29 +194,11 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                         ],
                       ),
                     ),
-                    _buildStatusBadge(group.overallStatus),
-                    const SizedBox(width: 4),
-                    // Nhấn vào icon mũi tên để mở / đóng cữ
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _isExpanded = !_isExpanded),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          _isExpanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          color: headerFg,
-                          size: 22,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
 
-            // 2. Nội dung mở rộng: Danh sách chi tiết các thành phần trong cữ
             if (_isExpanded && group.allSchedules.isNotEmpty) ...<Widget>[
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -303,10 +256,7 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      OperationTypeBadge(
-                        type: s.operationType,
-                        compact: true,
-                      ),
+                      OperationTypeBadge(type: s.operationType, compact: true),
                       const SizedBox(height: 4),
                       Text(
                         s.productName,

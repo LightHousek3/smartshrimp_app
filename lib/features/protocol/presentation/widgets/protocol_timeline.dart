@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
+import 'package:smartshrimp_app/features/protocol/domain/protocol_occurrence.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart';
 
 class ProtocolTimeline extends StatefulWidget {
@@ -89,10 +90,12 @@ class _ProtocolTimelineState extends State<ProtocolTimeline> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Chọn khoảng, sau đó chọn một DOC để xem chi tiết.',
-                        style: TextStyle(
+                        treatment
+                            ? 'Chọn khoảng, sau đó chọn ngày điều trị để xem chi tiết.'
+                            : 'Chọn khoảng, sau đó chọn một DOC để xem chi tiết.',
+                        style: const TextStyle(
                           fontSize: 10,
                           height: 1.625,
                           color: AppColors.inkMuted,
@@ -174,6 +177,10 @@ class _ProtocolTimelineState extends State<ProtocolTimeline> {
                           marker: detail.dayMarkers
                               .where((m) => m.day == day)
                               .firstOrNull,
+                          expectedItems:
+                              detail.card.status == ProtocolStatus.active
+                              ? protocolExpectedItems(detail, day)
+                              : 0,
                           onTap: () => onSelect(day),
                         ),
                       ),
@@ -194,9 +201,10 @@ class _ProtocolTimelineState extends State<ProtocolTimeline> {
                   spacing: 12,
                   runSpacing: 6,
                   children: [
-                    _Legend('Đã hoàn tất', Color(0xFF00D5BE)),
-                    _Legend('Đang chờ', Color(0xFFFFB900)),
-                    _Legend('Có vấn đề', Color(0xFFFF637E)),
+                    _Legend('Đã hoàn thành', Color(0xFF00D5BE)),
+                    _Legend('Chưa hoàn tất', Color(0xFFFFB900)),
+                    _Legend('Đã hủy', Color(0xFF94A3B8)),
+                    _Legend('Có sai lệch', Color(0xFFFF637E)),
                   ],
                 ),
               ],
@@ -265,7 +273,7 @@ class _RangeButton extends StatelessWidget {
                 right: 4,
                 top: 4,
                 child: Semantics(
-                  label: 'Khoảng DOC hiện tại',
+                  label: 'Khoảng ngày hiện tại',
                   child: Container(
                     key: const Key('protocol_current_range_badge'),
                     width: 6,
@@ -359,6 +367,7 @@ class _DayButton extends StatelessWidget {
     required this.treatment,
     required this.anchor,
     required this.marker,
+    required this.expectedItems,
     required this.onTap,
   });
   final int day;
@@ -367,19 +376,29 @@ class _DayButton extends StatelessWidget {
   final bool treatment;
   final String? anchor;
   final ProtocolDayMarker? marker;
+  final int expectedItems;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
     final date = anchor == null
         ? null
         : DateTime.parse('${anchor!}T00:00:00Z').add(Duration(days: day - 1));
-    final dot = marker == null
-        ? null
-        : marker!.cancelled > 0 || marker!.issues > 0
-        ? const Color(0xFFFF637E)
-        : marker!.planned > 0
-        ? const Color(0xFFFFB900)
-        : const Color(0xFF00D5BE);
+    final status = marker;
+    final Color? dot;
+    if (status == null) {
+      dot = null;
+    } else if (status.issues > 0) {
+      dot = const Color(0xFFFF637E);
+    } else if (status.planned > 0 ||
+        status.unrecorded > 0 ||
+        status.completed > 0 &&
+            status.completed + status.cancelled < expectedItems) {
+      dot = const Color(0xFFFFB900);
+    } else if (status.cancelled > 0) {
+      dot = const Color(0xFF94A3B8);
+    } else {
+      dot = status.completed > 0 ? const Color(0xFF00D5BE) : null;
+    }
     return Semantics(
       selected: selected,
       button: true,
@@ -493,18 +512,23 @@ class ProtocolDayBanner extends StatelessWidget {
     required this.day,
     required this.data,
     required this.onSelect,
+    this.loadFailed = false,
     super.key,
   });
   final ProtocolDetail detail;
   final int day;
   final ProtocolDay? data;
   final ValueChanged<int> onSelect;
+  final bool loadFailed;
   @override
   Widget build(BuildContext context) {
     final date = data?.date;
     final rows = data?.rows ?? const <ProtocolDayRow>[];
-    final meals = rows.map((r) => r.time).toSet().length;
-    final completed = rows
+    final groups = protocolMeals(rows).values;
+    final meals = groups.length;
+    final completedMeals = groups.where(protocolMealCompleted).length;
+    final currentRows = groups.expand(protocolCurrentRows).toList();
+    final completed = currentRows
         .where((r) => r.status == ProtocolOperationStatus.completed)
         .length;
     return Container(
@@ -568,9 +592,13 @@ class ProtocolDayBanner extends StatelessWidget {
                 ],
                 const SizedBox(height: 6),
                 Text(
-                  data == null
+                  loadFailed
+                      ? 'Chưa tải được dữ liệu ngày này.'
+                      : data == null
                       ? 'Đang tải…'
-                      : '$meals cữ · $completed/${rows.length} hạng mục hoàn tất',
+                      : meals == 0
+                      ? 'Không có cữ trong ngày này.'
+                      : '$completedMeals/$meals cữ hoàn thành · $completed/${currentRows.length} hạng mục',
                   style: const TextStyle(
                     fontSize: 9,
                     height: 1.5,

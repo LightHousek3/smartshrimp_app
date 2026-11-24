@@ -36,6 +36,7 @@ final class OperationRepositoryImpl implements OperationRepository {
     String? note,
     String? varianceReason,
     DateTime? executedAt,
+    HistoricalFeedingOccurrence? historicalOccurrence,
   }) => _apiService.executeSchedule(
     scheduleId,
     actualQuantity: actualQuantity,
@@ -44,6 +45,7 @@ final class OperationRepositoryImpl implements OperationRepository {
     note: note,
     varianceReason: varianceReason,
     executedAt: executedAt,
+    historicalOccurrence: historicalOccurrence,
   );
 
   @override

@@ -219,10 +219,17 @@ class _SeasonDetailContent extends ConsumerWidget {
   );
 
   Widget _metricGrid() {
+    final activatedAt = season.activatedAt;
     final metrics = <({String label, String value, bool highlighted})>[
       (
-        label: 'NGÀY THẢ GIỐNG',
-        value: seasonDateLabel(season.stockingDate),
+        label: season.status == SeasonStatus.planning
+            ? 'NGÀY THẢ DỰ KIẾN'
+            : 'NGÀY THẢ THỰC TẾ',
+        value: seasonDateLabel(
+          season.status == SeasonStatus.planning
+              ? season.plannedStockingDate ?? season.stockingDate
+              : season.stockingDate,
+        ),
         highlighted: false,
       ),
       (
@@ -230,6 +237,12 @@ class _SeasonDetailContent extends ConsumerWidget {
         value: seasonDateLabel(season.expectedEndDate),
         highlighted: false,
       ),
+      if (activatedAt != null)
+        (
+          label: 'NGÀY KÍCH HOẠT',
+          value: seasonDateLabel(SeasonRules.vietnamCalendarDate(activatedAt)),
+          highlighted: false,
+        ),
       if (season.actualEndDate != null)
         (
           label: 'KẾT THÚC THỰC TẾ',
@@ -268,6 +281,15 @@ class _SeasonDetailContent extends ConsumerWidget {
                   label: metric.label,
                   value: metric.value,
                   highlighted: metric.highlighted,
+                ),
+              ),
+            if (season.activationDelayReason case final reason?)
+              SizedBox(
+                width: constraints.maxWidth,
+                child: _DetailMetric(
+                  label: 'LÝ DO KÍCH HOẠT MUỘN',
+                  value: reason,
+                  maxLines: null,
                 ),
               ),
           ],
@@ -480,23 +502,32 @@ class _SeasonDetailContent extends ConsumerWidget {
   }
 
   Widget _activationChecklist() {
+    final missing = season.activationEligibility?.missingConditions ?? const [];
     final items = <({bool ok, String label})>[
-      (ok: season.stockingDate != null, label: 'Ngày thả giống đã nhập'),
-      (ok: season.initialQuantity != null, label: 'Số lượng giống ban đầu'),
       (
-        ok: season.personnel?.technician != null,
-        label:
-            'KTV phụ trách: ${season.personnel?.technician?.account.fullName ?? 'Chưa phân công'}',
+        ok:
+            !missing.contains('INITIAL_QUANTITY_REQUIRED') &&
+            !missing.contains('INITIAL_DENSITY_REQUIRED'),
+        label: 'Số lượng giống và mật độ ban đầu',
       ),
       (
-        ok: season.personnel?.expert != null,
+        ok: !missing.contains('ACTIVE_TECHNICIAN_REQUIRED'),
+        label:
+            'Kỹ thuật viên phụ trách: ${season.personnel?.technician?.account.fullName ?? 'Chưa phân công'}',
+      ),
+      (
+        ok: !missing.contains('ACTIVE_EXPERT_REQUIRED'),
         label:
             'Chuyên gia: ${season.personnel?.expert?.account.fullName ?? 'Chưa phân công'}',
       ),
       (
-        ok: season.approvedProductionProtocol != null,
+        ok: !missing.contains('APPROVED_PRODUCTION_PROTOCOL_REQUIRED'),
         label: 'Phác đồ nuôi đã được duyệt',
       ),
+      for (final code in missing.where(
+        (code) => code.startsWith('FARM_') || code.startsWith('POND_'),
+      ))
+        (ok: false, label: activationConditionLabel(code)),
     ];
     return SeasonSectionCard(
       child: Column(
@@ -563,23 +594,20 @@ class _SeasonDetailContent extends ConsumerWidget {
   );
 
   Future<void> _activate(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<({DateTime date, String? reason})>(
       context: context,
-      builder: (dialogContext) => AppConfirmDialog(
-        title: 'Kích hoạt vụ nuôi?',
-        description: 'Kiểm tra thông tin trước khi bắt đầu vận hành.',
-        confirmLabel: 'Kích hoạt',
-        cancelLabel: 'Để sau',
-        level: AppNoticeLevel.warning,
-        content: _ActivationDialogContent(season: season),
-        onConfirm: () => Navigator.of(dialogContext).pop(true),
-      ),
+      builder: (_) => _ActivationDialog(season: season),
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed == null || !context.mounted) return;
     try {
       await ref
           .read(seasonMutationControllerProvider.notifier)
-          .activate(farmId: farmId, current: season);
+          .activate(
+            farmId: farmId,
+            current: season,
+            actualStockingDate: confirmed.date,
+            activationDelayReason: confirmed.reason,
+          );
       if (!context.mounted) return;
       AppNoticeService.success(
         context,
@@ -587,6 +615,9 @@ class _SeasonDetailContent extends ConsumerWidget {
       );
     } on Object catch (error) {
       if (context.mounted) {
+        if (error is AppException && error.statusCode == 409) {
+          ref.invalidate(seasonDetailControllerProvider(season.id));
+        }
         AppNoticeService.danger(
           context,
           ErrorMapper.displayMessage(error),
@@ -623,247 +654,170 @@ class _SeasonDetailContent extends ConsumerWidget {
   }
 }
 
-class _ActivationDialogContent extends StatelessWidget {
-  const _ActivationDialogContent({required this.season});
+class _ActivationDialog extends StatefulWidget {
+  const _ActivationDialog({required this.season});
 
   final AquacultureSeason season;
 
   @override
-  Widget build(BuildContext context) {
-    final expectedEndDateStr = season.expectedEndDate != null
-        ? seasonDateLabel(season.expectedEndDate)
-        : null;
-    final expectedDurationDays =
-        season.stockingDate != null && season.expectedEndDate != null
-        ? season.expectedEndDate!.difference(season.stockingDate!).inDays
-        : null;
-    final expectedEndDisplay = expectedEndDateStr != null
-        ? (expectedDurationDays != null && expectedDurationDays > 0
-              ? '$expectedEndDateStr (~$expectedDurationDays ngày)'
-              : expectedEndDateStr)
-        : 'Chưa đặt';
-    final areaDisplay = season.pond.areaM2 != null && season.pond.areaM2! > 0
-        ? '${seasonDecimalLabel(season.pond.areaM2)} m²'
-        : '—';
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FBFE),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFDDEAF4)),
-          ),
-          child: Column(
-            children: <Widget>[
-              // Row 1: Ao nuôi & Diện tích
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Ao nuôi',
-                      value: season.pond.name,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Diện tích ao',
-                      value: areaDisplay,
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: AppColors.line),
-              ),
-              // Row 2: Số lượng thả & Mật độ thả (tách riêng rõ ràng)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Số lượng thả',
-                      value:
-                          '${seasonIntegerLabel(season.initialQuantity)} con',
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Mật độ thả',
-                      value:
-                          '${seasonDecimalLabel(season.initialDensityPerM2)} con/m²',
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: AppColors.line),
-              ),
-              // Row 3: Giống tôm & Phác đồ nuôi
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Giống tôm',
-                      value: shrimpTypeLabel(season.shrimpType),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Phác đồ nuôi',
-                      value: season.approvedProductionProtocol != null
-                          ? '${season.approvedProductionProtocol!.title} · Bản ${season.approvedProductionProtocol!.versionNo}'
-                          : 'Chưa áp dụng',
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: AppColors.line),
-              ),
-              // Row 4: Ngày thả giống & Dự kiến kết thúc
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Ngày thả giống',
-                      value: seasonDateLabel(season.stockingDate),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Dự kiến kết thúc',
-                      value: expectedEndDisplay,
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: AppColors.line),
-              ),
-              // Row 5: Nhân sự phụ trách
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Kỹ thuật viên',
-                      value:
-                          season.personnel?.technician?.account.fullName ??
-                          'Chưa phân công',
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActivationDialogMetric(
-                      label: 'Chuyên gia thủy sản',
-                      value:
-                          season.personnel?.expert?.account.fullName ??
-                          'Chưa phân công',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF5E3),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFF1D8A9)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFBE8C5),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.lock_outline_rounded,
-                  size: 16,
-                  color: Color(0xFFB86808),
-                ),
-              ),
-              const SizedBox(width: 9),
-              const Expanded(
-                child: Text(
-                  'Thông tin khởi tạo sẽ được khóa sau khi kích hoạt và không thể chỉnh sửa.',
-                  style: TextStyle(
-                    color: Color(0xFF8B540D),
-                    fontSize: 11,
-                    height: 1.35,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  State<_ActivationDialog> createState() => _ActivationDialogState();
 }
 
-class _ActivationDialogMetric extends StatelessWidget {
-  const _ActivationDialogMetric({required this.label, required this.value});
+class _ActivationDialogState extends State<_ActivationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _reason = TextEditingController();
+  DateTime? _actualDate;
+  String? _dateError;
 
-  final String label;
-  final String value;
+  DateTime? get _plannedDate =>
+      widget.season.plannedStockingDate ?? widget.season.stockingDate;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      Text(
-        label.toUpperCase(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: AppColors.inkMuted,
-          fontSize: 9,
-          height: 1.2,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.25,
+  void initState() {
+    super.initState();
+    final today = SeasonRules.vietnamCalendarDate(DateTime.now());
+    if (DateUtils.isSameDay(_plannedDate, today)) _actualDate = today;
+  }
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  void _select(DateTime date) => setState(() {
+    _actualDate = date;
+    _dateError = null;
+  });
+
+  Future<void> _selectEarlier(DateTime today) async {
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
+    final candidate = _actualDate ?? _plannedDate;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: candidate != null && candidate.isBefore(today)
+          ? candidate
+          : yesterday,
+      firstDate: DateTime(1),
+      lastDate: yesterday,
+      currentDate: today,
+      helpText: 'Chọn ngày đã thả thực tế',
+    );
+    if (selected != null && mounted) _select(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final today = SeasonRules.vietnamCalendarDate(DateTime.now());
+    final date = _actualDate;
+    final delayed = date != null && date.isBefore(today);
+    return AppConfirmDialog(
+      title: 'Kích hoạt vụ nuôi?',
+      description: 'Xác nhận ngày đã thả và kiểm tra số lượng giống.',
+      confirmLabel: 'Kích hoạt',
+      cancelLabel: 'Chưa thả',
+      onCancel: () => Navigator.of(context).pop(),
+      onConfirm: () {
+        final actual = _actualDate;
+        final nowDay = SeasonRules.vietnamCalendarDate(DateTime.now());
+        if (!DateUtils.isSameDay(today, nowDay)) {
+          setState(
+            () => _dateError =
+                'Đã sang ngày mới. Vui lòng kiểm tra lại ngày thả.',
+          );
+          return;
+        }
+        if (actual == null) {
+          setState(() => _dateError = 'Vui lòng xác nhận ngày thả thực tế.');
+          return;
+        }
+        final dateError = SeasonRules.validateDateRange(
+          actual,
+          widget.season.expectedEndDate,
+        );
+        if (dateError != null) {
+          setState(() => _dateError = dateError);
+          return;
+        }
+        if (!_formKey.currentState!.validate()) return;
+        Navigator.of(
+          context,
+        ).pop((date: actual, reason: delayed ? _reason.text.trim() : null));
+      },
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F7FD),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.season.pond.name,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${seasonIntegerLabel(widget.season.initialQuantity)} con · Dự kiến ${seasonDateLabel(_plannedDate)}',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Ngày thả thực tế',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  selected: date != null && !delayed,
+                  onSelected: (_) => _select(today),
+                  label: const Text('Thả hôm nay'),
+                ),
+                ChoiceChip(
+                  selected: delayed,
+                  onSelected: (_) => _selectEarlier(today),
+                  label: const Text('Đã thả ngày trước'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (date != null)
+              Text(
+                'Đã chọn: ${seasonDateLabel(date)} · DOC ${SeasonRules.cultureDay(date, today)}',
+              ),
+            if (_dateError != null)
+              Text(_dateError!, style: const TextStyle(color: AppColors.error)),
+            if (delayed) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _reason,
+                maxLength: SeasonRules.activationReasonMaxLength,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Lý do kích hoạt muộn *',
+                ),
+                validator: (value) => (value ?? '').trim().isEmpty
+                    ? 'Vui lòng nhập lý do kích hoạt muộn.'
+                    : null,
+              ),
+            ],
+          ],
         ),
       ),
-      const SizedBox(height: 5),
-      Text(
-        value,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontSize: 12,
-          height: 1.3,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }
 
 class _ChecklistRow extends StatelessWidget {
@@ -909,10 +863,12 @@ class _DetailMetric extends StatelessWidget {
     required this.label,
     required this.value,
     this.highlighted = false,
+    this.maxLines = 2,
   });
   final String label;
   final String value;
   final bool highlighted;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -930,8 +886,8 @@ class _DetailMetric extends StatelessWidget {
       const SizedBox(height: 2),
       Text(
         value,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+        maxLines: maxLines,
+        overflow: maxLines == null ? null : TextOverflow.ellipsis,
         style: TextStyle(
           color: highlighted ? AppColors.ocean : AppColors.ink,
           fontSize: 13,

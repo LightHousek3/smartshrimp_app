@@ -31,7 +31,11 @@ abstract interface class SeasonRepository {
     int? initialQuantity,
   });
 
-  Future<AquacultureSeason> activateSeason(AquacultureSeason current);
+  Future<AquacultureSeason> activateSeason(
+    AquacultureSeason current, {
+    required DateTime actualStockingDate,
+    String? activationDelayReason,
+  });
 
   Future<SeasonCancellationResult> cancelSeason({
     required AquacultureSeason current,

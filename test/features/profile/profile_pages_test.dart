@@ -246,7 +246,7 @@ void main() {
       );
     }
     expect(find.byKey(const Key('account_personnel_entry')), findsOneWidget);
-    expect(find.text('3 KTV · 2 Chuyên gia'), findsOneWidget);
+    expect(find.text('3 Kỹ thuật viên · 2 Chuyên gia'), findsOneWidget);
     expect(find.text('5 đang hoạt động'), findsOneWidget);
     expect(find.text('Quản lý hồ sơ & nhân sự'), findsOneWidget);
     final header = find.text('Quản lý hồ sơ & nhân sự');

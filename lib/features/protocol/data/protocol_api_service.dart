@@ -39,12 +39,17 @@ final class ProtocolApiService implements ProtocolRepository {
     )).requireMapData(),
   );
   @override
-  Future<ProtocolDay> day(String id, int day) async => ProtocolDay.parse(
-    (await _client.get(
-      '/owner/protocols/$id/days/$day',
-      authenticated: true,
-    )).requireMapData(),
-  );
+  Future<ProtocolDay> day(String id, int day) async {
+    final result = ProtocolDay.parse(
+      (await _client.get(
+        '/owner/protocols/$id/days/$day',
+        authenticated: true,
+      )).requireMapData(),
+    );
+    if (result.day != day) throw const InvalidResponseException();
+    return result;
+  }
+
   @override
   Future<List<ProtocolInventoryEntry>> inventory(
     String id,

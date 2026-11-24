@@ -173,7 +173,7 @@ class _ProtocolDecisionState extends ConsumerState<ProtocolDecision> {
                   const SizedBox(height: 4),
                   Text(
                     widget.detail.card.protocolType == ProtocolType.treatment
-                        ? 'Phiên bản sẽ bị khóa. Điều trị bắt đầu theo mốc Expert đã đặt${widget.detail.treatmentStartAt == null ? '' : ': ${protocolDate(widget.detail.treatmentStartAt, year: true, time: true)}'}. Duyệt không đồng nghĩa bắt đầu điều trị ngay.'
+                        ? 'Phiên bản sẽ bị khóa sau khi duyệt. Điều trị bắt đầu theo mốc Chuyên gia chỉ định${widget.detail.treatmentStartAt == null ? '' : ' lúc ${protocolDate(widget.detail.treatmentStartAt, year: true, time: true)}'}.'
                         : 'Phiên bản sẽ bị khóa. Lịch được sinh cuốn theo ngày thả giống, không tạo cứng toàn bộ mùa vụ.',
                     style: const TextStyle(
                       fontSize: 10,

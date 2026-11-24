@@ -483,7 +483,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
-                  'Nhiệm vụ gắn với vụ nuôi được giao tự động cho KTV đang phụ trách để đúng trách nhiệm vận hành.',
+                  'Nhiệm vụ của vụ nuôi được giao tự động cho Kỹ thuật viên đang phụ trách.',
                   style: TextStyle(
                     fontSize: 11,
                     height: 1.6,

@@ -20,6 +20,7 @@ import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart'
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_detail_page.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/pages/protocol_list_page.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_empty_state.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_audit.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/view_models/protocol_controller.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/entities/owner_disease_case.dart'
@@ -301,8 +302,60 @@ void main() {
     expect(find.text(repo.rejectionReason!), findsOneWidget);
     expect(
       tester.getTopLeft(find.text('Lý do từ chối')).dy,
-      lessThan(tester.getTopLeft(find.text('LỊCH SỬ TRẠNG THÁI')).dy),
+      lessThan(tester.getTopLeft(find.text('LỊCH SỬ PHÁC ĐỒ')).dy),
     );
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('post-treatment events do not repeat the completed status', (
+    tester,
+  ) async {
+    final timestamp = DateTime.parse('2026-11-23T15:30:00Z');
+    final detail =
+        (await ProtocolFixtureRepository(
+          type: 'TREATMENT',
+          status: 'COMPLETED',
+        ).detail('protocol-1')).copyWith(
+          history: [
+            ProtocolHistory(
+              id: 'course-ended',
+              fromStatus: ProtocolStatus.active,
+              toStatus: ProtocolStatus.completed,
+              changedAt: timestamp,
+              changedByName: 'Hệ thống',
+            ),
+            ProtocolHistory.fromJson({
+              'id': 'hold',
+              'fromStatus': 'COMPLETED',
+              'toStatus': 'COMPLETED',
+              'eventLabel': 'Tạm hoãn phác đồ nuôi',
+              'reason': 'Chờ Chuyên gia quyết định sau điều trị.',
+              'changedAt': timestamp.toIso8601String(),
+              'changedByName': 'Hệ thống',
+            }),
+            ProtocolHistory(
+              id: 'legacy',
+              fromStatus: ProtocolStatus.completed,
+              toStatus: ProtocolStatus.completed,
+              changedAt: timestamp,
+              changedByName: 'Chuyên gia',
+            ),
+          ],
+        );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(child: ProtocolAudit(detail: detail)),
+        ),
+      ),
+    );
+    expect(find.text('Đang có hiệu lực'), findsOneWidget);
+    expect(find.text('Đã kết thúc'), findsOneWidget);
+    expect(find.text('Tạm hoãn phác đồ nuôi'), findsOneWidget);
+    expect(
+      find.text('Chờ Chuyên gia quyết định sau điều trị.'),
+      findsOneWidget,
+    );
+    expect(find.text('Sự kiện phác đồ'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets(
@@ -566,7 +619,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Thành công'), findsOneWidget);
       expect(
-        find.text('Đã phê duyệt. Hệ thống sẽ sinh lịch vận hành gần nhất.'),
+        find.text(
+          'Đã phê duyệt. Phác đồ được áp dụng khi đủ điều kiện có hiệu lực.',
+        ),
         findsOneWidget,
       );
       expect(repo.approved, isTrue);

@@ -29,7 +29,7 @@ void main() {
         'pondId': 'pond-1',
         'name': 'Vụ tháng 9',
         'shrimpType': 'WHITELEG',
-        'stockingDate': '2026-09-25',
+        'plannedStockingDate': '2026-09-25',
         'expectedEndDate': '2027-01-20',
         'initialQuantity': 100000,
       });
@@ -46,9 +46,15 @@ void main() {
       );
       expect(remote.lastData?['expectedUpdatedAt'], '2026-09-22T02:00:00.000Z');
 
-      await repository.activateSeason(_season);
+      await repository.activateSeason(
+        _season,
+        actualStockingDate: DateTime(2026, 9, 21),
+        activationDelayReason: '  Chờ   phác đồ ',
+      );
       expect(remote.lastData, <String, dynamic>{
         'expectedUpdatedAt': '2026-09-22T02:00:00.000Z',
+        'actualStockingDate': '2026-09-21',
+        'activationDelayReason': 'Chờ phác đồ',
       });
 
       await repository.cancelSeason(current: _season, reason: '  Nước   xấu ');

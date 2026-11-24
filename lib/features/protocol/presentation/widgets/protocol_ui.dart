@@ -29,6 +29,33 @@ String protocolStatusLabel(ProtocolStatus status) => switch (status) {
   ProtocolStatus.unknown => 'Chưa xác định',
 };
 
+String? protocolStatusDescription(
+  ProtocolDetail detail,
+) => switch (detail.card.status) {
+  ProtocolStatus.draft => 'Bản nháp chưa gửi duyệt, chưa có hiệu lực.',
+  ProtocolStatus.pendingApproval =>
+    'Đang chờ Chủ trại duyệt. Các cữ bên dưới là kế hoạch, chưa được thực hiện.',
+  ProtocolStatus.approved =>
+    detail.card.protocolType == ProtocolType.treatment
+        ? 'Đã duyệt. Chỉ bắt đầu điều trị theo mốc của Chuyên gia khi đủ điều kiện có hiệu lực.'
+        : 'Đã duyệt, đang chờ đủ điều kiện có hiệu lực và sinh lịch vận hành.',
+  ProtocolStatus.active => null,
+  ProtocolStatus.paused =>
+    'Phác đồ nuôi đang tạm hoãn. Không thực hiện lịch nuôi trong thời gian tạm hoãn.',
+  ProtocolStatus.completed =>
+    'Phác đồ đã kết thúc và khóa ghi nhận. Trạng thái này không có nghĩa mọi cữ đều đã hoàn thành; xem tiến độ và lý do trong lịch sử.',
+  ProtocolStatus.rejected =>
+    'Phác đồ đã bị từ chối và chưa có hiệu lực. Lý do được ghi trong lịch sử.',
+  ProtocolStatus.superseded =>
+    'Phiên bản đã được thay thế và khóa ghi nhận. Dữ liệu thực hiện trước đó vẫn được giữ.',
+  ProtocolStatus.cancelled =>
+    'Phác đồ đã bị hủy. Không tiếp tục thực hiện các cữ từ phiên bản này.',
+  ProtocolStatus.aborted =>
+    'Điều trị đã dừng sớm và khóa ghi nhận. Dừng sớm không tự kết luận ca bệnh đã khỏi.',
+  ProtocolStatus.unknown =>
+    'Chưa xác định trạng thái phác đồ. Vui lòng tải lại để kiểm tra thông tin mới nhất.',
+};
+
 String protocolNumber(num number) => number
     .toStringAsFixed(4)
     .replaceFirst(RegExp(r'\.?0+$'), '')
@@ -138,13 +165,15 @@ class ProtocolBadge extends StatelessWidget {
           ),
           const SizedBox(width: 6),
         ],
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            height: 1,
-            fontWeight: FontWeight.w600,
-            color: color,
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              height: 1,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ),
       ],

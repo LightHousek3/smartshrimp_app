@@ -266,6 +266,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     String? productId,
     InventoryTransactionType? transactionType,
     String? seasonId,
+    String? scheduleId,
     DateTime? createdFrom,
     DateTime? createdTo,
   }) => _remoteDataSource.getHistory(farmId, <String, dynamic>{
@@ -274,6 +275,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
     'productId': ?productId,
     'seasonId': ?seasonId,
+    'scheduleId': ?scheduleId,
     if (transactionType != null)
       'transactionType': _transactionTypeValue(transactionType),
     if (createdFrom != null)

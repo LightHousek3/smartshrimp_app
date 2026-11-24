@@ -9,7 +9,9 @@ import 'package:smartshrimp_app/features/operation/presentation/widgets/operatio
 /// Parse số thực hỗ trợ cả dấu `.` và dấu `,` trên bàn phím tiếng Việt.
 double? parseOperationQuantity(String raw) {
   final normalized = raw.trim().replaceAll(',', '.');
-  if (normalized.isEmpty) return null;
+  if (!RegExp(r'^(?:\d{1,11}(?:\.\d{0,9})?|\.\d{1,9})$').hasMatch(normalized)) {
+    return null;
+  }
   final parsed = double.tryParse(normalized);
   if (parsed == null || !parsed.isFinite) return null;
   return parsed;
@@ -18,35 +20,12 @@ double? parseOperationQuantity(String raw) {
 /// Định dạng số gọn đẹp, bỏ số 0 thừa ở phần thập phân.
 String formatOperationCompact(double value, {int maxDecimals = 2}) {
   if (!value.isFinite) return '0';
-  final rounded = double.parse(value.toStringAsFixed(maxDecimals));
-  if (rounded == rounded.roundToDouble()) {
-    return rounded.toInt().toString();
-  }
-  return rounded
-      .toStringAsFixed(maxDecimals)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '');
+  final formatted = value.toStringAsFixed(maxDecimals);
+  if (!formatted.contains('.') || formatted.contains('e')) return formatted;
+  return formatted.replaceFirst(RegExp(r'\.?0+$'), '');
 }
 
-/// Định dạng tỷ lệ gấp bao nhiêu lần dễ đọc (vd: 2, 1.5, 0.25, < 0.01).
-String formatOperationRatio(double ratio) {
-  if (!ratio.isFinite || ratio <= 0) return '0';
-  if (ratio < 0.01) return '< 0.01';
-  if (ratio >= 10) return formatOperationCompact(ratio, maxDecimals: 1);
-  return formatOperationCompact(ratio, maxDecimals: 2);
-}
-
-/// Format thời điểm ghi nhận đồng bộ phong cách "09:18 • Hôm nay (18/11)".
-String formatOperationRecordedTime(DateTime dt) {
-  final local = dt.toLocal();
-  final hh = local.hour.toString().padLeft(2, '0');
-  final mm = local.minute.toString().padLeft(2, '0');
-  final dd = local.day.toString().padLeft(2, '0');
-  final mo = local.month.toString().padLeft(2, '0');
-  return '$hh:$mm • Hôm nay ($dd/$mo)';
-}
-
-/// Kết quả kiểm tra sai số cho một mục vật tư khi ghi nhận vận hành.
+/// Preview the same quantity threshold used when saving an execution.
 @immutable
 class OperationVarianceEvaluation {
   const OperationVarianceEvaluation({
@@ -59,7 +38,17 @@ class OperationVarianceEvaluation {
   final double? actual;
   final double allowedPct;
 
-  static const double _epsilon = 1e-9;
+  static const _quantityDecimals = 9;
+  static const _percentageDecimals = 2;
+
+  static BigInt _decimalUnits(double value, int decimals) {
+    final [mantissa, exponent] = value.toStringAsExponential().split('e');
+    final fractionalDigits = mantissa.contains('.') ? mantissa.length - 2 : 0;
+    final digits = BigInt.parse(mantissa.replaceFirst('.', ''));
+    final shift = decimals + int.parse(exponent) - fractionalDigits;
+    final factor = BigInt.from(10).pow(shift.abs());
+    return shift < 0 ? digits ~/ factor : digits * factor;
+  }
 
   double get minAllowed {
     final raw = planned * (1 - allowedPct / 100);
@@ -75,43 +64,43 @@ class OperationVarianceEvaluation {
     return ((actual! - planned).abs() / planned) * 100;
   }
 
-  bool get isAboveAllowed =>
-      isValidPositive && planned > 0 && actual! > maxAllowed + _epsilon;
+  bool get exceedsAllowed {
+    if (!hasAnyDeviation ||
+        !allowedPct.isFinite ||
+        allowedPct < 0 ||
+        allowedPct > 100) {
+      return false;
+    }
+    final plannedUnits = _decimalUnits(planned, _quantityDecimals);
+    final difference =
+        (_decimalUnits(actual!, _quantityDecimals) - plannedUnits).abs();
+    final thresholdUnits = _decimalUnits(allowedPct, _percentageDecimals);
+    // Compare before division so an exact boundary stays within tolerance.
+    return difference * BigInt.from(10000) > plannedUnits * thresholdUnits;
+  }
 
-  bool get isBelowAllowed =>
-      isValidPositive && planned > 0 && actual! < minAllowed - _epsilon;
-
-  bool get exceedsAllowed => isAboveAllowed || isBelowAllowed;
-
-  /// Theo BR-57: mọi chênh lệch khác 0 (kể cả trong ngưỡng) đều cần lý do.
+  /// Distinguish an in-range adjustment from the threshold that requires a reason.
   bool get hasAnyDeviation =>
-      isValidPositive && planned > 0 && variancePct > _epsilon;
+      isValidPositive && planned.isFinite && planned > 0 && actual != planned;
 
-  bool get isDeviatedWithinAllowed =>
-      hasAnyDeviation && !exceedsAllowed;
+  bool get isDeviatedWithinAllowed => hasAnyDeviation && !exceedsAllowed;
 
-  double get ratio =>
-      isValidPositive && planned > 0 ? actual! / planned : 1.0;
-
-  double get inverseRatio =>
-      isValidPositive && planned > 0 ? planned / actual! : 1.0;
-
-  String get warningTitle => isAboveAllowed
-      ? 'Vượt khoảng sai số cho phép (±${formatOperationCompact(allowedPct)}%)'
-      : 'Thấp hơn khoảng sai số cho phép (±${formatOperationCompact(allowedPct)}%)';
+  String get varianceLabel {
+    final sign = actual! > planned ? '+' : '−';
+    final pct = variancePct;
+    final formatted = formatOperationCompact(pct, maxDecimals: 2);
+    return formatted == '0'
+        ? 'Chênh lệch $sign<0,01%'
+        : 'Chênh lệch $sign$formatted%';
+  }
 
   String warningMessage(String unit) {
     final unitSuffix = unit.trim().isEmpty ? '' : ' ${unit.trim()}';
     final actualText =
-        '${formatOperationCompact(actual!, maxDecimals: 3)}$unitSuffix';
+        '${formatOperationCompact(actual!, maxDecimals: _quantityDecimals)}$unitSuffix';
     final plannedText =
-        '${formatOperationCompact(planned, maxDecimals: 3)}$unitSuffix';
-    final pctText = formatOperationCompact(variancePct, maxDecimals: 1);
-
-    if (isAboveAllowed) {
-      return 'Lượng nhập ($actualText) cao gấp ${formatOperationRatio(ratio)} lần so với lượng ban đầu ($plannedText, lệch +$pctText%). Bắt buộc nhập lý do mới được ghi nhận.';
-    }
-    return 'Lượng nhập ($actualText) chỉ bằng ${formatOperationRatio(ratio)} lần (nhỏ hơn ${formatOperationRatio(inverseRatio)} lần, lệch -$pctText%) so với lượng ban đầu ($plannedText). Bắt buộc nhập lý do mới được ghi nhận.';
+        '${formatOperationCompact(planned, maxDecimals: _quantityDecimals)}$unitSuffix';
+    return 'Lượng nhập $actualText, kế hoạch $plannedText. Cần nhập lý do khi lệch quá ±${formatOperationCompact(allowedPct)}%.';
   }
 }
 
@@ -123,6 +112,7 @@ class OperationExecuteItemCard extends StatelessWidget {
     required this.quantityController,
     required this.varianceReasonController,
     this.showDivider = false,
+    this.checkCurrentStock = true,
     super.key,
   });
 
@@ -130,6 +120,7 @@ class OperationExecuteItemCard extends StatelessWidget {
   final TextEditingController quantityController;
   final TextEditingController varianceReasonController;
   final bool showDivider;
+  final bool checkCurrentStock;
 
   static const Color _borderColor = Color(0xFFDDE3EA);
   static const Color _focusColor = Color(0xFF1D7AD6);
@@ -156,9 +147,11 @@ class OperationExecuteItemCard extends StatelessWidget {
           actual: actual,
           allowedPct: allowedPct,
         );
-        final isStockInsufficient = eval.isValidPositive
-            ? schedule.isStockInsufficientFor(eval.actual!)
-            : schedule.isStockInsufficientForPlanned;
+        final isStockInsufficient =
+            checkCurrentStock &&
+            (eval.isValidPositive
+                ? schedule.isStockInsufficientFor(eval.actual!)
+                : schedule.isStockInsufficientForPlanned);
         final dangerVisual = appNoticeVisualFor(AppNoticeLevel.danger);
         final hasAlertBorder = eval.exceedsAllowed || isStockInsufficient;
 
@@ -229,10 +222,7 @@ class OperationExecuteItemCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               'Kế hoạch: ${formatOperationCompact(schedule.plannedQuantity, maxDecimals: 3)} $unit · Cho phép: ${formatOperationCompact(eval.minAllowed, maxDecimals: 3)} – ${formatOperationCompact(eval.maxAllowed, maxDecimals: 3)} $unit (±${formatOperationCompact(allowedPct)}%)',
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.inkMuted,
-              ),
+              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 6),
 
@@ -285,7 +275,7 @@ class OperationExecuteItemCard extends StatelessWidget {
               validator: (raw) {
                 final parsed = parseOperationQuantity(raw ?? '');
                 if (parsed == null || parsed <= 0) {
-                  return 'Vui lòng nhập số lượng lớn hơn 0';
+                  return 'Nhập lượng lớn hơn 0, tối đa 9 chữ số thập phân.';
                 }
                 return null;
               },
@@ -305,7 +295,7 @@ class OperationExecuteItemCard extends StatelessWidget {
                   const SizedBox(width: 5),
                   Expanded(
                     child: Text(
-                      'Chênh lệch ${eval.actual! > eval.planned ? '+' : '-'}${formatOperationCompact(eval.variancePct, maxDecimals: 1)}% — trong khoảng cho phép (vẫn cần nhập lý do theo quy định).',
+                      eval.varianceLabel,
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -328,18 +318,16 @@ class OperationExecuteItemCard extends StatelessWidget {
               ),
             ],
 
-            // 5. Box cảnh báo đỏ chuẩn AppFormMessageBanner khi vượt khoảng sai số
-            if (eval.exceedsAllowed && !isStockInsufficient) ...<Widget>[
+            if (eval.exceedsAllowed) ...<Widget>[
               const SizedBox(height: 10),
               AppFormMessageBanner(
                 level: AppNoticeLevel.danger,
-                title: eval.warningTitle,
+                title: eval.varianceLabel,
                 message: eval.warningMessage(unit),
               ),
             ],
 
-            // 6. Ô Lý do chênh lệch bắt buộc cho mọi chênh lệch khác 0 (BR-57)
-            if (eval.hasAnyDeviation && !isStockInsufficient) ...<Widget>[
+            if (eval.exceedsAllowed && !isStockInsufficient) ...<Widget>[
               const SizedBox(height: 10),
               const Text(
                 'Lý do chênh lệch *',
@@ -352,6 +340,7 @@ class OperationExecuteItemCard extends StatelessWidget {
               const SizedBox(height: 6),
               TextFormField(
                 controller: varianceReasonController,
+                maxLength: 500,
                 maxLines: 2,
                 minLines: 2,
                 style: const TextStyle(
@@ -382,8 +371,7 @@ class OperationExecuteItemCard extends StatelessWidget {
                   ),
                 ),
                 validator: (raw) {
-                  if (eval.hasAnyDeviation &&
-                      (raw == null || raw.trim().isEmpty)) {
+                  if (raw == null || raw.trim().isEmpty) {
                     return 'Bắt buộc nhập lý do chênh lệch';
                   }
                   return null;
@@ -401,97 +389,4 @@ class OperationExecuteItemCard extends StatelessWidget {
       },
     );
   }
-}
-
-/// Header + thanh Thời điểm ghi nhận đồng bộ phong cách "Ghi nhận sức khỏe tôm".
-class OperationExecuteSheetHeader extends StatelessWidget {
-  const OperationExecuteSheetHeader({
-    required this.title,
-    required this.recordedAt,
-    required this.onClose,
-    super.key,
-  });
-
-  final String title;
-  final DateTime recordedAt;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onClose,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEF1F6),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close_rounded,
-                size: 18,
-                color: AppColors.inkMuted,
-              ),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 14),
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF1F6),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.inkMuted,
-                    fontFamily: 'PlusJakartaSans',
-                  ),
-                  children: <TextSpan>[
-                    const TextSpan(text: 'Thời điểm ghi nhận: '),
-                    TextSpan(
-                      text: formatOperationRecordedTime(recordedAt),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Icon(
-              Icons.schedule_rounded,
-              size: 16,
-              color: AppColors.inkMuted,
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
 }

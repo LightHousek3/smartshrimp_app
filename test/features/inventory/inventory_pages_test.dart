@@ -3092,6 +3092,7 @@ final class _InventoryRepository implements InventoryRepository {
     String? productId,
     domain.InventoryTransactionType? transactionType,
     String? seasonId,
+    String? scheduleId,
     DateTime? createdFrom,
     DateTime? createdTo,
   }) async => history;

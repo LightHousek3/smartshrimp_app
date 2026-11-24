@@ -16,28 +16,9 @@ class OperationScheduleCard extends StatelessWidget {
   final VoidCallback onTap;
   final BoxDecoration? decoration;
 
-  static const Color _blueBg = Color(0xFFDEEDFD);
-  static const Color _blueFg = Color(0xFF1D7AD6);
-
-  (Color dot, Color text, Color bg) _statusVisuals(OperationStatus status) =>
-      switch (status) {
-        OperationStatus.planned => (_blueFg, _blueFg, _blueBg),
-        OperationStatus.completed => (
-          const Color(0xFF10B981),
-          const Color(0xFF047857),
-          const Color(0xFFECFDF5),
-        ),
-        OperationStatus.cancelled => (
-          AppColors.inkMuted,
-          AppColors.inkMuted,
-          const Color(0xFFF1F5F9),
-        ),
-      };
-
   @override
   Widget build(BuildContext context) {
     final visuals = OperationTypeVisuals.of(schedule.operationType);
-    final (statusDot, statusText, statusBg) = _statusVisuals(schedule.status);
 
     final timeStr = schedule.timeRangeText;
     final isOverdue = schedule.isOverdue;
@@ -119,39 +100,6 @@ class OperationScheduleCard extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.5,
-                              vertical: 3.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusBg,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: statusDot,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  schedule.status.displayName,
-                                  style: TextStyle(
-                                    color: statusText,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -172,12 +120,14 @@ class OperationScheduleCard extends StatelessWidget {
                             color: AppColors.inkMuted,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            timeStr,
-                            style: const TextStyle(
-                              color: AppColors.inkMuted,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              timeStr,
+                              style: const TextStyle(
+                                color: AppColors.inkMuted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -189,19 +139,24 @@ class OperationScheduleCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            quantityStr,
-                            style: const TextStyle(
-                              color: AppColors.inkSoft,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                          Flexible(
+                            child: Text(
+                              quantityStr,
+                              style: const TextStyle(
+                                color: AppColors.inkSoft,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                          if (isOverdue) ...<Widget>[
-                            const Spacer(),
-                            const OperationOverdueBadge(compact: true),
-                          ],
                         ],
+                      ),
+                      const SizedBox(height: 6),
+                      OperationStatusLine(
+                        badge: OperationStatusBadge(status: schedule.status),
+                        label: isOverdue
+                            ? const OperationOverdueBadge(compact: true)
+                            : null,
                       ),
                     ],
                   ),

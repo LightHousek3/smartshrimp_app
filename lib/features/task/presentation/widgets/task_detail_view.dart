@@ -205,7 +205,10 @@ class _TaskAssignment extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _TaskFact('KTV phụ trách', task.assignee?.name ?? '—'),
+              child: _TaskFact(
+                'Kỹ thuật viên phụ trách',
+                task.assignee?.name ?? '—',
+              ),
             ),
           ],
         ),
