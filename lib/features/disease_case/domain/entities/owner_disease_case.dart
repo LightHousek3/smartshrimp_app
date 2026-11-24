@@ -1,7 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'case_care_action.dart';
 
 part 'owner_disease_case.freezed.dart';
@@ -124,6 +126,7 @@ abstract class DiseaseCaseDetail with _$DiseaseCaseDetail {
     required List<DiseaseCaseProtocol> protocols,
     required List<DiseaseCaseEvent> timeline,
     DiseaseCaseSnapshot? snapshot,
+    DiseaseCaseAiAssessment? aiAssessment,
     String? resolutionSummary,
     @Default(false) bool productionPaused,
   }) = _DiseaseCaseDetail;
@@ -136,11 +139,15 @@ abstract class DiseaseCaseDetail with _$DiseaseCaseDetail {
 }
 
 @freezed
-abstract class DiseaseCaseSnapshot with _$DiseaseCaseSnapshot {
+abstract class DiseaseCaseSnapshot
+    with WaterMeasurements, _$DiseaseCaseSnapshot {
+  const DiseaseCaseSnapshot._();
+
   @JsonSerializable(checked: true)
   const factory DiseaseCaseSnapshot({
     required List<String> exceededWaterMetrics,
     DateTime? capturedAt,
+    DateTime? healthRecordedAt,
     @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)
     OpeningHealthStatus? healthStatus,
     String? note,
@@ -149,10 +156,48 @@ abstract class DiseaseCaseSnapshot with _$DiseaseCaseSnapshot {
     num? ph,
     num? no2MgL,
     num? nh3MgL,
+    num? temperatureC,
+    num? dissolvedOxygenMgL,
+    num? salinityPpt,
+    num? alkalinityMgLCaCO3,
+    num? h2sMgL,
+    DateTime? waterRecordedAt,
+    String? waterRecordedByName,
+    String? waterNote,
   }) = _DiseaseCaseSnapshot;
 
   factory DiseaseCaseSnapshot.fromJson(Map<String, dynamic> json) =>
       _$DiseaseCaseSnapshotFromJson(json);
+
+  @override
+  List<String> get exceededParameters => exceededWaterMetrics;
+
+  @override
+  bool get isVoided => false;
+}
+
+@freezed
+abstract class DiseaseCaseAiAssessment with _$DiseaseCaseAiAssessment {
+  const DiseaseCaseAiAssessment._();
+
+  @JsonSerializable(checked: true)
+  const factory DiseaseCaseAiAssessment({
+    String? predictedLabel,
+    @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)
+    AiRecognitionStatus? recognitionStatus,
+    @JsonKey(fromJson: _probability) double? confidence,
+    String? recommendation,
+    DateTime? createdAt,
+    int? processingTimeMs,
+    @Default([]) List<String> imageUrls,
+    DateTime? imageUrlsExpireAt,
+  }) = _DiseaseCaseAiAssessment;
+
+  factory DiseaseCaseAiAssessment.fromJson(Map<String, dynamic> json) =>
+      _$DiseaseCaseAiAssessmentFromJson(json);
+
+  bool imagesExpireBy(DateTime now) =>
+      imageUrlsExpireAt?.isAfter(now.add(const Duration(seconds: 5))) == false;
 }
 
 @freezed
@@ -241,4 +286,12 @@ int _positiveInt(Object? value) {
   final number = _count(value);
   if (number == 0) throw const InvalidResponseException();
   return number;
+}
+
+double? _probability(Object? value) {
+  if (value == null) return null;
+  if (value is! num || !value.isFinite || value < 0 || value > 1) {
+    throw const InvalidResponseException();
+  }
+  return value.toDouble();
 }

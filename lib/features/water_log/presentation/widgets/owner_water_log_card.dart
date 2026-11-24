@@ -36,70 +36,19 @@ class OwnerWaterLogCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF4FF),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.water_drop_outlined,
-                      color: AppColors.ocean,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${formatWaterTime(log.recordedAt)} · ${formatWaterDay(log.recordedAt)}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          log.recordedByName?.trim().isNotEmpty == true
-                              ? log.recordedByName!
-                              : 'Chưa cập nhật tên',
-                          style: const TextStyle(
-                            color: AppColors.inkMuted,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: WaterLogStatusBadge(log: log),
-              ),
-              const SizedBox(height: 12),
-              WaterParamTiles(
-                log: log,
+              WaterLogObservation(
+                measurements: log,
+                recordedAt: log.recordedAt,
+                recordedByName: log.recordedByName,
+                note: log.note,
                 metadata: metadata,
-                boxed: true,
-                includeH2s: true,
               ),
-              if (log.note?.trim().isNotEmpty == true) ...[
-                const SizedBox(height: 12),
-                _Note(title: 'GHI CHÚ', text: log.note!),
-              ],
               if (showAudit && log.isVoided) ...[
                 const SizedBox(height: 12),
                 _Note(title: 'Lý do hủy hiệu lực', text: log.voidReason ?? '—'),
-                if (log.voidedAt != null)
+                if (log.voidedAt case final voidedAt?)
                   Text(
-                    '${formatWaterTime(log.voidedAt!)} · ${formatWaterDay(log.voidedAt!)}',
+                    '${formatWaterTime(voidedAt)} · ${formatWaterDay(voidedAt)}',
                     style: const TextStyle(
                       color: AppColors.inkMuted,
                       fontSize: 11,
@@ -112,6 +61,98 @@ class OwnerWaterLogCard extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Display the same water log content inside a log card or an opening snapshot.
+class WaterLogObservation extends StatelessWidget {
+  const WaterLogObservation({
+    required this.measurements,
+    this.recordedAt,
+    this.recordedByName,
+    this.note,
+    this.metadata,
+    this.showStatusBadge = true,
+    super.key,
+  });
+
+  final WaterMeasurements measurements;
+  final DateTime? recordedAt;
+  final String? recordedByName;
+  final String? note;
+  final WaterLogMetadata? metadata;
+  final bool showStatusBadge;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasName = recordedByName?.trim().isNotEmpty == true;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (recordedAt != null || hasName) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF4FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.water_drop_outlined,
+                  color: AppColors.ocean,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    if (recordedAt case final at?)
+                      Text(
+                        '${formatWaterTime(at)} · ${formatWaterDay(at)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    Text(
+                      hasName ? recordedByName! : 'Chưa cập nhật tên',
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (showStatusBadge &&
+            (measurements.hasMeasurements || measurements.isVoided)) ...[
+          Align(
+            alignment: Alignment.centerRight,
+            child: WaterLogStatusBadge(log: measurements),
+          ),
+          const SizedBox(height: 12),
+        ],
+        WaterParamTiles(
+          log: measurements,
+          metadata: metadata,
+          boxed: true,
+          includeH2s: true,
+        ),
+        if (note?.trim().isNotEmpty == true) ...[
+          const SizedBox(height: 12),
+          _Note(title: 'GHI CHÚ', text: note!),
+        ],
+      ],
+    );
+  }
 }
 
 class _Note extends StatelessWidget {

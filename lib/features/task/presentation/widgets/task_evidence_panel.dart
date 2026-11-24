@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
+import 'package:smartshrimp_app/core/widgets/app_photo_grid.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/domain/task_rules.dart';
 import 'task_ui.dart';
@@ -111,90 +112,29 @@ class TaskEvidencePanel extends StatelessWidget {
               ),
             )
           else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final width = (constraints.maxWidth - 16) / 3;
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (var index = 0; index < urls.length; index++)
-                      SizedBox.square(
-                        dimension: width,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Material(
-                                color: taskGray,
-                                clipBehavior: Clip.antiAlias,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: const BorderSide(color: AppColors.line),
-                                ),
-                                child: InkWell(
-                                  onTap: () => _preview(context, index),
-                                  child: Semantics(
-                                    button: true,
-                                    label: 'Xem ảnh minh chứng ${index + 1}',
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        _EvidenceImage(urls[index]),
-                                        Positioned(
-                                          left: 0,
-                                          right: 0,
-                                          bottom: 0,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 4,
-                                            ),
-                                            color: const Color(0x73000000),
-                                            child: Text(
-                                              'Minh chứng ${index + 1}',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                height: 1.5,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (editable)
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: SizedBox.square(
-                                  dimension: 28,
-                                  child: IconButton(
-                                    tooltip: 'Bỏ ảnh minh chứng ${index + 1}',
-                                    padding: EdgeInsets.zero,
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: const Color(0xBF0F1C2E),
-                                    ),
-                                    onPressed: busy
-                                        ? null
-                                        : () => onRemove!(index),
-                                    icon: const AppSvgIcon(
-                                      AppSvgIconName.closeSmall,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
+            AppPhotoGrid(
+              itemCount: urls.length,
+              imageBuilder: (index) => _EvidenceImage(urls[index]),
+              labelBuilder: (index) => 'Minh chứng ${index + 1}',
+              onOpen: (index) => _preview(context, index),
+              overlayBuilder: editable
+                  ? (index) => SizedBox.square(
+                      dimension: 28,
+                      child: IconButton(
+                        tooltip: 'Bỏ ảnh minh chứng ${index + 1}',
+                        padding: EdgeInsets.zero,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xBF0F1C2E),
+                        ),
+                        onPressed: busy ? null : () => onRemove!(index),
+                        icon: const AppSvgIcon(
+                          AppSvgIconName.closeSmall,
+                          size: 16,
+                          color: Colors.white,
                         ),
                       ),
-                  ],
-                );
-              },
+                    )
+                  : null,
             ),
           if (editable) ...[
             const SizedBox(height: 12),

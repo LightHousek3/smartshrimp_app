@@ -586,7 +586,7 @@ as int,
 /// @nodoc
 mixin _$DiseaseCaseDetail {
 
- DiseaseCaseCard get card;@JsonKey(fromJson: _requiredText) String get seasonName;@JsonKey(fromJson: _requiredText) String get pondName;@JsonKey(fromJson: _requiredText) String get farmName;@JsonKey(fromJson: _requiredText) String get reporterName; DateTime get createdAt; DateTime get updatedAt; List<DiseaseCaseAttachment> get attachments; List<DiseaseCaseProtocol> get protocols; List<DiseaseCaseEvent> get timeline; DiseaseCaseSnapshot? get snapshot; String? get resolutionSummary; bool get productionPaused;
+ DiseaseCaseCard get card;@JsonKey(fromJson: _requiredText) String get seasonName;@JsonKey(fromJson: _requiredText) String get pondName;@JsonKey(fromJson: _requiredText) String get farmName;@JsonKey(fromJson: _requiredText) String get reporterName; DateTime get createdAt; DateTime get updatedAt; List<DiseaseCaseAttachment> get attachments; List<DiseaseCaseProtocol> get protocols; List<DiseaseCaseEvent> get timeline; DiseaseCaseSnapshot? get snapshot; DiseaseCaseAiAssessment? get aiAssessment; String? get resolutionSummary; bool get productionPaused;
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -599,16 +599,16 @@ $DiseaseCaseDetailCopyWith<DiseaseCaseDetail> get copyWith => _$DiseaseCaseDetai
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.protocols, protocols)&&const DeepCollectionEquality().equals(other.timeline, timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&const DeepCollectionEquality().equals(other.protocols, protocols)&&const DeepCollectionEquality().equals(other.timeline, timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.aiAssessment, aiAssessment) || other.aiAssessment == aiAssessment)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(protocols),const DeepCollectionEquality().hash(timeline),snapshot,resolutionSummary,productionPaused);
+int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(attachments),const DeepCollectionEquality().hash(protocols),const DeepCollectionEquality().hash(timeline),snapshot,aiAssessment,resolutionSummary,productionPaused);
 
 @override
 String toString() {
-  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
+  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, aiAssessment: $aiAssessment, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
 }
 
 
@@ -619,11 +619,11 @@ abstract mixin class $DiseaseCaseDetailCopyWith<$Res>  {
   factory $DiseaseCaseDetailCopyWith(DiseaseCaseDetail value, $Res Function(DiseaseCaseDetail) _then) = _$DiseaseCaseDetailCopyWithImpl;
 @useResult
 $Res call({
- DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary, bool productionPaused
+ DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, DiseaseCaseAiAssessment? aiAssessment, String? resolutionSummary, bool productionPaused
 });
 
 
-$DiseaseCaseCardCopyWith<$Res> get card;$DiseaseCaseSnapshotCopyWith<$Res>? get snapshot;
+$DiseaseCaseCardCopyWith<$Res> get card;$DiseaseCaseSnapshotCopyWith<$Res>? get snapshot;$DiseaseCaseAiAssessmentCopyWith<$Res>? get aiAssessment;
 
 }
 /// @nodoc
@@ -636,7 +636,7 @@ class _$DiseaseCaseDetailCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? aiAssessment = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
   return _then(_self.copyWith(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseCard,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
@@ -649,7 +649,8 @@ as DateTime,attachments: null == attachments ? _self.attachments : attachments /
 as List<DiseaseCaseAttachment>,protocols: null == protocols ? _self.protocols : protocols // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseProtocol>,timeline: null == timeline ? _self.timeline : timeline // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseEvent>,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
-as DiseaseCaseSnapshot?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
+as DiseaseCaseSnapshot?,aiAssessment: freezed == aiAssessment ? _self.aiAssessment : aiAssessment // ignore: cast_nullable_to_non_nullable
+as DiseaseCaseAiAssessment?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
 as String?,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -674,6 +675,18 @@ $DiseaseCaseSnapshotCopyWith<$Res>? get snapshot {
 
   return $DiseaseCaseSnapshotCopyWith<$Res>(_self.snapshot!, (value) {
     return _then(_self.copyWith(snapshot: value));
+  });
+}/// Create a copy of DiseaseCaseDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DiseaseCaseAiAssessmentCopyWith<$Res>? get aiAssessment {
+    if (_self.aiAssessment == null) {
+    return null;
+  }
+
+  return $DiseaseCaseAiAssessmentCopyWith<$Res>(_self.aiAssessment!, (value) {
+    return _then(_self.copyWith(aiAssessment: value));
   });
 }
 }
@@ -757,10 +770,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  DiseaseCaseAiAssessment? aiAssessment,  String? resolutionSummary,  bool productionPaused)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail() when $default != null:
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.aiAssessment,_that.resolutionSummary,_that.productionPaused);case _:
   return orElse();
 
 }
@@ -778,10 +791,10 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  DiseaseCaseAiAssessment? aiAssessment,  String? resolutionSummary,  bool productionPaused)  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail():
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.aiAssessment,_that.resolutionSummary,_that.productionPaused);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -798,10 +811,10 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  String? resolutionSummary,  bool productionPaused)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DiseaseCaseCard card, @JsonKey(fromJson: _requiredText)  String seasonName, @JsonKey(fromJson: _requiredText)  String pondName, @JsonKey(fromJson: _requiredText)  String farmName, @JsonKey(fromJson: _requiredText)  String reporterName,  DateTime createdAt,  DateTime updatedAt,  List<DiseaseCaseAttachment> attachments,  List<DiseaseCaseProtocol> protocols,  List<DiseaseCaseEvent> timeline,  DiseaseCaseSnapshot? snapshot,  DiseaseCaseAiAssessment? aiAssessment,  String? resolutionSummary,  bool productionPaused)?  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseDetail() when $default != null:
-return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.resolutionSummary,_that.productionPaused);case _:
+return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.reporterName,_that.createdAt,_that.updatedAt,_that.attachments,_that.protocols,_that.timeline,_that.snapshot,_that.aiAssessment,_that.resolutionSummary,_that.productionPaused);case _:
   return null;
 
 }
@@ -813,7 +826,7 @@ return $default(_that.card,_that.seasonName,_that.pondName,_that.farmName,_that.
 
 @JsonSerializable(checked: true)
 class _DiseaseCaseDetail implements DiseaseCaseDetail {
-  const _DiseaseCaseDetail({required this.card, @JsonKey(fromJson: _requiredText) required this.seasonName, @JsonKey(fromJson: _requiredText) required this.pondName, @JsonKey(fromJson: _requiredText) required this.farmName, @JsonKey(fromJson: _requiredText) required this.reporterName, required this.createdAt, required this.updatedAt, required final  List<DiseaseCaseAttachment> attachments, required final  List<DiseaseCaseProtocol> protocols, required final  List<DiseaseCaseEvent> timeline, this.snapshot, this.resolutionSummary, this.productionPaused = false}): _attachments = attachments,_protocols = protocols,_timeline = timeline;
+  const _DiseaseCaseDetail({required this.card, @JsonKey(fromJson: _requiredText) required this.seasonName, @JsonKey(fromJson: _requiredText) required this.pondName, @JsonKey(fromJson: _requiredText) required this.farmName, @JsonKey(fromJson: _requiredText) required this.reporterName, required this.createdAt, required this.updatedAt, required final  List<DiseaseCaseAttachment> attachments, required final  List<DiseaseCaseProtocol> protocols, required final  List<DiseaseCaseEvent> timeline, this.snapshot, this.aiAssessment, this.resolutionSummary, this.productionPaused = false}): _attachments = attachments,_protocols = protocols,_timeline = timeline;
   factory _DiseaseCaseDetail.fromJson(Map<String, dynamic> json) => _$DiseaseCaseDetailFromJson(json);
 
 @override final  DiseaseCaseCard card;
@@ -845,6 +858,7 @@ class _DiseaseCaseDetail implements DiseaseCaseDetail {
 }
 
 @override final  DiseaseCaseSnapshot? snapshot;
+@override final  DiseaseCaseAiAssessment? aiAssessment;
 @override final  String? resolutionSummary;
 @override@JsonKey() final  bool productionPaused;
 
@@ -861,16 +875,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._protocols, _protocols)&&const DeepCollectionEquality().equals(other._timeline, _timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseDetail&&(identical(other.card, card) || other.card == card)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other._attachments, _attachments)&&const DeepCollectionEquality().equals(other._protocols, _protocols)&&const DeepCollectionEquality().equals(other._timeline, _timeline)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&(identical(other.aiAssessment, aiAssessment) || other.aiAssessment == aiAssessment)&&(identical(other.resolutionSummary, resolutionSummary) || other.resolutionSummary == resolutionSummary)&&(identical(other.productionPaused, productionPaused) || other.productionPaused == productionPaused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_protocols),const DeepCollectionEquality().hash(_timeline),snapshot,resolutionSummary,productionPaused);
+int get hashCode => Object.hash(runtimeType,card,seasonName,pondName,farmName,reporterName,createdAt,updatedAt,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_protocols),const DeepCollectionEquality().hash(_timeline),snapshot,aiAssessment,resolutionSummary,productionPaused);
 
 @override
 String toString() {
-  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
+  return 'DiseaseCaseDetail(card: $card, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, reporterName: $reporterName, createdAt: $createdAt, updatedAt: $updatedAt, attachments: $attachments, protocols: $protocols, timeline: $timeline, snapshot: $snapshot, aiAssessment: $aiAssessment, resolutionSummary: $resolutionSummary, productionPaused: $productionPaused)';
 }
 
 
@@ -881,11 +895,11 @@ abstract mixin class _$DiseaseCaseDetailCopyWith<$Res> implements $DiseaseCaseDe
   factory _$DiseaseCaseDetailCopyWith(_DiseaseCaseDetail value, $Res Function(_DiseaseCaseDetail) _then) = __$DiseaseCaseDetailCopyWithImpl;
 @override @useResult
 $Res call({
- DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, String? resolutionSummary, bool productionPaused
+ DiseaseCaseCard card,@JsonKey(fromJson: _requiredText) String seasonName,@JsonKey(fromJson: _requiredText) String pondName,@JsonKey(fromJson: _requiredText) String farmName,@JsonKey(fromJson: _requiredText) String reporterName, DateTime createdAt, DateTime updatedAt, List<DiseaseCaseAttachment> attachments, List<DiseaseCaseProtocol> protocols, List<DiseaseCaseEvent> timeline, DiseaseCaseSnapshot? snapshot, DiseaseCaseAiAssessment? aiAssessment, String? resolutionSummary, bool productionPaused
 });
 
 
-@override $DiseaseCaseCardCopyWith<$Res> get card;@override $DiseaseCaseSnapshotCopyWith<$Res>? get snapshot;
+@override $DiseaseCaseCardCopyWith<$Res> get card;@override $DiseaseCaseSnapshotCopyWith<$Res>? get snapshot;@override $DiseaseCaseAiAssessmentCopyWith<$Res>? get aiAssessment;
 
 }
 /// @nodoc
@@ -898,7 +912,7 @@ class __$DiseaseCaseDetailCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? card = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? reporterName = null,Object? createdAt = null,Object? updatedAt = null,Object? attachments = null,Object? protocols = null,Object? timeline = null,Object? snapshot = freezed,Object? aiAssessment = freezed,Object? resolutionSummary = freezed,Object? productionPaused = null,}) {
   return _then(_DiseaseCaseDetail(
 card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseCard,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
@@ -911,7 +925,8 @@ as DateTime,attachments: null == attachments ? _self._attachments : attachments 
 as List<DiseaseCaseAttachment>,protocols: null == protocols ? _self._protocols : protocols // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseProtocol>,timeline: null == timeline ? _self._timeline : timeline // ignore: cast_nullable_to_non_nullable
 as List<DiseaseCaseEvent>,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
-as DiseaseCaseSnapshot?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
+as DiseaseCaseSnapshot?,aiAssessment: freezed == aiAssessment ? _self.aiAssessment : aiAssessment // ignore: cast_nullable_to_non_nullable
+as DiseaseCaseAiAssessment?,resolutionSummary: freezed == resolutionSummary ? _self.resolutionSummary : resolutionSummary // ignore: cast_nullable_to_non_nullable
 as String?,productionPaused: null == productionPaused ? _self.productionPaused : productionPaused // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -938,6 +953,18 @@ $DiseaseCaseSnapshotCopyWith<$Res>? get snapshot {
   return $DiseaseCaseSnapshotCopyWith<$Res>(_self.snapshot!, (value) {
     return _then(_self.copyWith(snapshot: value));
   });
+}/// Create a copy of DiseaseCaseDetail
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DiseaseCaseAiAssessmentCopyWith<$Res>? get aiAssessment {
+    if (_self.aiAssessment == null) {
+    return null;
+  }
+
+  return $DiseaseCaseAiAssessmentCopyWith<$Res>(_self.aiAssessment!, (value) {
+    return _then(_self.copyWith(aiAssessment: value));
+  });
 }
 }
 
@@ -945,7 +972,7 @@ $DiseaseCaseSnapshotCopyWith<$Res>? get snapshot {
 /// @nodoc
 mixin _$DiseaseCaseSnapshot {
 
- List<String> get exceededWaterMetrics; DateTime? get capturedAt;@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? get healthStatus; String? get note; num? get avgWeightG; num? get mortalityCount; num? get ph; num? get no2MgL; num? get nh3MgL;
+ List<String> get exceededWaterMetrics; DateTime? get capturedAt; DateTime? get healthRecordedAt;@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? get healthStatus; String? get note; num? get avgWeightG; num? get mortalityCount; num? get ph; num? get no2MgL; num? get nh3MgL; num? get temperatureC; num? get dissolvedOxygenMgL; num? get salinityPpt; num? get alkalinityMgLCaCO3; num? get h2sMgL; DateTime? get waterRecordedAt; String? get waterRecordedByName; String? get waterNote;
 /// Create a copy of DiseaseCaseSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -958,16 +985,16 @@ $DiseaseCaseSnapshotCopyWith<DiseaseCaseSnapshot> get copyWith => _$DiseaseCaseS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseSnapshot&&const DeepCollectionEquality().equals(other.exceededWaterMetrics, exceededWaterMetrics)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.healthStatus, healthStatus) || other.healthStatus == healthStatus)&&(identical(other.note, note) || other.note == note)&&(identical(other.avgWeightG, avgWeightG) || other.avgWeightG == avgWeightG)&&(identical(other.mortalityCount, mortalityCount) || other.mortalityCount == mortalityCount)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.no2MgL, no2MgL) || other.no2MgL == no2MgL)&&(identical(other.nh3MgL, nh3MgL) || other.nh3MgL == nh3MgL));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseSnapshot&&const DeepCollectionEquality().equals(other.exceededWaterMetrics, exceededWaterMetrics)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.healthRecordedAt, healthRecordedAt) || other.healthRecordedAt == healthRecordedAt)&&(identical(other.healthStatus, healthStatus) || other.healthStatus == healthStatus)&&(identical(other.note, note) || other.note == note)&&(identical(other.avgWeightG, avgWeightG) || other.avgWeightG == avgWeightG)&&(identical(other.mortalityCount, mortalityCount) || other.mortalityCount == mortalityCount)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.no2MgL, no2MgL) || other.no2MgL == no2MgL)&&(identical(other.nh3MgL, nh3MgL) || other.nh3MgL == nh3MgL)&&(identical(other.temperatureC, temperatureC) || other.temperatureC == temperatureC)&&(identical(other.dissolvedOxygenMgL, dissolvedOxygenMgL) || other.dissolvedOxygenMgL == dissolvedOxygenMgL)&&(identical(other.salinityPpt, salinityPpt) || other.salinityPpt == salinityPpt)&&(identical(other.alkalinityMgLCaCO3, alkalinityMgLCaCO3) || other.alkalinityMgLCaCO3 == alkalinityMgLCaCO3)&&(identical(other.h2sMgL, h2sMgL) || other.h2sMgL == h2sMgL)&&(identical(other.waterRecordedAt, waterRecordedAt) || other.waterRecordedAt == waterRecordedAt)&&(identical(other.waterRecordedByName, waterRecordedByName) || other.waterRecordedByName == waterRecordedByName)&&(identical(other.waterNote, waterNote) || other.waterNote == waterNote));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(exceededWaterMetrics),capturedAt,healthStatus,note,avgWeightG,mortalityCount,ph,no2MgL,nh3MgL);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(exceededWaterMetrics),capturedAt,healthRecordedAt,healthStatus,note,avgWeightG,mortalityCount,ph,no2MgL,nh3MgL,temperatureC,dissolvedOxygenMgL,salinityPpt,alkalinityMgLCaCO3,h2sMgL,waterRecordedAt,waterRecordedByName,waterNote);
 
 @override
 String toString() {
-  return 'DiseaseCaseSnapshot(exceededWaterMetrics: $exceededWaterMetrics, capturedAt: $capturedAt, healthStatus: $healthStatus, note: $note, avgWeightG: $avgWeightG, mortalityCount: $mortalityCount, ph: $ph, no2MgL: $no2MgL, nh3MgL: $nh3MgL)';
+  return 'DiseaseCaseSnapshot(exceededWaterMetrics: $exceededWaterMetrics, capturedAt: $capturedAt, healthRecordedAt: $healthRecordedAt, healthStatus: $healthStatus, note: $note, avgWeightG: $avgWeightG, mortalityCount: $mortalityCount, ph: $ph, no2MgL: $no2MgL, nh3MgL: $nh3MgL, temperatureC: $temperatureC, dissolvedOxygenMgL: $dissolvedOxygenMgL, salinityPpt: $salinityPpt, alkalinityMgLCaCO3: $alkalinityMgLCaCO3, h2sMgL: $h2sMgL, waterRecordedAt: $waterRecordedAt, waterRecordedByName: $waterRecordedByName, waterNote: $waterNote)';
 }
 
 
@@ -978,7 +1005,7 @@ abstract mixin class $DiseaseCaseSnapshotCopyWith<$Res>  {
   factory $DiseaseCaseSnapshotCopyWith(DiseaseCaseSnapshot value, $Res Function(DiseaseCaseSnapshot) _then) = _$DiseaseCaseSnapshotCopyWithImpl;
 @useResult
 $Res call({
- List<String> exceededWaterMetrics, DateTime? capturedAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? healthStatus, String? note, num? avgWeightG, num? mortalityCount, num? ph, num? no2MgL, num? nh3MgL
+ List<String> exceededWaterMetrics, DateTime? capturedAt, DateTime? healthRecordedAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? healthStatus, String? note, num? avgWeightG, num? mortalityCount, num? ph, num? no2MgL, num? nh3MgL, num? temperatureC, num? dissolvedOxygenMgL, num? salinityPpt, num? alkalinityMgLCaCO3, num? h2sMgL, DateTime? waterRecordedAt, String? waterRecordedByName, String? waterNote
 });
 
 
@@ -995,10 +1022,11 @@ class _$DiseaseCaseSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? exceededWaterMetrics = null,Object? capturedAt = freezed,Object? healthStatus = freezed,Object? note = freezed,Object? avgWeightG = freezed,Object? mortalityCount = freezed,Object? ph = freezed,Object? no2MgL = freezed,Object? nh3MgL = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? exceededWaterMetrics = null,Object? capturedAt = freezed,Object? healthRecordedAt = freezed,Object? healthStatus = freezed,Object? note = freezed,Object? avgWeightG = freezed,Object? mortalityCount = freezed,Object? ph = freezed,Object? no2MgL = freezed,Object? nh3MgL = freezed,Object? temperatureC = freezed,Object? dissolvedOxygenMgL = freezed,Object? salinityPpt = freezed,Object? alkalinityMgLCaCO3 = freezed,Object? h2sMgL = freezed,Object? waterRecordedAt = freezed,Object? waterRecordedByName = freezed,Object? waterNote = freezed,}) {
   return _then(_self.copyWith(
 exceededWaterMetrics: null == exceededWaterMetrics ? _self.exceededWaterMetrics : exceededWaterMetrics // ignore: cast_nullable_to_non_nullable
 as List<String>,capturedAt: freezed == capturedAt ? _self.capturedAt : capturedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,healthRecordedAt: freezed == healthRecordedAt ? _self.healthRecordedAt : healthRecordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,healthStatus: freezed == healthStatus ? _self.healthStatus : healthStatus // ignore: cast_nullable_to_non_nullable
 as OpeningHealthStatus?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,avgWeightG: freezed == avgWeightG ? _self.avgWeightG : avgWeightG // ignore: cast_nullable_to_non_nullable
@@ -1006,7 +1034,15 @@ as num?,mortalityCount: freezed == mortalityCount ? _self.mortalityCount : morta
 as num?,ph: freezed == ph ? _self.ph : ph // ignore: cast_nullable_to_non_nullable
 as num?,no2MgL: freezed == no2MgL ? _self.no2MgL : no2MgL // ignore: cast_nullable_to_non_nullable
 as num?,nh3MgL: freezed == nh3MgL ? _self.nh3MgL : nh3MgL // ignore: cast_nullable_to_non_nullable
-as num?,
+as num?,temperatureC: freezed == temperatureC ? _self.temperatureC : temperatureC // ignore: cast_nullable_to_non_nullable
+as num?,dissolvedOxygenMgL: freezed == dissolvedOxygenMgL ? _self.dissolvedOxygenMgL : dissolvedOxygenMgL // ignore: cast_nullable_to_non_nullable
+as num?,salinityPpt: freezed == salinityPpt ? _self.salinityPpt : salinityPpt // ignore: cast_nullable_to_non_nullable
+as num?,alkalinityMgLCaCO3: freezed == alkalinityMgLCaCO3 ? _self.alkalinityMgLCaCO3 : alkalinityMgLCaCO3 // ignore: cast_nullable_to_non_nullable
+as num?,h2sMgL: freezed == h2sMgL ? _self.h2sMgL : h2sMgL // ignore: cast_nullable_to_non_nullable
+as num?,waterRecordedAt: freezed == waterRecordedAt ? _self.waterRecordedAt : waterRecordedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,waterRecordedByName: freezed == waterRecordedByName ? _self.waterRecordedByName : waterRecordedByName // ignore: cast_nullable_to_non_nullable
+as String?,waterNote: freezed == waterNote ? _self.waterNote : waterNote // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1091,10 +1127,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> exceededWaterMetrics,  DateTime? capturedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> exceededWaterMetrics,  DateTime? capturedAt,  DateTime? healthRecordedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL,  num? temperatureC,  num? dissolvedOxygenMgL,  num? salinityPpt,  num? alkalinityMgLCaCO3,  num? h2sMgL,  DateTime? waterRecordedAt,  String? waterRecordedByName,  String? waterNote)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DiseaseCaseSnapshot() when $default != null:
-return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL);case _:
+return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthRecordedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL,_that.temperatureC,_that.dissolvedOxygenMgL,_that.salinityPpt,_that.alkalinityMgLCaCO3,_that.h2sMgL,_that.waterRecordedAt,_that.waterRecordedByName,_that.waterNote);case _:
   return orElse();
 
 }
@@ -1112,10 +1148,10 @@ return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> exceededWaterMetrics,  DateTime? capturedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> exceededWaterMetrics,  DateTime? capturedAt,  DateTime? healthRecordedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL,  num? temperatureC,  num? dissolvedOxygenMgL,  num? salinityPpt,  num? alkalinityMgLCaCO3,  num? h2sMgL,  DateTime? waterRecordedAt,  String? waterRecordedByName,  String? waterNote)  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseSnapshot():
-return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL);case _:
+return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthRecordedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL,_that.temperatureC,_that.dissolvedOxygenMgL,_that.salinityPpt,_that.alkalinityMgLCaCO3,_that.h2sMgL,_that.waterRecordedAt,_that.waterRecordedByName,_that.waterNote);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1132,10 +1168,10 @@ return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> exceededWaterMetrics,  DateTime? capturedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> exceededWaterMetrics,  DateTime? capturedAt,  DateTime? healthRecordedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  OpeningHealthStatus? healthStatus,  String? note,  num? avgWeightG,  num? mortalityCount,  num? ph,  num? no2MgL,  num? nh3MgL,  num? temperatureC,  num? dissolvedOxygenMgL,  num? salinityPpt,  num? alkalinityMgLCaCO3,  num? h2sMgL,  DateTime? waterRecordedAt,  String? waterRecordedByName,  String? waterNote)?  $default,) {final _that = this;
 switch (_that) {
 case _DiseaseCaseSnapshot() when $default != null:
-return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL);case _:
+return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthRecordedAt,_that.healthStatus,_that.note,_that.avgWeightG,_that.mortalityCount,_that.ph,_that.no2MgL,_that.nh3MgL,_that.temperatureC,_that.dissolvedOxygenMgL,_that.salinityPpt,_that.alkalinityMgLCaCO3,_that.h2sMgL,_that.waterRecordedAt,_that.waterRecordedByName,_that.waterNote);case _:
   return null;
 
 }
@@ -1146,8 +1182,8 @@ return $default(_that.exceededWaterMetrics,_that.capturedAt,_that.healthStatus,_
 /// @nodoc
 
 @JsonSerializable(checked: true)
-class _DiseaseCaseSnapshot implements DiseaseCaseSnapshot {
-  const _DiseaseCaseSnapshot({required final  List<String> exceededWaterMetrics, this.capturedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.healthStatus, this.note, this.avgWeightG, this.mortalityCount, this.ph, this.no2MgL, this.nh3MgL}): _exceededWaterMetrics = exceededWaterMetrics;
+class _DiseaseCaseSnapshot extends DiseaseCaseSnapshot {
+  const _DiseaseCaseSnapshot({required final  List<String> exceededWaterMetrics, this.capturedAt, this.healthRecordedAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.healthStatus, this.note, this.avgWeightG, this.mortalityCount, this.ph, this.no2MgL, this.nh3MgL, this.temperatureC, this.dissolvedOxygenMgL, this.salinityPpt, this.alkalinityMgLCaCO3, this.h2sMgL, this.waterRecordedAt, this.waterRecordedByName, this.waterNote}): _exceededWaterMetrics = exceededWaterMetrics,super._();
   factory _DiseaseCaseSnapshot.fromJson(Map<String, dynamic> json) => _$DiseaseCaseSnapshotFromJson(json);
 
  final  List<String> _exceededWaterMetrics;
@@ -1158,6 +1194,7 @@ class _DiseaseCaseSnapshot implements DiseaseCaseSnapshot {
 }
 
 @override final  DateTime? capturedAt;
+@override final  DateTime? healthRecordedAt;
 @override@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) final  OpeningHealthStatus? healthStatus;
 @override final  String? note;
 @override final  num? avgWeightG;
@@ -1165,6 +1202,14 @@ class _DiseaseCaseSnapshot implements DiseaseCaseSnapshot {
 @override final  num? ph;
 @override final  num? no2MgL;
 @override final  num? nh3MgL;
+@override final  num? temperatureC;
+@override final  num? dissolvedOxygenMgL;
+@override final  num? salinityPpt;
+@override final  num? alkalinityMgLCaCO3;
+@override final  num? h2sMgL;
+@override final  DateTime? waterRecordedAt;
+@override final  String? waterRecordedByName;
+@override final  String? waterNote;
 
 /// Create a copy of DiseaseCaseSnapshot
 /// with the given fields replaced by the non-null parameter values.
@@ -1179,16 +1224,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseSnapshot&&const DeepCollectionEquality().equals(other._exceededWaterMetrics, _exceededWaterMetrics)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.healthStatus, healthStatus) || other.healthStatus == healthStatus)&&(identical(other.note, note) || other.note == note)&&(identical(other.avgWeightG, avgWeightG) || other.avgWeightG == avgWeightG)&&(identical(other.mortalityCount, mortalityCount) || other.mortalityCount == mortalityCount)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.no2MgL, no2MgL) || other.no2MgL == no2MgL)&&(identical(other.nh3MgL, nh3MgL) || other.nh3MgL == nh3MgL));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseSnapshot&&const DeepCollectionEquality().equals(other._exceededWaterMetrics, _exceededWaterMetrics)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.healthRecordedAt, healthRecordedAt) || other.healthRecordedAt == healthRecordedAt)&&(identical(other.healthStatus, healthStatus) || other.healthStatus == healthStatus)&&(identical(other.note, note) || other.note == note)&&(identical(other.avgWeightG, avgWeightG) || other.avgWeightG == avgWeightG)&&(identical(other.mortalityCount, mortalityCount) || other.mortalityCount == mortalityCount)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.no2MgL, no2MgL) || other.no2MgL == no2MgL)&&(identical(other.nh3MgL, nh3MgL) || other.nh3MgL == nh3MgL)&&(identical(other.temperatureC, temperatureC) || other.temperatureC == temperatureC)&&(identical(other.dissolvedOxygenMgL, dissolvedOxygenMgL) || other.dissolvedOxygenMgL == dissolvedOxygenMgL)&&(identical(other.salinityPpt, salinityPpt) || other.salinityPpt == salinityPpt)&&(identical(other.alkalinityMgLCaCO3, alkalinityMgLCaCO3) || other.alkalinityMgLCaCO3 == alkalinityMgLCaCO3)&&(identical(other.h2sMgL, h2sMgL) || other.h2sMgL == h2sMgL)&&(identical(other.waterRecordedAt, waterRecordedAt) || other.waterRecordedAt == waterRecordedAt)&&(identical(other.waterRecordedByName, waterRecordedByName) || other.waterRecordedByName == waterRecordedByName)&&(identical(other.waterNote, waterNote) || other.waterNote == waterNote));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_exceededWaterMetrics),capturedAt,healthStatus,note,avgWeightG,mortalityCount,ph,no2MgL,nh3MgL);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_exceededWaterMetrics),capturedAt,healthRecordedAt,healthStatus,note,avgWeightG,mortalityCount,ph,no2MgL,nh3MgL,temperatureC,dissolvedOxygenMgL,salinityPpt,alkalinityMgLCaCO3,h2sMgL,waterRecordedAt,waterRecordedByName,waterNote);
 
 @override
 String toString() {
-  return 'DiseaseCaseSnapshot(exceededWaterMetrics: $exceededWaterMetrics, capturedAt: $capturedAt, healthStatus: $healthStatus, note: $note, avgWeightG: $avgWeightG, mortalityCount: $mortalityCount, ph: $ph, no2MgL: $no2MgL, nh3MgL: $nh3MgL)';
+  return 'DiseaseCaseSnapshot(exceededWaterMetrics: $exceededWaterMetrics, capturedAt: $capturedAt, healthRecordedAt: $healthRecordedAt, healthStatus: $healthStatus, note: $note, avgWeightG: $avgWeightG, mortalityCount: $mortalityCount, ph: $ph, no2MgL: $no2MgL, nh3MgL: $nh3MgL, temperatureC: $temperatureC, dissolvedOxygenMgL: $dissolvedOxygenMgL, salinityPpt: $salinityPpt, alkalinityMgLCaCO3: $alkalinityMgLCaCO3, h2sMgL: $h2sMgL, waterRecordedAt: $waterRecordedAt, waterRecordedByName: $waterRecordedByName, waterNote: $waterNote)';
 }
 
 
@@ -1199,7 +1244,7 @@ abstract mixin class _$DiseaseCaseSnapshotCopyWith<$Res> implements $DiseaseCase
   factory _$DiseaseCaseSnapshotCopyWith(_DiseaseCaseSnapshot value, $Res Function(_DiseaseCaseSnapshot) _then) = __$DiseaseCaseSnapshotCopyWithImpl;
 @override @useResult
 $Res call({
- List<String> exceededWaterMetrics, DateTime? capturedAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? healthStatus, String? note, num? avgWeightG, num? mortalityCount, num? ph, num? no2MgL, num? nh3MgL
+ List<String> exceededWaterMetrics, DateTime? capturedAt, DateTime? healthRecordedAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) OpeningHealthStatus? healthStatus, String? note, num? avgWeightG, num? mortalityCount, num? ph, num? no2MgL, num? nh3MgL, num? temperatureC, num? dissolvedOxygenMgL, num? salinityPpt, num? alkalinityMgLCaCO3, num? h2sMgL, DateTime? waterRecordedAt, String? waterRecordedByName, String? waterNote
 });
 
 
@@ -1216,10 +1261,11 @@ class __$DiseaseCaseSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? exceededWaterMetrics = null,Object? capturedAt = freezed,Object? healthStatus = freezed,Object? note = freezed,Object? avgWeightG = freezed,Object? mortalityCount = freezed,Object? ph = freezed,Object? no2MgL = freezed,Object? nh3MgL = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? exceededWaterMetrics = null,Object? capturedAt = freezed,Object? healthRecordedAt = freezed,Object? healthStatus = freezed,Object? note = freezed,Object? avgWeightG = freezed,Object? mortalityCount = freezed,Object? ph = freezed,Object? no2MgL = freezed,Object? nh3MgL = freezed,Object? temperatureC = freezed,Object? dissolvedOxygenMgL = freezed,Object? salinityPpt = freezed,Object? alkalinityMgLCaCO3 = freezed,Object? h2sMgL = freezed,Object? waterRecordedAt = freezed,Object? waterRecordedByName = freezed,Object? waterNote = freezed,}) {
   return _then(_DiseaseCaseSnapshot(
 exceededWaterMetrics: null == exceededWaterMetrics ? _self._exceededWaterMetrics : exceededWaterMetrics // ignore: cast_nullable_to_non_nullable
 as List<String>,capturedAt: freezed == capturedAt ? _self.capturedAt : capturedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,healthRecordedAt: freezed == healthRecordedAt ? _self.healthRecordedAt : healthRecordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,healthStatus: freezed == healthStatus ? _self.healthStatus : healthStatus // ignore: cast_nullable_to_non_nullable
 as OpeningHealthStatus?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,avgWeightG: freezed == avgWeightG ? _self.avgWeightG : avgWeightG // ignore: cast_nullable_to_non_nullable
@@ -1227,7 +1273,305 @@ as num?,mortalityCount: freezed == mortalityCount ? _self.mortalityCount : morta
 as num?,ph: freezed == ph ? _self.ph : ph // ignore: cast_nullable_to_non_nullable
 as num?,no2MgL: freezed == no2MgL ? _self.no2MgL : no2MgL // ignore: cast_nullable_to_non_nullable
 as num?,nh3MgL: freezed == nh3MgL ? _self.nh3MgL : nh3MgL // ignore: cast_nullable_to_non_nullable
-as num?,
+as num?,temperatureC: freezed == temperatureC ? _self.temperatureC : temperatureC // ignore: cast_nullable_to_non_nullable
+as num?,dissolvedOxygenMgL: freezed == dissolvedOxygenMgL ? _self.dissolvedOxygenMgL : dissolvedOxygenMgL // ignore: cast_nullable_to_non_nullable
+as num?,salinityPpt: freezed == salinityPpt ? _self.salinityPpt : salinityPpt // ignore: cast_nullable_to_non_nullable
+as num?,alkalinityMgLCaCO3: freezed == alkalinityMgLCaCO3 ? _self.alkalinityMgLCaCO3 : alkalinityMgLCaCO3 // ignore: cast_nullable_to_non_nullable
+as num?,h2sMgL: freezed == h2sMgL ? _self.h2sMgL : h2sMgL // ignore: cast_nullable_to_non_nullable
+as num?,waterRecordedAt: freezed == waterRecordedAt ? _self.waterRecordedAt : waterRecordedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,waterRecordedByName: freezed == waterRecordedByName ? _self.waterRecordedByName : waterRecordedByName // ignore: cast_nullable_to_non_nullable
+as String?,waterNote: freezed == waterNote ? _self.waterNote : waterNote // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$DiseaseCaseAiAssessment {
+
+ String? get predictedLabel;@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? get recognitionStatus;@JsonKey(fromJson: _probability) double? get confidence; String? get recommendation; DateTime? get createdAt; int? get processingTimeMs; List<String> get imageUrls; DateTime? get imageUrlsExpireAt;
+/// Create a copy of DiseaseCaseAiAssessment
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DiseaseCaseAiAssessmentCopyWith<DiseaseCaseAiAssessment> get copyWith => _$DiseaseCaseAiAssessmentCopyWithImpl<DiseaseCaseAiAssessment>(this as DiseaseCaseAiAssessment, _$identity);
+
+  /// Serializes this DiseaseCaseAiAssessment to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseAiAssessment&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,predictedLabel,recognitionStatus,confidence,recommendation,createdAt,processingTimeMs,const DeepCollectionEquality().hash(imageUrls),imageUrlsExpireAt);
+
+@override
+String toString() {
+  return 'DiseaseCaseAiAssessment(predictedLabel: $predictedLabel, recognitionStatus: $recognitionStatus, confidence: $confidence, recommendation: $recommendation, createdAt: $createdAt, processingTimeMs: $processingTimeMs, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DiseaseCaseAiAssessmentCopyWith<$Res>  {
+  factory $DiseaseCaseAiAssessmentCopyWith(DiseaseCaseAiAssessment value, $Res Function(DiseaseCaseAiAssessment) _then) = _$DiseaseCaseAiAssessmentCopyWithImpl;
+@useResult
+$Res call({
+ String? predictedLabel,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(fromJson: _probability) double? confidence, String? recommendation, DateTime? createdAt, int? processingTimeMs, List<String> imageUrls, DateTime? imageUrlsExpireAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$DiseaseCaseAiAssessmentCopyWithImpl<$Res>
+    implements $DiseaseCaseAiAssessmentCopyWith<$Res> {
+  _$DiseaseCaseAiAssessmentCopyWithImpl(this._self, this._then);
+
+  final DiseaseCaseAiAssessment _self;
+  final $Res Function(DiseaseCaseAiAssessment) _then;
+
+/// Create a copy of DiseaseCaseAiAssessment
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? predictedLabel = freezed,Object? recognitionStatus = freezed,Object? confidence = freezed,Object? recommendation = freezed,Object? createdAt = freezed,Object? processingTimeMs = freezed,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,}) {
+  return _then(_self.copyWith(
+predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as String?,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
+as double?,recommendation: freezed == recommendation ? _self.recommendation : recommendation // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,processingTimeMs: freezed == processingTimeMs ? _self.processingTimeMs : processingTimeMs // ignore: cast_nullable_to_non_nullable
+as int?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,imageUrlsExpireAt: freezed == imageUrlsExpireAt ? _self.imageUrlsExpireAt : imageUrlsExpireAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DiseaseCaseAiAssessment].
+extension DiseaseCaseAiAssessmentPatterns on DiseaseCaseAiAssessment {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DiseaseCaseAiAssessment value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DiseaseCaseAiAssessment value)  $default,){
+final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DiseaseCaseAiAssessment value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? predictedLabel, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(fromJson: _probability)  double? confidence,  String? recommendation,  DateTime? createdAt,  int? processingTimeMs,  List<String> imageUrls,  DateTime? imageUrlsExpireAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment() when $default != null:
+return $default(_that.predictedLabel,_that.recognitionStatus,_that.confidence,_that.recommendation,_that.createdAt,_that.processingTimeMs,_that.imageUrls,_that.imageUrlsExpireAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? predictedLabel, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(fromJson: _probability)  double? confidence,  String? recommendation,  DateTime? createdAt,  int? processingTimeMs,  List<String> imageUrls,  DateTime? imageUrlsExpireAt)  $default,) {final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment():
+return $default(_that.predictedLabel,_that.recognitionStatus,_that.confidence,_that.recommendation,_that.createdAt,_that.processingTimeMs,_that.imageUrls,_that.imageUrlsExpireAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? predictedLabel, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown)  AiRecognitionStatus? recognitionStatus, @JsonKey(fromJson: _probability)  double? confidence,  String? recommendation,  DateTime? createdAt,  int? processingTimeMs,  List<String> imageUrls,  DateTime? imageUrlsExpireAt)?  $default,) {final _that = this;
+switch (_that) {
+case _DiseaseCaseAiAssessment() when $default != null:
+return $default(_that.predictedLabel,_that.recognitionStatus,_that.confidence,_that.recommendation,_that.createdAt,_that.processingTimeMs,_that.imageUrls,_that.imageUrlsExpireAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(checked: true)
+class _DiseaseCaseAiAssessment extends DiseaseCaseAiAssessment {
+  const _DiseaseCaseAiAssessment({this.predictedLabel, @JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) this.recognitionStatus, @JsonKey(fromJson: _probability) this.confidence, this.recommendation, this.createdAt, this.processingTimeMs, final  List<String> imageUrls = const [], this.imageUrlsExpireAt}): _imageUrls = imageUrls,super._();
+  factory _DiseaseCaseAiAssessment.fromJson(Map<String, dynamic> json) => _$DiseaseCaseAiAssessmentFromJson(json);
+
+@override final  String? predictedLabel;
+@override@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) final  AiRecognitionStatus? recognitionStatus;
+@override@JsonKey(fromJson: _probability) final  double? confidence;
+@override final  String? recommendation;
+@override final  DateTime? createdAt;
+@override final  int? processingTimeMs;
+ final  List<String> _imageUrls;
+@override@JsonKey() List<String> get imageUrls {
+  if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_imageUrls);
+}
+
+@override final  DateTime? imageUrlsExpireAt;
+
+/// Create a copy of DiseaseCaseAiAssessment
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DiseaseCaseAiAssessmentCopyWith<_DiseaseCaseAiAssessment> get copyWith => __$DiseaseCaseAiAssessmentCopyWithImpl<_DiseaseCaseAiAssessment>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DiseaseCaseAiAssessmentToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiseaseCaseAiAssessment&&(identical(other.predictedLabel, predictedLabel) || other.predictedLabel == predictedLabel)&&(identical(other.recognitionStatus, recognitionStatus) || other.recognitionStatus == recognitionStatus)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.recommendation, recommendation) || other.recommendation == recommendation)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.processingTimeMs, processingTimeMs) || other.processingTimeMs == processingTimeMs)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.imageUrlsExpireAt, imageUrlsExpireAt) || other.imageUrlsExpireAt == imageUrlsExpireAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,predictedLabel,recognitionStatus,confidence,recommendation,createdAt,processingTimeMs,const DeepCollectionEquality().hash(_imageUrls),imageUrlsExpireAt);
+
+@override
+String toString() {
+  return 'DiseaseCaseAiAssessment(predictedLabel: $predictedLabel, recognitionStatus: $recognitionStatus, confidence: $confidence, recommendation: $recommendation, createdAt: $createdAt, processingTimeMs: $processingTimeMs, imageUrls: $imageUrls, imageUrlsExpireAt: $imageUrlsExpireAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DiseaseCaseAiAssessmentCopyWith<$Res> implements $DiseaseCaseAiAssessmentCopyWith<$Res> {
+  factory _$DiseaseCaseAiAssessmentCopyWith(_DiseaseCaseAiAssessment value, $Res Function(_DiseaseCaseAiAssessment) _then) = __$DiseaseCaseAiAssessmentCopyWithImpl;
+@override @useResult
+$Res call({
+ String? predictedLabel,@JsonKey(unknownEnumValue: AiRecognitionStatus.unknown) AiRecognitionStatus? recognitionStatus,@JsonKey(fromJson: _probability) double? confidence, String? recommendation, DateTime? createdAt, int? processingTimeMs, List<String> imageUrls, DateTime? imageUrlsExpireAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$DiseaseCaseAiAssessmentCopyWithImpl<$Res>
+    implements _$DiseaseCaseAiAssessmentCopyWith<$Res> {
+  __$DiseaseCaseAiAssessmentCopyWithImpl(this._self, this._then);
+
+  final _DiseaseCaseAiAssessment _self;
+  final $Res Function(_DiseaseCaseAiAssessment) _then;
+
+/// Create a copy of DiseaseCaseAiAssessment
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? predictedLabel = freezed,Object? recognitionStatus = freezed,Object? confidence = freezed,Object? recommendation = freezed,Object? createdAt = freezed,Object? processingTimeMs = freezed,Object? imageUrls = null,Object? imageUrlsExpireAt = freezed,}) {
+  return _then(_DiseaseCaseAiAssessment(
+predictedLabel: freezed == predictedLabel ? _self.predictedLabel : predictedLabel // ignore: cast_nullable_to_non_nullable
+as String?,recognitionStatus: freezed == recognitionStatus ? _self.recognitionStatus : recognitionStatus // ignore: cast_nullable_to_non_nullable
+as AiRecognitionStatus?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
+as double?,recommendation: freezed == recommendation ? _self.recommendation : recommendation // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,processingTimeMs: freezed == processingTimeMs ? _self.processingTimeMs : processingTimeMs // ignore: cast_nullable_to_non_nullable
+as int?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,imageUrlsExpireAt: freezed == imageUrlsExpireAt ? _self.imageUrlsExpireAt : imageUrlsExpireAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

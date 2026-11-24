@@ -6,6 +6,9 @@ import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart'
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart'
     show ProtocolBadge, protocolDate;
 
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/owner_water_log_card.dart';
+import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
+
 import '../../domain/entities/owner_disease_case.dart';
 import 'disease_case_ui.dart';
 
@@ -13,6 +16,70 @@ export 'case_evidence.dart' show CaseEvidence;
 
 class CaseOpeningSnapshot extends StatelessWidget {
   const CaseOpeningSnapshot({required this.snapshot, super.key});
+
+  final DiseaseCaseSnapshot? snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final reading =
+        snapshot ?? const DiseaseCaseSnapshot(exceededWaterMetrics: []);
+    final hasHealth =
+        reading.healthRecordedAt != null ||
+        reading.healthStatus != null ||
+        reading.avgWeightG != null ||
+        reading.mortalityCount != null;
+    final hasWater =
+        reading.waterRecordedAt != null ||
+        reading.hasMeasurements ||
+        reading.waterNote?.trim().isNotEmpty == true;
+    return DiseaseCaseSurface(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          const DiseaseCaseSectionTitle('Hiện trạng khi mở ca'),
+          if (!hasHealth && !hasWater)
+            const Text(
+              'Chưa có thông tin ghi nhận khi mở ca.',
+              style: caseBodyStyle,
+            )
+          else ...[
+            if (hasHealth) _OpeningHealth(snapshot: reading),
+            if (hasHealth && hasWater) caseDivider,
+            if (hasWater)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 8,
+                children: [
+                  _OpeningObservationHeading(
+                    title: 'Nhật ký đo nước',
+                    recordedAt: reading.waterRecordedAt,
+                    timeLabel: 'Đo lúc',
+                    status: reading.hasMeasurements
+                        ? WaterLogStatusBadge(log: reading)
+                        : null,
+                  ),
+                  WaterLogObservation(
+                    measurements: reading,
+                    note: reading.waterNote,
+                    showStatusBadge: false,
+                  ),
+                ],
+              ),
+            if (reading.note case final note? when note.trim().isNotEmpty) ...[
+              caseDivider,
+              Text(note, style: caseBodyStyle.copyWith(fontSize: 11)),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _OpeningHealth extends StatelessWidget {
+  const _OpeningHealth({required this.snapshot});
 
   final DiseaseCaseSnapshot snapshot;
 
@@ -42,68 +109,95 @@ class CaseOpeningSnapshot extends StatelessWidget {
       null => null,
     };
     final metrics = [
-      ('avgWeightG', 'Cỡ TB', snapshot.avgWeightG, 'g/con'),
-      ('mortalityCount', 'Hao hụt', snapshot.mortalityCount, 'con'),
-      ('ph', 'pH', snapshot.ph, null),
-      ('no2MgL', 'NO₂', snapshot.no2MgL, 'mg/L'),
-      ('nh3MgL', 'NH₃', snapshot.nh3MgL, 'mg/L'),
-    ].where((metric) => metric.$3 != null);
-    return DiseaseCaseSurface(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DiseaseCaseSectionTitle('Hiện trạng khi mở ca', trailing: status),
-          if (snapshot.capturedAt case final capturedAt?)
-            Text(
-              'Chụp tại ${protocolDate(capturedAt, year: true, time: true)}',
-              style: caseMetadataStyle,
-            ),
-          if (metrics.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const gap = 8.0;
-                final minWidth = MediaQuery.textScalerOf(context).scale(68);
-                final columns =
-                    ((constraints.maxWidth + gap) / (minWidth + gap))
-                        .floor()
-                        .clamp(1, 4);
-                final width =
-                    (constraints.maxWidth - gap * (columns - 1)) / columns;
-                return Wrap(
+      if (snapshot.avgWeightG case final weight?)
+        _OpeningMetric(label: 'Cỡ TB', value: weight, unit: 'g/con'),
+      if (snapshot.mortalityCount case final mortality?)
+        _OpeningMetric(
+          label: 'Hao hụt',
+          value: mortality,
+          unit: 'con',
+          tone: mortality > 0 ? caseAmber : null,
+        ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        _OpeningObservationHeading(
+          title: 'Sức khỏe',
+          recordedAt: snapshot.healthRecordedAt,
+          timeLabel: 'Ghi nhận lúc',
+          status: status,
+        ),
+        if (metrics.isNotEmpty)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 8.0;
+              final minWidth = MediaQuery.textScalerOf(context).scale(96);
+              if (metrics.length == 1 ||
+                  constraints.maxWidth < 2 * minWidth + gap) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: gap,
-                  runSpacing: gap,
-                  children: [
-                    for (final (field, label, value, unit) in metrics)
-                      SizedBox(
-                        width: width,
-                        child: _OpeningMetric(
-                          label: label,
-                          value: value!,
-                          unit: unit,
-                          tone: snapshot.exceededWaterMetrics.contains(field)
-                              ? caseRose
-                              : field == 'mortalityCount' && value > 0
-                              ? caseAmber
-                              : null,
-                        ),
-                      ),
-                  ],
+                  children: metrics,
                 );
-              },
-            ),
-          ],
-          if (snapshot.note case final note?) ...[
-            const SizedBox(height: 12),
-            caseDivider,
-            const SizedBox(height: 8),
-            Text(note, style: caseBodyStyle.copyWith(fontSize: 11)),
-          ],
-        ],
-      ),
+              }
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: gap,
+                  children: [
+                    for (final metric in metrics) Expanded(child: metric),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
+}
+
+class _OpeningObservationHeading extends StatelessWidget {
+  const _OpeningObservationHeading({
+    required this.title,
+    required this.recordedAt,
+    required this.timeLabel,
+    this.status,
+  });
+
+  final String title;
+  final DateTime? recordedAt;
+  final String timeLabel;
+  final Widget? status;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    spacing: 4,
+    children: [
+      LayoutBuilder(
+        builder: (context, constraints) => Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 8,
+          children: [
+            Expanded(child: Text(title, style: caseTitleStyle)),
+            if (status case final badge?)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
+                child: badge,
+              ),
+          ],
+        ),
+      ),
+      Text(
+        recordedAt == null
+            ? 'Chưa lưu thời điểm ghi nhận'
+            : '$timeLabel ${protocolDate(recordedAt, year: true, time: true)}',
+        style: caseMetadataStyle,
+      ),
+    ],
+  );
 }
 
 class _OpeningMetric extends StatelessWidget {
@@ -239,17 +333,7 @@ class CaseTimeline extends StatelessWidget {
       if (index == 0) {
         return const Padding(
           padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
-            children: [
-              DiseaseCaseSectionTitle('Diễn tiến và trách nhiệm'),
-              Text(
-                'Toàn bộ thay đổi trạng thái và phản hồi theo thứ tự thời gian',
-                style: caseMetadataStyle,
-              ),
-            ],
-          ),
+          child: DiseaseCaseSectionTitle('Diễn biến và trách nhiệm'),
         );
       }
       return _TimelineEntry(
@@ -284,10 +368,6 @@ class _TimelineEntry extends StatelessWidget {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(
-              'Đổi trạng thái',
-              style: caseTitleStyle.copyWith(fontSize: 11),
-            ),
             if (fromStatus != null) ...[
               DiseaseCaseBadge.status(fromStatus, dot: false),
               const AppSvgIcon(AppSvgIconName.chevronCompact, size: 12),

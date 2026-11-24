@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_photo_grid.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart'
     show protocolDate;
@@ -20,42 +21,55 @@ class CaseEvidence extends StatelessWidget {
     final files = attachments
         .where((item) => !_isEvidenceImage(item))
         .toList(growable: false);
+    final title = DiseaseCaseSectionTitle(
+      'Bằng chứng ban đầu',
+      trailing: DiseaseCaseBadge(
+        [
+          if (images.isNotEmpty) '${images.length} ảnh',
+          if (files.isNotEmpty) '${files.length} tệp',
+        ].join(' · '),
+      ),
+    );
     return Column(
       spacing: 8,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: DiseaseCaseSectionTitle(
-            'Bằng chứng ban đầu',
-            trailing: DiseaseCaseBadge(
-              [
-                if (images.isNotEmpty) '${images.length} ảnh',
-                if (files.isNotEmpty) '${files.length} tệp',
-              ].join(' · '),
-            ),
+        if (images.length <= 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: title,
           ),
-        ),
-        for (final (index, item) in images.indexed)
+        if (images.length > 1)
           DiseaseCaseSurface(
-            key: ValueKey('case-evidence-image-$index'),
-            padding: EdgeInsets.zero,
-            onTap: () => showAppImageViewer(
-              context,
-              builder: (_) => AppImageViewer(
-                itemCount: images.length,
-                initialIndex: index,
-                selectionColor: caseAiAccent,
-                imageBuilder: (i, fit) =>
-                    _CaseEvidenceImage(images[i].fileUrl, fit: fit),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 10,
+              children: [
+                title,
+                AppPhotoGrid(
+                  itemCount: images.length,
+                  imageBuilder: (index) => _CaseEvidenceImage(
+                    images[index].fileUrl,
+                    compact: true,
+                    key: ValueKey('case-evidence-image-$index'),
+                  ),
+                  labelBuilder: (index) => 'Minh chứng ${index + 1}',
+                  onOpen: (index) => _preview(context, images, index),
+                ),
+              ],
             ),
+          )
+        else if (images.singleOrNull case final item?)
+          DiseaseCaseSurface(
+            key: const ValueKey('case-evidence-image-0'),
+            padding: EdgeInsets.zero,
+            onTap: () => _preview(context, images, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Semantics(
                   image: true,
                   button: true,
-                  label: 'Xem ảnh bằng chứng ${index + 1}',
+                  label: 'Xem ảnh bằng chứng 1',
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
@@ -143,6 +157,46 @@ class CaseEvidence extends StatelessWidget {
     );
   }
 
+  void _preview(
+    BuildContext context,
+    List<DiseaseCaseAttachment> images,
+    int index,
+  ) {
+    showAppImageViewer(
+      context,
+      builder: (_) => AppImageViewer(
+        itemCount: images.length,
+        initialIndex: index,
+        selectionColor: caseAiAccent,
+        imageBuilder: (i, fit) => _CaseEvidenceImage(
+          images[i].fileUrl,
+          fit: fit,
+          compact: fit == BoxFit.cover,
+        ),
+        footerBuilder: (i) {
+          final item = images[i];
+          final date = protocolDate(item.createdAt, year: true, time: true);
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Column(
+              spacing: 4,
+              children: [
+                if (item.caption?.trim().isNotEmpty == true)
+                  Text(
+                    item.caption!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: caseTitleStyle,
+                  ),
+                Text('${item.uploaderName} · $date', style: caseMetadataStyle),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _openAttachment(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
     if (uri != null &&
@@ -181,9 +235,15 @@ bool _isEvidenceImage(DiseaseCaseAttachment item) {
 }
 
 class _CaseEvidenceImage extends StatefulWidget {
-  const _CaseEvidenceImage(this.url, {this.fit = BoxFit.cover});
+  const _CaseEvidenceImage(
+    this.url, {
+    this.fit = BoxFit.cover,
+    this.compact = false,
+    super.key,
+  });
   final String url;
   final BoxFit fit;
+  final bool compact;
   @override
   State<_CaseEvidenceImage> createState() => _CaseEvidenceImageState();
 }
@@ -206,16 +266,18 @@ class _CaseEvidenceImageState extends State<_CaseEvidenceImage> {
           : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       errorBuilder: (_, _, _) => ColoredBox(
         color: const Color(0xFFEEF1F6),
-        child: Center(
-          child: TextButton.icon(
-            onPressed: () async {
-              await provider.evict();
-              if (mounted) setState(() => _retryCount++);
-            },
-            icon: const AppSvgIcon(AppSvgIconName.camera, size: 20),
-            label: const Text('Tải lại ảnh'),
-          ),
-        ),
+        child: widget.compact
+            ? const Center(child: AppSvgIcon(AppSvgIconName.camera, size: 24))
+            : Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await provider.evict();
+                    if (mounted) setState(() => _retryCount++);
+                  },
+                  icon: const AppSvgIcon(AppSvgIconName.camera, size: 20),
+                  label: const Text('Tải lại ảnh'),
+                ),
+              ),
       ),
     );
   }
