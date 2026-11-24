@@ -59,7 +59,22 @@ class _ShrimpHealthDetailSheetState
     final minute = local.minute.toString().padLeft(2, '0');
     final day = local.day.toString().padLeft(2, '0');
     final month = local.month.toString().padLeft(2, '0');
-    return '$hour:$minute · $day-$month';
+
+    final now = DateTime.now();
+    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+      return '$hour:$minute • Hôm nay ($day/$month)';
+    }
+
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (local.year == yesterday.year && local.month == yesterday.month && local.day == yesterday.day) {
+      return '$hour:$minute • Hôm qua ($day/$month)';
+    }
+
+    if (local.year == now.year) {
+      return '$hour:$minute • $day/$month';
+    }
+
+    return '$hour:$minute • $day/$month/${local.year}';
   }
 
   static String _formatNumber(num? value, {int fractionDigits = 1}) {

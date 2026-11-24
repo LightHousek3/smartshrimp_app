@@ -14,6 +14,8 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     required this.seasonId,
     this.initialQuantity,
     this.previousPopulation,
+    this.previousAvgWeight,
+    this.previousAvgLength,
     this.onCreated,
     super.key,
   });
@@ -21,6 +23,8 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
   final String seasonId;
   final int? initialQuantity;
   final int? previousPopulation;
+  final double? previousAvgWeight;
+  final double? previousAvgLength;
   final VoidCallback? onCreated;
 
   static Future<bool?> show(
@@ -28,6 +32,8 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     required String seasonId,
     int? initialQuantity,
     int? previousPopulation,
+    double? previousAvgWeight,
+    double? previousAvgLength,
     VoidCallback? onCreated,
   }) => showModalBottomSheet<bool>(
     context: context,
@@ -37,6 +43,8 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
       seasonId: seasonId,
       initialQuantity: initialQuantity,
       previousPopulation: previousPopulation,
+      previousAvgWeight: previousAvgWeight,
+      previousAvgLength: previousAvgLength,
       onCreated: onCreated,
     ),
   );
@@ -171,9 +179,9 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       }
     }
 
-    final avgWeight = _calculatedAvgWeight;
-    if (avgWeight != null) {
-      final formattedWeight = _formatWeight(avgWeight);
+    final effectiveWeight = _calculatedAvgWeight ?? widget.previousAvgWeight;
+    if (effectiveWeight != null) {
+      final formattedWeight = _formatWeight(effectiveWeight);
       if (_avgWeightController.text != formattedWeight) {
         _avgWeightController.text = formattedWeight;
       }
@@ -183,11 +191,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       }
     }
 
-    if (avgWeight != null &&
-        avgWeight > 0 &&
+    if (effectiveWeight != null &&
+        effectiveWeight > 0 &&
         population != null &&
         population > 0) {
-      final calculatedBiomass = (population * avgWeight) / 1000;
+      final calculatedBiomass = (population * effectiveWeight) / 1000;
       final formattedBiomass =
           calculatedBiomass == calculatedBiomass.roundToDouble()
           ? calculatedBiomass.toStringAsFixed(0)
@@ -270,11 +278,18 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     }
 
     final sampleSize = int.tryParse(_sampleSizeController.text.trim());
-    final avgWeightG = _calculatedAvgWeight;
-    final avgLengthCm = _parseDouble(_avgLengthController.text);
+    final avgWeightG = _calculatedAvgWeight ?? widget.previousAvgWeight;
+    final avgLengthCm =
+        _parseDouble(_avgLengthController.text) ?? widget.previousAvgLength;
     final mortalityCount = int.tryParse(_mortalityController.text.trim()) ?? 0;
     final estimatedPopulation = _calculatedPopulation;
-    final estimatedBiomassKg = _parseDouble(_biomassController.text);
+    final estimatedBiomassKg = _parseDouble(_biomassController.text) ??
+        (avgWeightG != null &&
+                avgWeightG > 0 &&
+                estimatedPopulation != null &&
+                estimatedPopulation > 0
+            ? (estimatedPopulation * avgWeightG) / 1000
+            : null);
     final note = _noteController.text.trim();
 
     final hasAnyMetric =

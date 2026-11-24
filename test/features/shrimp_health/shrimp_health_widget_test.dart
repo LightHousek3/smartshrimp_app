@@ -978,6 +978,89 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'ShrimpHealthListPage KPI cards show latest valid biomass and weight when newest log is mortality-only',
+    (tester) async {
+      final listResult = ShrimpHealthListResult(
+        logs: [
+          // Log mới nhất (12:30): chỉ ghi nhận tôm chết, avgWeightG và estimatedBiomassKg = null
+          ShrimpHealthLog(
+            id: 'log-mortality-only',
+            seasonId: 'season-1',
+            recordedBy: 'user-1',
+            recordedByName: 'Kỹ thuật viên A',
+            recordedAt: DateTime.now(),
+            dayOfCulture: 12,
+            sampleSize: null,
+            avgWeightG: null,
+            avgLengthCm: null,
+            mortalityCount: 50,
+            estimatedPopulation: 12950,
+            estimatedBiomassKg: null,
+            healthStatus: HealthStatus.good,
+            note: 'Chỉ ghi nhận hao hụt',
+            isVoided: false,
+            createdAt: DateTime.now(),
+          ),
+          // Log trước đó (12:00): có đầy đủ chỉ số
+          ShrimpHealthLog(
+            id: 'log-full-measurements',
+            seasonId: 'season-1',
+            recordedBy: 'user-1',
+            recordedByName: 'Kỹ thuật viên A',
+            recordedAt: DateTime.now().subtract(const Duration(minutes: 30)),
+            dayOfCulture: 12,
+            sampleSize: 100,
+            avgWeightG: 15.5,
+            avgLengthCm: 12.0,
+            mortalityCount: 0,
+            estimatedPopulation: 13000,
+            estimatedBiomassKg: 201.5,
+            healthStatus: HealthStatus.good,
+            note: null,
+            isVoided: false,
+            createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
+          ),
+        ],
+        counts: const ShrimpHealthCounts(
+          total: 2,
+          valid: 2,
+          voided: 0,
+          warningOrCritical: 0,
+        ),
+        hasNext: false,
+      );
+
+      final fakeRepo = _FakeShrimpHealthRepository(listResult: listResult);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            shrimpHealthRepositoryProvider.overrideWithValue(fakeRepo),
+            assignedSeasonCanWriteProvider(
+              'season-1',
+            ).overrideWith((ref) => true),
+          ],
+          child: const MaterialApp(
+            home: ShrimpHealthListPage(
+              seasonId: 'season-1',
+              pondName: 'Ao A1',
+              seasonName: 'Vụ 1',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Kiểm tra 3 thẻ KPI vẫn hiển thị giá trị hợp lệ từ log trước đó chứ không bị '-'
+      expect(find.text('SINH KHỐI'), findsOneWidget);
+      expect(find.text('202'), findsNWidgets(2)); // KPI card and ShrimpHealthCard tile
+      expect(find.text('CỠ TB'), findsOneWidget);
+      expect(find.text('15,5'), findsNWidgets(2)); // KPI card and ShrimpHealthCard tile
+    },
+  );
 }
 
 class _FakeShrimpHealthRepository implements ShrimpHealthRepository {
