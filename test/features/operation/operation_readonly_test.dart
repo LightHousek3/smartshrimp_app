@@ -12,45 +12,42 @@ import 'package:smartshrimp_app/features/operation/presentation/view_models/oper
 
 void main() {
   for (final restriction in ['future', 'stock']) {
-    testWidgets(
-      'active season retains upstream $restriction execution restriction',
-      (tester) async {
-        final repository = _Operations(
-          scheduledAt: restriction == 'future'
-              ? DateTime.now().add(const Duration(hours: 2))
-              : DateTime.now().subtract(const Duration(hours: 2)),
-          stock: restriction == 'stock' ? 1 : 100,
-        );
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              assignedSeasonCanWriteProvider(
-                'season',
-              ).overrideWith((ref) => true),
-              operationRepositoryProvider.overrideWithValue(repository),
-            ],
-            child: const MaterialApp(
-              home: OperationDetailPage(
-                seasonId: 'season',
-                scheduleId: 'schedule',
-              ),
+    testWidgets('active season checks $restriction at the appropriate step', (
+      tester,
+    ) async {
+      final repository = _Operations(
+        scheduledAt: restriction == 'future'
+            ? DateTime.now().add(const Duration(hours: 2))
+            : DateTime.now().subtract(const Duration(hours: 2)),
+        stock: restriction == 'stock' ? 1 : 100,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season',
+            ).overrideWith((ref) => true),
+            operationRepositoryProvider.overrideWithValue(repository),
+          ],
+          child: const MaterialApp(
+            home: OperationDetailPage(
+              seasonId: 'season',
+              scheduleId: 'schedule',
             ),
           ),
-        );
-        await tester.pumpAndSettle();
-        final button = tester.widget<GradientButton>(
-          find.byType(GradientButton),
-        );
-        expect(button.onPressed, isNull);
-        expect(
-          button.label,
-          restriction == 'future'
-              ? 'Chưa đến giờ thực hiện'
-              : 'Không đủ vật tư trong kho',
-        );
-        expect(tester.takeException(), isNull);
-      },
-    );
+        ),
+      );
+      await tester.pumpAndSettle();
+      final button = tester.widget<GradientButton>(find.byType(GradientButton));
+      expect(button.onPressed, restriction == 'future' ? isNull : isNotNull);
+      expect(
+        button.label,
+        restriction == 'future'
+            ? 'Chưa đến giờ thực hiện'
+            : 'Ghi nhận thực hiện',
+      );
+      expect(tester.takeException(), isNull);
+    });
   }
 
   for (final overdue in [false, true]) {

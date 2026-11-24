@@ -1,31 +1,50 @@
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
-import 'package:smartshrimp_app/features/protocol/presentation/view_models/protocol_controller.dart';
+import 'package:smartshrimp_app/features/protocol/domain/protocol_occurrence.dart';
 import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart';
 
 class ProtocolDayAudit extends StatelessWidget {
   const ProtocolDayAudit({
-    required this.protocolId,
+    required this.farmId,
     required this.day,
+    required this.protocolStatus,
+    this.mealNumbersByItem = const {},
+    this.now,
     super.key,
   });
-  final String protocolId;
+  final String farmId;
   final ProtocolDay day;
+  final ProtocolStatus protocolStatus;
+  final Map<String, int> mealNumbersByItem;
+  final DateTime? now;
   @override
   Widget build(BuildContext context) {
-    final groups = <String?, List<ProtocolDayRow>>{};
-    for (final row in day.rows) {
-      groups.putIfAbsent(row.time, () => []).add(row);
-    }
+    final groups = protocolMeals(
+      day.rows,
+      mealNumbersByItem: mealNumbersByItem,
+    );
+    final clock = now ?? DateTime.now();
     return ProtocolSurface(
       padding: const EdgeInsets.all(12),
       shadow: true,
       child: Column(
         children: [
+          if (groups.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Ngưỡng sai lệch: ±${protocolNumber(day.allowedVariancePct)}%',
+                style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           if (groups.isEmpty)
             const Padding(
               padding: EdgeInsets.all(16),
@@ -34,126 +53,231 @@ class ProtocolDayAudit extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
             ),
-          for (final entry in groups.entries) ...[
-            if (entry.key != groups.keys.first) const SizedBox(height: 12),
-            ProtocolSurface(
-              radius: 12,
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  Container(
-                    color: protocolPanel,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const AppSvgIcon(
-                                    AppSvgIconName.clock,
-                                    size: 14,
-                                    color: AppColors.ocean,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    entry.key ?? 'Chưa đặt giờ',
-                                    style: AppTypography.mono(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.ink,
-                                    ).copyWith(fontFamily: 'JetBrainsMono'),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                entry.value.length > 1
-                                    ? 'Kết hợp ${entry.value.length} sản phẩm'
-                                    : '1 sản phẩm',
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  height: 1.5,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _OperationBadge(entry.value),
-                      ],
-                    ),
-                  ),
-                  for (var index = 0; index < entry.value.length; index++) ...[
-                    if (index > 0)
-                      const Divider(height: 1, color: Color(0xFFEEF1F7)),
-                    _ProductAudit(
-                      protocolId: protocolId,
-                      row: entry.value[index],
-                    ),
-                  ],
-                ],
+          ...groups.entries.map((entry) {
+            final current = protocolCurrentRows(entry.value);
+            final time = protocolMealTimeRange(entry.key.time, current);
+            return Padding(
+              padding: EdgeInsets.only(
+                top: entry.key == groups.keys.first ? 0 : 12,
               ),
-            ),
-          ],
+              child: ProtocolSurface(
+                radius: 12,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _MealHeader(
+                      time: time,
+                      mealNumber: entry.key.mealNumber,
+                      productCount: current.length,
+                      state: _mealState(current, protocolStatus, clock),
+                    ),
+                    for (
+                      var index = 0;
+                      index < entry.value.length;
+                      index++
+                    ) ...[
+                      if (index > 0)
+                        const Divider(height: 1, color: Color(0xFFEEF1F7)),
+                      _ProductAudit(
+                        farmId: farmId,
+                        row: entry.value[index],
+                        allowedVariancePct: day.allowedVariancePct,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 }
 
-class _OperationBadge extends StatelessWidget {
-  const _OperationBadge(this.rows);
-  final List<ProtocolDayRow> rows;
+class _MealHeader extends StatelessWidget {
+  const _MealHeader({
+    required this.time,
+    required this.mealNumber,
+    required this.productCount,
+    required this.state,
+  });
+
+  final String time;
+  final int? mealNumber;
+  final int productCount;
+  final ProtocolOccurrenceState state;
+
   @override
   Widget build(BuildContext context) {
-    final statuses = rows.map((r) => r.status).toSet();
-    final status = statuses.length == 1
-        ? statuses.first
-        : statuses.contains(ProtocolOperationStatus.planned)
-        ? ProtocolOperationStatus.planned
-        : ProtocolOperationStatus.unknown;
-    return switch (status) {
-      ProtocolOperationStatus.completed => const ProtocolBadge(
-        'Đã hoàn thành',
-        color: protocolTeal,
-        background: protocolTealPanel,
+    final badges = _occurrenceBadges(state);
+    return Container(
+      color: protocolPanel,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Table(
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        columnWidths: const {0: FlexColumnWidth(1.5), 1: FlexColumnWidth()},
+        children: [
+          TableRow(
+            children: [
+              Row(
+                children: [
+                  const AppSvgIcon(
+                    AppSvgIconName.clock,
+                    size: 14,
+                    color: AppColors.ocean,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: time,
+                        children: [
+                          if (mealNumber != null)
+                            TextSpan(
+                              text: ' (Cữ\u00a0$mealNumber)',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.inkMuted,
+                              ),
+                            ),
+                        ],
+                      ),
+                      style: AppTypography.mono(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              _RightBadge(badges.status),
+            ],
+          ),
+          TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '$productCount vật tư',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: badges.label == null
+                    ? const SizedBox.shrink()
+                    : _RightBadge(badges.label!),
+              ),
+            ],
+          ),
+        ],
       ),
-      ProtocolOperationStatus.pendingApproval => const ProtocolBadge(
-        'Chờ duyệt',
-        color: protocolAmber,
-        background: protocolAmberPanel,
-      ),
-      ProtocolOperationStatus.planned => const ProtocolBadge(
-        'Đang chờ',
-        color: protocolAmber,
-        background: protocolAmberPanel,
-      ),
-      _ => Text(
-        switch (status) {
-          ProtocolOperationStatus.cancelled => 'Đã hủy',
-          ProtocolOperationStatus.notGenerated => 'Chưa sinh lịch',
-          _ => 'Nhiều trạng thái',
-        },
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF64748B),
-        ),
-      ),
-    };
+    );
   }
 }
 
+class _RightBadge extends StatelessWidget {
+  const _RightBadge(this.child);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 6),
+    child: Align(
+      alignment: Alignment.centerRight,
+      child: FittedBox(fit: BoxFit.scaleDown, child: child),
+    ),
+  );
+}
+
+ProtocolOccurrenceState _mealState(
+  List<ProtocolDayRow> current,
+  ProtocolStatus protocolStatus,
+  DateTime now,
+) {
+  final states = current
+      .map((row) => protocolOccurrenceState(row, protocolStatus, now))
+      .toSet();
+  for (final state in [
+    ProtocolOccurrenceState.overdue,
+    ProtocolOccurrenceState.notRecorded,
+    ProtocolOccurrenceState.awaitingActivation,
+    ProtocolOccurrenceState.paused,
+    ProtocolOccurrenceState.locked,
+    ProtocolOccurrenceState.planned,
+    ProtocolOccurrenceState.notGenerated,
+    ProtocolOccurrenceState.pendingApproval,
+    ProtocolOccurrenceState.completed,
+    ProtocolOccurrenceState.cancelled,
+  ]) {
+    if (states.contains(state)) return state;
+  }
+  return ProtocolOccurrenceState.unknown;
+}
+
+({Widget status, Widget? label}) _occurrenceBadges(
+  ProtocolOccurrenceState state,
+) {
+  final status = switch (state) {
+    ProtocolOccurrenceState.completed => OperationStatus.completed,
+    ProtocolOccurrenceState.cancelled => OperationStatus.cancelled,
+    ProtocolOccurrenceState.planned ||
+    ProtocolOccurrenceState.notRecorded ||
+    ProtocolOccurrenceState.overdue ||
+    ProtocolOccurrenceState.awaitingActivation ||
+    ProtocolOccurrenceState.paused ||
+    ProtocolOccurrenceState.locked => OperationStatus.planned,
+    _ => null,
+  };
+  final label = switch (state) {
+    ProtocolOccurrenceState.awaitingActivation => 'Chờ hiệu lực',
+    ProtocolOccurrenceState.paused => 'Tạm hoãn',
+    ProtocolOccurrenceState.locked => 'Đã khóa ghi nhận',
+    _ => null,
+  };
+  final neutralLabel = switch (state) {
+    ProtocolOccurrenceState.pendingApproval => 'Chờ duyệt',
+    ProtocolOccurrenceState.notGenerated => 'Chưa sinh lịch',
+    _ => 'Chưa xác định',
+  };
+  if (status == null) {
+    return (status: ProtocolBadge(neutralLabel), label: null);
+  }
+  final (color, background) = switch (state) {
+    ProtocolOccurrenceState.locked => (AppColors.inkMuted, protocolPanel),
+    _ => (protocolAmber, protocolAmberPanel),
+  };
+  return (
+    status: OperationStatusBadge(status: status),
+    label: switch (state) {
+      ProtocolOccurrenceState.notRecorded => const OperationUnrecordedBadge(),
+      ProtocolOccurrenceState.overdue => const OperationOverdueBadge(
+        compact: true,
+      ),
+      _ =>
+        label == null
+            ? null
+            : ProtocolBadge(label, color: color, background: background),
+    },
+  );
+}
+
 class _ProductAudit extends StatelessWidget {
-  const _ProductAudit({required this.protocolId, required this.row});
-  final String protocolId;
+  const _ProductAudit({
+    required this.farmId,
+    required this.row,
+    required this.allowedVariancePct,
+  });
+  final String farmId;
   final ProtocolDayRow row;
+  final double allowedVariancePct;
   @override
   Widget build(BuildContext context) {
     final (icon, color, background) = switch (row.operationType) {
@@ -177,15 +301,22 @@ class _ProductAudit extends StatelessWidget {
     };
     final planned = row.plannedQuantity;
     final actual = row.actualQuantity;
+    final executor = row.executorName?.trim() ?? '';
+    final varianceReason = row.varianceReason?.trim() ?? '';
+    final note = row.note?.trim() ?? '';
     // Percent comparisons require the same unit and product as the frozen plan.
     final comparable =
         planned != null &&
         planned > 0 &&
         actual != null &&
         row.actualUnit == row.unit &&
-        (row.actualProductName == null ||
+        (row.quantityExceedsThreshold != null ||
+            row.actualProductName == null ||
             row.actualProductName == row.productName);
     final variance = comparable ? (actual - planned) / planned * 100 : null;
+    final exceeds =
+        row.quantityExceedsThreshold ??
+        (variance != null && variance.abs() > allowedVariancePct);
     final quantity = planned == null
         ? _dose(row)
         : '${protocolNumber(planned)} ${protocolUnit(row.unit)}';
@@ -205,7 +336,34 @@ class _ProductAudit extends StatelessWidget {
                   color: background,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: AppSvgIcon(icon, size: 14, color: color),
+                child: row.productImageUrls.isEmpty
+                    ? AppSvgIcon(icon, size: 14, color: color)
+                    : InkWell(
+                        onTap: () => showAppImageViewer(
+                          context,
+                          builder: (_) => AppImageViewer(
+                            itemCount: row.productImageUrls.length,
+                            initialIndex: 0,
+                            imageBuilder: (index, fit) => Image.network(
+                              row.productImageUrls[index],
+                              fit: fit,
+                              errorBuilder: (_, _, _) =>
+                                  AppSvgIcon(icon, size: 20, color: color),
+                            ),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            row.productImageUrls.first,
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) =>
+                                AppSvgIcon(icon, size: 14, color: color),
+                          ),
+                        ),
+                      ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -230,7 +388,7 @@ class _ProductAudit extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: _Quantity(
-                              'KTV THỰC SỰ DÙNG',
+                              'THỰC SỰ DÙNG',
                               actual == null
                                   ? 'Chưa có'
                                   : '${protocolNumber(actual)} ${protocolUnit(row.actualUnit ?? row.unit)}',
@@ -240,18 +398,18 @@ class _ProductAudit extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (variance != null && variance.abs() > .05)
+                    if (variance != null && variance != 0)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'Chênh lệch ${variance > 0 ? '+' : ''}${variance.toStringAsFixed(1)}%',
+                            'Chênh lệch ${variance > 0 ? '+' : ''}${variance.abs() < .05 ? '<0,1' : variance.toStringAsFixed(1)}%${exceeds ? ' · Vượt ngưỡng' : ''}',
                             style: TextStyle(
                               fontSize: 9,
                               height: 1.5,
                               fontWeight: FontWeight.w700,
-                              color: variance.abs() > 10
+                              color: exceeds
                                   ? const Color(0xFFFF2F61)
                                   : const Color(0xFFE17100),
                             ),
@@ -287,103 +445,41 @@ class _ProductAudit extends StatelessWidget {
               ),
             ],
           ),
-          if (row.varianceReason?.isNotEmpty == true)
-            _Reason(
-              'Lý do điều chỉnh lượng dùng',
-              row.varianceReason!,
-              danger: false,
-            ),
           if (row.cancellationReason?.isNotEmpty == true)
-            _Reason(
-              'Lý do không thực hiện',
+            _CancellationReason(
               '${row.cancellationReason}${row.cancelledAt == null ? '' : '\n${protocolDate(row.cancelledAt, time: true)}'}',
-              danger: true,
             ),
-          if (row.executedAt != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: protocolTealPanel,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(text: 'Chịu trách nhiệm: '),
-                          TextSpan(
-                            text: row.executorName ?? 'Chưa có tên',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                      style: const TextStyle(
-                        fontSize: 9,
-                        height: 1.5,
-                        color: Color(0xFF00786F),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    protocolDate(row.executedAt, time: true),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00786F),
-                    ),
-                  ),
-                ],
-              ),
+          if (row.status == ProtocolOperationStatus.completed &&
+              (row.executedAt != null ||
+                  executor.isNotEmpty ||
+                  varianceReason.isNotEmpty ||
+                  note.isNotEmpty))
+            _ExecutionAudit(
+              executor: executor,
+              executedAt: row.executedAt,
+              varianceReason: varianceReason,
+              note: note,
             ),
+          if (row.status == ProtocolOperationStatus.completed &&
+              row.executedAt != null &&
+              row.scheduleId != null &&
+              farmId.isNotEmpty) ...[
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: protocolPanel,
-                  foregroundColor: AppColors.inkSoft,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  minimumSize: const Size(0, 34),
-                  side: const BorderSide(color: AppColors.line, width: 1.25),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              child: OutlinedButton.icon(
+                icon: const AppSvgIcon(
+                  AppSvgIconName.clock,
+                  size: 13,
+                  color: AppColors.inkSoft,
                 ),
-                onPressed: row.scheduleId == null
-                    ? null
-                    : () => showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        showDragHandle: true,
-                        builder: (_) => _InventoryTrace(
-                          protocolId: protocolId,
-                          scheduleId: row.scheduleId!,
-                        ),
-                      ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppSvgIcon(
-                      AppSvgIconName.clock,
-                      size: 13,
-                      color: AppColors.inkSoft,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Kiểm tra giao dịch kho',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                label: const Text('Kiểm tra giao dịch kho'),
+                onPressed: () => context.push(
+                  Uri(
+                    path:
+                        '/farms/${Uri.encodeComponent(farmId)}/inventory/history',
+                    queryParameters: {'scheduleId': row.scheduleId},
+                  ).toString(),
                 ),
               ),
             ),
@@ -414,6 +510,109 @@ class _ProductAudit extends StatelessWidget {
       _ => '$dose $unit/lần',
     };
   }
+}
+
+class _ExecutionAudit extends StatelessWidget {
+  const _ExecutionAudit({
+    required this.executor,
+    required this.executedAt,
+    required this.varianceReason,
+    required this.note,
+  });
+
+  final String executor;
+  final DateTime? executedAt;
+  final String varianceReason;
+  final String note;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: ProtocolSurface(
+      radius: 8,
+      color: protocolTealPanel,
+      border: protocolTealPanel,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text: 'Chịu trách nhiệm: ',
+                    children: [
+                      TextSpan(
+                        text: executor.isEmpty ? 'Chưa có tên' : executor,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    height: 1.5,
+                    color: Color(0xFF00786F),
+                  ),
+                ),
+              ),
+              if (executedAt != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  protocolDate(executedAt, time: true),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    height: 1.5,
+                    color: Color(0xFF00786F),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (varianceReason.isNotEmpty || note.isNotEmpty) ...[
+            const Divider(height: 12, color: Color(0xFFCBFBF1)),
+            if (varianceReason.isNotEmpty)
+              _ExecutionDetail('Lý do điều chỉnh lượng dùng', varianceReason),
+            if (varianceReason.isNotEmpty && note.isNotEmpty)
+              const SizedBox(height: 6),
+            if (note.isNotEmpty)
+              _ExecutionDetail('Ghi chú của Kỹ thuật viên', note),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _ExecutionDetail extends StatelessWidget {
+  const _ExecutionDetail(this.title, this.value);
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.ink,
+        ),
+      ),
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 10,
+          height: 1.5,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    ],
+  );
 }
 
 class _Quantity extends StatelessWidget {
@@ -459,120 +658,40 @@ class _Quantity extends StatelessWidget {
   );
 }
 
-class _Reason extends StatelessWidget {
-  const _Reason(this.title, this.text, {required this.danger});
-  final String title;
+class _CancellationReason extends StatelessWidget {
+  const _CancellationReason(this.text);
+
   final String text;
-  final bool danger;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 8),
     child: ProtocolSurface(
       radius: 8,
       padding: const EdgeInsets.all(10),
-      color: danger ? protocolRosePanel : protocolAmberPanel,
-      border: danger ? protocolRosePanel : const Color(0xFFFFEFC0),
+      color: protocolRosePanel,
+      border: protocolRosePanel,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
+          const Text(
+            'Lý do không thực hiện',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: danger ? const Color(0xFFD70040) : const Color(0xFFBB4D00),
+              color: Color(0xFFD70040),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
               height: 1.625,
-              color: danger ? const Color(0xFFD70040) : const Color(0xFFBB4D00),
+              color: Color(0xFFD70040),
             ),
           ),
         ],
       ),
     ),
   );
-}
-
-class _InventoryTrace extends ConsumerWidget {
-  const _InventoryTrace({required this.protocolId, required this.scheduleId});
-  final String protocolId;
-  final String scheduleId;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final scope = (id: protocolId, scheduleId: scheduleId);
-    final state = ref.watch(protocolInventoryProvider(scope));
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .6,
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Truy vết giao dịch kho',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-            Expanded(
-              child: state.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => AppErrorState(
-                  error: e,
-                  onRetry: () =>
-                      ref.invalidate(protocolInventoryProvider(scope)),
-                ),
-                data: (rows) => rows.isEmpty
-                    ? const Center(
-                        child: Text('Chưa có giao dịch kho cho cữ này.'),
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          for (final row in rows)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: ProtocolSurface(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      row.productName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Lô ${row.lotNumber} · Xuất ${protocolNumber(row.quantity)} ${protocolUnit(row.unit)}',
-                                    ),
-                                    Text(
-                                      '${row.performedByName} · ${protocolDate(row.createdAt, time: true)}',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.inkMuted,
-                                      ),
-                                    ),
-                                    if (row.reason != null)
-                                      Text(
-                                        row.reason!,
-                                        style: const TextStyle(fontSize: 11),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

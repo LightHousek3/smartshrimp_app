@@ -106,10 +106,10 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                 .watch(activePersonnelSummaryProvider)
                                 .when(
                                   data: (summary) =>
-                                      '${summary.technicians} KTV · '
+                                      '${summary.technicians} Kỹ thuật viên · '
                                       '${summary.experts} Chuyên gia',
-                                  loading: () => 'KTV · Chuyên gia',
-                                  error: (_, _) => 'KTV · Chuyên gia',
+                                  loading: () => 'Kỹ thuật viên · Chuyên gia',
+                                  error: (_, _) => 'Kỹ thuật viên · Chuyên gia',
                                 ),
                             subtitle: ref
                                 .watch(activePersonnelSummaryProvider)

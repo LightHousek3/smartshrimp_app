@@ -469,7 +469,7 @@ class _ImmutableNotice extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
     ),
     child: const Text(
-      'Kết quả đo đã lưu không thể chỉnh sửa. Nếu ghi sai, KTV chỉ có thể hủy hiệu lực kèm lý do để vẫn giữ được lịch sử đối chiếu.',
+      'Nếu ghi sai kết quả đo, Kỹ thuật viên có thể hủy hiệu lực kèm lý do. Hệ thống giữ bản ghi cũ để đối chiếu.',
       style: TextStyle(color: AppColors.ocean, fontSize: 11, height: 1.5),
     ),
   );

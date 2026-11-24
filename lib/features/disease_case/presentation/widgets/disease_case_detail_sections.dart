@@ -439,7 +439,7 @@ class _ResponseHeading extends StatelessWidget {
             DiseaseCaseResponseType.unknown => ('Phản hồi', caseNeutral),
           };
     final roleLabel = switch (role) {
-      AccountRole.technician => 'KTV',
+      AccountRole.technician => 'Kỹ thuật viên',
       AccountRole.expert => 'Chuyên gia',
       AccountRole.farmOwner => 'Chủ trại',
       AccountRole.admin => 'Quản trị viên',

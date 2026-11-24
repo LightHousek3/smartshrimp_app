@@ -195,7 +195,7 @@ class _CancelTaskDialogState extends ConsumerState<_CancelTaskDialog> {
                         const SizedBox(height: 8),
                         Text(
                           widget.task.status == TaskStatus.inProgress
-                              ? 'KTV đã bắt đầu thực hiện. Sau khi hủy, KTV không thể tiếp tục nhiệm vụ.'
+                              ? 'Kỹ thuật viên đã bắt đầu thực hiện. Hủy sẽ dừng nhiệm vụ này.'
                               : 'Nhiệm vụ chưa bắt đầu. Sau khi hủy, nhiệm vụ không thể tiếp tục hoặc chỉnh sửa.',
                           style: const TextStyle(
                             fontSize: 12,

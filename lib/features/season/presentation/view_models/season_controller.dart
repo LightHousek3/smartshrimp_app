@@ -199,8 +199,16 @@ final class SeasonMutationController extends _OwnerSeasonController<void> {
   Future<AquacultureSeason> activate({
     required String farmId,
     required AquacultureSeason current,
+    required DateTime actualStockingDate,
+    String? activationDelayReason,
   }) => _mutate(
-    () => ref.read(seasonRepositoryProvider).activateSeason(current),
+    () => ref
+        .read(seasonRepositoryProvider)
+        .activateSeason(
+          current,
+          actualStockingDate: actualStockingDate,
+          activationDelayReason: activationDelayReason,
+        ),
     farmId: farmId,
     pondId: current.pondId,
     seasonId: current.id,

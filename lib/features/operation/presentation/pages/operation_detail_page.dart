@@ -13,7 +13,6 @@ import 'package:smartshrimp_app/features/operation/domain/entities/operation_mod
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_sheet.dart';
-import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_meal_execute_sheet.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 
@@ -37,6 +36,7 @@ class OperationDetailPage extends ConsumerStatefulWidget {
 class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
   static const Color _blueBg = Color(0xFFDEEDFD);
   static const Color _blueFg = Color(0xFF1D7AD6);
+  static const _batchLimit = 20;
 
   final Set<String> _expandedScheduleIds = <String>{};
 
@@ -62,9 +62,12 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         ),
       };
 
-  String _formatLocation(OperationSchedule schedule) {
-    final pond = schedule.pondName?.trim();
-    final season = schedule.seasonName?.trim();
+  String? _formatLocation(
+    OperationSchedule schedule,
+    OperationListResult? list,
+  ) {
+    final pond = (schedule.pondName ?? list?.pondName)?.trim();
+    final season = (schedule.seasonName ?? list?.seasonName)?.trim();
 
     final formattedSeason = season != null && season.isNotEmpty
         ? (season.toLowerCase().startsWith('vụ') ? season : 'Vụ $season')
@@ -75,10 +78,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
       ?formattedSeason,
     ];
 
-    if (parts.isNotEmpty) {
-      return parts.join(' · ');
-    }
-    return 'Vụ nuôi: ${widget.seasonId}';
+    return parts.isEmpty ? null : parts.join(' · ');
   }
 
   String _formatCompactNumber(double val) {
@@ -714,26 +714,17 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
           ),
 
           const SizedBox(height: 10),
-          Divider(
-            height: 1,
-            color: AppColors.line.withValues(alpha: 0.5),
-          ),
+          Divider(height: 1, color: AppColors.line.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
 
           // Danh sách số lượng thực tế ghi nhận (gọn gàng, tinh tế, không lặp lại ảnh/badge)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 0.8,
-              ),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,7 +835,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                               ),
                             ),
                             TextSpan(
-                              text: reasons[i].execution!.varianceReason!.trim(),
+                              text: reasons[i].execution!.varianceReason!
+                                  .trim(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w500,
                               ),
@@ -930,7 +922,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     required List<OperationSchedule> allItems,
     FeedingMedicineMealGroup? mealGroup,
   }) {
-    final isTreatment = schedule.isTreatment ||
+    final isTreatment =
+        schedule.isTreatment ||
         (mealGroup?.isTreatment ?? false) ||
         allItems.any((e) => e.isTreatment);
     final mealNumber =
@@ -938,8 +931,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final headerTitle = isTreatment
         ? 'Điều trị'
         : (mealNumber != null
-            ? 'Cữ $mealNumber'
-            : schedule.operationType.displayName);
+              ? 'Cữ $mealNumber'
+              : materialCategoryLabel(schedule.operationType));
 
     final (iconBg, iconFg, svgName) = isTreatment
         ? (
@@ -947,15 +940,16 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
             const Color(0xFFD43B57),
             AppSvgIconName.medicine,
           )
-        : (
-            _blueBg,
-            _blueFg,
-            AppSvgIconName.calendarDays,
-          );
+        : (_blueBg, _blueFg, AppSvgIconName.calendarDays);
 
     // Khoảng giờ thực hiện của cữ (bao gồm deadline nếu có dueAtMinutes)
     final mealTimeStr = mealGroup?.timeRangeText ?? schedule.timeRangeText;
     final hasAnyOverdue = allItems.any((e) => e.isOverdue);
+    final hasUnrecorded = allItems.any((e) => e.activatedAt != null);
+    final materialCount = allItems
+        .map((item) => item.protocolItemId)
+        .toSet()
+        .length;
 
     return Container(
       decoration: BoxDecoration(
@@ -990,11 +984,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child: AppSvgIcon(
-                      svgName,
-                      color: iconFg,
-                      size: 22,
-                    ),
+                    child: AppSvgIcon(svgName, color: iconFg, size: 22),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1038,6 +1028,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                                 ),
                               ),
                             ),
+                          if (hasUnrecorded) const OperationUnrecordedBadge(),
                           if (hasAnyOverdue)
                             const OperationOverdueBadge(compact: true),
                         ],
@@ -1051,12 +1042,14 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                             color: AppColors.inkMuted,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            '$mealTimeStr · ${allItems.length} thành phần',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.inkSoft,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              '$mealTimeStr · $materialCount vật tư',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.inkSoft,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -1082,25 +1075,62 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     );
   }
 
+  Future<void> _openExecution(
+    List<OperationSchedule> rows, {
+    required bool previewRoute,
+  }) async {
+    final saved = await OperationExecuteSheet.show(context, schedules: rows);
+    if (!mounted || saved != true) return;
+    AppNoticeService.success(context, 'Đã ghi nhận thực hiện.');
+    await Future.wait([
+      ref.read(operationListProvider(widget.seasonId).notifier).refresh(),
+      if (!previewRoute)
+        ref.read(operationDetailProvider(widget.scheduleId).notifier).refresh(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final canWrite = ref.watch(assignedSeasonCanWriteProvider(widget.seasonId));
-    final state = ref.watch(operationDetailProvider(widget.scheduleId));
-
-    // Luôn ưu tiên lấy cữ mới nhất từ operationListProvider để phản ánh đúng trạng thái sau khi ghi nhận,
-    // chỉ fallback về widget.mealGroup (snapshot từ route) khi danh sách chưa kịp tải.
     final listAsync = ref.watch(operationListProvider(widget.seasonId));
-    FeedingMedicineMealGroup? effectiveMealGroup;
-    if (listAsync.hasValue) {
-      final allMealGroups = listAsync.value!.mealGroups;
-      for (final g in allMealGroups) {
-        if (g.allSchedules.any((s) => s.id == widget.scheduleId)) {
-          effectiveMealGroup = g;
-          break;
-        }
+    final preview = widget.mealGroup?.allSchedules
+        .where((row) => row.id == widget.scheduleId && row.activatedAt != null)
+        .firstOrNull;
+    bool matchesTarget(OperationSchedule row) => preview == null
+        ? row.id == widget.scheduleId
+        : row.protocolItemId == preview.protocolItemId &&
+              row.scheduledAt.isAtSameMomentAs(preview.scheduledAt);
+
+    final list = listAsync.asData?.value;
+    final fromList = list == null
+        ? null
+        : [...list.schedules, ...list.historicalSchedules];
+    final effectiveMealGroup =
+        (fromList == null
+            ? null
+            : FeedingMedicineMealGroup.group(fromList)
+                  .where((group) => group.allSchedules.any(matchesTarget))
+                  .firstOrNull) ??
+        (preview == null ? widget.mealGroup : null);
+    // Preview IDs refer to prescription items. A saved occurrence has its own schedule ID.
+    final AsyncValue<OperationSchedule?> state = preview == null
+        ? ref.watch(operationDetailProvider(widget.scheduleId))
+        : listAsync.whenData((_) => fromList?.where(matchesTarget).firstOrNull);
+
+    void retry() {
+      if (preview == null) {
+        ref.read(operationDetailProvider(widget.scheduleId).notifier).refresh();
+      } else {
+        ref.read(operationListProvider(widget.seasonId).notifier).refresh();
       }
     }
-    effectiveMealGroup ??= widget.mealGroup;
+
+    Widget withBack(Widget child) => Column(
+      children: [
+        PageHeaderBar(title: 'Chi tiết vận hành', onBack: context.pop),
+        Expanded(child: child),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -1108,15 +1138,19 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         child: SafeArea(
           bottom: false,
           child: state.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator(color: _blueFg)),
-            error: (err, _) => AppErrorState(
-              error: err,
-              onRetry: () => ref
-                  .read(operationDetailProvider(widget.scheduleId).notifier)
-                  .refresh(),
+            loading: () => withBack(
+              const Center(child: CircularProgressIndicator(color: _blueFg)),
             ),
+            error: (err, _) =>
+                withBack(AppErrorState(error: err, onRetry: retry)),
             data: (schedule) {
+              if (schedule == null) {
+                return withBack(
+                  const Center(
+                    child: Text('Cữ này không còn khả dụng để ghi bổ sung.'),
+                  ),
+                );
+              }
               // Toàn bộ các thành phần trong cữ (thay schedule mới nhất từ API detail vào danh sách)
               final allItems = effectiveMealGroup != null
                   ? effectiveMealGroup.allSchedules
@@ -1135,6 +1169,18 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                   )
                   .toList(growable: false);
               final hasAnyPlanned = plannedItems.isNotEmpty;
+              final scheduledItems = plannedItems
+                  .where((item) => item.activatedAt == null)
+                  .toList();
+              final recordTogether =
+                  scheduledItems.isNotEmpty &&
+                  scheduledItems.length <= _batchLimit;
+              final supplements = plannedItems
+                  .where((item) => item.activatedAt != null)
+                  .toList();
+              final individualItems = recordTogether
+                  ? const <OperationSchedule>[]
+                  : scheduledItems;
               final displayStatus = hasAnyPlanned
                   ? OperationStatus.planned
                   : (allItems.every(
@@ -1156,7 +1202,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                   // Top App Bar
                   StickyPageHeader(
                     title: 'Chi tiết vận hành',
-                    subtitle: _formatLocation(schedule),
+                    subtitle: _formatLocation(schedule, list),
                     onBack: context.pop,
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(
@@ -1210,150 +1256,56 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                             _buildCompletedSummaryCard(completedItems),
                           ],
 
-                          // 2. Action button ghi nhận cữ (chỉ cho phép khi đã đến giờ dự kiến)
-                          if (hasAnyPlanned && canWrite) ...<Widget>[
+                          if (canWrite && recordTogether) ...[
                             const SizedBox(height: 14),
-                            Builder(
-                              builder: (_) {
-                                final isMultiPlanned = plannedItems.length > 1;
-                                final executableMealGroup =
-                                    isMultiPlanned && effectiveMealGroup != null
-                                    ? FeedingMedicineMealGroup(
-                                        key: effectiveMealGroup.key,
-                                        mealNumber:
-                                            effectiveMealGroup.mealNumber,
-                                        time: effectiveMealGroup.time,
-                                        scheduledAt:
-                                            effectiveMealGroup.scheduledAt,
-                                        feedings: plannedItems
-                                            .where(
-                                              (s) =>
-                                                  s.operationType ==
-                                                  OperationType.feeding,
-                                            )
-                                            .toList(growable: false),
-                                        medicines: plannedItems
-                                            .where(
-                                              (s) =>
-                                                  s.operationType ==
-                                                  OperationType.medicine,
-                                            )
-                                            .toList(growable: false),
-                                      )
-                                    : null;
-                                final singleTarget = plannedItems.first;
-                                final isBeforeScheduled =
-                                    executableMealGroup != null
-                                    ? executableMealGroup.isBeforeScheduled
-                                    : singleTarget.isBeforeScheduled;
-                                final insufficientItems = plannedItems
-                                    .where(
-                                      (s) => s.isStockInsufficientForPlanned,
+                            GradientButton(
+                              label:
+                                  scheduledItems.every(
+                                    (item) => item.canExecute,
+                                  )
+                                  ? 'Ghi nhận thực hiện'
+                                  : 'Chưa đến giờ thực hiện',
+                              height: 48,
+                              icon: Icons.check_rounded,
+                              onPressed:
+                                  scheduledItems.every(
+                                    (item) => item.canExecute,
+                                  )
+                                  ? () => _openExecution(
+                                      scheduledItems,
+                                      previewRoute: preview != null,
                                     )
-                                    .toList(growable: false);
-                                final hasInsufficientStock =
-                                    insufficientItems.isNotEmpty;
-                                final canTap =
-                                    !isBeforeScheduled && !hasInsufficientStock;
-
-                                final shortageDetails = insufficientItems
-                                    .map((s) {
-                                      final unit = s.unit.toLowerCase();
-                                      final stockText = formatOperationCompact(
-                                        s.availableStock ?? 0,
-                                        maxDecimals: 3,
-                                      );
-                                      final needText = formatOperationCompact(
-                                        s.plannedQuantity,
-                                        maxDecimals: 3,
-                                      );
-                                      return '${s.productName} (còn $stockText $unit, cần $needText $unit)';
-                                    })
-                                    .join('; ');
-
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    if (hasInsufficientStock) ...<Widget>[
-                                      AppFormMessageBanner(
-                                        level: AppNoticeLevel.danger,
-                                        title: 'Không đủ vật tư trong kho',
-                                        message:
-                                            '$shortageDetails. Vui lòng nhập thêm kho trước khi ghi nhận.',
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    GradientButton(
-                                      label: hasInsufficientStock
-                                          ? 'Không đủ vật tư trong kho'
-                                          : (isBeforeScheduled
-                                                ? 'Chưa đến giờ thực hiện'
-                                                : 'Ghi nhận thực hiện'),
-                                      compact: true,
-                                      height: 48,
-                                      borderRadius: 16,
-                                      leading: Icon(
-                                        hasInsufficientStock
-                                            ? Icons.inventory_2_outlined
-                                            : (isBeforeScheduled
-                                                  ? Icons.schedule_rounded
-                                                  : Icons.check_rounded),
-                                        color: Colors.white,
-                                        size: 19,
-                                      ),
-                                      onPressed: canTap
-                                          ? () {
-                                              if (executableMealGroup != null) {
-                                                OperationMealExecuteSheet.show(
-                                                  context,
-                                                  group: executableMealGroup,
-                                                  onSuccess: () {
-                                                    ref
-                                                        .read(
-                                                          operationDetailProvider(
-                                                            widget.scheduleId,
-                                                          ).notifier,
-                                                        )
-                                                        .refresh();
-                                                    ref
-                                                        .read(
-                                                          operationListProvider(
-                                                            widget.seasonId,
-                                                          ).notifier,
-                                                        )
-                                                        .refresh();
-                                                  },
-                                                );
-                                              } else {
-                                                OperationExecuteSheet.show(
-                                                  context,
-                                                  schedule: singleTarget,
-                                                  onSuccess: () {
-                                                    ref
-                                                        .read(
-                                                          operationDetailProvider(
-                                                            widget.scheduleId,
-                                                          ).notifier,
-                                                        )
-                                                        .refresh();
-                                                    ref
-                                                        .read(
-                                                          operationListProvider(
-                                                            widget.seasonId,
-                                                          ).notifier,
-                                                        )
-                                                        .refresh();
-                                                  },
-                                                );
-                                              }
-                                            }
-                                          : null,
-                                    ),
-                                  ],
-                                );
-                              },
+                                  : null,
                             ),
                           ],
+                          if (canWrite && supplements.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            if (supplements.length > _batchLimit)
+                              const Text('Mỗi lần ghi nhận tối đa 20 vật tư.'),
+                            GradientButton(
+                              label: 'Ghi nhận bổ sung',
+                              height: 48,
+                              icon: Icons.history_rounded,
+                              onPressed: () => _openExecution(
+                                supplements.take(_batchLimit).toList(),
+                                previewRoute: preview != null,
+                              ),
+                            ),
+                          ],
+                          if (canWrite)
+                            for (final item in individualItems) ...[
+                              const SizedBox(height: 12),
+                              GradientButton(
+                                label: 'Ghi nhận ${item.productName}',
+                                height: 48,
+                                icon: Icons.history_rounded,
+                                onPressed: item.canExecute
+                                    ? () => _openExecution([
+                                        item,
+                                      ], previewRoute: preview != null)
+                                    : null,
+                              ),
+                            ],
                         ],
                       ),
                     ),

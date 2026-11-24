@@ -476,6 +476,7 @@ final class InventoryHistoryController
         productId: filters.productId,
         transactionType: filters.transactionType,
         seasonId: filters.seasonId,
+        scheduleId: filters.scheduleId,
         createdFrom: filters.createdFrom,
         createdTo: filters.createdTo,
       );

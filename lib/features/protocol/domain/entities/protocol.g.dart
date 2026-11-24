@@ -111,6 +111,7 @@ _ProtocolHistory _$ProtocolHistoryFromJson(Map<String, dynamic> json) =>
           (v) => DateTime.parse(v as String),
         ),
         reason: $checkedConvert('reason', (v) => v as String?),
+        eventLabel: $checkedConvert('eventLabel', (v) => v as String?),
       );
       return val;
     });
@@ -123,6 +124,7 @@ Map<String, dynamic> _$ProtocolHistoryToJson(_ProtocolHistory instance) =>
       'changedByName': instance.changedByName,
       'changedAt': instance.changedAt.toIso8601String(),
       'reason': instance.reason,
+      'eventLabel': instance.eventLabel,
     };
 
 _ProtocolDayMarker _$ProtocolDayMarkerFromJson(Map<String, dynamic> json) =>
@@ -133,6 +135,10 @@ _ProtocolDayMarker _$ProtocolDayMarkerFromJson(Map<String, dynamic> json) =>
         planned: $checkedConvert('planned', (v) => (v as num).toInt()),
         cancelled: $checkedConvert('cancelled', (v) => (v as num).toInt()),
         issues: $checkedConvert('issues', (v) => (v as num?)?.toInt() ?? 0),
+        unrecorded: $checkedConvert(
+          'unrecorded',
+          (v) => (v as num?)?.toInt() ?? 0,
+        ),
       );
       return val;
     });
@@ -144,6 +150,7 @@ Map<String, dynamic> _$ProtocolDayMarkerToJson(_ProtocolDayMarker instance) =>
       'planned': instance.planned,
       'cancelled': instance.cancelled,
       'issues': instance.issues,
+      'unrecorded': instance.unrecorded,
     };
 
 _ProtocolMaterialProfile _$ProtocolMaterialProfileFromJson(
@@ -471,74 +478,101 @@ Map<String, dynamic> _$ProtocolDetailToJson(_ProtocolDetail instance) =>
       'materialReviews': instance.materialReviews,
     };
 
-_ProtocolDayRow _$ProtocolDayRowFromJson(Map<String, dynamic> json) =>
-    $checkedCreate('_ProtocolDayRow', json, ($checkedConvert) {
-      final val = _ProtocolDayRow(
-        itemId: $checkedConvert('itemId', (v) => v as String),
-        operationType: $checkedConvert('operationType', (v) => v as String),
-        productName: $checkedConvert('productName', (v) => v as String),
-        time: $checkedConvert('time', (v) => v as String?),
-        doseBasis: $checkedConvert('doseBasis', (v) => v as String),
-        doseValue: $checkedConvert('doseValue', (v) => (v as num).toDouble()),
-        doseUnit: $checkedConvert('doseUnit', (v) => v as String),
-        instructions: $checkedConvert('instructions', (v) => v as String?),
-        scheduleId: $checkedConvert('scheduleId', (v) => v as String?),
-        status: $checkedConvert(
-          'status',
-          (v) => $enumDecode(
-            _$ProtocolOperationStatusEnumMap,
-            v,
-            unknownValue: ProtocolOperationStatus.unknown,
-          ),
-        ),
-        plannedQuantity: $checkedConvert(
-          'plannedQuantity',
-          (v) => (v as num?)?.toDouble(),
-        ),
-        unit: $checkedConvert('unit', (v) => v as String),
-        basisQuantity: $checkedConvert(
-          'basisQuantity',
-          (v) => (v as num?)?.toDouble(),
-        ),
-        basisUnit: $checkedConvert('basisUnit', (v) => v as String?),
-        actualQuantity: $checkedConvert(
-          'actualQuantity',
-          (v) => (v as num?)?.toDouble(),
-        ),
-        actualProductName: $checkedConvert(
-          'actualProductName',
-          (v) => v as String?,
-        ),
-        actualUnit: $checkedConvert('actualUnit', (v) => v as String?),
-        varianceReason: $checkedConvert('varianceReason', (v) => v as String?),
-        executorName: $checkedConvert('executorName', (v) => v as String?),
-        executedAt: $checkedConvert(
-          'executedAt',
-          (v) => v == null ? null : DateTime.parse(v as String),
-        ),
-        cancellationReason: $checkedConvert(
-          'cancellationReason',
-          (v) => v as String?,
-        ),
-        cancelledAt: $checkedConvert(
-          'cancelledAt',
-          (v) => v == null ? null : DateTime.parse(v as String),
-        ),
-      );
-      return val;
-    });
+_ProtocolDayRow _$ProtocolDayRowFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_ProtocolDayRow', json, ($checkedConvert) {
+  final val = _ProtocolDayRow(
+    itemId: $checkedConvert('itemId', (v) => v as String),
+    operationType: $checkedConvert('operationType', (v) => v as String),
+    productName: $checkedConvert('productName', (v) => v as String),
+    productImageUrls: $checkedConvert(
+      'productImageUrls',
+      (v) =>
+          (v as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+    ),
+    time: $checkedConvert('time', (v) => v as String?),
+    doseBasis: $checkedConvert('doseBasis', (v) => v as String),
+    doseValue: $checkedConvert('doseValue', (v) => (v as num).toDouble()),
+    doseUnit: $checkedConvert('doseUnit', (v) => v as String),
+    instructions: $checkedConvert('instructions', (v) => v as String?),
+    scheduleId: $checkedConvert('scheduleId', (v) => v as String?),
+    productionMealId: $checkedConvert('productionMealId', (v) => v as String?),
+    scheduledAt: $checkedConvert(
+      'scheduledAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    dueAt: $checkedConvert(
+      'dueAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    dueAtMinutes: $checkedConvert('dueAtMinutes', (v) => (v as num?)?.toInt()),
+    quantityExceedsThreshold: $checkedConvert(
+      'quantityExceedsThreshold',
+      (v) => v as bool?,
+    ),
+    status: $checkedConvert(
+      'status',
+      (v) => $enumDecode(
+        _$ProtocolOperationStatusEnumMap,
+        v,
+        unknownValue: ProtocolOperationStatus.unknown,
+      ),
+    ),
+    plannedQuantity: $checkedConvert(
+      'plannedQuantity',
+      (v) => (v as num?)?.toDouble(),
+    ),
+    unit: $checkedConvert('unit', (v) => v as String),
+    basisQuantity: $checkedConvert(
+      'basisQuantity',
+      (v) => (v as num?)?.toDouble(),
+    ),
+    basisUnit: $checkedConvert('basisUnit', (v) => v as String?),
+    actualQuantity: $checkedConvert(
+      'actualQuantity',
+      (v) => (v as num?)?.toDouble(),
+    ),
+    actualProductName: $checkedConvert(
+      'actualProductName',
+      (v) => v as String?,
+    ),
+    actualUnit: $checkedConvert('actualUnit', (v) => v as String?),
+    varianceReason: $checkedConvert('varianceReason', (v) => v as String?),
+    note: $checkedConvert('note', (v) => v as String?),
+    executorName: $checkedConvert('executorName', (v) => v as String?),
+    executedAt: $checkedConvert(
+      'executedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+    cancellationReason: $checkedConvert(
+      'cancellationReason',
+      (v) => v as String?,
+    ),
+    cancelledAt: $checkedConvert(
+      'cancelledAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
+  );
+  return val;
+});
 
 Map<String, dynamic> _$ProtocolDayRowToJson(_ProtocolDayRow instance) =>
     <String, dynamic>{
       'itemId': instance.itemId,
       'operationType': instance.operationType,
       'productName': instance.productName,
+      'productImageUrls': instance.productImageUrls,
       'time': instance.time,
       'doseBasis': instance.doseBasis,
       'doseValue': instance.doseValue,
       'doseUnit': instance.doseUnit,
       'instructions': instance.instructions,
       'scheduleId': instance.scheduleId,
+      'productionMealId': instance.productionMealId,
+      'scheduledAt': instance.scheduledAt?.toIso8601String(),
+      'dueAt': instance.dueAt?.toIso8601String(),
+      'dueAtMinutes': instance.dueAtMinutes,
+      'quantityExceedsThreshold': instance.quantityExceedsThreshold,
       'status': _$ProtocolOperationStatusEnumMap[instance.status]!,
       'plannedQuantity': instance.plannedQuantity,
       'unit': instance.unit,
@@ -548,6 +582,7 @@ Map<String, dynamic> _$ProtocolDayRowToJson(_ProtocolDayRow instance) =>
       'actualProductName': instance.actualProductName,
       'actualUnit': instance.actualUnit,
       'varianceReason': instance.varianceReason,
+      'note': instance.note,
       'executorName': instance.executorName,
       'executedAt': instance.executedAt?.toIso8601String(),
       'cancellationReason': instance.cancellationReason,
@@ -560,6 +595,7 @@ const _$ProtocolOperationStatusEnumMap = {
   ProtocolOperationStatus.cancelled: 'CANCELLED',
   ProtocolOperationStatus.pendingApproval: 'PENDING_APPROVAL',
   ProtocolOperationStatus.notGenerated: 'NOT_GENERATED',
+  ProtocolOperationStatus.notRecorded: 'NOT_RECORDED',
   ProtocolOperationStatus.unknown: 'UNKNOWN',
 };
 
@@ -574,6 +610,10 @@ _ProtocolDay _$ProtocolDayFromJson(Map<String, dynamic> json) =>
               .map((e) => ProtocolDayRow.fromJson(e as Map<String, dynamic>))
               .toList(),
         ),
+        allowedVariancePct: $checkedConvert(
+          'allowedVariancePct',
+          (v) => (v as num?)?.toDouble() ?? 10,
+        ),
       );
       return val;
     });
@@ -583,6 +623,7 @@ Map<String, dynamic> _$ProtocolDayToJson(_ProtocolDay instance) =>
       'day': instance.day,
       'date': instance.date,
       'rows': instance.rows,
+      'allowedVariancePct': instance.allowedVariancePct,
     };
 
 _ProtocolInventoryEntry _$ProtocolInventoryEntryFromJson(

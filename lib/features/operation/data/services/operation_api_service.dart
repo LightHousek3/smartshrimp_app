@@ -48,6 +48,7 @@ class OperationApiService {
     String? note,
     String? varianceReason,
     DateTime? executedAt,
+    HistoricalFeedingOccurrence? historicalOccurrence,
   }) async {
     final body = <String, dynamic>{
       'actualQuantity': actualQuantity,
@@ -56,7 +57,15 @@ class OperationApiService {
       if (note != null && note.isNotEmpty) 'note': note,
       if (varianceReason != null && varianceReason.isNotEmpty)
         'varianceReason': varianceReason,
-      if (executedAt != null) 'executedAt': executedAt.toUtc().toIso8601String(),
+      if (executedAt != null)
+        'executedAt': executedAt.toUtc().toIso8601String(),
+      if (historicalOccurrence != null)
+        'historicalOccurrence': {
+          'seasonId': historicalOccurrence.seasonId,
+          'scheduledAt': historicalOccurrence.scheduledAt
+              .toUtc()
+              .toIso8601String(),
+        },
     };
 
     final response = await _client.post(

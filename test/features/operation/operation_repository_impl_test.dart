@@ -129,6 +129,7 @@ final class _FakeOperationApiService implements OperationApiService {
     String? note,
     String? varianceReason,
     DateTime? executedAt,
+    HistoricalFeedingOccurrence? historicalOccurrence,
   }) async {
     lastExecuteScheduleId = scheduleId;
     lastActualQuantity = actualQuantity;

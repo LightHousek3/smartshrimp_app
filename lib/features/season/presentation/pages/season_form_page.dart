@@ -139,7 +139,7 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
       text: season?.initialQuantity?.toString() ?? '',
     );
     _shrimpType = season?.shrimpType ?? ShrimpType.whiteleg;
-    _stockingDate = season?.stockingDate;
+    _stockingDate = season?.plannedStockingDate ?? season?.stockingDate;
     _expectedEndDate = season?.expectedEndDate;
   }
 
@@ -227,8 +227,8 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
                         const SizedBox(height: 16),
                         _DateField(
                           label: _editing
-                              ? 'Ngày thả giống'
-                              : 'Ngày thả giống *',
+                              ? 'Ngày thả dự kiến'
+                              : 'Ngày thả dự kiến *',
                           value: _stockingDate,
                           enabled: !loading,
                           onChanged: (value) => setState(() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
@@ -195,25 +196,37 @@ class InventoryHistoryFilterPanel extends StatelessWidget {
                   Expanded(
                     child: SizedBox(
                       height: 44,
-                      child: OutlinedButton(
+                      child: OutlinedButton.icon(
                         onPressed: onReset,
+                        icon: const Icon(Icons.restart_alt_rounded, size: 17),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.inkSoft,
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           side: const BorderSide(color: AppColors.line),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(22),
                           ),
                         ),
-                        child: const Text('Đặt lại'),
+                        label: const Text('Đặt lại'),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: InventoryGradientButton(
+                    child: GradientButton(
                       label: 'Xem kết quả',
-                      radius: 22,
-                      iconAsset: InventoryAssets.search,
+                      compact: true,
+                      borderRadius: 22,
+                      leading: const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white,
+                        size: 17,
+                      ),
                       height: 44,
                       onPressed: loading ? null : onApply,
                     ),

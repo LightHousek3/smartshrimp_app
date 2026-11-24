@@ -49,6 +49,8 @@ enum ProtocolOperationStatus {
   pendingApproval,
   @JsonValue('NOT_GENERATED')
   notGenerated,
+  @JsonValue('NOT_RECORDED')
+  notRecorded,
   @JsonValue('UNKNOWN')
   unknown,
 }
@@ -106,6 +108,7 @@ abstract class ProtocolHistory with _$ProtocolHistory {
     required String changedByName,
     required DateTime changedAt,
     String? reason,
+    String? eventLabel,
   }) = _ProtocolHistory;
   factory ProtocolHistory.fromJson(Map<String, dynamic> json) =>
       _$ProtocolHistoryFromJson(json);
@@ -120,6 +123,7 @@ abstract class ProtocolDayMarker with _$ProtocolDayMarker {
     required int planned,
     required int cancelled,
     @Default(0) int issues,
+    @Default(0) int unrecorded,
   }) = _ProtocolDayMarker;
   factory ProtocolDayMarker.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDayMarkerFromJson(json);
@@ -295,6 +299,7 @@ abstract class ProtocolDetail with _$ProtocolDetail {
   /// Validate source metadata, material rules and day markers before enabling Owner review.
   static ProtocolDetail parse(Map<String, dynamic> json) => _parse(() {
     final card = ProtocolCardData.parse(json);
+    if (json['durationDays'] is! int) throw const InvalidResponseException();
     // Generated numeric converters must not truncate a fractional source revision.
     final rawSource = json['sourceTemplateSnapshot'];
     if (rawSource != null &&
@@ -364,6 +369,8 @@ abstract class ProtocolDetail with _$ProtocolDetail {
       }
     }
     if (value.durationDays < 0 ||
+        value.dayMarkers.map((marker) => marker.day).toSet().length !=
+            value.dayMarkers.length ||
         value.dayMarkers.any(
           (m) =>
               m.day < 1 ||
@@ -371,7 +378,8 @@ abstract class ProtocolDetail with _$ProtocolDetail {
               m.completed < 0 ||
               m.planned < 0 ||
               m.cancelled < 0 ||
-              m.issues < 0,
+              m.issues < 0 ||
+              m.unrecorded < 0,
         )) {
       throw const InvalidResponseException();
     }
@@ -400,12 +408,18 @@ abstract class ProtocolDayRow with _$ProtocolDayRow {
     required String itemId,
     required String operationType,
     required String productName,
+    @Default([]) List<String> productImageUrls,
     String? time,
     required String doseBasis,
     required double doseValue,
     required String doseUnit,
     String? instructions,
     String? scheduleId,
+    String? productionMealId,
+    DateTime? scheduledAt,
+    DateTime? dueAt,
+    int? dueAtMinutes,
+    bool? quantityExceedsThreshold,
     @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)
     required ProtocolOperationStatus status,
     double? plannedQuantity,
@@ -416,6 +430,7 @@ abstract class ProtocolDayRow with _$ProtocolDayRow {
     String? actualProductName,
     String? actualUnit,
     String? varianceReason,
+    String? note,
     String? executorName,
     DateTime? executedAt,
     String? cancellationReason,
@@ -432,14 +447,30 @@ abstract class ProtocolDay with _$ProtocolDay {
     required int day,
     String? date,
     required List<ProtocolDayRow> rows,
+    @Default(10) double allowedVariancePct,
   }) = _ProtocolDay;
   factory ProtocolDay.fromJson(Map<String, dynamic> json) =>
       _$ProtocolDayFromJson(json);
 
   /// Validate the requested day and its schedule rows before presenting execution details.
   static ProtocolDay parse(Map<String, dynamic> json) => _parse(() {
+    if (json['day'] is! int) throw const InvalidResponseException();
     final value = ProtocolDay.fromJson(json);
-    if (value.day < 1) throw const InvalidResponseException();
+    if (value.day < 1 ||
+        !value.allowedVariancePct.isFinite ||
+        value.allowedVariancePct < 0 ||
+        value.allowedVariancePct > 100) {
+      throw const InvalidResponseException();
+    }
+    if (value.date case final date?) {
+      final parsed = DateTime.tryParse(date);
+      if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date) ||
+          parsed == null ||
+          parsed.toIso8601String().substring(0, 10) != date) {
+        throw const InvalidResponseException();
+      }
+    }
+    final scheduleIds = <String>{};
     for (final row in value.rows) {
       _strings([
         row.itemId,
@@ -449,6 +480,11 @@ abstract class ProtocolDay with _$ProtocolDay {
         row.doseUnit,
         row.unit,
       ]);
+      if (row.scheduleId case final id?) {
+        if (id.trim().isEmpty || !scheduleIds.add(id)) {
+          throw const InvalidResponseException();
+        }
+      }
       if (!row.doseValue.isFinite ||
           row.doseValue <= 0 ||
           [
@@ -456,6 +492,10 @@ abstract class ProtocolDay with _$ProtocolDay {
             row.actualQuantity,
             row.basisQuantity,
           ].whereType<double>().any((n) => !n.isFinite || n < 0) ||
+          row.actualQuantity != null && row.actualQuantity! <= 0 ||
+          row.dueAt != null &&
+              (row.scheduledAt == null ||
+                  row.dueAt!.isBefore(row.scheduledAt!)) ||
           row.time != null &&
               !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(row.time!)) {
         throw const InvalidResponseException();

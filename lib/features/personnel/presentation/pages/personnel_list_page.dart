@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/router/app_router.dart';
@@ -176,16 +177,18 @@ class _PersonnelListPageState extends ConsumerState<PersonnelListPage> {
             ),
             const SizedBox(width: 4),
             Expanded(
+              flex: 2,
               child: _RoleChip(
-                label: 'KTV',
+                label: PersonnelVisuals.roleBadgeLabel(AccountRole.technician),
                 selected: _roleFilter == PersonnelRoleFilter.technician,
                 onTap: () => _changeRole(PersonnelRoleFilter.technician),
               ),
             ),
             const SizedBox(width: 4),
             Expanded(
+              flex: 2,
               child: _RoleChip(
-                label: 'Chuyên gia',
+                label: PersonnelVisuals.roleBadgeLabel(AccountRole.expert),
                 selected: _roleFilter == PersonnelRoleFilter.expert,
                 onTap: () => _changeRole(PersonnelRoleFilter.expert),
               ),
@@ -371,7 +374,8 @@ class _RoleChip extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              maxLines: 1,
+              textAlign: TextAlign.center,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: selected ? Colors.white : AppColors.inkSoft,

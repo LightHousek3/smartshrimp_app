@@ -126,7 +126,7 @@ class OwnerHomePage extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${dashboard.personnel.technicians} KTV · ${dashboard.personnel.experts} Chuyên gia',
+                                  '${dashboard.personnel.technicians} Kỹ thuật viên · ${dashboard.personnel.experts} Chuyên gia',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: AppColors.ink,

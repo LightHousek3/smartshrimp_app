@@ -115,6 +115,7 @@ abstract interface class InventoryRepository {
     String? productId,
     InventoryTransactionType? transactionType,
     String? seasonId,
+    String? scheduleId,
     DateTime? createdFrom,
     DateTime? createdTo,
   });

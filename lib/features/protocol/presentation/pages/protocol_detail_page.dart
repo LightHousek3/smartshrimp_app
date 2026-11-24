@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
@@ -22,8 +23,56 @@ class ProtocolDetailPage extends ConsumerStatefulWidget {
   ConsumerState<ProtocolDetailPage> createState() => _ProtocolDetailPageState();
 }
 
-class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
+class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage>
+    with WidgetsBindingObserver {
   int? _selectedDay;
+  late final Timer _clock;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _clock = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (!mounted) return;
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if ((lifecycle == null || lifecycle == AppLifecycleState.resumed) &&
+          ModalRoute.of(context)?.isCurrent != false) {
+        _synchronize();
+      }
+    });
+  }
+
+  void _synchronize() {
+    if (!mounted) return;
+    if (ref.read(protocolReviewProvider(widget.protocolId)).isLoading) return;
+    final state = ref.read(protocolDetailProvider(widget.protocolId));
+    if (state.isLoading) return;
+    final detail = state.value;
+    if (detail != null && detail.durationDays > 0) {
+      final day =
+          (_selectedDay ??
+                  protocolInitialDay(detail, ref.read(protocolClockProvider)()))
+              .clamp(1, detail.durationDays);
+      ref.invalidate(protocolDayProvider((id: widget.protocolId, day: day)));
+    }
+    setState(() {});
+    ref.invalidate(protocolDetailProvider(widget.protocolId));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        ModalRoute.of(context)?.isCurrent != false) {
+      _synchronize();
+    }
+  }
+
+  @override
+  void dispose() {
+    _clock.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant ProtocolDetailPage oldWidget) {
@@ -33,6 +82,13 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(protocolDetailProvider(widget.protocolId), (previous, next) {
+      final before = previous?.value?.card;
+      final after = next.asData?.value.card;
+      if (before != null && after != null && before != after) {
+        ref.invalidate(protocolListProvider);
+      }
+    });
     ref.listen(protocolReviewProvider(widget.protocolId), (previous, next) {
       if (previous?.isLoading != true || next.isLoading) return;
       if (next.hasError) {
@@ -42,7 +98,7 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
         AppNoticeService.success(
           context,
           next.value == true
-              ? 'Đã phê duyệt. Hệ thống sẽ sinh lịch vận hành gần nhất.'
+              ? 'Đã phê duyệt. Phác đồ được áp dụng khi đủ điều kiện có hiệu lực.'
               : 'Đã từ chối phác đồ.',
         );
       }
@@ -57,11 +113,7 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
           : '${detail.card.pondName} · ${detail.card.seasonName}',
       child: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => AppErrorState(
-          error: error,
-          onRetry: () =>
-              ref.invalidate(protocolDetailProvider(widget.protocolId)),
-        ),
+        error: (error, _) => AppErrorState(error: error, onRetry: _synchronize),
         data: (detail) {
           final day = (_selectedDay ?? protocolInitialDay(detail, now)).clamp(
             1,
@@ -70,7 +122,8 @@ class _ProtocolDetailPageState extends ConsumerState<ProtocolDetailPage> {
           return _DetailContent(
             detail: detail,
             day: day,
-            currentDoc: protocolCurrentDoc(detail, now),
+            currentDay: protocolCurrentDay(detail, now),
+            now: now,
             onSelect: (value) => setState(() => _selectedDay = value),
           );
         },
@@ -84,12 +137,14 @@ class _DetailContent extends ConsumerWidget {
     required this.detail,
     required this.day,
     required this.onSelect,
-    required this.currentDoc,
+    required this.currentDay,
+    required this.now,
   });
   final ProtocolDetail detail;
   final int day;
   final ValueChanged<int> onSelect;
-  final int? currentDoc;
+  final int? currentDay;
+  final DateTime now;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dayScope = (id: detail.card.id, day: day);
@@ -99,19 +154,31 @@ class _DetailContent extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(protocolDetailProvider(detail.card.id));
-        ref.invalidate(protocolDayProvider);
-        await ref.read(protocolDetailProvider(detail.card.id).future);
+        ref.invalidate(protocolDayProvider(dayScope));
+        // Providers render the failure; the refresh gesture must settle without a second error.
+        await AsyncValue.guard(
+          () => ref.read(protocolDetailProvider(detail.card.id).future),
+        );
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           _Header(detail),
-          if (detail.scheduleMessage case final message?)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(message),
+          if (protocolStatusDescription(detail) case final description?) ...[
+            const SizedBox(height: 8),
+            ProtocolSurface(
+              color: protocolPanel,
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.6,
+                  color: AppColors.inkSoft,
+                ),
+              ),
             ),
+          ],
           const SizedBox(height: 16),
           ProtocolSurface(
             color: const Color(0xFFEAF4FF),
@@ -163,7 +230,7 @@ class _DetailContent extends ConsumerWidget {
             ProtocolTimeline(
               detail: detail,
               selectedDay: day,
-              currentDay: currentDoc,
+              currentDay: currentDay,
               onSelect: onSelect,
             ),
             const SizedBox(height: 16),
@@ -188,7 +255,8 @@ class _DetailContent extends ConsumerWidget {
             ProtocolDayBanner(
               detail: detail,
               day: day,
-              data: dayState.value,
+              data: dayState.hasError ? null : dayState.value,
+              loadFailed: dayState.hasError,
               onSelect: onSelect,
             ),
             const SizedBox(height: 16),
@@ -204,7 +272,16 @@ class _DetailContent extends ConsumerWidget {
               ),
               data: (data) => data == null
                   ? const SizedBox.shrink()
-                  : ProtocolDayAudit(protocolId: detail.card.id, day: data),
+                  : ProtocolDayAudit(
+                      farmId: detail.farmId,
+                      day: data,
+                      protocolStatus: detail.card.status,
+                      mealNumbersByItem: {
+                        for (final item in detail.materialReviews)
+                          item.itemId: ?item.mealNumber,
+                      },
+                      now: now,
+                    ),
             ),
             const SizedBox(height: 16),
           ] else ...[

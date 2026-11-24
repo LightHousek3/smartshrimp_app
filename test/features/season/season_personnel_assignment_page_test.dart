@@ -213,8 +213,11 @@ final class _SeasonRepository implements SeasonRepository {
   }
 
   @override
-  Future<AquacultureSeason> activateSeason(AquacultureSeason current) =>
-      throw UnimplementedError();
+  Future<AquacultureSeason> activateSeason(
+    AquacultureSeason current, {
+    required DateTime actualStockingDate,
+    String? activationDelayReason,
+  }) => throw UnimplementedError();
 
   @override
   Future<SeasonCancellationResult> cancelSeason({

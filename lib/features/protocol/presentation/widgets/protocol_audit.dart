@@ -86,7 +86,7 @@ class ProtocolAudit extends StatelessWidget {
         const Divider(height: 1, color: Color(0xFFEEF1F7)),
         const SizedBox(height: 12),
         const Text(
-          'LỊCH SỬ TRẠNG THÁI',
+          'LỊCH SỬ PHÁC ĐỒ',
           style: TextStyle(
             fontSize: 10,
             height: 1.5,
@@ -99,7 +99,7 @@ class ProtocolAudit extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
-              'Chưa có lịch sử trạng thái.',
+              'Chưa có lịch sử phác đồ.',
               style: TextStyle(fontSize: 10, color: AppColors.inkMuted),
             ),
           ),
@@ -116,18 +116,28 @@ class ProtocolAudit extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      if (history.fromStatus != null) ...[
-                        ProtocolBadge.status(history.fromStatus!),
-                        const AppSvgIcon(AppSvgIconName.chevron, size: 13),
+                  if (history.fromStatus == history.toStatus)
+                    Text(
+                      history.eventLabel ?? 'Sự kiện phác đồ',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    )
+                  else
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (history.fromStatus != null) ...[
+                          ProtocolBadge.status(history.fromStatus!),
+                          const AppSvgIcon(AppSvgIconName.chevron, size: 13),
+                        ],
+                        ProtocolBadge.status(history.toStatus, dot: true),
                       ],
-                      ProtocolBadge.status(history.toStatus, dot: true),
-                    ],
-                  ),
+                    ),
                   if (history.reason?.isNotEmpty == true)
                     Padding(
                       padding: const EdgeInsets.only(top: 6),

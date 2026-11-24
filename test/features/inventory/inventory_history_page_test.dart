@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -22,7 +23,12 @@ void main() {
   late _HistoryRemote remote;
   setUp(() => remote = _HistoryRemote());
 
-  Future<void> openPage(WidgetTester tester, {double width = 393}) async {
+  Future<void> openPage(
+    WidgetTester tester, {
+    double width = 393,
+    String? scheduleId,
+    bool expandFilters = true,
+  }) async {
     tester.view.physicalSize = Size(width, 852);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -38,12 +44,51 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.light,
-          home: const InventoryHistoryPage(farmId: 'farm-1'),
+          home: InventoryHistoryPage(farmId: 'farm-1', scheduleId: scheduleId),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    if (expandFilters) {
+      await tester.tap(find.text('Bộ lọc truy vết'));
+      await tester.pumpAndSettle();
+    }
   }
+
+  testWidgets(
+    'opens stock history scoped to the selected execution and resets the scope',
+    (tester) async {
+      await openPage(
+        tester,
+        scheduleId: 'schedule-selected',
+        expandFilters: false,
+      );
+      expect(
+        remote.queries.any(
+          (query) => query['scheduleId'] == 'schedule-selected',
+        ),
+        isTrue,
+      );
+      expect(find.text('Xuất kho theo lần ghi nhận của KTV'), findsNothing);
+      expect(find.text('Xem kết quả'), findsNothing);
+      await tester.tap(find.text('Bộ lọc truy vết'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is GradientButton && widget.label == 'Xem kết quả',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.restart_alt_rounded), findsOneWidget);
+      await tester.ensureVisible(find.text('Đặt lại'));
+      await tester.tap(find.text('Đặt lại'));
+      await tester.pumpAndSettle();
+      final panel = tester.widget<InventoryHistoryFilterPanel>(
+        find.byType(InventoryHistoryFilterPanel),
+      );
+      expect(panel.filters.scheduleId, isNull);
+    },
+  );
 
   Finder field(String label, Type type) => find.descendant(
     of: find.byWidgetPredicate(

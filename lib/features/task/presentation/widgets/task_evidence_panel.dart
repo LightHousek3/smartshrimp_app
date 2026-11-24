@@ -98,7 +98,7 @@ class TaskEvidencePanel extends StatelessWidget {
                           ? 'Nhiệm vụ đã hoàn thành không kèm ảnh minh chứng.'
                           : editable
                           ? 'Có thể thêm ảnh trước khi xác nhận hoàn thành.'
-                          : 'Ảnh KTV tải lên sẽ xuất hiện tại đây.',
+                          : 'Ảnh do Kỹ thuật viên tải lên sẽ xuất hiện tại đây.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 12,

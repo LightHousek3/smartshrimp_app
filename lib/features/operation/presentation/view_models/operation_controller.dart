@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/assigned_season/domain/entities/assigned_season.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/operation/data/repositories/operation_repository_impl.dart';
 import 'package:smartshrimp_app/features/operation/data/services/operation_api_service.dart';
@@ -33,13 +33,10 @@ final operationDateFilterProvider =
 
 final class OperationDateFilterController extends Notifier<DateTime> {
   @override
-  DateTime build() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime build() => AssignedSeasonRules.vietnamDay(DateTime.now());
 
   void setDate(DateTime date) =>
-      state = DateTime(date.year, date.month, date.day);
+      state = DateTime.utc(date.year, date.month, date.day);
 }
 
 final operationListProvider = AsyncNotifierProvider.autoDispose
@@ -68,10 +65,10 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
   OperationListController(this.seasonId);
   final String seasonId;
 
-  String? _operationType;
   final Map<String, OperationListResult> _cacheByDate =
       <String, OperationListResult>{};
   int _requestSeq = 0;
+  int _cacheGeneration = 0;
 
   String _formatDate(DateTime dt) =>
       '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
@@ -82,30 +79,57 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
     final dateStr = _formatDate(selectedDate);
     final result = await _fetch(dateStr);
     _cacheByDate[dateStr] = result;
-    // Prefetch âm thầm ngày mai & ngày mốt để chuyển chip ngày mượt 0ms
-    _prefetchUpcomingDays();
+    if (ref.mounted) _prefetchUpcomingDays();
     return result;
   }
 
   Future<OperationListResult> _fetch(String dateStr) async {
     try {
-      return await ref
-          .read(operationRepositoryProvider)
-          .getSchedules(
-            seasonId,
-            status: null,
-            operationType: _operationType,
-            date: dateStr,
-          );
+      final repository = ref.read(operationRepositoryProvider);
+      const limit = AssignedSeasonRules.operationPageSize;
+      final first = await repository.getSchedules(
+        seasonId,
+        date: dateStr,
+        limit: limit,
+      );
+      if (first.nextPage == null) return first;
+
+      // Load the whole day before grouping materials into occurrences.
+      final schedules = {for (final row in first.schedules) row.id: row};
+      var nextPage = first.nextPage;
+      while (nextPage != null) {
+        final result = await repository.getSchedules(
+          seasonId,
+          date: dateStr,
+          page: nextPage,
+          limit: limit,
+        );
+        for (final row in result.schedules) {
+          schedules[row.id] = row;
+        }
+        nextPage = result.nextPage;
+      }
+      return OperationListResult(
+        summary: first.summary,
+        banner: first.banner,
+        schedules: schedules.values.toList(growable: false),
+        seasonName: first.seasonName,
+        pondName: first.pondName,
+        seasonStartDate: first.seasonStartDate,
+        historicalFeedingAvailable: first.historicalFeedingAvailable,
+        historicalSchedules: first.historicalSchedules,
+      );
     } on SessionExpiredException {
-      await ref.read(authControllerProvider.notifier).expireSession();
+      if (ref.mounted) {
+        await ref.read(authControllerProvider.notifier).expireSession();
+      }
       rethrow;
     }
   }
 
   Future<void> _prefetchUpcomingDays() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final generation = _cacheGeneration;
+    final today = AssignedSeasonRules.vietnamDay(DateTime.now());
     final targets = <DateTime>[
       today,
       today.add(const Duration(days: 1)),
@@ -113,33 +137,22 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
     ];
 
     for (final day in targets) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || generation != _cacheGeneration) return;
       final key = _formatDate(day);
       if (_cacheByDate.containsKey(key)) continue;
       try {
-        final data = await ref
-            .read(operationRepositoryProvider)
-            .getSchedules(
-              seasonId,
-              status: null,
-              operationType: _operationType,
-              date: key,
-            );
-        if (!ref.mounted) return;
-        _cacheByDate[key] = data;
+        final data = await _fetch(key);
+        if (!ref.mounted || generation != _cacheGeneration) return;
+        _cacheByDate.putIfAbsent(key, () => data);
       } catch (_) {
-        // Bỏ qua lỗi prefetch nền, sẽ tải trực tiếp khi người dùng chọn
+        // Retry unavailable data when the user selects the date.
       }
     }
   }
 
-  /// Chuyển ngày mượt không reload toàn trang:
-  /// - Nếu đã có trong RAM cache -> đổi dữ liệu tức thì (0ms).
-  /// - Nếu chưa có (vd chọn ngày quá khứ) -> giữ nguyên UI hiện tại và chỉ tải ngầm danh sách.
   Future<void> selectDate(DateTime date) async {
-    final normalized = DateTime(date.year, date.month, date.day);
-    ref.read(operationDateFilterProvider.notifier).setDate(normalized);
-    final dateStr = _formatDate(normalized);
+    ref.read(operationDateFilterProvider.notifier).setDate(date);
+    final dateStr = _formatDate(date);
 
     final seq = ++_requestSeq;
     final cached = _cacheByDate[dateStr];
@@ -148,7 +161,7 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
       return;
     }
 
-    // Giữ nguyên dữ liệu hiện tại trên màn hình trong lúc tải nền (không nhấp nháy loading toàn trang)
+    state = const AsyncLoading();
     final nextState = await AsyncValue.guard(() => _fetch(dateStr));
     if (!ref.mounted || seq != _requestSeq) return;
     if (nextState case AsyncData(:final value)) {
@@ -158,6 +171,7 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
   }
 
   Future<void> refresh() async {
+    _cacheGeneration++;
     _cacheByDate.clear();
     final selectedDate = ref.read(operationDateFilterProvider);
     final dateStr = _formatDate(selectedDate);
@@ -196,37 +210,7 @@ final class OperationDetailController extends AsyncNotifier<OperationSchedule> {
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetch);
-  }
-
-  Future<OperationExecution> execute({
-    required double actualQuantity,
-    required String idempotencyKey,
-    String? actualProductId,
-    String? note,
-    String? varianceReason,
-    DateTime? executedAt,
-  }) async {
-    try {
-      final result = await ref
-          .read(operationRepositoryProvider)
-          .executeSchedule(
-            scheduleId,
-            actualQuantity: actualQuantity,
-            idempotencyKey: idempotencyKey,
-            actualProductId: actualProductId,
-            note: note,
-            varianceReason: varianceReason,
-            executedAt: executedAt,
-          );
-      if (ref.mounted) {
-        ref.invalidate(technicianDashboardProvider);
-      }
-      await refresh();
-      return result;
-    } on SessionExpiredException {
-      await ref.read(authControllerProvider.notifier).expireSession();
-      rethrow;
-    }
+    final result = await AsyncValue.guard(_fetch);
+    if (ref.mounted) state = result;
   }
 }

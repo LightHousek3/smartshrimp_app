@@ -317,7 +317,7 @@ as String,
 /// @nodoc
 mixin _$ProtocolHistory {
 
- String get id;@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? get fromStatus;@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus get toStatus; String get changedByName; DateTime get changedAt; String? get reason;
+ String get id;@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? get fromStatus;@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus get toStatus; String get changedByName; DateTime get changedAt; String? get reason; String? get eventLabel;
 /// Create a copy of ProtocolHistory
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -330,16 +330,16 @@ $ProtocolHistoryCopyWith<ProtocolHistory> get copyWith => _$ProtocolHistoryCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolHistory&&(identical(other.id, id) || other.id == id)&&(identical(other.fromStatus, fromStatus) || other.fromStatus == fromStatus)&&(identical(other.toStatus, toStatus) || other.toStatus == toStatus)&&(identical(other.changedByName, changedByName) || other.changedByName == changedByName)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt)&&(identical(other.reason, reason) || other.reason == reason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolHistory&&(identical(other.id, id) || other.id == id)&&(identical(other.fromStatus, fromStatus) || other.fromStatus == fromStatus)&&(identical(other.toStatus, toStatus) || other.toStatus == toStatus)&&(identical(other.changedByName, changedByName) || other.changedByName == changedByName)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.eventLabel, eventLabel) || other.eventLabel == eventLabel));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,fromStatus,toStatus,changedByName,changedAt,reason);
+int get hashCode => Object.hash(runtimeType,id,fromStatus,toStatus,changedByName,changedAt,reason,eventLabel);
 
 @override
 String toString() {
-  return 'ProtocolHistory(id: $id, fromStatus: $fromStatus, toStatus: $toStatus, changedByName: $changedByName, changedAt: $changedAt, reason: $reason)';
+  return 'ProtocolHistory(id: $id, fromStatus: $fromStatus, toStatus: $toStatus, changedByName: $changedByName, changedAt: $changedAt, reason: $reason, eventLabel: $eventLabel)';
 }
 
 
@@ -350,7 +350,7 @@ abstract mixin class $ProtocolHistoryCopyWith<$Res>  {
   factory $ProtocolHistoryCopyWith(ProtocolHistory value, $Res Function(ProtocolHistory) _then) = _$ProtocolHistoryCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? fromStatus,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus toStatus, String changedByName, DateTime changedAt, String? reason
+ String id,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? fromStatus,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus toStatus, String changedByName, DateTime changedAt, String? reason, String? eventLabel
 });
 
 
@@ -367,7 +367,7 @@ class _$ProtocolHistoryCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolHistory
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fromStatus = freezed,Object? toStatus = null,Object? changedByName = null,Object? changedAt = null,Object? reason = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fromStatus = freezed,Object? toStatus = null,Object? changedByName = null,Object? changedAt = null,Object? reason = freezed,Object? eventLabel = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fromStatus: freezed == fromStatus ? _self.fromStatus : fromStatus // ignore: cast_nullable_to_non_nullable
@@ -375,6 +375,7 @@ as ProtocolStatus?,toStatus: null == toStatus ? _self.toStatus : toStatus // ign
 as ProtocolStatus,changedByName: null == changedByName ? _self.changedByName : changedByName // ignore: cast_nullable_to_non_nullable
 as String,changedAt: null == changedAt ? _self.changedAt : changedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String?,eventLabel: freezed == eventLabel ? _self.eventLabel : eventLabel // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -460,10 +461,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason,  String? eventLabel)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolHistory() when $default != null:
-return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason);case _:
+return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason,_that.eventLabel);case _:
   return orElse();
 
 }
@@ -481,10 +482,10 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason,  String? eventLabel)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolHistory():
-return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason);case _:
+return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason,_that.eventLabel);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -501,10 +502,10 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus? fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown)  ProtocolStatus toStatus,  String changedByName,  DateTime changedAt,  String? reason,  String? eventLabel)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolHistory() when $default != null:
-return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason);case _:
+return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_that.changedAt,_that.reason,_that.eventLabel);case _:
   return null;
 
 }
@@ -516,7 +517,7 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedByName,_th
 
 @JsonSerializable(checked: true)
 class _ProtocolHistory implements ProtocolHistory {
-  const _ProtocolHistory({required this.id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown) this.fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown) required this.toStatus, required this.changedByName, required this.changedAt, this.reason});
+  const _ProtocolHistory({required this.id, @JsonKey(unknownEnumValue: ProtocolStatus.unknown) this.fromStatus, @JsonKey(unknownEnumValue: ProtocolStatus.unknown) required this.toStatus, required this.changedByName, required this.changedAt, this.reason, this.eventLabel});
   factory _ProtocolHistory.fromJson(Map<String, dynamic> json) => _$ProtocolHistoryFromJson(json);
 
 @override final  String id;
@@ -525,6 +526,7 @@ class _ProtocolHistory implements ProtocolHistory {
 @override final  String changedByName;
 @override final  DateTime changedAt;
 @override final  String? reason;
+@override final  String? eventLabel;
 
 /// Create a copy of ProtocolHistory
 /// with the given fields replaced by the non-null parameter values.
@@ -539,16 +541,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolHistory&&(identical(other.id, id) || other.id == id)&&(identical(other.fromStatus, fromStatus) || other.fromStatus == fromStatus)&&(identical(other.toStatus, toStatus) || other.toStatus == toStatus)&&(identical(other.changedByName, changedByName) || other.changedByName == changedByName)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt)&&(identical(other.reason, reason) || other.reason == reason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolHistory&&(identical(other.id, id) || other.id == id)&&(identical(other.fromStatus, fromStatus) || other.fromStatus == fromStatus)&&(identical(other.toStatus, toStatus) || other.toStatus == toStatus)&&(identical(other.changedByName, changedByName) || other.changedByName == changedByName)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.eventLabel, eventLabel) || other.eventLabel == eventLabel));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,fromStatus,toStatus,changedByName,changedAt,reason);
+int get hashCode => Object.hash(runtimeType,id,fromStatus,toStatus,changedByName,changedAt,reason,eventLabel);
 
 @override
 String toString() {
-  return 'ProtocolHistory(id: $id, fromStatus: $fromStatus, toStatus: $toStatus, changedByName: $changedByName, changedAt: $changedAt, reason: $reason)';
+  return 'ProtocolHistory(id: $id, fromStatus: $fromStatus, toStatus: $toStatus, changedByName: $changedByName, changedAt: $changedAt, reason: $reason, eventLabel: $eventLabel)';
 }
 
 
@@ -559,7 +561,7 @@ abstract mixin class _$ProtocolHistoryCopyWith<$Res> implements $ProtocolHistory
   factory _$ProtocolHistoryCopyWith(_ProtocolHistory value, $Res Function(_ProtocolHistory) _then) = __$ProtocolHistoryCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? fromStatus,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus toStatus, String changedByName, DateTime changedAt, String? reason
+ String id,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus? fromStatus,@JsonKey(unknownEnumValue: ProtocolStatus.unknown) ProtocolStatus toStatus, String changedByName, DateTime changedAt, String? reason, String? eventLabel
 });
 
 
@@ -576,7 +578,7 @@ class __$ProtocolHistoryCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolHistory
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fromStatus = freezed,Object? toStatus = null,Object? changedByName = null,Object? changedAt = null,Object? reason = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fromStatus = freezed,Object? toStatus = null,Object? changedByName = null,Object? changedAt = null,Object? reason = freezed,Object? eventLabel = freezed,}) {
   return _then(_ProtocolHistory(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fromStatus: freezed == fromStatus ? _self.fromStatus : fromStatus // ignore: cast_nullable_to_non_nullable
@@ -584,6 +586,7 @@ as ProtocolStatus?,toStatus: null == toStatus ? _self.toStatus : toStatus // ign
 as ProtocolStatus,changedByName: null == changedByName ? _self.changedByName : changedByName // ignore: cast_nullable_to_non_nullable
 as String,changedAt: null == changedAt ? _self.changedAt : changedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String?,eventLabel: freezed == eventLabel ? _self.eventLabel : eventLabel // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -595,7 +598,7 @@ as String?,
 /// @nodoc
 mixin _$ProtocolDayMarker {
 
- int get day; int get completed; int get planned; int get cancelled; int get issues;
+ int get day; int get completed; int get planned; int get cancelled; int get issues; int get unrecorded;
 /// Create a copy of ProtocolDayMarker
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -608,16 +611,16 @@ $ProtocolDayMarkerCopyWith<ProtocolDayMarker> get copyWith => _$ProtocolDayMarke
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDayMarker&&(identical(other.day, day) || other.day == day)&&(identical(other.completed, completed) || other.completed == completed)&&(identical(other.planned, planned) || other.planned == planned)&&(identical(other.cancelled, cancelled) || other.cancelled == cancelled)&&(identical(other.issues, issues) || other.issues == issues));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDayMarker&&(identical(other.day, day) || other.day == day)&&(identical(other.completed, completed) || other.completed == completed)&&(identical(other.planned, planned) || other.planned == planned)&&(identical(other.cancelled, cancelled) || other.cancelled == cancelled)&&(identical(other.issues, issues) || other.issues == issues)&&(identical(other.unrecorded, unrecorded) || other.unrecorded == unrecorded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,day,completed,planned,cancelled,issues);
+int get hashCode => Object.hash(runtimeType,day,completed,planned,cancelled,issues,unrecorded);
 
 @override
 String toString() {
-  return 'ProtocolDayMarker(day: $day, completed: $completed, planned: $planned, cancelled: $cancelled, issues: $issues)';
+  return 'ProtocolDayMarker(day: $day, completed: $completed, planned: $planned, cancelled: $cancelled, issues: $issues, unrecorded: $unrecorded)';
 }
 
 
@@ -628,7 +631,7 @@ abstract mixin class $ProtocolDayMarkerCopyWith<$Res>  {
   factory $ProtocolDayMarkerCopyWith(ProtocolDayMarker value, $Res Function(ProtocolDayMarker) _then) = _$ProtocolDayMarkerCopyWithImpl;
 @useResult
 $Res call({
- int day, int completed, int planned, int cancelled, int issues
+ int day, int completed, int planned, int cancelled, int issues, int unrecorded
 });
 
 
@@ -645,13 +648,14 @@ class _$ProtocolDayMarkerCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDayMarker
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? day = null,Object? completed = null,Object? planned = null,Object? cancelled = null,Object? issues = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? day = null,Object? completed = null,Object? planned = null,Object? cancelled = null,Object? issues = null,Object? unrecorded = null,}) {
   return _then(_self.copyWith(
 day: null == day ? _self.day : day // ignore: cast_nullable_to_non_nullable
 as int,completed: null == completed ? _self.completed : completed // ignore: cast_nullable_to_non_nullable
 as int,planned: null == planned ? _self.planned : planned // ignore: cast_nullable_to_non_nullable
 as int,cancelled: null == cancelled ? _self.cancelled : cancelled // ignore: cast_nullable_to_non_nullable
 as int,issues: null == issues ? _self.issues : issues // ignore: cast_nullable_to_non_nullable
+as int,unrecorded: null == unrecorded ? _self.unrecorded : unrecorded // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -737,10 +741,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int day,  int completed,  int planned,  int cancelled,  int issues)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int day,  int completed,  int planned,  int cancelled,  int issues,  int unrecorded)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolDayMarker() when $default != null:
-return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues);case _:
+return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues,_that.unrecorded);case _:
   return orElse();
 
 }
@@ -758,10 +762,10 @@ return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int day,  int completed,  int planned,  int cancelled,  int issues)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int day,  int completed,  int planned,  int cancelled,  int issues,  int unrecorded)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDayMarker():
-return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues);case _:
+return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues,_that.unrecorded);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -778,10 +782,10 @@ return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int day,  int completed,  int planned,  int cancelled,  int issues)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int day,  int completed,  int planned,  int cancelled,  int issues,  int unrecorded)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDayMarker() when $default != null:
-return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues);case _:
+return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.issues,_that.unrecorded);case _:
   return null;
 
 }
@@ -793,7 +797,7 @@ return $default(_that.day,_that.completed,_that.planned,_that.cancelled,_that.is
 
 @JsonSerializable(checked: true)
 class _ProtocolDayMarker implements ProtocolDayMarker {
-  const _ProtocolDayMarker({required this.day, required this.completed, required this.planned, required this.cancelled, this.issues = 0});
+  const _ProtocolDayMarker({required this.day, required this.completed, required this.planned, required this.cancelled, this.issues = 0, this.unrecorded = 0});
   factory _ProtocolDayMarker.fromJson(Map<String, dynamic> json) => _$ProtocolDayMarkerFromJson(json);
 
 @override final  int day;
@@ -801,6 +805,7 @@ class _ProtocolDayMarker implements ProtocolDayMarker {
 @override final  int planned;
 @override final  int cancelled;
 @override@JsonKey() final  int issues;
+@override@JsonKey() final  int unrecorded;
 
 /// Create a copy of ProtocolDayMarker
 /// with the given fields replaced by the non-null parameter values.
@@ -815,16 +820,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDayMarker&&(identical(other.day, day) || other.day == day)&&(identical(other.completed, completed) || other.completed == completed)&&(identical(other.planned, planned) || other.planned == planned)&&(identical(other.cancelled, cancelled) || other.cancelled == cancelled)&&(identical(other.issues, issues) || other.issues == issues));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDayMarker&&(identical(other.day, day) || other.day == day)&&(identical(other.completed, completed) || other.completed == completed)&&(identical(other.planned, planned) || other.planned == planned)&&(identical(other.cancelled, cancelled) || other.cancelled == cancelled)&&(identical(other.issues, issues) || other.issues == issues)&&(identical(other.unrecorded, unrecorded) || other.unrecorded == unrecorded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,day,completed,planned,cancelled,issues);
+int get hashCode => Object.hash(runtimeType,day,completed,planned,cancelled,issues,unrecorded);
 
 @override
 String toString() {
-  return 'ProtocolDayMarker(day: $day, completed: $completed, planned: $planned, cancelled: $cancelled, issues: $issues)';
+  return 'ProtocolDayMarker(day: $day, completed: $completed, planned: $planned, cancelled: $cancelled, issues: $issues, unrecorded: $unrecorded)';
 }
 
 
@@ -835,7 +840,7 @@ abstract mixin class _$ProtocolDayMarkerCopyWith<$Res> implements $ProtocolDayMa
   factory _$ProtocolDayMarkerCopyWith(_ProtocolDayMarker value, $Res Function(_ProtocolDayMarker) _then) = __$ProtocolDayMarkerCopyWithImpl;
 @override @useResult
 $Res call({
- int day, int completed, int planned, int cancelled, int issues
+ int day, int completed, int planned, int cancelled, int issues, int unrecorded
 });
 
 
@@ -852,13 +857,14 @@ class __$ProtocolDayMarkerCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDayMarker
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? day = null,Object? completed = null,Object? planned = null,Object? cancelled = null,Object? issues = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? day = null,Object? completed = null,Object? planned = null,Object? cancelled = null,Object? issues = null,Object? unrecorded = null,}) {
   return _then(_ProtocolDayMarker(
 day: null == day ? _self.day : day // ignore: cast_nullable_to_non_nullable
 as int,completed: null == completed ? _self.completed : completed // ignore: cast_nullable_to_non_nullable
 as int,planned: null == planned ? _self.planned : planned // ignore: cast_nullable_to_non_nullable
 as int,cancelled: null == cancelled ? _self.cancelled : cancelled // ignore: cast_nullable_to_non_nullable
 as int,issues: null == issues ? _self.issues : issues // ignore: cast_nullable_to_non_nullable
+as int,unrecorded: null == unrecorded ? _self.unrecorded : unrecorded // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -3391,7 +3397,7 @@ $ProtocolTemplateSourceCopyWith<$Res>? get sourceTemplateSnapshot {
 /// @nodoc
 mixin _$ProtocolDayRow {
 
- String get itemId; String get operationType; String get productName; String? get time; String get doseBasis; double get doseValue; String get doseUnit; String? get instructions; String? get scheduleId;@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus get status; double? get plannedQuantity; String get unit; double? get basisQuantity; String? get basisUnit; double? get actualQuantity; String? get actualProductName; String? get actualUnit; String? get varianceReason; String? get executorName; DateTime? get executedAt; String? get cancellationReason; DateTime? get cancelledAt;
+ String get itemId; String get operationType; String get productName; List<String> get productImageUrls; String? get time; String get doseBasis; double get doseValue; String get doseUnit; String? get instructions; String? get scheduleId; String? get productionMealId; DateTime? get scheduledAt; DateTime? get dueAt; int? get dueAtMinutes; bool? get quantityExceedsThreshold;@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus get status; double? get plannedQuantity; String get unit; double? get basisQuantity; String? get basisUnit; double? get actualQuantity; String? get actualProductName; String? get actualUnit; String? get varianceReason; String? get note; String? get executorName; DateTime? get executedAt; String? get cancellationReason; DateTime? get cancelledAt;
 /// Create a copy of ProtocolDayRow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3404,16 +3410,16 @@ $ProtocolDayRowCopyWith<ProtocolDayRow> get copyWith => _$ProtocolDayRowCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDayRow&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.time, time) || other.time == time)&&(identical(other.doseBasis, doseBasis) || other.doseBasis == doseBasis)&&(identical(other.doseValue, doseValue) || other.doseValue == doseValue)&&(identical(other.doseUnit, doseUnit) || other.doseUnit == doseUnit)&&(identical(other.instructions, instructions) || other.instructions == instructions)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId)&&(identical(other.status, status) || other.status == status)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.basisQuantity, basisQuantity) || other.basisQuantity == basisQuantity)&&(identical(other.basisUnit, basisUnit) || other.basisUnit == basisUnit)&&(identical(other.actualQuantity, actualQuantity) || other.actualQuantity == actualQuantity)&&(identical(other.actualProductName, actualProductName) || other.actualProductName == actualProductName)&&(identical(other.actualUnit, actualUnit) || other.actualUnit == actualUnit)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&(identical(other.executorName, executorName) || other.executorName == executorName)&&(identical(other.executedAt, executedAt) || other.executedAt == executedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDayRow&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.productName, productName) || other.productName == productName)&&const DeepCollectionEquality().equals(other.productImageUrls, productImageUrls)&&(identical(other.time, time) || other.time == time)&&(identical(other.doseBasis, doseBasis) || other.doseBasis == doseBasis)&&(identical(other.doseValue, doseValue) || other.doseValue == doseValue)&&(identical(other.doseUnit, doseUnit) || other.doseUnit == doseUnit)&&(identical(other.instructions, instructions) || other.instructions == instructions)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId)&&(identical(other.productionMealId, productionMealId) || other.productionMealId == productionMealId)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.dueAtMinutes, dueAtMinutes) || other.dueAtMinutes == dueAtMinutes)&&(identical(other.quantityExceedsThreshold, quantityExceedsThreshold) || other.quantityExceedsThreshold == quantityExceedsThreshold)&&(identical(other.status, status) || other.status == status)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.basisQuantity, basisQuantity) || other.basisQuantity == basisQuantity)&&(identical(other.basisUnit, basisUnit) || other.basisUnit == basisUnit)&&(identical(other.actualQuantity, actualQuantity) || other.actualQuantity == actualQuantity)&&(identical(other.actualProductName, actualProductName) || other.actualProductName == actualProductName)&&(identical(other.actualUnit, actualUnit) || other.actualUnit == actualUnit)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&(identical(other.note, note) || other.note == note)&&(identical(other.executorName, executorName) || other.executorName == executorName)&&(identical(other.executedAt, executedAt) || other.executedAt == executedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,itemId,operationType,productName,time,doseBasis,doseValue,doseUnit,instructions,scheduleId,status,plannedQuantity,unit,basisQuantity,basisUnit,actualQuantity,actualProductName,actualUnit,varianceReason,executorName,executedAt,cancellationReason,cancelledAt]);
+int get hashCode => Object.hashAll([runtimeType,itemId,operationType,productName,const DeepCollectionEquality().hash(productImageUrls),time,doseBasis,doseValue,doseUnit,instructions,scheduleId,productionMealId,scheduledAt,dueAt,dueAtMinutes,quantityExceedsThreshold,status,plannedQuantity,unit,basisQuantity,basisUnit,actualQuantity,actualProductName,actualUnit,varianceReason,note,executorName,executedAt,cancellationReason,cancelledAt]);
 
 @override
 String toString() {
-  return 'ProtocolDayRow(itemId: $itemId, operationType: $operationType, productName: $productName, time: $time, doseBasis: $doseBasis, doseValue: $doseValue, doseUnit: $doseUnit, instructions: $instructions, scheduleId: $scheduleId, status: $status, plannedQuantity: $plannedQuantity, unit: $unit, basisQuantity: $basisQuantity, basisUnit: $basisUnit, actualQuantity: $actualQuantity, actualProductName: $actualProductName, actualUnit: $actualUnit, varianceReason: $varianceReason, executorName: $executorName, executedAt: $executedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt)';
+  return 'ProtocolDayRow(itemId: $itemId, operationType: $operationType, productName: $productName, productImageUrls: $productImageUrls, time: $time, doseBasis: $doseBasis, doseValue: $doseValue, doseUnit: $doseUnit, instructions: $instructions, scheduleId: $scheduleId, productionMealId: $productionMealId, scheduledAt: $scheduledAt, dueAt: $dueAt, dueAtMinutes: $dueAtMinutes, quantityExceedsThreshold: $quantityExceedsThreshold, status: $status, plannedQuantity: $plannedQuantity, unit: $unit, basisQuantity: $basisQuantity, basisUnit: $basisUnit, actualQuantity: $actualQuantity, actualProductName: $actualProductName, actualUnit: $actualUnit, varianceReason: $varianceReason, note: $note, executorName: $executorName, executedAt: $executedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt)';
 }
 
 
@@ -3424,7 +3430,7 @@ abstract mixin class $ProtocolDayRowCopyWith<$Res>  {
   factory $ProtocolDayRowCopyWith(ProtocolDayRow value, $Res Function(ProtocolDayRow) _then) = _$ProtocolDayRowCopyWithImpl;
 @useResult
 $Res call({
- String itemId, String operationType, String productName, String? time, String doseBasis, double doseValue, String doseUnit, String? instructions, String? scheduleId,@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus status, double? plannedQuantity, String unit, double? basisQuantity, String? basisUnit, double? actualQuantity, String? actualProductName, String? actualUnit, String? varianceReason, String? executorName, DateTime? executedAt, String? cancellationReason, DateTime? cancelledAt
+ String itemId, String operationType, String productName, List<String> productImageUrls, String? time, String doseBasis, double doseValue, String doseUnit, String? instructions, String? scheduleId, String? productionMealId, DateTime? scheduledAt, DateTime? dueAt, int? dueAtMinutes, bool? quantityExceedsThreshold,@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus status, double? plannedQuantity, String unit, double? basisQuantity, String? basisUnit, double? actualQuantity, String? actualProductName, String? actualUnit, String? varianceReason, String? note, String? executorName, DateTime? executedAt, String? cancellationReason, DateTime? cancelledAt
 });
 
 
@@ -3441,18 +3447,24 @@ class _$ProtocolDayRowCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDayRow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? itemId = null,Object? operationType = null,Object? productName = null,Object? time = freezed,Object? doseBasis = null,Object? doseValue = null,Object? doseUnit = null,Object? instructions = freezed,Object? scheduleId = freezed,Object? status = null,Object? plannedQuantity = freezed,Object? unit = null,Object? basisQuantity = freezed,Object? basisUnit = freezed,Object? actualQuantity = freezed,Object? actualProductName = freezed,Object? actualUnit = freezed,Object? varianceReason = freezed,Object? executorName = freezed,Object? executedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? itemId = null,Object? operationType = null,Object? productName = null,Object? productImageUrls = null,Object? time = freezed,Object? doseBasis = null,Object? doseValue = null,Object? doseUnit = null,Object? instructions = freezed,Object? scheduleId = freezed,Object? productionMealId = freezed,Object? scheduledAt = freezed,Object? dueAt = freezed,Object? dueAtMinutes = freezed,Object? quantityExceedsThreshold = freezed,Object? status = null,Object? plannedQuantity = freezed,Object? unit = null,Object? basisQuantity = freezed,Object? basisUnit = freezed,Object? actualQuantity = freezed,Object? actualProductName = freezed,Object? actualUnit = freezed,Object? varianceReason = freezed,Object? note = freezed,Object? executorName = freezed,Object? executedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,}) {
   return _then(_self.copyWith(
 itemId: null == itemId ? _self.itemId : itemId // ignore: cast_nullable_to_non_nullable
 as String,operationType: null == operationType ? _self.operationType : operationType // ignore: cast_nullable_to_non_nullable
 as String,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
-as String,time: freezed == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
+as String,productImageUrls: null == productImageUrls ? _self.productImageUrls : productImageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,time: freezed == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
 as String?,doseBasis: null == doseBasis ? _self.doseBasis : doseBasis // ignore: cast_nullable_to_non_nullable
 as String,doseValue: null == doseValue ? _self.doseValue : doseValue // ignore: cast_nullable_to_non_nullable
 as double,doseUnit: null == doseUnit ? _self.doseUnit : doseUnit // ignore: cast_nullable_to_non_nullable
 as String,instructions: freezed == instructions ? _self.instructions : instructions // ignore: cast_nullable_to_non_nullable
 as String?,scheduleId: freezed == scheduleId ? _self.scheduleId : scheduleId // ignore: cast_nullable_to_non_nullable
-as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,productionMealId: freezed == productionMealId ? _self.productionMealId : productionMealId // ignore: cast_nullable_to_non_nullable
+as String?,scheduledAt: freezed == scheduledAt ? _self.scheduledAt : scheduledAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,dueAt: freezed == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,dueAtMinutes: freezed == dueAtMinutes ? _self.dueAtMinutes : dueAtMinutes // ignore: cast_nullable_to_non_nullable
+as int?,quantityExceedsThreshold: freezed == quantityExceedsThreshold ? _self.quantityExceedsThreshold : quantityExceedsThreshold // ignore: cast_nullable_to_non_nullable
+as bool?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ProtocolOperationStatus,plannedQuantity: freezed == plannedQuantity ? _self.plannedQuantity : plannedQuantity // ignore: cast_nullable_to_non_nullable
 as double?,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,basisQuantity: freezed == basisQuantity ? _self.basisQuantity : basisQuantity // ignore: cast_nullable_to_non_nullable
@@ -3461,6 +3473,7 @@ as String?,actualQuantity: freezed == actualQuantity ? _self.actualQuantity : ac
 as double?,actualProductName: freezed == actualProductName ? _self.actualProductName : actualProductName // ignore: cast_nullable_to_non_nullable
 as String?,actualUnit: freezed == actualUnit ? _self.actualUnit : actualUnit // ignore: cast_nullable_to_non_nullable
 as String?,varianceReason: freezed == varianceReason ? _self.varianceReason : varianceReason // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,executorName: freezed == executorName ? _self.executorName : executorName // ignore: cast_nullable_to_non_nullable
 as String?,executedAt: freezed == executedAt ? _self.executedAt : executedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,cancellationReason: freezed == cancellationReason ? _self.cancellationReason : cancellationReason // ignore: cast_nullable_to_non_nullable
@@ -3550,10 +3563,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String itemId,  String operationType,  String productName,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String itemId,  String operationType,  String productName,  List<String> productImageUrls,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId,  String? productionMealId,  DateTime? scheduledAt,  DateTime? dueAt,  int? dueAtMinutes,  bool? quantityExceedsThreshold, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? note,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolDayRow() when $default != null:
-return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
+return $default(_that.itemId,_that.operationType,_that.productName,_that.productImageUrls,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.productionMealId,_that.scheduledAt,_that.dueAt,_that.dueAtMinutes,_that.quantityExceedsThreshold,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.note,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
   return orElse();
 
 }
@@ -3571,10 +3584,10 @@ return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String itemId,  String operationType,  String productName,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String itemId,  String operationType,  String productName,  List<String> productImageUrls,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId,  String? productionMealId,  DateTime? scheduledAt,  DateTime? dueAt,  int? dueAtMinutes,  bool? quantityExceedsThreshold, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? note,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDayRow():
-return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
+return $default(_that.itemId,_that.operationType,_that.productName,_that.productImageUrls,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.productionMealId,_that.scheduledAt,_that.dueAt,_that.dueAtMinutes,_that.quantityExceedsThreshold,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.note,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3591,10 +3604,10 @@ return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String itemId,  String operationType,  String productName,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String itemId,  String operationType,  String productName,  List<String> productImageUrls,  String? time,  String doseBasis,  double doseValue,  String doseUnit,  String? instructions,  String? scheduleId,  String? productionMealId,  DateTime? scheduledAt,  DateTime? dueAt,  int? dueAtMinutes,  bool? quantityExceedsThreshold, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown)  ProtocolOperationStatus status,  double? plannedQuantity,  String unit,  double? basisQuantity,  String? basisUnit,  double? actualQuantity,  String? actualProductName,  String? actualUnit,  String? varianceReason,  String? note,  String? executorName,  DateTime? executedAt,  String? cancellationReason,  DateTime? cancelledAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDayRow() when $default != null:
-return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
+return $default(_that.itemId,_that.operationType,_that.productName,_that.productImageUrls,_that.time,_that.doseBasis,_that.doseValue,_that.doseUnit,_that.instructions,_that.scheduleId,_that.productionMealId,_that.scheduledAt,_that.dueAt,_that.dueAtMinutes,_that.quantityExceedsThreshold,_that.status,_that.plannedQuantity,_that.unit,_that.basisQuantity,_that.basisUnit,_that.actualQuantity,_that.actualProductName,_that.actualUnit,_that.varianceReason,_that.note,_that.executorName,_that.executedAt,_that.cancellationReason,_that.cancelledAt);case _:
   return null;
 
 }
@@ -3606,18 +3619,30 @@ return $default(_that.itemId,_that.operationType,_that.productName,_that.time,_t
 
 @JsonSerializable(checked: true)
 class _ProtocolDayRow implements ProtocolDayRow {
-  const _ProtocolDayRow({required this.itemId, required this.operationType, required this.productName, this.time, required this.doseBasis, required this.doseValue, required this.doseUnit, this.instructions, this.scheduleId, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) required this.status, this.plannedQuantity, required this.unit, this.basisQuantity, this.basisUnit, this.actualQuantity, this.actualProductName, this.actualUnit, this.varianceReason, this.executorName, this.executedAt, this.cancellationReason, this.cancelledAt});
+  const _ProtocolDayRow({required this.itemId, required this.operationType, required this.productName, final  List<String> productImageUrls = const [], this.time, required this.doseBasis, required this.doseValue, required this.doseUnit, this.instructions, this.scheduleId, this.productionMealId, this.scheduledAt, this.dueAt, this.dueAtMinutes, this.quantityExceedsThreshold, @JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) required this.status, this.plannedQuantity, required this.unit, this.basisQuantity, this.basisUnit, this.actualQuantity, this.actualProductName, this.actualUnit, this.varianceReason, this.note, this.executorName, this.executedAt, this.cancellationReason, this.cancelledAt}): _productImageUrls = productImageUrls;
   factory _ProtocolDayRow.fromJson(Map<String, dynamic> json) => _$ProtocolDayRowFromJson(json);
 
 @override final  String itemId;
 @override final  String operationType;
 @override final  String productName;
+ final  List<String> _productImageUrls;
+@override@JsonKey() List<String> get productImageUrls {
+  if (_productImageUrls is EqualUnmodifiableListView) return _productImageUrls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_productImageUrls);
+}
+
 @override final  String? time;
 @override final  String doseBasis;
 @override final  double doseValue;
 @override final  String doseUnit;
 @override final  String? instructions;
 @override final  String? scheduleId;
+@override final  String? productionMealId;
+@override final  DateTime? scheduledAt;
+@override final  DateTime? dueAt;
+@override final  int? dueAtMinutes;
+@override final  bool? quantityExceedsThreshold;
 @override@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) final  ProtocolOperationStatus status;
 @override final  double? plannedQuantity;
 @override final  String unit;
@@ -3627,6 +3652,7 @@ class _ProtocolDayRow implements ProtocolDayRow {
 @override final  String? actualProductName;
 @override final  String? actualUnit;
 @override final  String? varianceReason;
+@override final  String? note;
 @override final  String? executorName;
 @override final  DateTime? executedAt;
 @override final  String? cancellationReason;
@@ -3645,16 +3671,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDayRow&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.time, time) || other.time == time)&&(identical(other.doseBasis, doseBasis) || other.doseBasis == doseBasis)&&(identical(other.doseValue, doseValue) || other.doseValue == doseValue)&&(identical(other.doseUnit, doseUnit) || other.doseUnit == doseUnit)&&(identical(other.instructions, instructions) || other.instructions == instructions)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId)&&(identical(other.status, status) || other.status == status)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.basisQuantity, basisQuantity) || other.basisQuantity == basisQuantity)&&(identical(other.basisUnit, basisUnit) || other.basisUnit == basisUnit)&&(identical(other.actualQuantity, actualQuantity) || other.actualQuantity == actualQuantity)&&(identical(other.actualProductName, actualProductName) || other.actualProductName == actualProductName)&&(identical(other.actualUnit, actualUnit) || other.actualUnit == actualUnit)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&(identical(other.executorName, executorName) || other.executorName == executorName)&&(identical(other.executedAt, executedAt) || other.executedAt == executedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDayRow&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.productName, productName) || other.productName == productName)&&const DeepCollectionEquality().equals(other._productImageUrls, _productImageUrls)&&(identical(other.time, time) || other.time == time)&&(identical(other.doseBasis, doseBasis) || other.doseBasis == doseBasis)&&(identical(other.doseValue, doseValue) || other.doseValue == doseValue)&&(identical(other.doseUnit, doseUnit) || other.doseUnit == doseUnit)&&(identical(other.instructions, instructions) || other.instructions == instructions)&&(identical(other.scheduleId, scheduleId) || other.scheduleId == scheduleId)&&(identical(other.productionMealId, productionMealId) || other.productionMealId == productionMealId)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.dueAtMinutes, dueAtMinutes) || other.dueAtMinutes == dueAtMinutes)&&(identical(other.quantityExceedsThreshold, quantityExceedsThreshold) || other.quantityExceedsThreshold == quantityExceedsThreshold)&&(identical(other.status, status) || other.status == status)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.basisQuantity, basisQuantity) || other.basisQuantity == basisQuantity)&&(identical(other.basisUnit, basisUnit) || other.basisUnit == basisUnit)&&(identical(other.actualQuantity, actualQuantity) || other.actualQuantity == actualQuantity)&&(identical(other.actualProductName, actualProductName) || other.actualProductName == actualProductName)&&(identical(other.actualUnit, actualUnit) || other.actualUnit == actualUnit)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&(identical(other.note, note) || other.note == note)&&(identical(other.executorName, executorName) || other.executorName == executorName)&&(identical(other.executedAt, executedAt) || other.executedAt == executedAt)&&(identical(other.cancellationReason, cancellationReason) || other.cancellationReason == cancellationReason)&&(identical(other.cancelledAt, cancelledAt) || other.cancelledAt == cancelledAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,itemId,operationType,productName,time,doseBasis,doseValue,doseUnit,instructions,scheduleId,status,plannedQuantity,unit,basisQuantity,basisUnit,actualQuantity,actualProductName,actualUnit,varianceReason,executorName,executedAt,cancellationReason,cancelledAt]);
+int get hashCode => Object.hashAll([runtimeType,itemId,operationType,productName,const DeepCollectionEquality().hash(_productImageUrls),time,doseBasis,doseValue,doseUnit,instructions,scheduleId,productionMealId,scheduledAt,dueAt,dueAtMinutes,quantityExceedsThreshold,status,plannedQuantity,unit,basisQuantity,basisUnit,actualQuantity,actualProductName,actualUnit,varianceReason,note,executorName,executedAt,cancellationReason,cancelledAt]);
 
 @override
 String toString() {
-  return 'ProtocolDayRow(itemId: $itemId, operationType: $operationType, productName: $productName, time: $time, doseBasis: $doseBasis, doseValue: $doseValue, doseUnit: $doseUnit, instructions: $instructions, scheduleId: $scheduleId, status: $status, plannedQuantity: $plannedQuantity, unit: $unit, basisQuantity: $basisQuantity, basisUnit: $basisUnit, actualQuantity: $actualQuantity, actualProductName: $actualProductName, actualUnit: $actualUnit, varianceReason: $varianceReason, executorName: $executorName, executedAt: $executedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt)';
+  return 'ProtocolDayRow(itemId: $itemId, operationType: $operationType, productName: $productName, productImageUrls: $productImageUrls, time: $time, doseBasis: $doseBasis, doseValue: $doseValue, doseUnit: $doseUnit, instructions: $instructions, scheduleId: $scheduleId, productionMealId: $productionMealId, scheduledAt: $scheduledAt, dueAt: $dueAt, dueAtMinutes: $dueAtMinutes, quantityExceedsThreshold: $quantityExceedsThreshold, status: $status, plannedQuantity: $plannedQuantity, unit: $unit, basisQuantity: $basisQuantity, basisUnit: $basisUnit, actualQuantity: $actualQuantity, actualProductName: $actualProductName, actualUnit: $actualUnit, varianceReason: $varianceReason, note: $note, executorName: $executorName, executedAt: $executedAt, cancellationReason: $cancellationReason, cancelledAt: $cancelledAt)';
 }
 
 
@@ -3665,7 +3691,7 @@ abstract mixin class _$ProtocolDayRowCopyWith<$Res> implements $ProtocolDayRowCo
   factory _$ProtocolDayRowCopyWith(_ProtocolDayRow value, $Res Function(_ProtocolDayRow) _then) = __$ProtocolDayRowCopyWithImpl;
 @override @useResult
 $Res call({
- String itemId, String operationType, String productName, String? time, String doseBasis, double doseValue, String doseUnit, String? instructions, String? scheduleId,@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus status, double? plannedQuantity, String unit, double? basisQuantity, String? basisUnit, double? actualQuantity, String? actualProductName, String? actualUnit, String? varianceReason, String? executorName, DateTime? executedAt, String? cancellationReason, DateTime? cancelledAt
+ String itemId, String operationType, String productName, List<String> productImageUrls, String? time, String doseBasis, double doseValue, String doseUnit, String? instructions, String? scheduleId, String? productionMealId, DateTime? scheduledAt, DateTime? dueAt, int? dueAtMinutes, bool? quantityExceedsThreshold,@JsonKey(unknownEnumValue: ProtocolOperationStatus.unknown) ProtocolOperationStatus status, double? plannedQuantity, String unit, double? basisQuantity, String? basisUnit, double? actualQuantity, String? actualProductName, String? actualUnit, String? varianceReason, String? note, String? executorName, DateTime? executedAt, String? cancellationReason, DateTime? cancelledAt
 });
 
 
@@ -3682,18 +3708,24 @@ class __$ProtocolDayRowCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDayRow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? itemId = null,Object? operationType = null,Object? productName = null,Object? time = freezed,Object? doseBasis = null,Object? doseValue = null,Object? doseUnit = null,Object? instructions = freezed,Object? scheduleId = freezed,Object? status = null,Object? plannedQuantity = freezed,Object? unit = null,Object? basisQuantity = freezed,Object? basisUnit = freezed,Object? actualQuantity = freezed,Object? actualProductName = freezed,Object? actualUnit = freezed,Object? varianceReason = freezed,Object? executorName = freezed,Object? executedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? itemId = null,Object? operationType = null,Object? productName = null,Object? productImageUrls = null,Object? time = freezed,Object? doseBasis = null,Object? doseValue = null,Object? doseUnit = null,Object? instructions = freezed,Object? scheduleId = freezed,Object? productionMealId = freezed,Object? scheduledAt = freezed,Object? dueAt = freezed,Object? dueAtMinutes = freezed,Object? quantityExceedsThreshold = freezed,Object? status = null,Object? plannedQuantity = freezed,Object? unit = null,Object? basisQuantity = freezed,Object? basisUnit = freezed,Object? actualQuantity = freezed,Object? actualProductName = freezed,Object? actualUnit = freezed,Object? varianceReason = freezed,Object? note = freezed,Object? executorName = freezed,Object? executedAt = freezed,Object? cancellationReason = freezed,Object? cancelledAt = freezed,}) {
   return _then(_ProtocolDayRow(
 itemId: null == itemId ? _self.itemId : itemId // ignore: cast_nullable_to_non_nullable
 as String,operationType: null == operationType ? _self.operationType : operationType // ignore: cast_nullable_to_non_nullable
 as String,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
-as String,time: freezed == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
+as String,productImageUrls: null == productImageUrls ? _self._productImageUrls : productImageUrls // ignore: cast_nullable_to_non_nullable
+as List<String>,time: freezed == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
 as String?,doseBasis: null == doseBasis ? _self.doseBasis : doseBasis // ignore: cast_nullable_to_non_nullable
 as String,doseValue: null == doseValue ? _self.doseValue : doseValue // ignore: cast_nullable_to_non_nullable
 as double,doseUnit: null == doseUnit ? _self.doseUnit : doseUnit // ignore: cast_nullable_to_non_nullable
 as String,instructions: freezed == instructions ? _self.instructions : instructions // ignore: cast_nullable_to_non_nullable
 as String?,scheduleId: freezed == scheduleId ? _self.scheduleId : scheduleId // ignore: cast_nullable_to_non_nullable
-as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,productionMealId: freezed == productionMealId ? _self.productionMealId : productionMealId // ignore: cast_nullable_to_non_nullable
+as String?,scheduledAt: freezed == scheduledAt ? _self.scheduledAt : scheduledAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,dueAt: freezed == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,dueAtMinutes: freezed == dueAtMinutes ? _self.dueAtMinutes : dueAtMinutes // ignore: cast_nullable_to_non_nullable
+as int?,quantityExceedsThreshold: freezed == quantityExceedsThreshold ? _self.quantityExceedsThreshold : quantityExceedsThreshold // ignore: cast_nullable_to_non_nullable
+as bool?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ProtocolOperationStatus,plannedQuantity: freezed == plannedQuantity ? _self.plannedQuantity : plannedQuantity // ignore: cast_nullable_to_non_nullable
 as double?,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,basisQuantity: freezed == basisQuantity ? _self.basisQuantity : basisQuantity // ignore: cast_nullable_to_non_nullable
@@ -3702,6 +3734,7 @@ as String?,actualQuantity: freezed == actualQuantity ? _self.actualQuantity : ac
 as double?,actualProductName: freezed == actualProductName ? _self.actualProductName : actualProductName // ignore: cast_nullable_to_non_nullable
 as String?,actualUnit: freezed == actualUnit ? _self.actualUnit : actualUnit // ignore: cast_nullable_to_non_nullable
 as String?,varianceReason: freezed == varianceReason ? _self.varianceReason : varianceReason // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,executorName: freezed == executorName ? _self.executorName : executorName // ignore: cast_nullable_to_non_nullable
 as String?,executedAt: freezed == executedAt ? _self.executedAt : executedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,cancellationReason: freezed == cancellationReason ? _self.cancellationReason : cancellationReason // ignore: cast_nullable_to_non_nullable
@@ -3717,7 +3750,7 @@ as DateTime?,
 /// @nodoc
 mixin _$ProtocolDay {
 
- int get day; String? get date; List<ProtocolDayRow> get rows;
+ int get day; String? get date; List<ProtocolDayRow> get rows; double get allowedVariancePct;
 /// Create a copy of ProtocolDay
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3730,16 +3763,16 @@ $ProtocolDayCopyWith<ProtocolDay> get copyWith => _$ProtocolDayCopyWithImpl<Prot
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDay&&(identical(other.day, day) || other.day == day)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.rows, rows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtocolDay&&(identical(other.day, day) || other.day == day)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.rows, rows)&&(identical(other.allowedVariancePct, allowedVariancePct) || other.allowedVariancePct == allowedVariancePct));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,day,date,const DeepCollectionEquality().hash(rows));
+int get hashCode => Object.hash(runtimeType,day,date,const DeepCollectionEquality().hash(rows),allowedVariancePct);
 
 @override
 String toString() {
-  return 'ProtocolDay(day: $day, date: $date, rows: $rows)';
+  return 'ProtocolDay(day: $day, date: $date, rows: $rows, allowedVariancePct: $allowedVariancePct)';
 }
 
 
@@ -3750,7 +3783,7 @@ abstract mixin class $ProtocolDayCopyWith<$Res>  {
   factory $ProtocolDayCopyWith(ProtocolDay value, $Res Function(ProtocolDay) _then) = _$ProtocolDayCopyWithImpl;
 @useResult
 $Res call({
- int day, String? date, List<ProtocolDayRow> rows
+ int day, String? date, List<ProtocolDayRow> rows, double allowedVariancePct
 });
 
 
@@ -3767,12 +3800,13 @@ class _$ProtocolDayCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDay
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? day = null,Object? date = freezed,Object? rows = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? day = null,Object? date = freezed,Object? rows = null,Object? allowedVariancePct = null,}) {
   return _then(_self.copyWith(
 day: null == day ? _self.day : day // ignore: cast_nullable_to_non_nullable
 as int,date: freezed == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as String?,rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
-as List<ProtocolDayRow>,
+as List<ProtocolDayRow>,allowedVariancePct: null == allowedVariancePct ? _self.allowedVariancePct : allowedVariancePct // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -3857,10 +3891,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int day,  String? date,  List<ProtocolDayRow> rows)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int day,  String? date,  List<ProtocolDayRow> rows,  double allowedVariancePct)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProtocolDay() when $default != null:
-return $default(_that.day,_that.date,_that.rows);case _:
+return $default(_that.day,_that.date,_that.rows,_that.allowedVariancePct);case _:
   return orElse();
 
 }
@@ -3878,10 +3912,10 @@ return $default(_that.day,_that.date,_that.rows);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int day,  String? date,  List<ProtocolDayRow> rows)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int day,  String? date,  List<ProtocolDayRow> rows,  double allowedVariancePct)  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDay():
-return $default(_that.day,_that.date,_that.rows);case _:
+return $default(_that.day,_that.date,_that.rows,_that.allowedVariancePct);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3898,10 +3932,10 @@ return $default(_that.day,_that.date,_that.rows);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int day,  String? date,  List<ProtocolDayRow> rows)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int day,  String? date,  List<ProtocolDayRow> rows,  double allowedVariancePct)?  $default,) {final _that = this;
 switch (_that) {
 case _ProtocolDay() when $default != null:
-return $default(_that.day,_that.date,_that.rows);case _:
+return $default(_that.day,_that.date,_that.rows,_that.allowedVariancePct);case _:
   return null;
 
 }
@@ -3913,7 +3947,7 @@ return $default(_that.day,_that.date,_that.rows);case _:
 
 @JsonSerializable(checked: true)
 class _ProtocolDay implements ProtocolDay {
-  const _ProtocolDay({required this.day, this.date, required final  List<ProtocolDayRow> rows}): _rows = rows;
+  const _ProtocolDay({required this.day, this.date, required final  List<ProtocolDayRow> rows, this.allowedVariancePct = 10}): _rows = rows;
   factory _ProtocolDay.fromJson(Map<String, dynamic> json) => _$ProtocolDayFromJson(json);
 
 @override final  int day;
@@ -3925,6 +3959,7 @@ class _ProtocolDay implements ProtocolDay {
   return EqualUnmodifiableListView(_rows);
 }
 
+@override@JsonKey() final  double allowedVariancePct;
 
 /// Create a copy of ProtocolDay
 /// with the given fields replaced by the non-null parameter values.
@@ -3939,16 +3974,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDay&&(identical(other.day, day) || other.day == day)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._rows, _rows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProtocolDay&&(identical(other.day, day) || other.day == day)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._rows, _rows)&&(identical(other.allowedVariancePct, allowedVariancePct) || other.allowedVariancePct == allowedVariancePct));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,day,date,const DeepCollectionEquality().hash(_rows));
+int get hashCode => Object.hash(runtimeType,day,date,const DeepCollectionEquality().hash(_rows),allowedVariancePct);
 
 @override
 String toString() {
-  return 'ProtocolDay(day: $day, date: $date, rows: $rows)';
+  return 'ProtocolDay(day: $day, date: $date, rows: $rows, allowedVariancePct: $allowedVariancePct)';
 }
 
 
@@ -3959,7 +3994,7 @@ abstract mixin class _$ProtocolDayCopyWith<$Res> implements $ProtocolDayCopyWith
   factory _$ProtocolDayCopyWith(_ProtocolDay value, $Res Function(_ProtocolDay) _then) = __$ProtocolDayCopyWithImpl;
 @override @useResult
 $Res call({
- int day, String? date, List<ProtocolDayRow> rows
+ int day, String? date, List<ProtocolDayRow> rows, double allowedVariancePct
 });
 
 
@@ -3976,12 +4011,13 @@ class __$ProtocolDayCopyWithImpl<$Res>
 
 /// Create a copy of ProtocolDay
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? day = null,Object? date = freezed,Object? rows = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? day = null,Object? date = freezed,Object? rows = null,Object? allowedVariancePct = null,}) {
   return _then(_ProtocolDay(
 day: null == day ? _self.day : day // ignore: cast_nullable_to_non_nullable
 as int,date: freezed == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as String?,rows: null == rows ? _self._rows : rows // ignore: cast_nullable_to_non_nullable
-as List<ProtocolDayRow>,
+as List<ProtocolDayRow>,allowedVariancePct: null == allowedVariancePct ? _self.allowedVariancePct : allowedVariancePct // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

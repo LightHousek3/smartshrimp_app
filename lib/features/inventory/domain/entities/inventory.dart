@@ -77,6 +77,7 @@ abstract class InventoryHistoryFilters with _$InventoryHistoryFilters {
     InventoryTransactionType? transactionType,
     String? productId,
     String? seasonId,
+    String? scheduleId,
   }) = _InventoryHistoryFilters;
 
   bool get isEmpty =>
@@ -85,7 +86,8 @@ abstract class InventoryHistoryFilters with _$InventoryHistoryFilters {
       toDate == null &&
       transactionType == null &&
       productId == null &&
-      seasonId == null;
+      seasonId == null &&
+      scheduleId == null;
 
   bool get isValidDateRange =>
       fromDate == null ||
