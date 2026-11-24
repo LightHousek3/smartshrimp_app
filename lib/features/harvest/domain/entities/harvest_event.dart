@@ -116,6 +116,7 @@ abstract class HarvestPage with _$HarvestPage {
     required double totalRevenue,
     String? availableQuantityCount,
     HarvestWithdrawal? withdrawal,
+    @Default(false) bool finalReasonRequired,
   }) = _HarvestPage;
 }
 

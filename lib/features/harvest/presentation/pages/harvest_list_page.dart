@@ -5,6 +5,7 @@ import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/harvest/domain/entities/harvest_event.dart';
@@ -135,7 +136,11 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
             label: pending.value != null || pending.hasError
                 ? 'Kiểm tra lần thu hoạch đang chờ'
                 : 'Ghi nhận thu hoạch',
-            icon: Icons.add,
+            leading: const AppSvgIcon(
+              AppSvgIconName.harvest,
+              color: Colors.white,
+              size: 18,
+            ),
             compact: true,
             borderRadius: 14,
             onPressed: () => context.push('$base/create'),

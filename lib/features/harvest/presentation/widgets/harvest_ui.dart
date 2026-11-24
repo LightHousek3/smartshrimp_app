@@ -31,9 +31,10 @@ String harvestDate(DateTime value) {
   return '${two(d.hour)}:${two(d.minute)} ${two(d.day)}/${two(d.month)}/${d.year}';
 }
 
-String harvestError(Object error) => error is AppException
-    ? error.message
-    : 'Không thể tải dữ liệu thu hoạch. Vui lòng thử lại.';
+String harvestError(
+  Object error, {
+  String fallback = 'Không thể tải dữ liệu thu hoạch. Vui lòng thử lại.',
+}) => error is AppException ? error.message : fallback;
 
 class HarvestScaffold extends StatelessWidget {
   const HarvestScaffold({
