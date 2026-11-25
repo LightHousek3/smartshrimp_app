@@ -1,16 +1,20 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart'
+    show waterLogFormParams;
+import 'package:smartshrimp_app/features/water_log/presentation/view_models/water_log_controller.dart';
 import '../../domain/domain.dart';
+import '../../domain/entities/owner_disease_case.dart' show DiseaseCaseSnapshot;
+import '../view_models/case_evidence_draft.dart';
 import '../view_models/disease_case_controller.dart';
 import '../widgets/case_ui.dart';
+import '../widgets/case_evidence.dart';
 import '../widgets/case_evidence_picker.dart';
 import '../widgets/case_care_notice.dart';
+import '../widgets/disease_case_detail_sections.dart' show CaseOpeningSnapshot;
 
 /// Show observations, evidence and conversation for the technician's selected case.
 class DiseaseCaseDetailPage extends ConsumerStatefulWidget {
@@ -27,93 +31,55 @@ class DiseaseCaseDetailPage extends ConsumerStatefulWidget {
 }
 
 class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
-  static const _historyExpansionDuration = Duration(milliseconds: 200);
-  final _historyKey = GlobalKey();
-  Timer? _historyRevealTimer;
-  Timer? _successNoticeTimer;
-  String? _successNotice;
-  bool _historyExpanded = false;
   final _message = TextEditingController();
   final _form = GlobalKey<FormState>();
-  List<String> _evidence = [];
-  bool _uploading = false;
+  final _evidence = CaseEvidenceDraft();
+  bool _picking = false;
+  bool _sending = false;
   @override
   void dispose() {
-    _historyRevealTimer?.cancel();
-    _successNoticeTimer?.cancel();
     _message.dispose();
     super.dispose();
   }
 
-  void _clearSuccessNotice() {
-    _successNoticeTimer?.cancel();
-    if (_successNotice != null) setState(() => _successNotice = null);
-  }
-
-  void _showResponseSuccess(String message) {
-    _successNoticeTimer?.cancel();
-    setState(() => _successNotice = message);
-    _successNoticeTimer = Timer(const Duration(milliseconds: 3200), () {
-      if (mounted) setState(() => _successNotice = null);
-    });
-  }
-
-  void _onHistoryExpansionChanged(bool expanded) {
-    _historyExpanded = expanded;
-    _historyRevealTimer?.cancel();
-    if (!expanded) return;
-    FocusScope.of(context).unfocus();
-    // Start counting after the expansion's first frame, so scrolling uses
-    // its final height even when rendering starts after the tap callback.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_historyExpanded) return;
-      _historyRevealTimer = Timer(_historyExpansionDuration, () {
-        if (!mounted || !_historyExpanded) return;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_historyExpanded) return;
-          final historyContext = _historyKey.currentContext;
-          if (historyContext == null) return;
-          unawaited(
-            Scrollable.ensureVisible(
-              historyContext,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-            ),
-          );
-        });
-        WidgetsBinding.instance.ensureVisualUpdate();
-      });
-    });
-  }
-
   Future<void> _respond(DiseaseCase item) async {
+    if (_picking ||
+        _sending ||
+        ref.read(diseaseCaseMutationProvider).isLoading) {
+      return;
+    }
     if (!(_form.currentState?.validate() ?? false)) return;
-    _clearSuccessNotice();
+    setState(() => _sending = true);
+    final message = _message.text;
     try {
-      await ref
-          .read(diseaseCaseMutationProvider.notifier)
-          .respond(
-            widget.seasonId,
-            item,
-            CaseResponseType.normal,
-            _message.text,
-            attachments: _evidence,
-          );
+      final mutation = ref.read(diseaseCaseMutationProvider.notifier);
+      final attachments = await _evidence.upload(
+        uploadImage: mutation.uploadEvidence,
+        isActive: () => mounted,
+      );
+      if (!mounted || attachments == null) return;
+      await mutation.respond(
+        widget.seasonId,
+        item,
+        CaseResponseType.normal,
+        message,
+        attachments: attachments,
+      );
       if (mounted) {
         _message.clear();
-        setState(() => _evidence = []);
-        _showResponseSuccess('Đã gửi phản hồi.');
+        _evidence.replace(const []);
       }
     } catch (error) {
       if (mounted) {
         AppNoticeService.danger(context, caseError(error));
       }
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
   }
 
   Future<void> _emergency() async {
-    _clearSuccessNotice();
-    final sent = await showModalBottomSheet<bool>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       isDismissible: false,
@@ -141,38 +107,8 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
         },
       ),
     );
-    if (sent == true && mounted) {
-      _showResponseSuccess('Đã gửi cảnh báo khẩn đến chuyên gia và chủ trại.');
-    }
   }
 
-  Future<void> _openAttachment(String url) async {
-    final uri = Uri.tryParse(url);
-    var opened = false;
-    if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
-      try {
-        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } catch (_) {
-        opened = false;
-      }
-    }
-    if (!opened && mounted) {
-      AppNoticeService.danger(context, 'Không thể mở ảnh minh chứng.');
-    }
-  }
-
-  Widget _attachments(List<String> urls) => Wrap(
-    spacing: 6,
-    runSpacing: 4,
-    children: [
-      for (var i = 0; i < urls.length; i++)
-        TextButton.icon(
-          onPressed: () => _openAttachment(urls[i]),
-          icon: const Icon(Icons.image_outlined, size: 14),
-          label: Text('Ảnh ${i + 1}', style: const TextStyle(fontSize: 11)),
-        ),
-    ],
-  );
   @override
   Widget build(BuildContext context) {
     final provider = diseaseCaseDetailProvider((
@@ -181,30 +117,12 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
     ));
     final state = ref.watch(provider);
     final item = state.value;
-    final sending = ref.watch(diseaseCaseMutationProvider).isLoading;
-    final busy = sending || _uploading || item == null || state.hasError;
+    final sending =
+        ref.watch(diseaseCaseMutationProvider).isLoading || _sending;
+    final disabled = sending || state.hasError;
     return CaseFrame(
-      title: item?.title ?? 'Chi tiết ca bệnh',
+      title: 'Chi tiết ca bệnh',
       subtitle: item == null ? null : caseContext(item.caseSnapshot),
-      notice: _successNotice == null
-          ? null
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Dismissible(
-                key: const ValueKey('case-response-success'),
-                direction: DismissDirection.up,
-                resizeDuration: null,
-                onDismissed: (_) => _clearSuccessNotice(),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: AppNoticeCard(
-                    title: 'Thành công',
-                    message: _successNotice!,
-                    level: AppNoticeLevel.success,
-                  ),
-                ),
-              ),
-            ),
       trailing: item == null
           ? null
           : ConstrainedBox(
@@ -212,7 +130,7 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
               child: CaseStatusBadge(item.status),
             ),
       composer: item?.allowsResponse == true
-          ? _composer(item!, busy, sending)
+          ? _composer(item!, disabled: disabled, sending: sending)
           : null,
       child: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -230,88 +148,12 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               if (item.productionPaused) const CaseCareNotice(),
-              CaseSurface(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: [
-                        CaseBadge(
-                          'Mức độ: ${item.severity.label}',
-                          color: caseRose,
-                          background: const Color(0xFFFBE6EA),
-                          dot: true,
-                        ),
-                        if (item.expert?['fullName'] case final String name)
-                          CaseBadge(name),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SelectableText(
-                      item.description ?? '',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.7,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                    if (item.caseSnapshot['aiDiagnosis'] case final Map ai) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0E9FF),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.auto_awesome,
-                              color: caseViolet,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 7),
-                            Expanded(
-                              child: Text(
-                                'AI tham khảo: ${caseAiLabel(ai)}\n${caseAiConfidence(num.tryParse('${ai['confidence']}'))}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: caseViolet,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (item.attachments.isNotEmpty)
-                      _attachments(
-                        item.attachments
-                            .map((a) => a['fileUrl'])
-                            .whereType<String>()
-                            .toList(),
-                      ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tạo lúc ${caseDate(item.createdAt)}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _CaseSnapshot(snapshot: item.caseSnapshot),
+              _CaseOpeningData(item: item),
               const SizedBox(height: 20),
               const Padding(
                 padding: EdgeInsets.only(left: 3, bottom: 10),
                 child: Text(
-                  'Diễn tiến trao đổi',
+                  'Trò chuyện với chuyên gia',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -329,10 +171,7 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
                   ),
                 ),
               for (final response in item.responses)
-                _ResponseBubble(
-                  response: response,
-                  attachmentBuilder: _attachments,
-                ),
+                _ResponseBubble(response: response),
               if (item.resolutionSummary != null)
                 CaseSurface(
                   child: Text(
@@ -342,51 +181,6 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
                       height: 1.6,
                       color: AppColors.inkSoft,
                     ),
-                  ),
-                ),
-              if (item.statusHistory.isNotEmpty)
-                CaseSurface(
-                  key: _historyKey,
-                  padding: EdgeInsets.zero,
-                  child: ExpansionTile(
-                    onExpansionChanged: _onHistoryExpansionChanged,
-                    expansionAnimationStyle: const AnimationStyle(
-                      duration: _historyExpansionDuration,
-                    ),
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 14),
-                    backgroundColor: Colors.transparent,
-                    collapsedBackgroundColor: Colors.transparent,
-                    shape: const Border(),
-                    collapsedShape: const Border(),
-                    iconColor: AppColors.inkMuted,
-                    collapsedIconColor: AppColors.inkMuted,
-                    leading: const Icon(
-                      Icons.history_rounded,
-                      size: 20,
-                      color: AppColors.inkMuted,
-                    ),
-                    title: const Text(
-                      'Lịch sử trạng thái',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                    children: [
-                      for (final event in item.statusHistory)
-                        ListTile(
-                          dense: true,
-                          title: Text(
-                            _statusLabel(event['toStatus']),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          subtitle: Text(
-                            event['reason'] as String? ?? '',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ),
-                    ],
                   ),
                 ),
               if (!item.allowsResponse)
@@ -404,269 +198,267 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
     );
   }
 
-  Widget _composer(DiseaseCase item, bool busy, bool sending) => Container(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(top: BorderSide(color: AppColors.line)),
-      boxShadow: [
-        BoxShadow(
-          color: Color(0x080F1C2E),
-          blurRadius: 16,
-          offset: Offset(0, -4),
-        ),
-      ],
-    ),
-    child: Form(
-      key: _form,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Trao đổi với chuyên gia',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              Tooltip(
-                message: 'Gửi cảnh báo khẩn cho chuyên gia',
-                child: OutlinedButton.icon(
-                  key: const ValueKey('case-emergency-alert'),
-                  onPressed: busy ? null : _emergency,
-                  icon: const Icon(Icons.warning_amber_rounded, size: 17),
-                  label: const Text(
-                    'Báo khẩn',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+  Widget _composer(
+    DiseaseCase item, {
+    required bool disabled,
+    required bool sending,
+  }) {
+    final busy = disabled || _picking;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.line)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x080F1C2E),
+            blurRadius: 16,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: CaseEvidencePicker(
+                    compact: true,
+                    images: _evidence.images,
+                    disabled: disabled,
+                    onChanged: (images) =>
+                        setState(() => _evidence.replace(images)),
+                    onBusyChanged: (value) => setState(() => _picking = value),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: caseRose,
-                    side: const BorderSide(color: Color(0xFFF4B8C4)),
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: 'Gửi cảnh báo khẩn cho chuyên gia',
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('case-emergency-alert'),
+                    onPressed: busy ? null : _emergency,
+                    icon: const Icon(Icons.warning_amber_rounded, size: 17),
+                    label: const Text(
+                      'Báo khẩn',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            controller: _message,
-            enabled: !busy,
-            minLines: 2,
-            maxLines: 3,
-            textCapitalization: TextCapitalization.sentences,
-            keyboardType: TextInputType.multiline,
-            style: const TextStyle(fontSize: 14, height: 1.5),
-            decoration: caseInput('Nhập thông tin cần gửi cho chuyên gia…')
-                .copyWith(
-                  hintStyle: const TextStyle(
-                    fontSize: 13,
-                    height: 1.5,
-                    color: AppColors.inkMuted,
-                  ),
-                  fillColor: const Color(0xFFF8FAFC),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-            validator: (value) =>
-                DiseaseCaseRules.textError(value, DiseaseCaseRules.textLimit),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: CaseEvidencePicker(
-                  compact: true,
-                  urls: _evidence,
-                  disabled: busy && !_uploading,
-                  onChanged: (urls) => setState(() => _evidence = urls),
-                  onBusyChanged: (value) => setState(() => _uploading = value),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Tooltip(
-                message: 'Gửi phản hồi',
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    key: const ValueKey('case-send-response'),
-                    onPressed: busy ? null : () => _respond(item),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.ocean,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: caseRose,
+                      side: const BorderSide(color: Color(0xFFF4B8C4)),
+                      minimumSize: const Size(0, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: sending
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send_rounded, size: 18),
-                    label: const Text(
-                      'Gửi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _CaseSnapshot extends StatelessWidget {
-  const _CaseSnapshot({required this.snapshot});
-  final Map<String, dynamic> snapshot;
-  @override
-  Widget build(BuildContext context) {
-    final health = snapshot['healthStatus'];
-    final metrics = [
-      ('Cỡ TB', 'avgWeightG', 'g/con'),
-      ('Hao hụt', 'mortalityCount', 'con'),
-      ('Sinh khối', 'estimatedBiomassKg', 'kg'),
-      ('pH', 'ph', ''),
-      ('DO', 'doMgL', 'mg/L'),
-      ('NH3', 'nh3MgL', 'mg/L'),
-      ('NO2', 'no2MgL', 'mg/L'),
-    ];
-    return CaseSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Dữ liệu lúc mở ca',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-              if (health is String)
-                CaseBadge(
-                  switch (health) {
-                    'WARNING' => 'Cần chú ý',
-                    'CRITICAL' => 'Nguy cấp',
-                    'GOOD' => 'Ổn định',
-                    _ => 'Theo nhật ký',
-                  },
-                  color: health == 'GOOD' ? const Color(0xFF0F9B8E) : caseRose,
-                  background: health == 'GOOD'
-                      ? const Color(0xFFE2F6F3)
-                      : const Color(0xFFFBE6EA),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = (constraints.maxWidth - 18) / 4;
-              return Wrap(
-                spacing: 6,
-                runSpacing: 7,
-                children: [
-                  for (final (label, field, unit) in metrics)
-                    Container(
-                      width: width,
-                      constraints: const BoxConstraints(minHeight: 70),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F3F8),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            label,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: AppColors.inkMuted,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            snapshot[field]?.toString() ?? '—',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.mono(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          if (unit.isNotEmpty)
-                            Text(
-                              unit,
-                              style: const TextStyle(
-                                fontSize: 8,
-                                color: AppColors.inkMuted,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          if (!metrics.any((m) => snapshot[m.$2] != null))
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text(
-                'Hồ sơ chưa có số liệu được lưu tại thời điểm mở ca.',
-                style: TextStyle(fontSize: 10, color: AppColors.inkMuted),
-              ),
+              ],
             ),
-          for (final (field, label) in [
-            ('healthRecordedAt', 'Nhật ký sức khỏe'),
-            ('waterRecordedAt', 'Nhật ký nước'),
-          ])
-            if (DateTime.tryParse('${snapshot[field]}') case final DateTime at)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  '$label: ${caseDate(at)}',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: AppColors.inkMuted,
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _message,
+              enabled: !busy,
+              minLines: 2,
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              keyboardType: TextInputType.multiline,
+              style: const TextStyle(fontSize: 14, height: 1.5),
+              decoration: caseInput('Nhập thông tin cần gửi cho chuyên gia…')
+                  .copyWith(
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: AppColors.inkMuted,
+                    ),
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Tooltip(
+                        message: 'Gửi phản hồi',
+                        child: IconButton.filled(
+                          key: const ValueKey('case-send-response'),
+                          onPressed: busy ? null : () => _respond(item),
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppColors.ocean,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: AppColors.ocean.withValues(
+                              alpha: 0.4,
+                            ),
+                            disabledForegroundColor: Colors.white,
+                            minimumSize: const Size(40, 40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: sending
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.send_rounded, size: 18),
+                        ),
+                      ),
+                    ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 40,
+                    ),
                   ),
-                ),
-              ),
-        ],
+              validator: (value) =>
+                  DiseaseCaseRules.textError(value, DiseaseCaseRules.textLimit),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+class _CaseOpeningData extends StatelessWidget {
+  const _CaseOpeningData({required this.item});
+
+  final DiseaseCase item;
+
+  @override
+  Widget build(BuildContext context) => CaseSurface(
+    padding: EdgeInsets.zero,
+    child: ExpansionTile(
+      key: PageStorageKey((item.seasonId, item.id)),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+      childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+      shape: const Border(),
+      collapsedShape: const Border(),
+      title: const Text(
+        'Dữ liệu lúc mở ca',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.ink,
+        ),
+      ),
+      children: [
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            CaseBadge(
+              'Mức độ: ${item.severity.label}',
+              color: caseRose,
+              background: const Color(0xFFFBE6EA),
+              dot: true,
+            ),
+            if (item.expert?['fullName'] case final String name)
+              CaseBadge(name),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Keep text scroll offsets separate from the tile's expansion state.
+        SelectableText(
+          'Ca bệnh: ${item.title}',
+          key: const PageStorageKey('case-summary-title'),
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.6,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 4),
+        SelectableText(
+          'Ghi chú: ${item.description?.trim().isNotEmpty == true ? item.description! : '—'}',
+          key: const PageStorageKey('case-summary-note'),
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.7,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        if (item.caseSnapshot['aiDiagnosis'] case final Map ai) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0E9FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: caseViolet, size: 15),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    'AI tham khảo: ${caseAiLabel(ai)}\n${caseAiConfidence(num.tryParse('${ai['confidence']}'))}',
+                    style: const TextStyle(fontSize: 11, color: caseViolet),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Text(
+          'Tạo lúc ${caseDate(item.createdAt)}',
+          style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
+        ),
+        const SizedBox(height: 12),
+        Consumer(
+          builder: (context, ref, _) {
+            final recorded = item.caseSnapshot;
+            final snapshot = DiseaseCaseSnapshot.fromRecordedSnapshot(recorded);
+            final water = {
+              for (final param in waterLogFormParams)
+                param.field: ?snapshot.valueOf(param.field),
+            };
+            final hasRecordedFlags = recorded['exceededWaterMetrics'] is List;
+            final metadata = water.isNotEmpty && !hasRecordedFlags
+                ? ref
+                      .watch(waterLogMetadataProvider(item.seasonId))
+                      .asData
+                      ?.value
+                : null;
+            return CaseOpeningSnapshot(
+              showWaterStatus: hasRecordedFlags || metadata != null,
+              snapshot: metadata == null
+                  ? snapshot
+                  : snapshot.copyWith(
+                      exceededWaterMetrics: [
+                        for (final warning in metadata.warnings(water))
+                          warning.threshold.param.field,
+                      ],
+                    ),
+            );
+          },
+        ),
+        if (item.attachments.isNotEmpty)
+          CaseAttachmentStrip(
+            urls: item.attachments
+                .map((attachment) => attachment['fileUrl'])
+                .whereType<String>()
+                .toList(),
+          ),
+      ],
+    ),
+  );
+}
+
 class _ResponseBubble extends StatelessWidget {
-  const _ResponseBubble({
-    required this.response,
-    required this.attachmentBuilder,
-  });
+  const _ResponseBubble({required this.response});
   final CaseResponse response;
-  final Widget Function(List<String>) attachmentBuilder;
   @override
   Widget build(BuildContext context) {
     final mine = response.author?['role'] == 'TECHNICIAN';
@@ -742,7 +534,7 @@ class _ResponseBubble extends StatelessWidget {
                   ),
                 ),
                 if (response.attachments.isNotEmpty)
-                  attachmentBuilder(response.attachments),
+                  CaseAttachmentStrip(urls: response.attachments),
                 const SizedBox(height: 5),
                 Text(
                   caseDate(response.createdAt),
@@ -787,7 +579,7 @@ class _EmergencySheetState extends State<_EmergencySheet> {
     try {
       await widget.onSend(_text.text);
       if (mounted) {
-        Navigator.pop(context, true);
+        Navigator.pop(context);
       }
     } catch (error) {
       if (mounted) {
@@ -872,12 +664,3 @@ class _EmergencySheetState extends State<_EmergencySheet> {
     ),
   );
 }
-
-String _statusLabel(Object? value) => switch (value) {
-  'OPEN' => DiseaseCaseStatus.open.label,
-  'WAITING_FOR_INFO' => DiseaseCaseStatus.waitingForInfo.label,
-  'MONITORING' => DiseaseCaseStatus.monitoring.label,
-  'IN_TREATMENT' => DiseaseCaseStatus.inTreatment.label,
-  'RESOLVED' => DiseaseCaseStatus.resolved.label,
-  _ => DiseaseCaseStatus.unknown.label,
-};

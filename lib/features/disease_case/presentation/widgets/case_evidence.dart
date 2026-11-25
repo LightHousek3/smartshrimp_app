@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_photo_grid.dart';
@@ -17,10 +18,14 @@ class CaseEvidence extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final images = attachments.where(_isEvidenceImage).toList(growable: false);
-    final files = attachments
-        .where((item) => !_isEvidenceImage(item))
-        .toList(growable: false);
+    final images = <DiseaseCaseAttachment>[];
+    final files = <DiseaseCaseAttachment>[];
+    for (final attachment in attachments) {
+      (_isEvidenceImage(attachment.fileUrl, attachment.mediaType)
+              ? images
+              : files)
+          .add(attachment);
+    }
     final title = DiseaseCaseSectionTitle(
       'Bằng chứng ban đầu',
       trailing: DiseaseCaseBadge(
@@ -196,29 +201,91 @@ class CaseEvidence extends StatelessWidget {
       ),
     );
   }
+}
 
-  Future<void> _openAttachment(BuildContext context, String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri != null &&
-        (uri.isScheme('https') || uri.isScheme('http')) &&
-        uri.host.isNotEmpty) {
-      try {
-        if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
-      } on PlatformException {
-        // Use the same notice when the device cannot open the file.
-      }
+class CaseAttachmentStrip extends StatelessWidget {
+  const CaseAttachmentStrip({required this.urls, super.key});
+
+  final List<String> urls;
+
+  @override
+  Widget build(BuildContext context) {
+    if (urls.isEmpty) return const SizedBox.shrink();
+    final images = <String>[];
+    final files = <String>[];
+    for (final url in urls) {
+      (_isEvidenceImage(url) ? images : files).add(url);
     }
-    if (context.mounted) {
-      AppNoticeService.danger(context, 'Không thể mở tệp đính kèm.');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final (index, url) in images.indexed)
+            Semantics(
+              image: true,
+              label: 'Xem ảnh minh chứng ${index + 1}',
+              child: SizedBox.square(
+                dimension: 68,
+                child: Material(
+                  color: const Color(0xFFEEF1F6),
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: AppColors.line),
+                  ),
+                  child: InkWell(
+                    onTap: () => showAppImageViewer(
+                      context,
+                      builder: (_) => AppImageViewer(
+                        itemCount: images.length,
+                        initialIndex: index,
+                        imageBuilder: (i, fit) => _CaseEvidenceImage(
+                          images[i],
+                          fit: fit,
+                          compact: fit == BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    child: _CaseEvidenceImage(url, compact: true),
+                  ),
+                ),
+              ),
+            ),
+          for (final (index, url) in files.indexed)
+            TextButton.icon(
+              onPressed: () => _openAttachment(context, url),
+              icon: const Icon(Icons.attach_file, size: 16),
+              label: Text('Tệp đính kèm ${index + 1}'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _openAttachment(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri != null &&
+      (uri.isScheme('https') || uri.isScheme('http')) &&
+      uri.host.isNotEmpty) {
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } on PlatformException {
+      // Use the same notice when the device cannot open the file.
     }
+  }
+  if (context.mounted) {
+    AppNoticeService.danger(context, 'Không thể mở tệp đính kèm.');
   }
 }
 
 // KTV uploads image URLs without MIME metadata, including extensionless CDN URLs.
 // Explicit non-image files keep their existing external-file behavior.
-bool _isEvidenceImage(DiseaseCaseAttachment item) {
-  final type = item.mediaType?.split(';').first.trim().toLowerCase();
-  final path = Uri.tryParse(item.fileUrl)?.path.toLowerCase() ?? '';
+bool _isEvidenceImage(String url, [String? mediaType]) {
+  final type = mediaType?.split(';').first.trim().toLowerCase();
+  final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
   if (type != null && type.isNotEmpty && type != 'application/octet-stream') {
     return type.startsWith('image/');
   }

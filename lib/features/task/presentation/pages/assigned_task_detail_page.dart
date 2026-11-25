@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/services/app_image_picker.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
@@ -26,12 +26,15 @@ class AssignedTaskDetailPage extends ConsumerStatefulWidget {
       _AssignedTaskDetailPageState();
 }
 
+enum _EvidenceState { idle, selecting, uploading }
+
 class _AssignedTaskDetailPageState
     extends ConsumerState<AssignedTaskDetailPage> {
   List<String> _evidenceUrls = [];
-  bool _picking = false;
+  _EvidenceState _evidenceState = _EvidenceState.idle;
   bool _confirming = false;
   int _generation = 0;
+  bool get _addingEvidence => _evidenceState != _EvidenceState.idle;
 
   @override
   void didUpdateWidget(covariant AssignedTaskDetailPage oldWidget) {
@@ -39,49 +42,58 @@ class _AssignedTaskDetailPageState
     if (oldWidget.taskId != widget.taskId) {
       _generation++;
       _evidenceUrls = [];
-      _picking = false;
+      _evidenceState = _EvidenceState.idle;
       _confirming = false;
     }
   }
 
-  Future<void> _chooseImage() async {
-    final source = await showAppImageSourceDialog(context);
-    if (source != null && mounted) await _pick(source);
-  }
-
-  Future<void> _pick(ImageSource source) async {
+  Future<void> _addEvidence() async {
     if (ref.read(assignedTaskDetailProvider(widget.taskId)).value?.status !=
         TaskStatus.inProgress) {
       return;
     }
-    if (_picking ||
+    final remaining = TaskRules.maxEvidenceImages - _evidenceUrls.length;
+    if (_addingEvidence ||
         _confirming ||
         ref.read(assignedTaskMutationProvider).isLoading ||
-        _evidenceUrls.length >= TaskRules.maxEvidenceImages) {
+        remaining <= 0) {
       return;
     }
     final generation = _generation;
     final picker = ref.read(taskImagePickerProvider);
-    setState(() => _picking = true);
+    setState(() => _evidenceState = _EvidenceState.selecting);
     try {
-      final file = await picker.pickImage(
-        source: source,
-        requestFullMetadata: false,
+      final source = await showAppImageSourceDialog(
+        context,
+        remaining: remaining,
       );
-      if (file == null || !mounted || generation != _generation) return;
-      if (await file.length() > TaskRules.maxEvidenceImageBytes) {
-        throw const ApiException('Ảnh minh chứng tối đa 5 MB.');
+      if (source == null || !mounted || generation != _generation) return;
+      final files = await pickAppImages(
+        picker,
+        source: source,
+        limit: remaining,
+      );
+      if (files.isEmpty || !mounted || generation != _generation) return;
+      final images = <({Uint8List bytes, String fileName})>[];
+      for (final file in files) {
+        if (await file.length() > TaskRules.maxEvidenceImageBytes) {
+          throw const ApiException('Ảnh minh chứng tối đa 5 MB.');
+        }
+        final bytes = await file.readAsBytes();
+        TaskRules.validateEvidenceImage(bytes);
+        images.add((bytes: bytes, fileName: file.name));
       }
-      final bytes = await file.readAsBytes();
-      TaskRules.validateEvidenceImage(bytes);
       if (!mounted || generation != _generation) return;
-      final url = await ref
-          .read(assignedTaskMutationProvider.notifier)
-          .uploadEvidence(bytes, file.name);
-      if (!mounted || generation != _generation) return;
-      final urls = [..._evidenceUrls, url];
-      TaskRules.validateEvidenceUrls(urls);
-      setState(() => _evidenceUrls = urls);
+      setState(() => _evidenceState = _EvidenceState.uploading);
+      for (final image in images) {
+        final url = await ref
+            .read(assignedTaskMutationProvider.notifier)
+            .uploadEvidence(image.bytes, image.fileName);
+        if (!mounted || generation != _generation) return;
+        final urls = [..._evidenceUrls, url];
+        TaskRules.validateEvidenceUrls(urls);
+        setState(() => _evidenceUrls = urls);
+      }
     } on PlatformException catch (error) {
       if (mounted && generation == _generation) {
         AppNoticeService.danger(context, switch (error.code) {
@@ -103,13 +115,13 @@ class _AssignedTaskDetailPageState
       }
     } finally {
       if (mounted && generation == _generation) {
-        setState(() => _picking = false);
+        setState(() => _evidenceState = _EvidenceState.idle);
       }
     }
   }
 
   Future<void> _advance(TaskItem task) async {
-    if (_picking ||
+    if (_addingEvidence ||
         _confirming ||
         ref.read(assignedTaskMutationProvider).isLoading) {
       return;
@@ -164,7 +176,7 @@ class _AssignedTaskDetailPageState
     final provider = assignedTaskDetailProvider(widget.taskId);
     final detail = ref.watch(provider);
     final mutating = ref.watch(assignedTaskMutationProvider).isLoading;
-    final busy = mutating || _picking || _confirming;
+    final busy = mutating || _addingEvidence || _confirming;
     return TaskDetailView(
       detail: detail,
       onBack: () => context.canPop() ? context.pop() : context.go('/tasks'),
@@ -184,8 +196,8 @@ class _AssignedTaskDetailPageState
                 : task.evidenceUrls,
             status: task.status,
             busy: busy,
-            uploading: _picking,
-            onAdd: task.status == TaskStatus.inProgress ? _chooseImage : null,
+            uploading: _evidenceState == _EvidenceState.uploading,
+            onAdd: task.status == TaskStatus.inProgress ? _addEvidence : null,
             onRemove: task.status == TaskStatus.inProgress
                 ? (index) => setState(() => _evidenceUrls.removeAt(index))
                 : null,

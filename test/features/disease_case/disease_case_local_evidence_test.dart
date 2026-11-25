@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/cloudinary_image_storage.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/pages/disease_case_form_page.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/widgets/case_evidence_picker.dart';
@@ -24,6 +25,8 @@ final _png = base64Decode(
 class _Picker extends ImagePicker {
   final files = <XFile?>[];
   final sources = <ImageSource>[];
+  final galleryLimits = <int?>[];
+  int galleryCount = 1;
 
   void add(String name, {Uint8List? bytes}) =>
       files.add(XFile.fromData(bytes ?? _png, name: name, path: name));
@@ -39,6 +42,22 @@ class _Picker extends ImagePicker {
   }) async {
     sources.add(source);
     return files.removeAt(0);
+  }
+
+  @override
+  Future<List<XFile>> pickMultiImage({
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    int? limit,
+    bool requestFullMetadata = true,
+  }) async {
+    sources.add(ImageSource.gallery);
+    galleryLimits.add(limit);
+    return List.generate(
+      galleryCount,
+      (_) => files.removeAt(0),
+    ).nonNulls.toList();
   }
 }
 
@@ -104,6 +123,26 @@ class _Cases extends CaseFixtureRepository {
     if (mutationFailure != null) throw mutationFailure!;
     return item;
   }
+
+  @override
+  Future<DiseaseCase> respond(
+    String seasonId,
+    DiseaseCase value,
+    CaseResponseType type,
+    String message, {
+    List<String> attachments = const [],
+    String? replyToResponseId,
+  }) {
+    submittedAttachments = [...attachments];
+    return super.respond(
+      seasonId,
+      value,
+      type,
+      message,
+      attachments: attachments,
+      replyToResponseId: replyToResponseId,
+    );
+  }
 }
 
 Future<void> _open(WidgetTester tester, _Cases repo, _Picker picker) async {
@@ -116,14 +155,16 @@ Future<void> _open(WidgetTester tester, _Cases repo, _Picker picker) async {
   );
 }
 
-Future<void> _pick(WidgetTester tester, {bool camera = false}) async {
-  final add = find.text('Thêm ảnh mẫu tôm / nhá');
+Future<void> _pick(
+  WidgetTester tester, {
+  bool camera = false,
+  String button = 'Thêm ảnh mẫu tôm / nhá',
+}) async {
+  final add = find.text(button);
   await tester.ensureVisible(add);
   await tester.tap(add);
   await tester.pumpAndSettle();
-  await tester.tap(
-    find.text(camera ? 'Chụp ảnh mới' : 'Chọn ảnh từ thiết bị'),
-  );
+  await tester.tap(find.text(camera ? 'Chụp ảnh mới' : 'Chọn ảnh từ thiết bị'));
   await tester.pumpAndSettle();
 }
 
@@ -321,7 +362,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('local preview keeps the five-photo limit and handles cancel', (
+  testWidgets('gallery batches fill the local draft up to five photos', (
     tester,
   ) async {
     final uploads = _Uploads();
@@ -333,9 +374,12 @@ void main() {
     await _open(tester, repo, picker);
     await _pick(tester);
     expect(find.byTooltip('Bỏ ảnh minh chứng'), findsNothing);
-    for (var i = 0; i < 5; i++) {
-      await _pick(tester);
-    }
+    picker.galleryCount = 3;
+    await _pick(tester);
+    expect(find.byTooltip('Bỏ ảnh minh chứng'), findsNWidgets(3));
+    picker.galleryCount = 2;
+    await _pick(tester);
+    expect(picker.galleryLimits, [5, 5, 2]);
     final add = find.widgetWithText(TextButton, 'Thêm ảnh mẫu tôm / nhá');
     expect(tester.widget<TextButton>(add).onPressed, isNull);
     expect(find.byTooltip('Bỏ ảnh minh chứng'), findsNWidgets(5));
@@ -343,7 +387,59 @@ void main() {
     await tester.pumpAndSettle();
     await _pick(tester);
     expect(find.byTooltip('Bỏ ảnh minh chứng'), findsNWidgets(5));
+    expect(picker.galleryLimits, [5, 5, 2]);
     expect(uploads.names, isEmpty);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'a reply previews locally until sending and reuses uploads after failure',
+    (tester) async {
+      final uploads = _Uploads()..failure = 'second.png';
+      final repo = _Cases(uploads);
+      final picker = _Picker()
+        ..galleryCount = 2
+        ..add('first.png')
+        ..add('second.png');
+      await showCase(
+        tester,
+        repo,
+        path: '/seasons/season/disease-cases/case',
+        imagePicker: picker,
+        evidenceStorage: uploads.storage,
+      );
+      await _pick(tester, button: 'Đính kèm ảnh (0/5)');
+      expect(picker.galleryLimits, [5]);
+      expect(uploads.names, isEmpty);
+      expect(find.text('Đính kèm ảnh (2/5)'), findsOneWidget);
+      expect(find.byTooltip('Bỏ ảnh minh chứng'), findsNWidgets(2));
+
+      final send = find.byKey(const ValueKey('case-send-response'));
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(find.text('Vui lòng nhập nội dung.'), findsOneWidget);
+      expect(uploads.names, isEmpty);
+
+      await tester.enterText(find.byType(TextFormField), 'Bổ sung tình trạng');
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(uploads.names, ['first.png', 'second.png']);
+      expect(repo.mutations, 0);
+      expect(find.text('Bổ sung tình trạng'), findsOneWidget);
+      expect(find.text('Đính kèm ảnh (2/5)'), findsOneWidget);
+      AppNoticeService.hide();
+      await tester.pumpAndSettle();
+
+      uploads.failure = null;
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(uploads.names, ['first.png', 'second.png', 'second.png']);
+      expect(repo.submittedAttachments, [
+        'https://images.test/first.png',
+        'https://images.test/second.png',
+      ]);
+      expect(find.text('Đính kèm ảnh (0/5)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

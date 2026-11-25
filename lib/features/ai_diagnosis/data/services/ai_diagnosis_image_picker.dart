@@ -1,5 +1,5 @@
 import 'package:image_picker/image_picker.dart';
-import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/services/app_image_picker.dart';
 import '../../domain/ai_diagnosis_rules.dart';
 import '../../domain/entities/ai_diagnosis_image.dart';
 import '../../domain/repositories/ai_diagnosis_repository.dart';
@@ -13,24 +13,13 @@ class DeviceAiDiagnosisImagePicker implements AiDiagnosisImagePicker {
     required int limit,
   }) async {
     if (limit < 1 || limit > AiDiagnosisRules.maxImages) return [];
-    final List<XFile> files;
-    if (source == AiImageSource.camera || limit == 1) {
-      final file = await _picker.pickImage(
-        source: source == AiImageSource.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        requestFullMetadata: false,
-      );
-      files = file == null ? [] : [file];
-    } else {
-      files = await _picker.pickMultiImage(
-        limit: limit,
-        requestFullMetadata: false,
-      );
-    }
-    if (files.length > limit) {
-      throw const ApiException('Tối đa 5 ảnh cho mỗi lần nhận diện.');
-    }
+    final files = await pickAppImages(
+      _picker,
+      source: source == AiImageSource.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
+      limit: limit,
+    );
     final result = <AiDiagnosisImage>[];
     for (final file in files) {
       AiDiagnosisRules.validateSize(await file.length());

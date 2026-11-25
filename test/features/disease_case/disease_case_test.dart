@@ -12,6 +12,7 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/di/core_providers.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/network/cloudinary_image_storage.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
@@ -23,6 +24,7 @@ import 'package:smartshrimp_app/features/notifications/data/services/notificatio
 import 'package:smartshrimp_app/features/notifications/presentation/view_models/notification_controller.dart';
 import '../home/owner_dashboard_fixtures.dart';
 import '../task/task_api_test.dart' show TaskSessionStore;
+import 'case_evidence_test.dart' show cachePhoto;
 
 Map<String, dynamic> caseJson() => {
   'id': 'case',
@@ -601,12 +603,25 @@ void main() {
   testWidgets(
     'N: list opens detail and shows conversation, snapshot and response form',
     (tester) async {
-      await showCase(tester, CaseFixtureRepository());
+      final repo = CaseFixtureRepository()
+        ..canCreate = false
+        ..existingCaseId = 'case';
+      await showCase(tester, repo);
       expect(find.text('Tôm giảm ăn'), findsOneWidget);
+      expect(find.text('Mở ca đang xử lý của vụ'), findsNothing);
       await tester.tap(find.text('Tôm giảm ăn'));
       await tester.pumpAndSettle();
-      expect(find.text('Tôm giảm ăn'), findsOneWidget);
-      expect(find.text('Dữ liệu lúc mở ca'), findsOneWidget);
+      expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
+      final openingData = find.text('Dữ liệu lúc mở ca');
+      expect(openingData, findsOneWidget);
+      expect(find.text('Ca bệnh: Tôm giảm ăn'), findsNothing);
+      expect(find.text('Ghi chú: Tình trạng quan sát tại ao'), findsNothing);
+      expect(find.textContaining('Tạo lúc '), findsNothing);
+      await tester.tap(openingData);
+      await tester.pumpAndSettle();
+      expect(find.text('Ca bệnh: Tôm giảm ăn'), findsOneWidget);
+      expect(find.text('Ghi chú: Tình trạng quan sát tại ao'), findsOneWidget);
+      expect(find.textContaining('Tạo lúc '), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Chưa có phản hồi.'),
         150,
@@ -616,6 +631,66 @@ void main() {
       expect(find.byKey(const ValueKey('case-send-response')), findsOneWidget);
     },
   );
+  testWidgets('case detail opens the selected thumbnail in the app gallery', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(imageCache.clear);
+    const urls = [
+      'https://images.test/first.jpg',
+      'https://images.test/upload/second',
+      'https://images.test/third.png',
+    ];
+    for (final (index, url) in urls.indexed) {
+      await cachePhoto(tester, url, Colors.primaries[index]);
+    }
+    final repo = CaseFixtureRepository()
+      ..item = fixture.copyWith(
+        attachments: [
+          for (final url in urls) {'fileUrl': url},
+        ],
+      );
+    await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
+
+    final openingData = find.text('Dữ liệu lúc mở ca');
+    final second = find.bySemanticsLabel('Xem ảnh minh chứng 2');
+    expect(second, findsNothing);
+    await tester.tap(openingData);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(second);
+    await tester.pumpAndSettle();
+    for (var i = 1; i <= urls.length; i++) {
+      final thumbnail = find.bySemanticsLabel('Xem ảnh minh chứng $i');
+      final photo = find.descendant(
+        of: thumbnail,
+        matching: find.byType(RawImage),
+      );
+      expect(tester.widget<RawImage>(photo).image, isNotNull);
+    }
+    await tester.tap(second);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppImageViewer), findsOneWidget);
+    expect(find.text('Ảnh 2/3'), findsOneWidget);
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Xem ảnh 3 trong thư viện'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ảnh 3/3'), findsOneWidget);
+    await tester.tap(find.byTooltip('Đóng'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppImageViewer), findsNothing);
+    expect(second, findsOneWidget);
+    await tester.ensureVisible(openingData);
+    await tester.pumpAndSettle();
+    await tester.tap(openingData);
+    await tester.pumpAndSettle();
+    expect(second, findsNothing);
+    expect(find.text('Ca bệnh: Tôm giảm ăn'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('N: create validates inputs and navigates to created case', (
     tester,
   ) async {
@@ -644,7 +719,7 @@ void main() {
     await tester.tap(find.text('Gửi cho chuyên gia'));
     await tester.pumpAndSettle();
     expect(repo.mutations, 1);
-    expect(find.text('Tôm giảm ăn'), findsOneWidget);
+    expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
   });
   testWidgets(
     'closed season permission keeps case details without response controls',
@@ -652,7 +727,7 @@ void main() {
       final repo = CaseFixtureRepository()
         ..item = fixture.copyWith(canRespond: false);
       await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
-      expect(find.text('Tôm giảm ăn'), findsOneWidget);
+      expect(find.text('Chi tiết ca bệnh'), findsOneWidget);
       expect(find.text('Gửi phản hồi'), findsNothing);
       expect(find.text('Ca bệnh hiện chỉ cho phép xem.'), findsOneWidget);
       expect(repo.mutations, 0);
@@ -726,7 +801,7 @@ void main() {
       );
     },
   );
-  testWidgets('N: emergency response succeeds and clears the editor', (
+  testWidgets('N: emergency response closes without a success notice', (
     tester,
   ) async {
     final repo = CaseFixtureRepository();
@@ -744,9 +819,10 @@ void main() {
     expect(repo.mutations, 1);
     expect(
       find.text('Đã gửi cảnh báo khẩn đến chuyên gia và chủ trại.'),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.byKey(const ValueKey('case-response-success')), findsOneWidget);
+    expect(find.byKey(const ValueKey('app_notice_success')), findsNothing);
+    expect(find.text('Gửi cảnh báo khẩn'), findsNothing);
     expect(find.byType(SnackBar), findsNothing);
     expect(repo.sentType, CaseResponseType.emergencyAlert);
     expect(repo.sentMessage, 'Cần chuyên gia hỗ trợ');
@@ -764,9 +840,7 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsWidgets);
     expect(
       tester
-          .widget<FilledButton>(
-            find.byKey(const ValueKey('case-send-response')),
-          )
+          .widget<IconButton>(find.byKey(const ValueKey('case-send-response')))
           .onPressed,
       isNull,
     );

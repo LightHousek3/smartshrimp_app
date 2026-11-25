@@ -1,44 +1,27 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/services/app_image_picker.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import '../../domain/domain.dart';
+import '../view_models/case_evidence_draft.dart';
 import '../view_models/disease_case_controller.dart';
 import 'case_ui.dart';
-
-typedef LocalCaseEvidence = ({Uint8List bytes, String fileName});
 
 class CaseEvidencePicker extends ConsumerStatefulWidget {
   const CaseEvidencePicker({
     super.key,
-    required this.urls,
+    required this.images,
     required this.onChanged,
     this.disabled = false,
     this.onBusyChanged,
     this.compact = false,
-  }) : localImages = const [],
-       onLocalChanged = null;
+  });
 
-  const CaseEvidencePicker.local({
-    super.key,
-    required this.localImages,
-    required ValueChanged<List<LocalCaseEvidence>> onChanged,
-    this.disabled = false,
-    this.onBusyChanged,
-    this.compact = false,
-  }) : urls = const [],
-       onChanged = null,
-       onLocalChanged = onChanged;
-
-  final List<String> urls;
-  final ValueChanged<List<String>>? onChanged;
-  final List<LocalCaseEvidence> localImages;
-  final ValueChanged<List<LocalCaseEvidence>>? onLocalChanged;
+  final List<LocalCaseEvidence> images;
+  final ValueChanged<List<LocalCaseEvidence>> onChanged;
   final bool disabled;
   final ValueChanged<bool>? onBusyChanged;
   final bool compact;
@@ -48,36 +31,38 @@ class CaseEvidencePicker extends ConsumerStatefulWidget {
 
 class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
   bool _busy = false;
-  int get _imageCount => widget.urls.length + widget.localImages.length;
-  String get _busyLabel =>
-      widget.onLocalChanged == null ? 'Đang tải ảnh…' : 'Đang đọc ảnh…';
+  int get _imageCount => widget.images.length;
+  int get _remaining => DiseaseCaseRules.maxEvidenceImages - _imageCount;
 
-  Future<void> _pick(ImageSource source) async {
-    if (_busy || widget.disabled || _imageCount >= 5) return;
+  Future<void> _addEvidence() async {
+    final remaining = _remaining;
+    if (_busy || widget.disabled || remaining <= 0) return;
     setState(() => _busy = true);
     widget.onBusyChanged?.call(true);
     try {
-      final file = await ref
-          .read(caseImagePickerProvider)
-          .pickImage(source: source);
-      if (file == null || !mounted) return;
-      if (await file.length() > DiseaseCaseRules.maxImageBytes) {
-        throw const ApiException('Ảnh tối đa 5 MB.');
+      final source = await showAppImageSourceDialog(
+        context,
+        remaining: remaining,
+      );
+      if (source == null || !mounted || widget.disabled) return;
+      final files = await pickAppImages(
+        ref.read(caseImagePickerProvider),
+        source: source,
+        limit: remaining,
+      );
+      if (files.isEmpty || !mounted || widget.disabled) return;
+      final images = <LocalCaseEvidence>[];
+      for (final file in files) {
+        if (await file.length() > DiseaseCaseRules.maxImageBytes) {
+          throw const ApiException('Ảnh tối đa 5 MB.');
+        }
+        final bytes = await file.readAsBytes();
+        DiseaseCaseRules.validateImage(bytes);
+        images.add((bytes: bytes, fileName: file.name));
       }
-      final bytes = await file.readAsBytes();
-      if (!mounted) return;
-      DiseaseCaseRules.validateImage(bytes);
-      if (widget.onLocalChanged != null) {
-        widget.onLocalChanged!([
-          ...widget.localImages,
-          (bytes: bytes, fileName: file.name),
-        ]);
-        return;
+      if (mounted && !widget.disabled) {
+        widget.onChanged([...widget.images, ...images]);
       }
-      final url = await ref
-          .read(diseaseCaseMutationProvider.notifier)
-          .uploadEvidence(bytes, file.name);
-      if (mounted) widget.onChanged!([...widget.urls, url]);
     } catch (error) {
       if (mounted) {
         AppNoticeService.danger(context, caseError(error));
@@ -90,15 +75,9 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
     }
   }
 
-  Future<void> _choose() async {
-    if (_busy || widget.disabled || widget.urls.length >= 5) return;
-    final source = await showAppImageSourceDialog(context);
-    if (source != null && mounted) await _pick(source);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final disabled = _busy || widget.disabled || _imageCount >= 5;
+    final disabled = _busy || widget.disabled || _remaining <= 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -106,7 +85,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
-              onPressed: disabled ? null : _choose,
+              onPressed: disabled ? null : _addEvidence,
               icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
               style: TextButton.styleFrom(
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -114,7 +93,9 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               ),
               label: Text(
-                _busy ? _busyLabel : 'Đính kèm ảnh ($_imageCount/5)',
+                _busy
+                    ? 'Đang đọc ảnh…'
+                    : 'Đính kèm ảnh ($_imageCount/${DiseaseCaseRules.maxEvidenceImages})',
                 style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontSize: 12,
                   color: AppColors.inkSoft,
@@ -128,7 +109,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
             child: SizedBox(
               width: double.infinity,
               child: TextButton.icon(
-                onPressed: disabled ? null : _choose,
+                onPressed: disabled ? null : _addEvidence,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -144,7 +125,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _busy ? _busyLabel : 'Thêm ảnh mẫu tôm / nhá',
+                      _busy ? 'Đang đọc ảnh…' : 'Thêm ảnh mẫu tôm / nhá',
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 12,
                         color: AppColors.inkMuted,
@@ -152,7 +133,7 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'JPG, PNG, WebP · tối đa 5 ảnh, 5 MB/ảnh',
+                      'JPG, PNG, WebP · tối đa ${DiseaseCaseRules.maxEvidenceImages} ảnh, 5 MB/ảnh',
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontSize: 10,
                         height: 1.5,
@@ -169,30 +150,15 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
             spacing: 7,
             runSpacing: 6,
             children: [
-              for (final preview in [
-                for (final url in widget.urls)
-                  (
-                    image: NetworkImage(url) as ImageProvider,
-                    remove: () => widget.onChanged!(
-                      widget.urls.where((v) => v != url).toList(),
-                    ),
-                  ),
-                for (final image in widget.localImages)
-                  (
-                    image: MemoryImage(image.bytes) as ImageProvider,
-                    remove: () => widget.onLocalChanged!(
-                      widget.localImages.where((v) => v != image).toList(),
-                    ),
-                  ),
-              ])
+              for (final (index, image) in widget.images.indexed)
                 Stack(
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image(
-                          image: preview.image,
+                        child: Image.memory(
+                          image.bytes,
                           height: widget.compact ? 44 : 72,
                           width: widget.compact ? 58 : 78,
                           fit: BoxFit.cover,
@@ -222,7 +188,9 @@ class _CaseEvidencePickerState extends ConsumerState<CaseEvidencePicker> {
                           ),
                           onPressed: _busy || widget.disabled
                               ? null
-                              : preview.remove,
+                              : () => widget.onChanged(
+                                  [...widget.images]..removeAt(index),
+                                ),
                           icon: const Icon(Icons.close, size: 14),
                         ),
                       ),

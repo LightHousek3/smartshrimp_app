@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
-import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/domain.dart';
 import '../../support/load_app_fonts.dart';
 import 'disease_case_test.dart' show CaseFixtureRepository, fixture, showCase;
@@ -193,13 +192,27 @@ void main() {
             'nh3MgL': '0.32',
             'no2MgL': '1.9',
             'healthStatus': 'WARNING',
+            'exceededWaterMetrics': ['ph', 'no2MgL', 'nh3MgL'],
           },
         );
       await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
+      expect(find.text('12.4'), findsNothing);
+      expect(find.text('Hiện trạng khi mở ca'), findsNothing);
+      await tester.tap(find.text('Dữ liệu lúc mở ca'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hiện trạng khi mở ca'), findsOneWidget);
+      expect(find.text('Nhật ký đo nước'), findsOneWidget);
+      expect(find.text('Hao hụt'), findsOneWidget);
       expect(find.text('12.4'), findsOneWidget);
       expect(find.text('8.6'), findsOneWidget);
       expect(find.text('Cần chú ý'), findsOneWidget);
-      expect(find.text('Trao đổi với chuyên gia'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Trò chuyện với chuyên gia'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Trò chuyện với chuyên gia'), findsOneWidget);
+      expect(find.text('Trao đổi với chuyên gia'), findsNothing);
       tester.view.viewInsets = const FakeViewPadding(bottom: 260);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField), 'Tôm bắt mồi tốt hơn');
@@ -224,120 +237,62 @@ void main() {
       CaseFixtureRepository(),
       path: '/seasons/season/disease-cases/case',
     );
-    expect(find.text('—'), findsNWidgets(7));
-    expect(
-      find.text('Hồ sơ chưa có số liệu được lưu tại thời điểm mở ca.'),
-      findsOneWidget,
-    );
+    expect(find.text('Chưa có thông tin ghi nhận khi mở ca.'), findsNothing);
+    await tester.tap(find.text('Dữ liệu lúc mở ca'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chưa có thông tin ghi nhận khi mở ca.'), findsOneWidget);
     expect(find.text('12.4'), findsNothing);
   });
 
   testWidgets(
-    'floating response success stays below the header without moving page content',
+    'sending a chat reply clears the draft without showing a success notice',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(320, 725);
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetViewInsets);
-      await showCase(
-        tester,
-        CaseFixtureRepository(),
-        path: '/seasons/season/disease-cases/case',
-      );
+      final repo = CaseFixtureRepository();
+      await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
+      await tester.tap(find.text('Dữ liệu lúc mở ca'));
+      await tester.pumpAndSettle();
       tester.view.viewInsets = const FakeViewPadding(bottom: 260);
       await tester.pumpAndSettle();
       final send = find.byKey(const ValueKey('case-send-response'));
       final originalSendRect = tester.getRect(send);
       final originalContentRect = tester.getRect(find.byType(RefreshIndicator));
       final originalDescriptionRect = tester.getRect(
-        find.text('Tình trạng quan sát tại ao'),
+        find.text('Ghi chú: Tình trạng quan sát tại ao'),
       );
       await tester.enterText(find.byType(TextFormField), 'Thông tin mới');
       await tester.tap(send);
       await tester.pumpAndSettle();
 
-      final notice = find.byKey(const ValueKey('case-response-success'));
-      expect(find.text('Đã gửi phản hồi.'), findsOneWidget);
-      expect(find.byKey(const ValueKey('app_notice_success')), findsOneWidget);
+      expect(repo.sentMessage, 'Thông tin mới');
+      expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField))
+            .controller!
+            .text,
+        isEmpty,
+      );
+      expect(find.byKey(const ValueKey('app_notice_success')), findsNothing);
       expect(find.byType(SnackBar), findsNothing);
-      expect(
-        tester.getRect(notice).top,
-        greaterThanOrEqualTo(tester.getRect(find.byType(PageHeaderBar)).bottom),
-      );
-      expect(
-        tester.getRect(notice).bottom,
-        lessThan(tester.getTopLeft(send).dy),
-      );
       expect(tester.getRect(send), originalSendRect);
       expect(
         tester.getRect(find.byType(RefreshIndicator)),
         originalContentRect,
       );
       expect(
-        tester.getRect(find.text('Tình trạng quan sát tại ao')),
+        tester.getRect(find.text('Ghi chú: Tình trạng quan sát tại ao')),
         originalDescriptionRect,
       );
-      await tester.pump(const Duration(seconds: 2));
-      await tester.enterText(find.byType(TextFormField), 'Bổ sung tiếp');
-      await tester.tap(send);
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 2));
-      expect(notice, findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 1300));
-      expect(notice, findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'expanded status history stays above the pinned response composer',
-    (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(320, 725);
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      final repo = CaseFixtureRepository()
-        ..item = fixture.copyWith(
-          statusHistory: [
-            {'toStatus': 'OPEN', 'reason': 'KTV mở ca bệnh'},
-            {'toStatus': 'MONITORING', 'reason': 'Chuyên gia yêu cầu theo dõi'},
-          ],
-        );
-      await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
-      final header = find.text('Lịch sử trạng thái');
-      await tester.scrollUntilVisible(
-        header,
-        150,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await Scrollable.ensureVisible(tester.element(header), alignment: 1);
-      await tester.pumpAndSettle();
-      await tester.tap(header);
-      await tester.pumpAndSettle();
-
-      final scrollable = find
-          .ancestor(of: header, matching: find.byType(Scrollable))
-          .first;
-      final viewport = tester.getRect(scrollable);
-      for (final reason in ['KTV mở ca bệnh', 'Chuyên gia yêu cầu theo dõi']) {
-        final event = find.text(reason);
-        expect(event.hitTestable(), findsOneWidget);
-        expect(
-          tester.getRect(event).bottom,
-          lessThanOrEqualTo(viewport.bottom),
-        );
-      }
-      expect(
-        find.byKey(const ValueKey('case-send-response')).hitTestable(),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'long history remains scrollable with the keyboard and preserves the reply draft',
+    'opening data expands above the pinned composer and keeps the reply draft',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(320, 725);
@@ -346,37 +301,33 @@ void main() {
       addTearDown(tester.view.resetViewInsets);
       final repo = CaseFixtureRepository()
         ..item = fixture.copyWith(
-          statusHistory: List.generate(
-            12,
-            (index) => {
-              'toStatus': 'MONITORING',
-              'reason': 'Bước xử lý ${index + 1}',
-            },
-          ),
+          caseSnapshot: {
+            ...fixture.caseSnapshot,
+            'shrimpHealth': {'avgWeightG': '12.4', 'healthStatus': 'GOOD'},
+          },
+          statusHistory: [
+            {'toStatus': 'OPEN', 'reason': 'KTV mở ca bệnh'},
+          ],
         );
       await showCase(tester, repo, path: '/seasons/season/disease-cases/case');
       await tester.enterText(find.byType(TextFormField), 'Bản nháp đang nhập');
       tester.view.viewInsets = const FakeViewPadding(bottom: 260);
       await tester.pumpAndSettle();
-      final header = find.text('Lịch sử trạng thái');
+
+      expect(find.text('Lịch sử trạng thái'), findsNothing);
+      expect(find.text('12.4'), findsNothing);
+      final header = find.text('Dữ liệu lúc mở ca');
       await tester.scrollUntilVisible(
         header,
-        150,
+        100,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
       await tester.tap(header);
       await tester.pumpAndSettle();
-      expect(tester.testTextInput.isVisible, isFalse);
+      expect(find.text('12.4'), findsOneWidget);
+      expect(find.text('Tốt'), findsOneWidget);
       expect(find.text('Bản nháp đang nhập'), findsOneWidget);
-      final finalEvent = find.text('Bước xử lý 12');
-      await tester.scrollUntilVisible(
-        finalEvent,
-        150,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-      expect(finalEvent.hitTestable(), findsOneWidget);
       expect(
         find.byKey(const ValueKey('case-send-response')).hitTestable(),
         findsOneWidget,

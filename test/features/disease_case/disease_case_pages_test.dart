@@ -502,7 +502,7 @@ void main() {
       expect(find.byIcon(Icons.water_drop_outlined), findsNothing);
       expect(find.text('Mẫu nước lấy trước khi báo ca.'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Kỹ Thuật Viên'),
+        find.text('Kỹ thuật viên'),
         120,
         scrollable: scrollable,
       );

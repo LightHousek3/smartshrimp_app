@@ -86,6 +86,8 @@ class _TaskImagePicker extends ImagePicker {
     name: 'evidence.jpg',
   );
   Object? failure;
+  int galleryCount = 1;
+  final galleryLimits = <int?>[];
   final sources = <ImageSource>[];
   @override
   Future<XFile?> pickImage({
@@ -99,6 +101,21 @@ class _TaskImagePicker extends ImagePicker {
     sources.add(source);
     if (failure != null) throw failure!;
     return image;
+  }
+
+  @override
+  Future<List<XFile>> pickMultiImage({
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    int? limit,
+    bool requestFullMetadata = true,
+  }) async {
+    sources.add(ImageSource.gallery);
+    galleryLimits.add(limit);
+    if (failure != null) throw failure!;
+    final file = image;
+    return file == null ? [] : List.filled(galleryCount, file);
   }
 }
 
@@ -389,22 +406,24 @@ void main() {
     },
   );
 
-  testWidgets('B: five photos disable both sources until a photo is removed', (
+  testWidgets('B: gallery batches use remaining slots up to five photos', (
     tester,
   ) async {
     final repo = AssignedTaskFixtureRepository();
-    final picker = _TaskImagePicker();
+    final picker = _TaskImagePicker()..galleryCount = 3;
     await openAssignedTasks(
       tester,
       repo,
       path: '/tasks/progress',
       picker: picker,
     );
-    for (var index = 0; index < 5; index++) {
-      await tester.ensureVisible(find.text('Thêm ảnh'));
-      await pickTaskImage(tester, ImageSource.camera);
-      await tester.pumpAndSettle();
-    }
+    await pickTaskImage(tester, ImageSource.gallery);
+    await tester.pumpAndSettle();
+    expect(find.text('3/5 ảnh'), findsOneWidget);
+    picker.galleryCount = 2;
+    await pickTaskImage(tester, ImageSource.gallery);
+    await tester.pumpAndSettle();
+    expect(picker.galleryLimits, [5, 2]);
     expect(find.text('5/5 ảnh'), findsOneWidget);
     expect(
       tester
@@ -412,7 +431,6 @@ void main() {
           .onPressed,
       isNull,
     );
-    expect(find.text('Chọn từ thư viện'), findsNothing);
     await tester.ensureVisible(find.byTooltip('Bỏ ảnh minh chứng 1'));
     await tester.tap(find.byTooltip('Bỏ ảnh minh chứng 1'));
     await tester.pumpAndSettle();
@@ -424,6 +442,11 @@ void main() {
       isNotNull,
     );
     expect(repo.uploads, 5);
+    await pickTaskImage(tester, ImageSource.gallery);
+    await tester.pumpAndSettle();
+    expect(find.text('5/5 ảnh'), findsOneWidget);
+    expect(picker.galleryLimits, [5, 2]);
+    expect(repo.uploads, 6);
   });
 
   testWidgets('B: late upload does not update a disposed page', (tester) async {
