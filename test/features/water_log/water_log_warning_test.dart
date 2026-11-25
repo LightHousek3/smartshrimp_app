@@ -548,6 +548,149 @@ void main() {
     expect(find.byKey(const Key('water_log_form_sheet')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'quick fill uses template thresholds when no valid logs exist (only min uses min)',
+    (tester) async {
+      final repository = _Repository();
+      await _open(tester, repository);
+      expect(find.text('Điền ngưỡng mẫu'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('water_log_quick_fill_button')));
+      await tester.pumpAndSettle();
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      final metadata = WaterLogMetadata.legacy(ShrimpType.whiteleg);
+      final doMetric = metadata.metrics.firstWhere(
+        (m) => m.field == 'dissolvedOxygenMgL',
+      );
+      expect(fields[2].controller!.text, '${doMetric.warningMin!.toInt()}');
+      expect(fields[4].controller!.text, '0');
+      expect(fields[5].controller!.text, '0');
+      expect(fields[6].controller!.text, '175');
+      expect(fields[7].controller!.text, '0');
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const Key('water_log_quick_fill_button')),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(find.byType(TextField).first, '30');
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const Key('water_log_quick_fill_button')),
+            )
+            .onPressed,
+        isNull,
+      );
+
+      await _save(tester);
+      expect(find.byKey(const Key('water_log_warning_dialog')), findsNothing);
+      expect(repository.payloads, hasLength(1));
+    },
+  );
+
+  for (final changed in [false, true]) {
+    testWidgets('pending quick fill locks input and save; changed=$changed', (
+      tester,
+    ) async {
+      final repository = _PendingMetadataRepository();
+      await _open(tester, repository);
+      await tester.enterText(find.byType(TextField).first, '30');
+      await tester.tap(find.byKey(const Key('water_log_quick_fill_button')));
+      await tester.pump();
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      expect(fields.every((field) => field.enabled == false), isTrue);
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNull,
+      );
+      expect(repository.payloads, isEmpty);
+
+      // Simulate a late text update despite the disabled controls.
+      if (changed) fields.first.controller!.text = '31';
+      repository.pending.complete(WaterLogMetadata.legacy(ShrimpType.whiteleg));
+      await tester.pumpAndSettle();
+
+      expect(fields.first.controller!.text, changed ? '31' : '29');
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const Key('water_log_quick_fill_button')),
+            )
+            .onPressed,
+        changed ? isNotNull : isNull,
+      );
+      expect(fields[1].controller!.text, changed ? '' : '8');
+      expect(
+        tester
+            .widgetList<TextField>(find.byType(TextField))
+            .every((field) => field.enabled == true),
+        isTrue,
+      );
+      expect(
+        tester.widget<GradientButton>(find.byType(GradientButton)).onPressed,
+        isNotNull,
+      );
+      expect(repository.payloads, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'quick fill copies values from latest non-voided log when available',
+    (tester) async {
+      final repository = _Repository()
+        ..logs = [
+          WaterLog(
+            id: 'log-1',
+            seasonId: 'season',
+            recordedAt: DateTime(2026, 10, 1, 8, 0),
+            createdAt: DateTime(2026, 10, 1, 8, 0),
+            isVoided: false,
+            exceededParameters: const [],
+            temperatureC: 29.5,
+            ph: 7.9,
+            dissolvedOxygenMgL: 5.2,
+          ),
+        ];
+      await _open(tester, repository);
+      expect(find.text('Lấy từ lần đo trước'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('water_log_quick_fill_button')));
+      await tester.pumpAndSettle();
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      expect(fields[0].controller!.text, '29.5');
+      expect(fields[1].controller!.text, '7.9');
+      expect(fields[2].controller!.text, '5.2');
+      expect(fields[3].controller!.text, '');
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const Key('water_log_quick_fill_button')),
+            )
+            .onPressed,
+        isNull,
+      );
+    },
+  );
+}
+
+class _PendingMetadataRepository extends _Repository {
+  final pending = Completer<WaterLogMetadata>();
+
+  @override
+  Future<WaterLogMetadata> getMetadata({required String seasonId}) =>
+      pending.future;
 }
 
 class _PendingRepository extends _Repository {
@@ -577,6 +720,7 @@ class _Repository implements WaterLogRepository {
 
   final payloads = <Map<String, Object?>>[];
   final keys = <String>[];
+  List<WaterLog> logs = const [];
   bool failCreate = false;
   AppException? createError;
 
@@ -590,8 +734,16 @@ class _Repository implements WaterLogRepository {
     bool includeCounts = false,
     int limit = 20,
     String? cursor,
-  }) async =>
-      const WaterLogPage(items: [], totalResults: 0, hasNextPage: false);
+  }) async {
+    final visible = includeVoided
+        ? logs
+        : logs.where((l) => !l.isVoided).toList();
+    return WaterLogPage(
+      items: visible.take(limit).toList(),
+      totalResults: visible.length,
+      hasNextPage: visible.length > limit,
+    );
+  }
 
   @override
   Future<WaterLog> createWaterLog({

@@ -265,7 +265,11 @@ class _SeasonDetailContent extends ConsumerWidget {
         (label: 'DOC', value: 'Ngày ${season.dayOfCulture}', highlighted: true),
       if (season.status == SeasonStatus.active ||
           season.status == SeasonStatus.completed)
-        (label: 'FCR TẠM TÍNH', value: '—', highlighted: true),
+        (
+          label: 'FCR TẠM TÍNH',
+          value: seasonDecimalLabel(season.estimatedFcr),
+          highlighted: true,
+        ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {

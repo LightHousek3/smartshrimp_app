@@ -1544,14 +1544,12 @@ void main() {
         );
         expect(find.text('Danh sách thu hoạch'), findsOneWidget);
         if (warning != null) {
-          expect(find.text(warning), findsOneWidget);
-          expect(find.text('Đã ghi nhận thu hoạch thành công.'), findsNothing);
-        } else {
-          expect(
-            find.text('Đã ghi nhận thu hoạch thành công.'),
-            findsOneWidget,
-          );
+          expect(find.text(warning), findsNothing);
         }
+        expect(
+          find.text('Đã ghi nhận thu hoạch thành công.'),
+          findsOneWidget,
+        );
       },
     );
   }
