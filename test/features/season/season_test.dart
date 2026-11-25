@@ -28,6 +28,21 @@ void main() {
     );
   });
 
+  test('parses estimatedFcr when present and defaults to null when omitted', () {
+    final omitted = AquacultureSeason.fromJson(_seasonJson());
+    final withNull = AquacultureSeason.fromJson(
+      _seasonJson()..['estimatedFcr'] = null,
+    );
+    final withValue = AquacultureSeason.fromJson(
+      _seasonJson()..['estimatedFcr'] = 1.35,
+    );
+
+    expect(omitted.estimatedFcr, isNull);
+    expect(withNull.estimatedFcr, isNull);
+    expect(withValue.estimatedFcr, 1.35);
+    expect(withValue.copyWith(estimatedFcr: null), omitted);
+  });
+
   test('keeps large money exact and handles an empty total', () {
     final json = _costsJson()
       ..addAll({

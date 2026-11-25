@@ -13,10 +13,31 @@ String formatWaterTime(DateTime value) {
   return '${_twoDigits(local.hour)}:${_twoDigits(local.minute)}';
 }
 
-/// 'dd-MM' theo giờ địa phương.
+/// Nhãn ngày theo giờ địa phương: 'Hôm nay (dd/MM)', 'Hôm qua (dd/MM)', 'dd/MM' hoặc 'dd/MM/yyyy'.
 String formatWaterDay(DateTime value) {
   final local = value.toLocal();
-  return '${_twoDigits(local.day)}-${_twoDigits(local.month)}';
+  final day = _twoDigits(local.day);
+  final month = _twoDigits(local.month);
+
+  final now = DateTime.now();
+  if (local.year == now.year &&
+      local.month == now.month &&
+      local.day == now.day) {
+    return 'Hôm nay ($day/$month)';
+  }
+
+  final yesterday = now.subtract(const Duration(days: 1));
+  if (local.year == yesterday.year &&
+      local.month == yesterday.month &&
+      local.day == yesterday.day) {
+    return 'Hôm qua ($day/$month)';
+  }
+
+  if (local.year == now.year) {
+    return '$day/$month';
+  }
+
+  return '$day/$month/${local.year}';
 }
 
 /// Badge trạng thái trên card theo Figma.
