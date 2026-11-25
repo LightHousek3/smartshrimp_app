@@ -234,13 +234,23 @@ void main() {
     await tester.pump();
   }
 
-  Future<void> addLabelPhoto(WidgetTester tester) async {
+  Future<void> addLabelPhoto(
+    WidgetTester tester, {
+    String button = 'Thêm ảnh',
+    ImageSource source = ImageSource.gallery,
+  }) async {
     FocusManager.instance.primaryFocus?.unfocus();
     tester.testTextInput.hide();
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Thêm ảnh'));
+    await tester.ensureVisible(find.text(button));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Thêm ảnh'));
+    await tester.tap(find.text(button));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text(
+        source == ImageSource.camera ? 'Chụp ảnh mới' : 'Chọn ảnh từ thiết bị',
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -1090,46 +1100,47 @@ void main() {
     },
   );
 
-  testWidgets('add photos opens the multi-file picker without a camera menu', (
-    tester,
-  ) async {
-    final picker = _FileImagePicker();
-    await openForm(
-      tester,
-      const InventoryProductFormPage.create(farmId: 'farm-1'),
-      _InventoryRepository(product: _product(), history: _history()),
-      picker: picker,
-    );
-    await tester.ensureVisible(find.text('Thêm ảnh'));
-    await tester.tap(find.text('Thêm ảnh'));
-    await tester.pumpAndSettle();
-    expect(picker.calls, 1);
-    expect(find.byKey(const ValueKey('inventory-photo-0')), findsOneWidget);
-    expect(find.byKey(const ValueKey('inventory-photo-1')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('inventory-photo-preview')),
-      findsOneWidget,
-    );
-    expect(find.text('Chụp ảnh'), findsNothing);
-    expect(find.byKey(const ValueKey('inventory-photo-2')), findsNothing);
-    expect(find.text('Thêm ảnh khác'), findsOneWidget);
-    await capture(tester, 'create-material-with-photos');
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets(
-    'accepts three photos and preserves the third slot after removal',
+    'add photos opens the shared source dialog and limits the gallery',
     (tester) async {
-      final picker = _FileImagePicker(fileCount: 3);
+      final picker = _FileImagePicker();
       await openForm(
         tester,
         const InventoryProductFormPage.create(farmId: 'farm-1'),
         _InventoryRepository(product: _product(), history: _history()),
         picker: picker,
       );
-      await tester.ensureVisible(find.text('Thêm ảnh'));
-      await tester.tap(find.text('Thêm ảnh'));
-      await tester.pumpAndSettle();
+      await addLabelPhoto(tester);
+      expect(picker.calls, 1);
+      expect(picker.galleryLimits, [3]);
+      expect(find.byKey(const ValueKey('inventory-photo-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('inventory-photo-1')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('inventory-photo-preview')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('inventory-photo-2')), findsNothing);
+      expect(find.text('Thêm ảnh khác'), findsOneWidget);
+      await capture(tester, 'create-material-with-photos');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'adds two gallery photos after a camera photo and reuses a removed slot',
+    (tester) async {
+      final picker = _FileImagePicker();
+      await openForm(
+        tester,
+        const InventoryProductFormPage.create(farmId: 'farm-1'),
+        _InventoryRepository(product: _product(), history: _history()),
+        picker: picker,
+      );
+      await addLabelPhoto(tester, source: ImageSource.camera);
+      expect(picker.lastSource, ImageSource.camera);
+      expect(find.textContaining('1/3 ảnh'), findsOneWidget);
+      await addLabelPhoto(tester, button: 'Thêm ảnh khác');
+      expect(picker.galleryLimits, [2]);
       expect(find.text('Đã đủ 3 ảnh'), findsOneWidget);
       await selectPhoto(tester, 2);
       await tester.ensureVisible(find.byTooltip('Gỡ ảnh 3'));
@@ -1137,10 +1148,9 @@ void main() {
       await tester.tap(find.byTooltip('Gỡ ảnh 3'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Gỡ ảnh 3'), findsNothing);
-      await tester.ensureVisible(find.text('Thêm ảnh khác'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Thêm ảnh khác'));
-      await tester.pumpAndSettle();
+      await addLabelPhoto(tester, button: 'Thêm ảnh khác');
+      expect(picker.lastSource, ImageSource.gallery);
+      expect(picker.galleryLimits, [2]);
       expect(find.byTooltip('Gỡ ảnh 3'), findsOneWidget);
       expect(find.text('Đã đủ 3 ảnh'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -1157,10 +1167,11 @@ void main() {
       _InventoryRepository(product: _product(), history: _history()),
       picker: picker,
     );
-    await tester.ensureVisible(find.text('Thêm ảnh'));
-    await tester.tap(find.text('Thêm ảnh'));
-    await tester.pumpAndSettle();
-    expect(find.text('Mỗi vật tư có tối đa 3 ảnh.'), findsOneWidget);
+    await addLabelPhoto(tester);
+    expect(
+      find.text('Bạn chỉ có thể thêm tối đa 3 ảnh trong lần này.'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Gỡ ảnh 1'), findsNothing);
     expect(find.byTooltip('Gỡ ảnh 2'), findsNothing);
   });
@@ -1231,9 +1242,7 @@ void main() {
         picker: _FileImagePicker(),
         storage: storage,
       );
-      await tester.ensureVisible(find.text('Thêm ảnh'));
-      await tester.tap(find.text('Thêm ảnh'));
-      await tester.pumpAndSettle();
+      await addLabelPhoto(tester);
       await submitForm(tester, 'Lưu thay đổi');
       expect(repository.updateCalls, 1);
       expect(storage.calls, 2);
@@ -2937,6 +2946,7 @@ class _ImageStorage implements InventoryImageStorage {
 class _FileImagePicker extends ImagePicker {
   _FileImagePicker({this.fileCount = 2});
   final int fileCount;
+  final galleryLimits = <int?>[];
   ImageSource? lastSource;
   int calls = 0;
   @override
@@ -2949,7 +2959,8 @@ class _FileImagePicker extends ImagePicker {
     bool requestFullMetadata = true,
   }) async {
     lastSource = source;
-    return (await pickMultiImage()).first;
+    calls++;
+    return _files(1).single;
   }
 
   @override
@@ -2961,11 +2972,16 @@ class _FileImagePicker extends ImagePicker {
     bool requestFullMetadata = true,
   }) async {
     calls++;
+    galleryLimits.add(limit);
+    return _files(fileCount);
+  }
+
+  List<XFile> _files(int count) {
     final bytes = base64Decode(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     );
     return List.generate(
-      fileCount,
+      count,
       (index) => XFile.fromData(bytes, name: 'photo-$index.png'),
     );
   }

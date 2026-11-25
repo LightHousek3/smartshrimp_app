@@ -56,14 +56,12 @@ class CaseFrame extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.composer,
-    this.notice,
   });
   final String title;
   final String? subtitle;
   final Widget child;
   final Widget? trailing;
   final Widget? composer;
-  final Widget? notice;
   @override
   Widget build(BuildContext context) => AppGradientBackground(
     child: Scaffold(
@@ -80,16 +78,7 @@ class CaseFrame extends StatelessWidget {
                   trailing: trailing,
                   onBack: () => Navigator.of(context).maybePop(),
                 ),
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      child,
-                      if (notice != null)
-                        Positioned(top: 0, left: 0, right: 0, child: notice!),
-                    ],
-                  ),
-                ),
+                Expanded(child: SizedBox.expand(child: child)),
                 ?composer,
               ],
             ),

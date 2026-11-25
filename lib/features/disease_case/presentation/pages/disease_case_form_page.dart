@@ -8,6 +8,7 @@ import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/domain/entities/ai_diagnosis.dart';
 import 'package:smartshrimp_app/features/ai_diagnosis/presentation/view_models/ai_diagnosis_controller.dart';
 import '../../domain/domain.dart';
+import '../view_models/case_evidence_draft.dart';
 import '../view_models/disease_case_controller.dart';
 import '../widgets/case_ui.dart';
 import '../widgets/case_evidence_picker.dart';
@@ -30,8 +31,7 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   CaseSeverity _severity = CaseSeverity.medium;
-  List<LocalCaseEvidence> _evidence = [];
-  final _uploadedEvidence = <LocalCaseEvidence, String>{};
+  final _evidence = CaseEvidenceDraft();
   bool _picking = false;
   bool _submitting = false;
   String? _aiDiagnosisId;
@@ -61,31 +61,21 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
     if (!(_form.currentState?.validate() ?? false)) return;
     setState(() => _submitting = true);
     try {
-      final attachments = <String>[];
-      for (final image in _evidence) {
-        var url = _uploadedEvidence[image];
-        if (url == null) {
-          url = await ref
-              .read(diseaseCaseMutationProvider.notifier)
-              .uploadEvidence(image.bytes, image.fileName);
-          if (!mounted) return;
-          // Reuse completed uploads if a later upload or case creation fails.
-          _uploadedEvidence[image] = url;
-        }
-        attachments.add(url);
-      }
-      if (!mounted) return;
-      final item = await ref
-          .read(diseaseCaseMutationProvider.notifier)
-          .create(
-            widget.seasonId,
-            _title.text,
-            _description.text,
-            _severity,
-            attachments: attachments,
-            aiDiagnosisId: _aiDiagnosisId,
-            relatedCaseId: _relatedCaseId,
-          );
+      final mutation = ref.read(diseaseCaseMutationProvider.notifier);
+      final attachments = await _evidence.upload(
+        uploadImage: mutation.uploadEvidence,
+        isActive: () => mounted,
+      );
+      if (!mounted || attachments == null) return;
+      final item = await mutation.create(
+        widget.seasonId,
+        _title.text,
+        _description.text,
+        _severity,
+        attachments: attachments,
+        aiDiagnosisId: _aiDiagnosisId,
+        relatedCaseId: _relatedCaseId,
+      );
       if (mounted) {
         context.pushReplacement(
           '/seasons/${widget.seasonId}/disease-cases/${item.id}',
@@ -120,10 +110,9 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final busy =
-        ref.watch(diseaseCaseMutationProvider).isLoading ||
-        _picking ||
-        _submitting;
+    final submitting =
+        ref.watch(diseaseCaseMutationProvider).isLoading || _submitting;
+    final busy = submitting || _picking;
     final scopeProvider = diseaseCaseListProvider((
       seasonId: widget.seasonId,
       page: 1,
@@ -296,17 +285,11 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                   CaseField(
                     'Ảnh minh chứng (tùy chọn)',
                     bottomGap: 0,
-                    child: CaseEvidencePicker.local(
-                      localImages: _evidence,
-                      disabled:
-                          _submitting ||
-                          ref.watch(diseaseCaseMutationProvider).isLoading,
-                      onChanged: (images) => setState(() {
-                        _evidence = images;
-                        _uploadedEvidence.removeWhere(
-                          (image, _) => !images.contains(image),
-                        );
-                      }),
+                    child: CaseEvidencePicker(
+                      images: _evidence.images,
+                      disabled: submitting,
+                      onChanged: (images) =>
+                          setState(() => _evidence.replace(images)),
                       onBusyChanged: (value) =>
                           setState(() => _picking = value),
                     ),
@@ -524,9 +507,9 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
             ),
             const SizedBox(height: 20),
             CasePrimaryButton(
-              label: busy ? 'Đang gửi…' : 'Gửi cho chuyên gia',
-              busy: busy,
-              onPressed: canSubmit ? _submit : null,
+              label: submitting ? 'Đang gửi…' : 'Gửi cho chuyên gia',
+              busy: submitting,
+              onPressed: !busy && canSubmit ? _submit : null,
             ),
           ],
         ),

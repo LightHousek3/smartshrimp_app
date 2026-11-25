@@ -166,7 +166,7 @@ class TaskEvidencePanel extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             const Text(
-              'Tối đa 5 ảnh · JPG, PNG, WebP · 5 MB/ảnh. Có thể hoàn thành mà không kèm ảnh minh chứng.',
+              'Tối đa ${TaskRules.maxEvidenceImages} ảnh · JPG, PNG, WebP · 5 MB/ảnh. Có thể hoàn thành mà không kèm ảnh minh chứng.',
               style: TextStyle(
                 fontSize: 11,
                 height: 1.625,

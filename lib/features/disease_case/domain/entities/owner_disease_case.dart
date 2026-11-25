@@ -169,6 +169,69 @@ abstract class DiseaseCaseSnapshot
   factory DiseaseCaseSnapshot.fromJson(Map<String, dynamic> json) =>
       _$DiseaseCaseSnapshotFromJson(json);
 
+  /// Technician details store decimals as strings in the original case record.
+  factory DiseaseCaseSnapshot.fromRecordedSnapshot(Map<String, dynamic> json) {
+    Map<dynamic, dynamic> section(Object? value) => value is Map ? value : json;
+    String? text(Object? value) =>
+        value is String && value.trim().isNotEmpty ? value.trim() : null;
+    num? number(Object? value) {
+      final parsed = value is num ? value : num.tryParse(text(value) ?? '');
+      return parsed?.isFinite == true ? parsed : null;
+    }
+
+    String? date(Object? value) =>
+        DateTime.tryParse(text(value) ?? '')?.toIso8601String();
+    final health = section(json['shrimpHealth'] ?? json['health']);
+    final water = section(
+      json['waterIndicators'] ?? json['waterQuality'] ?? json['water'],
+    );
+    return DiseaseCaseSnapshot.fromJson({
+      'capturedAt': date(json['capturedAt'] ?? json['captured_at']),
+      'healthRecordedAt':
+          date(json['healthRecordedAt'] ?? json['health_recorded_at']) ??
+          (identical(health, json)
+              ? null
+              : date(health['recordedAt'] ?? health['recorded_at'])),
+      'waterRecordedAt':
+          date(json['waterRecordedAt'] ?? json['water_recorded_at']) ??
+          (identical(water, json)
+              ? null
+              : date(water['recordedAt'] ?? water['recorded_at'])),
+      'healthStatus': text(
+        health['healthStatus'] ?? health['health_status'],
+      )?.toUpperCase(),
+      'note': text(json['note']) ?? text(health['note']),
+      'avgWeightG': number(health['avgWeightG'] ?? health['avg_weight_g']),
+      'mortalityCount': number(
+        health['mortalityCount'] ?? health['mortality_count'],
+      ),
+      'ph': number(water['ph']),
+      'no2MgL': number(water['no2MgL'] ?? water['no2_mg_l']),
+      'nh3MgL': number(water['nh3MgL'] ?? water['nh3_mg_l']),
+      'temperatureC': number(water['temperatureC'] ?? water['temperature_c']),
+      'dissolvedOxygenMgL': number(
+        water['dissolvedOxygenMgL'] ??
+            water['dissolved_oxygen_mg_l'] ??
+            water['doMgL'],
+      ),
+      'salinityPpt': number(water['salinityPpt'] ?? water['salinity_ppt']),
+      'alkalinityMgLCaCO3': number(
+        water['alkalinityMgLCaCO3'] ?? water['alkalinity_mg_l_ca_co3'],
+      ),
+      'h2sMgL': number(water['h2sMgL'] ?? water['h2s_mg_l']),
+      'waterRecordedByName':
+          text(water['recordedByName'] ?? water['recorded_by_name']) ??
+          text(json['waterRecordedByName']),
+      'waterNote': text(
+        identical(water, json) ? json['waterNote'] : water['note'],
+      ),
+      'exceededWaterMetrics': switch (json['exceededWaterMetrics']) {
+        final List fields => fields.whereType<String>().toList(),
+        _ => <String>[],
+      },
+    });
+  }
+
   @override
   List<String> get exceededParameters => exceededWaterMetrics;
 

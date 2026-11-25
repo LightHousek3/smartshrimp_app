@@ -15,9 +15,14 @@ import 'disease_case_ui.dart';
 export 'case_evidence.dart' show CaseEvidence;
 
 class CaseOpeningSnapshot extends StatelessWidget {
-  const CaseOpeningSnapshot({required this.snapshot, super.key});
+  const CaseOpeningSnapshot({
+    required this.snapshot,
+    this.showWaterStatus = true,
+    super.key,
+  });
 
   final DiseaseCaseSnapshot? snapshot;
+  final bool showWaterStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +61,7 @@ class CaseOpeningSnapshot extends StatelessWidget {
                     title: 'Nhật ký đo nước',
                     recordedAt: reading.waterRecordedAt,
                     timeLabel: 'Đo lúc',
-                    status: reading.hasMeasurements
+                    status: showWaterStatus && reading.hasMeasurements
                         ? WaterLogStatusBadge(log: reading)
                         : null,
                   ),

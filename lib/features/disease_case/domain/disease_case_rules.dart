@@ -23,9 +23,10 @@ abstract final class DiseaseCaseRules {
 
   static const titleLimit = 500;
   static const textLimit = 500;
+  static const maxEvidenceImages = 5;
   static const maxImageBytes = 5 * 1024 * 1024;
   static void validateAttachments(List<String> urls) {
-    if (urls.length > 5 ||
+    if (urls.length > maxEvidenceImages ||
         urls.toSet().length != urls.length ||
         urls.any((url) {
           final uri = Uri.tryParse(url);
@@ -35,7 +36,7 @@ abstract final class DiseaseCaseRules {
               uri.host.isEmpty;
         })) {
       throw const ApiException(
-        'Chọn tối đa 5 ảnh minh chứng hợp lệ.',
+        'Chọn tối đa $maxEvidenceImages ảnh minh chứng hợp lệ.',
         statusCode: 400,
       );
     }

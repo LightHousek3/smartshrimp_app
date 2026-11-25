@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
+import '../../domain/ai_diagnosis_rules.dart';
 import '../../domain/entities/ai_diagnosis.dart';
 import '../../domain/repositories/ai_diagnosis_repository.dart';
 import '../view_models/ai_diagnosis_controller.dart';
@@ -122,16 +123,23 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
   );
 
   Future<void> pickImages() async {
-    final source = await showAppImageSourceDialog(context);
-    if (source != null && mounted) {
-      await ref
-          .read(aiDiagnosisDraftProvider(widget.seasonId).notifier)
-          .pick(
-            source == ImageSource.camera
-                ? AiImageSource.camera
-                : AiImageSource.gallery,
-          );
-    }
+    final seasonId = widget.seasonId;
+    final provider = aiDiagnosisDraftProvider(seasonId);
+    final draft = ref.read(provider);
+    final remaining = AiDiagnosisRules.maxImages - draft.images.length;
+    if (draft.picking || draft.submitting || remaining <= 0) return;
+    final source = await showAppImageSourceDialog(
+      context,
+      remaining: remaining,
+    );
+    if (source == null || !mounted || seasonId != widget.seasonId) return;
+    await ref
+        .read(provider.notifier)
+        .pick(
+          source == ImageSource.camera
+              ? AiImageSource.camera
+              : AiImageSource.gallery,
+        );
   }
 
   Future<void> submit() async {
@@ -219,7 +227,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
                                           child: AiTitle('Ảnh mẫu tôm'),
                                         ),
                                         AiBadge(
-                                          '${draft.images.length}/5 ảnh',
+                                          '${draft.images.length}/${AiDiagnosisRules.maxImages} ảnh',
                                           empty: draft.images.isEmpty,
                                         ),
                                       ],
@@ -271,7 +279,7 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 const Text(
-                                                  'Tải từ 1–5 ảnh rõ nét vùng nghi bệnh',
+                                                  'Tải từ 1–${AiDiagnosisRules.maxImages} ảnh rõ nét vùng nghi bệnh',
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(
                                                     fontSize: 11,
@@ -297,7 +305,11 @@ class _AiDiagnosisPageState extends ConsumerState<AiDiagnosisPage> {
                                           ),
                                         ),
                                         onView: viewLocalImage,
-                                        onAdd: pickImages,
+                                        onAdd:
+                                            draft.images.length <
+                                                AiDiagnosisRules.maxImages
+                                            ? pickImages
+                                            : null,
                                         onRemove: ref
                                             .read(
                                               aiDiagnosisDraftProvider(

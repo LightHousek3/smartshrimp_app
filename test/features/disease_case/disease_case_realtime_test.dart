@@ -151,7 +151,9 @@ void main() {
       transport.emitReserved('connect');
       await tester.pumpAndSettle();
       expect(repo.detailCalls, initialCalls + 2);
-      expect(find.text('Dữ liệu mới sau kết nối lại'), findsOneWidget);
+      await tester.tap(find.text('Dữ liệu lúc mở ca'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ghi chú: Dữ liệu mới sau kết nối lại'), findsOneWidget);
       expect(find.text('Bản nháp đang nhập'), findsOneWidget);
       expect(container.read(detail).requireValue.responses, hasLength(1));
       expect(tester.takeException(), isNull);

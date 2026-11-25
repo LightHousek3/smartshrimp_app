@@ -155,7 +155,7 @@ class AiPhotoGrid extends StatelessWidget {
                 ],
               ),
             ),
-          if (onAdd != null && count < 5)
+          if (onAdd != null)
             SizedBox.square(
               dimension: width,
               child: AiDashedBox(

@@ -83,23 +83,6 @@ class _DiseaseCaseListPageState extends ConsumerState<DiseaseCaseListPage> {
                   padding: const EdgeInsets.fromLTRB(5, 0, 5, 24),
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    if (!page.canCreate && page.existingCaseId != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TextButton.icon(
-                          onPressed: () => context.push(
-                            '/seasons/${widget.seasonId}/disease-cases/${page.existingCaseId}',
-                          ),
-                          icon: const Icon(
-                            Icons.medical_information_outlined,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            'Mở ca đang xử lý của vụ',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ),
                     if (page.items.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 56),

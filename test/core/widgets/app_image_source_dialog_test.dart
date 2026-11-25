@@ -15,6 +15,7 @@ void main() {
             body: TextButton(
               onPressed: () async => selected = await showAppImageSourceDialog(
                 tester.element(find.text('Mở')),
+                remaining: 3,
               ),
               child: const Text('Mở'),
             ),
@@ -24,6 +25,10 @@ void main() {
       await tester.tap(find.text('Mở'));
       await tester.pumpAndSettle();
       expect(find.text('Thêm ảnh'), findsOneWidget);
+      expect(
+        find.text('Chọn tối đa 3 ảnh hoặc chụp một ảnh mới.'),
+        findsOneWidget,
+      );
       await tester.tap(
         find.text(
           source == ImageSource.camera
@@ -54,8 +59,10 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () async =>
-                  selected = await showAppImageSourceDialog(context),
+              onPressed: () async => selected = await showAppImageSourceDialog(
+                context,
+                remaining: 1,
+              ),
               child: const Text('Mở'),
             ),
           ),

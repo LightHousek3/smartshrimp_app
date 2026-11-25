@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
+import 'package:smartshrimp_app/core/services/app_image_picker.dart';
+import 'package:smartshrimp_app/core/widgets/app_image_source_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
@@ -80,6 +82,8 @@ class _InventoryProductFormPageState
     growable: true,
   );
   int get _imageCount => _images.where(_hasPhoto).length;
+  int get _remainingPhotos => InventoryRules.maxProductImages - _imageCount;
+  bool get _photosBusy => _saving || _picking || _readingLabel;
   String? get _photoError =>
       _submitted && _product?.metadataLocked != true && _imageCount == 0
       ? InventoryRules.requiredProductImageMessage
@@ -229,35 +233,26 @@ class _InventoryProductFormPageState
         : null;
   }
 
-  Future<void> _pickImage({int? slot, ImageSource? source}) async {
-    if (_saving || _picking || _readingLabel) return;
+  Future<void> _pickImages({int? slot}) async {
+    if (_photosBusy || _remainingPhotos <= 0) return;
     if (slot != null &&
         (slot < 0 || slot >= _images.length || _hasPhoto(_images[slot]))) {
       return;
     }
-    if (slot == null && _imageCount >= InventoryRules.maxProductImages) {
-      AppNoticeService.danger(context, 'Mỗi vật tư có tối đa 3 ảnh.');
-      return;
-    }
+    final limit = slot == null ? _remainingPhotos : 1;
     setState(() => _picking = true);
     try {
-      final picker = ref.read(inventoryImagePickerProvider);
-      final List<XFile> files;
-      if (slot == null && source != ImageSource.camera) {
-        files = await picker.pickMultiImage(requestFullMetadata: false);
-      } else {
-        final file = await picker.pickImage(
-          source: source ?? ImageSource.gallery,
-          requestFullMetadata: false,
-        );
-        files = file == null ? [] : [file];
-      }
+      final source = slot == null
+          ? await showAppImageSourceDialog(context, remaining: limit)
+          : ImageSource.gallery;
+      if (source == null || !mounted) return;
+      final files = await pickAppImages(
+        ref.read(inventoryImagePickerProvider),
+        source: source,
+        limit: limit,
+      );
       if (files.isEmpty || !mounted) return;
-      if (slot == null &&
-          _imageCount + files.length > InventoryRules.maxProductImages) {
-        throw const ApiException('Mỗi vật tư có tối đa 3 ảnh.');
-      }
-      final selected = <({String? url, Uint8List? bytes, String? fileName})>[];
+      final selected = <_MaterialPhoto>[];
       for (final file in files) {
         if (await file.length() > InventoryRules.maxImageBytes) {
           throw const ApiException('Ảnh vật tư không được vượt quá 5 MB.');
@@ -268,17 +263,11 @@ class _InventoryProductFormPageState
       }
       if (mounted) {
         setState(() {
-          if (slot != null) {
-            _images[slot] = selected.single;
-            _selectedPhotoIndex = slot;
-          } else {
-            for (final photo in selected) {
-              final photoIndex = _images.indexWhere(
-                (image) => !_hasPhoto(image),
-              );
-              _images[photoIndex] = photo;
-              _selectedPhotoIndex = photoIndex;
-            }
+          for (final photo in selected) {
+            final index =
+                slot ?? _images.indexWhere((image) => !_hasPhoto(image));
+            _images[index] = photo;
+            _selectedPhotoIndex = index;
           }
         });
       }
@@ -288,7 +277,14 @@ class _InventoryProductFormPageState
       if (mounted) {
         AppNoticeService.danger(
           context,
-          'Không thể mở trình chọn tệp ảnh. Vui lòng thử lại.',
+          'Không thể mở camera hoặc thư viện ảnh. Vui lòng thử lại.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppNoticeService.danger(
+          context,
+          'Không thể đọc ảnh. Vui lòng thử lại.',
         );
       }
     } finally {
@@ -297,10 +293,7 @@ class _InventoryProductFormPageState
   }
 
   Future<void> _readLabel() async {
-    if (_saving ||
-        _picking ||
-        _readingLabel ||
-        _product?.metadataLocked == true) {
+    if (_photosBusy || _product?.metadataLocked == true) {
       return;
     }
     final List<InventoryLabelImage> photos = _images
@@ -883,26 +876,17 @@ class _InventoryProductFormPageState
             child: InventoryGradientButton(
               label: _picking
                   ? 'Đang mở tệp…'
-                  : _imageCount >= InventoryRules.maxProductImages
-                  ? 'Đã đủ 3 ảnh'
+                  : _remainingPhotos <= 0
+                  ? 'Đã đủ ${InventoryRules.maxProductImages} ảnh'
                   : _imageCount == 0
                   ? 'Thêm ảnh'
                   : 'Thêm ảnh khác',
               iconAsset: InventoryAssets.formImage,
               radius: 12,
               fitContent: true,
-              onPressed:
-                  _saving ||
-                      _picking ||
-                      _imageCount >= InventoryRules.maxProductImages
+              onPressed: _photosBusy || _remainingPhotos <= 0
                   ? null
-                  : () => _imageCount == 0
-                        ? _pickImage()
-                        : _pickImage(
-                            slot: _images.indexWhere(
-                              (image) => !_hasPhoto(image),
-                            ),
-                          ),
+                  : _pickImages,
             ),
           ),
           const SizedBox(width: 8),
@@ -912,25 +896,10 @@ class _InventoryProductFormPageState
               iconAsset: InventoryAssets.formOcr,
               radius: 12,
               fitContent: true,
-              onPressed:
-                  _saving || _picking || _readingLabel || _imageCount == 0
-                  ? null
-                  : _readLabel,
+              onPressed: _photosBusy || _imageCount == 0 ? null : _readLabel,
             ),
           ),
         ],
-      ),
-      TextButton.icon(
-        style: TextButton.styleFrom(textStyle: inventoryTextButtonTextStyle),
-        onPressed:
-            _saving ||
-                _picking ||
-                _readingLabel ||
-                _imageCount >= InventoryRules.maxProductImages
-            ? null
-            : () => _pickImage(source: ImageSource.camera),
-        icon: const Icon(Icons.camera_alt_outlined, size: 18),
-        label: const Text('Chụp ảnh nhãn'),
       ),
       const SizedBox(height: 8),
       const Text(
@@ -1010,13 +979,11 @@ class _InventoryProductFormPageState
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    onPressed: () {
-                      if (_hasPhoto(_images[index])) {
-                        setState(() => _selectedPhotoIndex = index);
-                      } else {
-                        _pickImage(slot: index);
-                      }
-                    },
+                    onPressed: _hasPhoto(_images[index])
+                        ? () => setState(() => _selectedPhotoIndex = index)
+                        : _photosBusy || _remainingPhotos <= 0
+                        ? null
+                        : () => _pickImages(slot: index),
                     child: Text('Ảnh ${index + 1}'),
                   ),
                 ),
@@ -1037,14 +1004,16 @@ class _InventoryProductFormPageState
                   InventoryAssets.formDelete,
                   size: 17,
                 ),
-                onPressed: () => setState(() {
-                  if (selected < InventoryRules.maxProductImages) {
-                    _images[selected] = _emptyPhoto;
-                  } else {
-                    _images.removeAt(selected);
-                  }
-                  _selectedPhotoIndex = null;
-                }),
+                onPressed: _photosBusy
+                    ? null
+                    : () => setState(() {
+                        if (selected < InventoryRules.maxProductImages) {
+                          _images[selected] = _emptyPhoto;
+                        } else {
+                          _images.removeAt(selected);
+                        }
+                        _selectedPhotoIndex = null;
+                      }),
               ),
             ),
           ],
