@@ -157,6 +157,7 @@ class AppNoticeCard extends StatelessWidget {
     required this.message,
     required this.level,
     this.messageMaxLines = 3,
+    this.expand = false,
     this.actionLabel,
     this.onActionPressed,
     super.key,
@@ -166,103 +167,108 @@ class AppNoticeCard extends StatelessWidget {
   final String message;
   final AppNoticeLevel level;
   final int messageMaxLines;
+  final bool expand;
   final String? actionLabel;
   final VoidCallback? onActionPressed;
 
   @override
   Widget build(BuildContext context) {
     final visual = appNoticeVisualFor(level);
-    return Semantics(
-      liveRegion: true,
-      label: '$title. $message',
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: Container(
-            key: ValueKey<String>('app_notice_${level.name}'),
-            constraints: const BoxConstraints(minHeight: 64),
-            padding: const EdgeInsets.all(14),
+    final card = Container(
+      key: ValueKey<String>('app_notice_${level.name}'),
+      width: expand ? double.infinity : null,
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: visual.border),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x320F1C2E),
+            blurRadius: 36,
+            spreadRadius: -12,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: visual.border),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x320F1C2E),
-                  blurRadius: 36,
-                  spreadRadius: -12,
-                  offset: Offset(0, 14),
-                ),
-              ],
+              color: visual.background,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: Icon(visual.icon, size: 18, color: visual.foreground),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: visual.background,
-                    borderRadius: BorderRadius.circular(12),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
-                  child: Icon(visual.icon, size: 18, color: visual.foreground),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        title,
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  maxLines: messageMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 11,
+                    height: 1.45,
+                  ),
+                ),
+                if (actionLabel != null) ...<Widget>[
+                  const SizedBox(height: 5),
+                  InkWell(
+                    onTap: onActionPressed,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(
+                        actionLabel!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 12,
+                        style: TextStyle(
+                          color: visual.foreground,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        message,
-                        maxLines: messageMaxLines,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.inkSoft,
-                          fontSize: 11,
-                          height: 1.45,
-                        ),
-                      ),
-                      if (actionLabel != null) ...<Widget>[
-                        const SizedBox(height: 5),
-                        InkWell(
-                          onTap: onActionPressed,
-                          borderRadius: BorderRadius.circular(6),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text(
-                              actionLabel!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: visual.foreground,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-        ),
+        ],
       ),
+    );
+    return Semantics(
+      liveRegion: true,
+      label: '$title. $message',
+      child: expand
+          ? card
+          : Align(
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: card,
+              ),
+            ),
     );
   }
 }

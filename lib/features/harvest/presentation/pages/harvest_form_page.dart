@@ -140,6 +140,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         title: 'Thời gian ngừng thuốc',
         message: '$message Không thể ghi nhận thu hoạch, kể cả thu hoạch cuối.',
         level: AppNoticeLevel.danger,
+        expand: true,
       ),
     );
   }
@@ -445,20 +446,11 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   Future<void> _save(Map<String, dynamic> body) async {
     setState(() => _error = null);
     try {
-      final event = await ref
+      await ref
           .read(harvestMutationProvider(widget.seasonId).notifier)
           .submit(body);
       if (!mounted) return;
-      if (event.warnings.isEmpty) {
-        AppNoticeService.success(context, 'Đã ghi nhận thu hoạch thành công.');
-      } else {
-        AppNoticeService.warning(
-          context,
-          event.warnings.join('\n'),
-          title: 'Đã ghi nhận thu hoạch',
-          messageMaxLines: 6,
-        );
-      }
+      AppNoticeService.success(context, 'Đã ghi nhận thu hoạch thành công.');
       context.pop();
     } on Object catch (error) {
       if (!mounted) return;
@@ -714,6 +706,17 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                             ),
                           ),
                         ),
+                      if (!_final && diseaseRestricted)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: AppNoticeCard(
+                            title: 'Ca bệnh / điều trị',
+                            message:
+                                'Không thể thu tỉa khi còn ca bệnh chưa đóng hoặc phác đồ điều trị chưa kết thúc.',
+                            level: AppNoticeLevel.danger,
+                            expand: true,
+                          ),
+                        ),
                       const SizedBox(height: 16),
                       _label('Thời điểm thu hoạch *'),
                       const SizedBox(height: 6),
@@ -805,16 +808,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                           ),
                         ),
                       if (withdrawalBlocked) _withdrawalStatus(withdrawal),
-                      if (!_final && diseaseRestricted)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: AppNoticeCard(
-                            title: 'Ca bệnh / điều trị',
-                            message:
-                                'Không thể thu tỉa khi còn ca bệnh chưa đóng hoặc phác đồ điều trị chưa kết thúc.',
-                            level: AppNoticeLevel.danger,
-                          ),
-                        ),
                       _field(
                         'weight',
                         'Sản lượng (kg) *',

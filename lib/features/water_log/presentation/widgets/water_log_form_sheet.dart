@@ -84,6 +84,8 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
   DateTime _recordedAt = DateTime.now();
   bool _submitting = false;
   bool _confirming = false;
+  bool _fillingDefaults = false;
+  bool _defaultsFilled = false;
   String? _lastPayload;
   String? _idempotencyKey;
   WaterLogMetadata? _metadata;
@@ -193,8 +195,79 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
     });
   }
 
+  static String _formatPrefillValue(double value, {int? scale}) {
+    final raw = scale == null ? value.toString() : value.toStringAsFixed(scale);
+    return raw.contains('.') ? raw.replaceFirst(RegExp(r'\.?0+$'), '') : raw;
+  }
+
+  String _formSnapshot() => jsonEncode([
+    _recordedAt.toIso8601String(),
+    _noteController.text,
+    for (final controller in _controllers.values) controller.text,
+  ]);
+
+  Future<void> _fillDefaults(WaterLog? latestLog) async {
+    if (_submitting || _fillingDefaults || _defaultsFilled) return;
+    if (latestLog != null) {
+      setState(() {
+        for (final param in waterLogFormParams) {
+          final value = latestLog.valueOf(param.field);
+          _controllers[param.field]!.text = value == null
+              ? ''
+              : _formatPrefillValue(value);
+        }
+        _parseInputs();
+        _formError = null;
+        _defaultsFilled = true;
+      });
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    final snapshot = _formSnapshot();
+    setState(() => _fillingDefaults = true);
+    try {
+      final metadata =
+          _metadata ??
+          await ref
+              .read(waterLogListProvider(widget.seasonId).notifier)
+              .loadMetadata();
+      if (!mounted || _submitting || snapshot != _formSnapshot()) return;
+      _metadata = metadata;
+      setState(() {
+        for (final metric in metadata.metrics) {
+          final controller = _controllers[metric.field];
+          if (controller == null) continue;
+          final double value;
+          if (metric.warningMin != null && metric.warningMax != null) {
+            value = metric.canonicalValue(
+              (metric.warningMin! + metric.warningMax!) / 2,
+            );
+          } else if (metric.warningMin != null) {
+            value = metric.canonicalValue(metric.warningMin!);
+          } else {
+            value = metric.canonicalValue(metric.inputMin);
+          }
+          controller.text = _formatPrefillValue(value, scale: metric.scale);
+        }
+        _parseInputs();
+        _formError = null;
+        _defaultsFilled = true;
+      });
+    } on Object catch (error) {
+      if (!mounted || _submitting || snapshot != _formSnapshot()) return;
+      setState(() {
+        _formError = error is AppException
+            ? error.message
+            : 'Không thể tải ngưỡng mẫu. Vui lòng thử lại.';
+      });
+    } finally {
+      if (mounted) setState(() => _fillingDefaults = false);
+    }
+  }
+
   Future<void> _submit() async {
-    if (_submitting) return;
+    if (_submitting || _fillingDefaults) return;
     final values = _parseInputs();
     setState(() {
       _formError = values == null
@@ -275,6 +348,16 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final latestValidLog =
+        ref.watch(latestWaterLogProvider(widget.seasonId)).asData?.value ??
+        ref
+            .watch(waterLogListProvider(widget.seasonId))
+            .asData
+            ?.value
+            .page
+            .items
+            .where((log) => !log.isVoided)
+            .firstOrNull;
     return PopScope(
       canPop: !_submitting,
       child: Container(
@@ -306,7 +389,9 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
                       color: const Color(0xFFEEF1F6),
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
-                        onTap: _submitting ? null : _pickRecordedAt,
+                        onTap: (_submitting || _fillingDefaults)
+                            ? null
+                            : _pickRecordedAt,
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           width: double.infinity,
@@ -337,6 +422,53 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        key: const Key('water_log_quick_fill_button'),
+                        onPressed:
+                            (_submitting || _fillingDefaults || _defaultsFilled)
+                            ? null
+                            : () => _fillDefaults(latestValidLog),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.ocean,
+                          backgroundColor: const Color(0xFFEAF4FF),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        icon: _fillingDefaults
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(
+                                latestValidLog != null
+                                    ? Icons.history_rounded
+                                    : Icons.auto_fix_high_rounded,
+                                size: 15,
+                              ),
+                        label: Text(
+                          latestValidLog != null
+                              ? 'Lấy từ lần đo trước'
+                              : 'Điền ngưỡng mẫu',
+                        ),
+                      ),
+                    ),
                     for (var row = 0; row < 4; row++) ...<Widget>[
                       const SizedBox(height: 12),
                       Row(
@@ -359,7 +491,7 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
                                     _fieldErrors[waterLogFormParams[row * 2 +
                                             column]
                                         .field],
-                                enabled: !_submitting,
+                                enabled: !_submitting && !_fillingDefaults,
                                 onChanged: _onMetricChanged,
                               ),
                             ),
@@ -380,7 +512,7 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _noteController,
-                      enabled: !_submitting,
+                      enabled: !_submitting && !_fillingDefaults,
                       minLines: 2,
                       maxLines: 4,
                       style: const TextStyle(
@@ -428,6 +560,7 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
                 isLoading: _submitting && !_confirming,
                 onPressed:
                     _submitting ||
+                        _fillingDefaults ||
                         _fieldErrors.values.any((error) => error != null)
                     ? null
                     : _submit,
