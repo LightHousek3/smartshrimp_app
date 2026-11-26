@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
@@ -10,20 +11,8 @@ String harvestTypeLabel(HarvestType type) => switch (type) {
   HarvestType.finalHarvest => 'Thu hoạch cuối',
   HarvestType.unknown => 'Không xác định',
 };
-String harvestNumber(num? value) {
-  if (value == null) return '—';
-  final parts = value.toStringAsFixed(value % 1 == 0 ? 0 : 3).split('.');
-  // Group digits locally without adding a formatting dependency.
-  final whole = value.toStringAsFixed(value % 1 == 0 ? 0 : 3).split('.').first;
-  final grouped = whole.replaceAllMapped(
-    RegExp(r'(\d)(?=(\d{3})+$)'),
-    (m) => '${m[1]}.',
-  );
-  final fraction = parts.length > 1
-      ? parts[1].replaceFirst(RegExp(r'0+$'), '')
-      : '';
-  return fraction.isNotEmpty ? '$grouped,$fraction' : grouped;
-}
+String harvestNumber(num? value) =>
+    value == null ? '—' : formatVietnameseNumber(value, decimalPlaces: 3);
 
 String harvestDate(DateTime value) {
   final d = value.toLocal();

@@ -89,7 +89,7 @@ void main() {
       ) async {
         final query = _query(status);
         await _pump(tester, query, width: width, textScale: scale);
-        expect(find.text('Trợ lý AI'), findsOneWidget);
+        expect(find.text('Trợ lý Aquabot'), findsOneWidget);
         expect(find.text(label), findsOneWidget);
         expect(tester.widget<Text>(find.text(label)).style!.color, color);
         expect(
@@ -130,7 +130,7 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('huong-dan.pdf · Phần 3'), findsOneWidget);
           expect(
-            find.text('32.5% tương đồng\n${_chunk.content}'),
+            find.text('32,5% tương đồng\n${_chunk.content}'),
             findsOneWidget,
           );
         }

@@ -5,6 +5,7 @@ import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/core/widgets/statistics_header_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -146,7 +147,7 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
                     seasonName,
                   ].whereType<String>().join(' · '),
                   onBack: context.pop,
-                  trailing: TextButton.icon(
+                  trailing: StatisticsHeaderButton(
                     key: const Key('owner_water_statistics_button'),
                     onPressed: () => context.push(
                       '$_path/statistics',
@@ -155,8 +156,6 @@ class _OwnerWaterLogListPageState extends ConsumerState<OwnerWaterLogListPage> {
                         'seasonName': ?seasonName,
                       },
                     ),
-                    icon: const Icon(Icons.bar_chart_rounded, size: 18),
-                    label: const Text('Thống kê'),
                   ),
                 ),
                 Padding(

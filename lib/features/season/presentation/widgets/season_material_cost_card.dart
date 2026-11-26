@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -122,12 +123,7 @@ class SeasonMaterialCostCard extends StatelessWidget {
 // Format the validated decimal string directly so large amounts stay exact.
 String seasonCostMoneyLabel(String amount) {
   final parts = amount.split('.');
-  final digits = parts.first;
-  final buffer = StringBuffer();
-  for (var index = 0; index < digits.length; index++) {
-    if (index > 0 && (digits.length - index) % 3 == 0) buffer.write('.');
-    buffer.write(digits[index]);
-  }
+  final buffer = StringBuffer(groupVietnameseDigits(parts.first));
   if (parts[1] != '00') buffer.write(',${parts[1]}');
   return '$buffer ₫';
 }

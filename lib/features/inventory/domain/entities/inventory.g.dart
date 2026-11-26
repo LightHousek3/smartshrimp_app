@@ -252,6 +252,7 @@ _InventoryTransaction _$InventoryTransactionFromJson(
     unknownValue: InventoryTransactionType.unknown,
   ),
   quantity: (json['quantity'] as num).toDouble(),
+  quantityExact: json['quantityExact'] as String?,
   unitSnapshot: $enumDecode(
     _$InventoryProductUnitEnumMap,
     json['unitSnapshot'],
@@ -290,6 +291,7 @@ Map<String, dynamic> _$InventoryTransactionToJson(
   'transactionType':
       _$InventoryTransactionTypeEnumMap[instance.transactionType]!,
   'quantity': instance.quantity,
+  'quantityExact': instance.quantityExact,
   'unitSnapshot': _$InventoryProductUnitEnumMap[instance.unitSnapshot]!,
   'totalAmount': instance.totalAmount,
   'referenceType': instance.referenceType,

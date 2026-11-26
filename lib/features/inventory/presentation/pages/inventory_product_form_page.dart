@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -117,8 +119,12 @@ class _InventoryProductFormPageState
     final material = proposal.material;
     _nameController.text = material.name;
     _descriptionController.text = material.description ?? '';
-    _thresholdController.text = material.minAlertQuantity ?? '0';
-    _conversionQuantityController.text = material.conversionQuantity ?? '';
+    _thresholdController.text = formatVietnameseDecimal(
+      material.minAlertQuantity ?? '0',
+    );
+    _conversionQuantityController.text = formatVietnameseDecimal(
+      material.conversionQuantity ?? '',
+    );
     _category = InventoryProductCategory.values.byName(
       material.category.toLowerCase(),
     );
@@ -216,11 +222,13 @@ class _InventoryProductFormPageState
       _images.add(_emptyPhoto);
     }
     _nameController.text = product.name;
-    _thresholdController.text = _numberText(product.minAlertQuantity);
+    _thresholdController.text = formatVietnameseNumber(
+      product.minAlertQuantity,
+    );
     _descriptionController.text = product.description ?? '';
     _conversionQuantityController.text = product.conversionQuantity == null
         ? ''
-        : _numberText(product.conversionQuantity!);
+        : formatVietnameseNumber(product.conversionQuantity);
     _category = product.category;
     if (!product.metadataLocked) _updateCompliance(_compliance);
     _unit = product.unit;
@@ -564,6 +572,7 @@ class _InventoryProductFormPageState
       if (detail.requireValue.isArchived) {
         return _frame(
           const Center(child: Text('Khôi phục vật tư trước khi chỉnh sửa.')),
+          subtitle: detail.requireValue.name,
         );
       }
       _initialize(detail.requireValue);
@@ -583,8 +592,39 @@ class _InventoryProductFormPageState
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Vật tư đã có lịch sử kho, vận hành hoặc phác đồ gửi duyệt. Hồ sơ được khóa, anh/chị có thể sửa ngưỡng cảnh báo tồn kho.',
+              const InventorySurface(
+                radius: 16,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSvgIcon(AppSvgIconName.info, color: AppColors.ocean),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hồ sơ vật tư đã khóa',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Vật tư đã có lịch sử kho, vận hành hoặc phác đồ gửi duyệt. Bạn chỉ có thể sửa ngưỡng cảnh báo tồn kho.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.45,
+                              color: AppColors.inkSoft,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _buildThresholdField(),
@@ -614,6 +654,7 @@ class _InventoryProductFormPageState
         ),
       );
     }
+    final manufacturerDropdown = _buildManufacturerDropdown();
     return _frame(
       Form(
         key: _formKey,
@@ -700,6 +741,9 @@ class _InventoryProductFormPageState
                                   fontSize: 14,
                                   color: AppColors.ink,
                                 ),
+                                inputFormatters: const [
+                                  VietnameseNumberInputFormatter(),
+                                ],
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,
@@ -728,26 +772,17 @@ class _InventoryProductFormPageState
                       labelSize: 12,
                       spacing: 6,
                       label: 'Nhà sản xuất *',
-                      child: _buildManufacturerDropdown(),
+                      action:
+                          !_requiresNewManufacturer || _manufacturerId == null
+                          ? InventoryFieldAction(
+                              label: _requiresNewManufacturer
+                                  ? 'Tạo nhà sản xuất được đề xuất'
+                                  : 'Thêm nhà sản xuất',
+                              onPressed: _saving ? null : _addManufacturer,
+                            )
+                          : null,
+                      child: manufacturerDropdown,
                     ),
-                    if (!_requiresNewManufacturer || _manufacturerId == null)
-                      TextButton.icon(
-                        icon: const AppSvgIcon(
-                          AppSvgIconName.plus,
-                          size: 16,
-                          color: AppColors.ocean,
-                        ),
-                        label: Text(
-                          _requiresNewManufacturer
-                              ? 'Tạo nhà sản xuất được đề xuất'
-                              : 'Thêm nhà sản xuất',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onPressed: _saving ? null : _addManufacturer,
-                      ),
                     const SizedBox(height: 16),
                     InventoryComplianceEditor(
                       farmId: widget.farmId,
@@ -828,12 +863,7 @@ class _InventoryProductFormPageState
             textInputAction: TextInputAction.done,
             autocorrect: false,
             enableSuggestions: false,
-            inputFormatters: [
-              TextInputFormatter.withFunction((oldValue, newValue) {
-                final numeric = RegExp(r'^(?:[0-9]+(?:[.,][0-9]{0,3})?)?$');
-                return numeric.hasMatch(newValue.text) ? newValue : oldValue;
-              }),
-            ],
+            inputFormatters: const [VietnameseNumberInputFormatter()],
             decoration: inventoryInputDecoration(hintText: '0'),
             enabled: !_saving,
             validator: (value) =>
@@ -902,11 +932,6 @@ class _InventoryProductFormPageState
         ],
       ),
       const SizedBox(height: 8),
-      const Text(
-        'OCR: gửi ảnh đến Gemini, tối đa ${InventoryRules.maxOcrTotalBytes ~/ (1024 * 1024)} MB/lượt.',
-        style: TextStyle(fontSize: 12, height: 1.5, color: AppColors.inkMuted),
-      ),
-      const SizedBox(height: 8),
       Text(
         '$_imageCount/${InventoryRules.maxProductImages} ảnh · Tối đa ${InventoryRules.maxImageBytes ~/ (1024 * 1024)} MB/ảnh',
         style: const TextStyle(
@@ -957,34 +982,37 @@ class _InventoryProductFormPageState
               Expanded(
                 child: SizedBox(
                   height: 36,
-                  child: OutlinedButton(
-                    key: ValueKey('inventory-photo-$index'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      backgroundColor: selected == index
-                          ? const Color(0xFFEAF4FF)
-                          : Colors.white,
-                      foregroundColor: const Color(0xFF0C4E8F),
-                      side: BorderSide(
-                        color: selected == index
-                            ? const Color(0xFF3F97E8)
-                            : AppColors.line,
+                  child: Semantics(
+                    selected: selected == index,
+                    child: OutlinedButton(
+                      key: ValueKey('inventory-photo-$index'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        backgroundColor: selected == index
+                            ? const Color(0xFFEAF4FF)
+                            : Colors.white,
+                        foregroundColor: const Color(0xFF0C4E8F),
+                        side: BorderSide(
+                          color: selected == index
+                              ? const Color(0xFF3F97E8)
+                              : AppColors.line,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      textStyle: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      onPressed: _hasPhoto(_images[index])
+                          ? () => setState(() => _selectedPhotoIndex = index)
+                          : _photosBusy || _remainingPhotos <= 0
+                          ? null
+                          : () => _pickImages(slot: index),
+                      child: Text('Ảnh ${index + 1}'),
                     ),
-                    onPressed: _hasPhoto(_images[index])
-                        ? () => setState(() => _selectedPhotoIndex = index)
-                        : _photosBusy || _remainingPhotos <= 0
-                        ? null
-                        : () => _pickImages(slot: index),
-                    child: Text('Ảnh ${index + 1}'),
                   ),
                 ),
               ),
@@ -1018,11 +1046,6 @@ class _InventoryProductFormPageState
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Đã chọn: ${inventoryPhotoLabel(selected)}',
-          style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
-        ),
       ],
     );
   }
@@ -1036,6 +1059,10 @@ class _InventoryProductFormPageState
         supplierListControllerProvider(widget.farmId),
       );
       if (_manufacturerId == null && proposed != null) {
+        String identityKey(String value) =>
+            InventoryRules.normalizeText(value).toLowerCase();
+        final proposedName = identityKey(proposed.name);
+        final proposedAddress = identityKey(proposed.address ?? '');
         final matches = (suppliers.value ?? <InventorySupplier>[]).where(
           (row) =>
               row.isActive &&
@@ -1043,12 +1070,9 @@ class _InventoryProductFormPageState
               !row.createdAt.isBefore(
                 proposal.submittedAt ?? proposal.updatedAt,
               ) &&
-              row.name.trim().toLowerCase() ==
-                  proposed.name.trim().toLowerCase() &&
-              (proposed.address == null ||
-                  proposed.address!.trim().isEmpty ||
-                  row.address?.trim().toLowerCase() ==
-                      proposed.address!.trim().toLowerCase()),
+              identityKey(row.name) == proposedName &&
+              (proposedAddress.isEmpty ||
+                  identityKey(row.address ?? '') == proposedAddress),
         );
         if (matches.isNotEmpty) {
           _manufacturerId = matches.first.id;
@@ -1135,15 +1159,8 @@ class _InventoryProductFormPageState
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
-          decoration: inventoryInputDecoration().copyWith(
-            prefixIcon: const Center(
-              widthFactor: 1,
-              heightFactor: 1,
-              child: InventorySvgIcon(
-                InventoryAssets.formManufacturer,
-                size: 17,
-              ),
-            ),
+          decoration: inventoryInputDecoration(
+            prefixIcon: inventorySupplierInputIcon,
           ),
           items: [
             if (retainCurrent)
@@ -1183,10 +1200,11 @@ class _InventoryProductFormPageState
     );
   }
 
-  Widget _frame(Widget child) => PopScope(
+  Widget _frame(Widget child, {String? subtitle}) => PopScope(
     canPop: !_saving,
     child: InventoryPageFrame(
       title: _isEdit ? 'Chỉnh sửa vật tư' : 'Thêm vật tư mới',
+      subtitle: subtitle ?? _product?.name,
       onBack: () {
         if (!_saving) context.pop();
       },
@@ -1367,12 +1385,6 @@ class _SelectionChip extends StatelessWidget {
 String? _nullableText(String value) {
   final normalized = InventoryRules.normalizeText(value);
   return normalized.isEmpty ? null : normalized;
-}
-
-String _numberText(double value) {
-  return value == value.truncateToDouble()
-      ? value.toInt().toString()
-      : value.toString();
 }
 
 String _errorMessage(Object? error) {

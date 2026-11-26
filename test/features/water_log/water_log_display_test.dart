@@ -10,10 +10,10 @@ void main() {
     expect(formatWaterValue(null), '—');
     expect(formatWaterValue(0), '0');
     expect(formatWaterValue(28), '28');
-    expect(formatWaterValue(29.4), '29.4');
-    expect(formatWaterValue(0.00001), '0.00001');
-    expect(formatWaterValue(0.05001), '0.05001');
-    expect(formatWaterValue(0.12345), '0.12345');
+    expect(formatWaterValue(29.4), '29,4');
+    expect(formatWaterValue(0.00001), '0,00001');
+    expect(formatWaterValue(0.05001), '0,05001');
+    expect(formatWaterValue(0.12345), '0,12345');
   });
 
   for (final (width, textScale) in [(400.0, 1.0), (320.0, 1.5)]) {

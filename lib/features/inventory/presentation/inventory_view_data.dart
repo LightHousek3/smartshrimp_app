@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
@@ -111,37 +112,57 @@ extension InventoryTransactionTypePresentation on InventoryTransactionType {
   };
 }
 
-String formatInventoryQuantity(num value) {
-  final number = value.toDouble();
-  final parts = number
-      .toStringAsFixed(9)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '')
-      .split('.');
-  final digits = parts.first;
-  final buffer = StringBuffer();
-  for (var index = 0; index < digits.length; index++) {
-    if (index > 0 && (digits.length - index) % 3 == 0) {
-      buffer.write('.');
-    }
-    buffer.write(digits[index]);
+/// Display up to three decimal places, keeping smaller nonzero quantities visible.
+String formatInventoryQuantity(num value) =>
+    _formatInventoryQuantity(value, places: value.abs() < 0.001 ? 9 : 3);
+
+/// Keep the nine decimal places supported by stock and execution records.
+String formatInventoryExactQuantity(num value, {String? exact}) =>
+    _formatInventoryQuantity(value, places: 9, exact: exact);
+
+String _formatInventoryQuantity(
+  num value, {
+  required int places,
+  String? exact,
+}) {
+  if (!value.isFinite) return '—';
+  final absolute = value.abs();
+  final exactDigits = exact?.replaceFirst(RegExp(r'^-'), '');
+  final decimal = exactDigits != null && _quantityPattern.hasMatch(exactDigits)
+      ? exactDigits
+      : absolute.toString();
+  final fixed = decimal.contains('e') ? absolute.toStringAsFixed(9) : decimal;
+  if (!_quantityPattern.hasMatch(fixed)) return '—';
+  final parts = fixed.split('.');
+  var whole = parts.first;
+  final fraction = parts.length > 1 ? parts.last : '';
+  final scale = places == 3 ? 1000 : 1000000000;
+  var rounded = int.parse(fraction.padRight(places, '0').substring(0, places));
+  if (fraction.length > places && int.parse(fraction[places]) >= 5) {
+    rounded++;
   }
-  if (parts.length == 2 && parts.last.isNotEmpty) {
-    buffer.write(',${parts.last}');
+  if (rounded == scale) {
+    whole = (BigInt.parse(whole) + BigInt.one).toString();
+    rounded = 0;
   }
-  return buffer.toString();
+  final sign = value.isNegative && (whole != '0' || rounded != 0) ? '-' : '';
+  final digits = groupVietnameseDigits(whole);
+  if (rounded == 0) return '$sign$digits';
+  final decimals = rounded
+      .toString()
+      .padLeft(places, '0')
+      .replaceFirst(RegExp(r'0+$'), '');
+  return '$sign$digits,$decimals';
 }
 
-String formatInventoryMoney(num value) {
-  final digits = value.round().toString();
-  final buffer = StringBuffer();
-  for (var index = 0; index < digits.length; index++) {
-    if (index > 0 && (digits.length - index) % 3 == 0) {
-      buffer.write('.');
-    }
-    buffer.write(digits[index]);
-  }
-  return '${buffer.toString()} ₫';
+final _quantityPattern = RegExp(r'^\d+(?:\.\d+)?$');
+
+String formatInventoryMoney(num value, {bool showSubDong = false}) {
+  if (!value.isFinite) return '—';
+  if (showSubDong && value > 0 && value < 1) return '< 1 ₫';
+  final amount = value.round();
+  final sign = amount < 0 ? '-' : '';
+  return '$sign${groupVietnameseDigits(amount.abs().toString())} ₫';
 }
 
 String formatInventoryDate(DateTime value, {bool includeTime = false}) {
@@ -160,14 +181,18 @@ String inventoryPhotoLabel(int index) => switch (index) {
   _ => 'Ảnh ${index + 1}',
 };
 
-/// Short money labels keep summary tiles readable; detailed amounts stay exact.
+/// Round summary amounts to one decimal place in millions or billions.
 String formatInventoryCompactMoney(num value) {
-  if (value.abs() < 1000000) return formatInventoryMoney(value);
-  final divisor = value.abs() >= 1000000000 ? 1000000000 : 1000000;
-  final suffix = divisor == 1000000000 ? 'tỷ' : 'tr';
-  final amount = (value / divisor)
-      .toStringAsFixed(1)
-      .replaceFirst(RegExp(r'\.0$'), '')
-      .replaceAll('.', ',');
-  return '$amount $suffix ₫';
+  if (!value.isFinite) return '—';
+  final absolute = value.abs();
+  if (absolute < 999999.5) return formatInventoryMoney(value);
+  final millionTenths = (absolute / 100000).round();
+  final billions = millionTenths >= 10000;
+  final tenths = billions ? (absolute / 100000000).round() : millionTenths;
+  final whole = groupVietnameseDigits((tenths ~/ 10).toString());
+  final fraction = tenths % 10;
+  final decimal = fraction == 0 ? '' : ',$fraction';
+  final sign = value.isNegative ? '-' : '';
+  final unit = billions ? 'tỷ' : 'tr';
+  return '$sign$whole$decimal $unit ₫';
 }

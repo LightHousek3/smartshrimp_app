@@ -1,8 +1,10 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
@@ -14,6 +16,7 @@ class ProtocolDayAudit extends StatelessWidget {
     required this.farmId,
     required this.day,
     required this.protocolStatus,
+    this.isTreatment = false,
     this.mealNumbersByItem = const {},
     this.now,
     super.key,
@@ -21,6 +24,7 @@ class ProtocolDayAudit extends StatelessWidget {
   final String farmId;
   final ProtocolDay day;
   final ProtocolStatus protocolStatus;
+  final bool isTreatment;
   final Map<String, int> mealNumbersByItem;
   final DateTime? now;
   @override
@@ -68,6 +72,7 @@ class ProtocolDayAudit extends StatelessWidget {
                     _MealHeader(
                       time: time,
                       mealNumber: entry.key.mealNumber,
+                      isTreatment: isTreatment,
                       productCount: current.length,
                       state: _mealState(current, protocolStatus, clock),
                     ),
@@ -99,12 +104,14 @@ class _MealHeader extends StatelessWidget {
   const _MealHeader({
     required this.time,
     required this.mealNumber,
+    required this.isTreatment,
     required this.productCount,
     required this.state,
   });
 
   final String time;
   final int? mealNumber;
+  final bool isTreatment;
   final int productCount;
   final ProtocolOccurrenceState state;
 
@@ -122,11 +129,25 @@ class _MealHeader extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const AppSvgIcon(
-                    AppSvgIconName.clock,
-                    size: 14,
-                    color: AppColors.ocean,
-                  ),
+                  if (isTreatment && mealNumber != null)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.treatmentSurface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const AppSvgIcon(
+                        AppSvgIconName.calendarDays,
+                        size: 14,
+                        color: AppColors.treatmentAccent,
+                      ),
+                    )
+                  else
+                    const AppSvgIcon(
+                      AppSvgIconName.clock,
+                      size: 14,
+                      color: AppColors.ocean,
+                    ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text.rich(
@@ -319,7 +340,7 @@ class _ProductAudit extends StatelessWidget {
         (variance != null && variance.abs() > allowedVariancePct);
     final quantity = planned == null
         ? _dose(row)
-        : '${protocolNumber(planned)} ${protocolUnit(row.unit)}';
+        : '${formatInventoryExactQuantity(planned)} ${protocolUnit(row.unit)}';
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -391,7 +412,7 @@ class _ProductAudit extends StatelessWidget {
                               'THỰC SỰ DÙNG',
                               actual == null
                                   ? 'Chưa có'
-                                  : '${protocolNumber(actual)} ${protocolUnit(row.actualUnit ?? row.unit)}',
+                                  : '${formatInventoryExactQuantity(actual)} ${protocolUnit(row.actualUnit ?? row.unit)}',
                               actual: actual != null,
                             ),
                           ),
@@ -404,7 +425,7 @@ class _ProductAudit extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'Chênh lệch ${variance > 0 ? '+' : ''}${variance.abs() < .05 ? '<0,1' : variance.toStringAsFixed(1)}%${exceeds ? ' · Vượt ngưỡng' : ''}',
+                            'Chênh lệch ${variance > 0 ? '+' : ''}${variance.abs() < .05 ? '<0,1' : formatVietnameseDecimal(variance.toStringAsFixed(1), trimTrailingZeroes: false)}%${exceeds ? ' · Vượt ngưỡng' : ''}',
                             style: TextStyle(
                               fontSize: 9,
                               height: 1.5,

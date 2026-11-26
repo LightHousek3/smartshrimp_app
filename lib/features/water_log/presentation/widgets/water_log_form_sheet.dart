@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -140,12 +142,12 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
     var hasError = false;
     _fieldErrors.clear();
     for (final param in waterLogFormParams) {
-      final raw = _controllers[param.field]!.text.trim().replaceAll(',', '.');
+      final raw = _controllers[param.field]!.text.trim();
       if (raw.isEmpty) {
         _fieldErrors[param.field] = null;
         continue;
       }
-      final value = double.tryParse(raw);
+      final value = parseVietnameseNumber(raw);
       if (value == null || !value.isFinite) {
         _fieldErrors[param.field] = 'Số không hợp lệ';
         hasError = true;
@@ -172,8 +174,8 @@ class _WaterLogFormSheetState extends ConsumerState<_WaterLogFormSheet> {
       if (value < metric.inputMin ||
           (metric.inputMax != null && value > metric.inputMax!)) {
         return metric.inputMax == null
-            ? 'Phải ≥ ${metric.inputMin}'
-            : '${metric.inputMin} – ${metric.inputMax}';
+            ? 'Phải ≥ ${formatVietnameseNumber(metric.inputMin)}'
+            : '${formatVietnameseNumber(metric.inputMin)} – ${formatVietnameseNumber(metric.inputMax)}';
       }
       return null;
     }
@@ -623,6 +625,7 @@ class _NumberField extends StatelessWidget {
         enabled: enabled,
         onChanged: onChanged,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: const [VietnameseNumberInputFormatter()],
         // Preserve invalid input so validation cannot silently change its value.
         textInputAction: TextInputAction.next,
         style: const TextStyle(
@@ -632,7 +635,7 @@ class _NumberField extends StatelessWidget {
           height: 1.5,
         ),
         decoration: waterLogInputDecoration(
-          hintText: '0.0',
+          hintText: '0,0',
           errorText: errorText,
         ),
       ),

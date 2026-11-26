@@ -1,12 +1,12 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
+import 'package:smartshrimp_app/core/widgets/statistics_header_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
@@ -40,20 +40,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
 
   static String _formatNumber(num? value, {int fractionDigits = 1}) {
     if (value == null) return '-';
-    if (value is int || fractionDigits == 0 || value == value.roundToDouble()) {
-      final intVal = fractionDigits == 0 ? value.round() : value.toInt();
-      return intVal.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
-    }
-    final fixed = value.toStringAsFixed(fractionDigits);
-    final parts = fixed.split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
-    return parts.length > 1 ? '$intPart,${parts[1]}' : intPart;
+    return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
   }
 
   void _onTabChanged(String tab) {
@@ -76,8 +63,9 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
     final logsWithWeight = validLogs
         .where((l) => l.avgWeightG != null && l.avgWeightG! > 0)
         .toList();
-    final latestWeightLog =
-        logsWithWeight.isNotEmpty ? logsWithWeight.first : null;
+    final latestWeightLog = logsWithWeight.isNotEmpty
+        ? logsWithWeight.first
+        : null;
 
     final String avgWeightStr = latestWeightLog?.avgWeightG != null
         ? _formatNumber(latestWeightLog!.avgWeightG, fractionDigits: 1)
@@ -97,7 +85,9 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
       } else {
         previousWeightLog = logsWithWeight.firstWhere(
           (l) => l.avgWeightG != latestWeight,
-          orElse: () => logsWithWeight.length > 1 ? logsWithWeight[1] : logsWithWeight.first,
+          orElse: () => logsWithWeight.length > 1
+              ? logsWithWeight[1]
+              : logsWithWeight.first,
         );
       }
 
@@ -105,7 +95,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
       if (previousWeight != null && previousWeightLog != latestWeightLog) {
         final diff = latestWeight - previousWeight;
         final prefix = diff >= 0 ? '+' : '';
-        growthStr = '$prefix${diff.toStringAsFixed(1)}';
+        growthStr = '$prefix${formatVietnameseNumber(diff, decimalPlaces: 1)}';
       } else {
         growthStr = '+0.0';
       }
@@ -355,65 +345,23 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                 title: 'Sức khỏe tôm',
                 subtitle: subtitle.isEmpty ? null : subtitle,
                 onBack: context.pop,
-                trailing: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xB3FFFFFF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xB3FFFFFF)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x1A000000),
-                        blurRadius: 3,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: TextButton(
-                    key: const Key('shrimp_health_statistics_button'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF0C4E8F),
-                      minimumSize: const Size(96, 35),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    onPressed: () {
-                      final currentUri = GoRouterState.of(context).uri.path;
-                      final target = currentUri.endsWith('/shrimp-health')
-                          ? '$currentUri/statistics'
-                          : '/seasons/${widget.seasonId}/shrimp-health/statistics';
-                      context.push(
-                        target,
-                        extra: <String, dynamic>{
-                          if (widget.pondName != null)
-                            'pondName': widget.pondName,
-                          if (widget.seasonName != null)
-                            'seasonName': widget.seasonName,
-                        },
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/water-log/water_statistics.svg',
-                          width: 14.9997,
-                          height: 14.9997,
-                        ),
-                        const SizedBox(width: 6),
-                        const Text('Thống kê'),
-                      ],
-                    ),
-                  ),
+                trailing: StatisticsHeaderButton(
+                  key: const Key('shrimp_health_statistics_button'),
+                  onPressed: () {
+                    final currentUri = GoRouterState.of(context).uri.path;
+                    final target = currentUri.endsWith('/shrimp-health')
+                        ? '$currentUri/statistics'
+                        : '/seasons/${widget.seasonId}/shrimp-health/statistics';
+                    context.push(
+                      target,
+                      extra: <String, dynamic>{
+                        if (widget.pondName != null)
+                          'pondName': widget.pondName,
+                        if (widget.seasonName != null)
+                          'seasonName': widget.seasonName,
+                      },
+                    );
+                  },
                 ),
               ),
 
@@ -427,9 +375,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                   child: GradientButton(
                     onPressed: () {
                       final initialQuantity = ref
-                          .watch(
-                            assignedSeasonDetailProvider(widget.seasonId),
-                          )
+                          .watch(assignedSeasonDetailProvider(widget.seasonId))
                           .value
                           ?.initialQuantity;
                       final logs = listAsync.value?.logs;
@@ -502,15 +448,13 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                   data: (result) {
                     final counts = result.counts;
                     final now = DateTime.now();
-                    final hasLogToday = result.logs.any(
-                      (l) {
-                        final local = l.recordedAt.toLocal();
-                        return !l.isVoided &&
-                            local.year == now.year &&
-                            local.month == now.month &&
-                            local.day == now.day;
-                      },
-                    );
+                    final hasLogToday = result.logs.any((l) {
+                      final local = l.recordedAt.toLocal();
+                      return !l.isVoided &&
+                          local.year == now.year &&
+                          local.month == now.month &&
+                          local.day == now.day;
+                    });
                     final showMissingToday = canWrite && !hasLogToday;
 
                     // Filter logs based on selected tab

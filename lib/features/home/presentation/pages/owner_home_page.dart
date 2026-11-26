@@ -39,7 +39,7 @@ class OwnerHomePage extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             state.when(
-              skipLoadingOnRefresh: false,
+              skipLoadingOnRefresh: true,
               loading: () => const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               ),

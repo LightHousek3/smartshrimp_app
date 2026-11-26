@@ -1124,7 +1124,7 @@ void main() {
         );
       } else if (key == 'price') {
         expect(
-          field.validator!('1.234'),
+          field.validator!('1,234'),
           'Chỉ nhập tối đa 2 chữ số sau dấu phẩy',
         );
         expect(field.validator!('1,23'), isNull);
@@ -1206,7 +1206,7 @@ void main() {
                   )
                   .controller!
                   .text,
-              '$count',
+              count == 50001 ? '50.001' : '$count',
             );
             await tester.ensureVisible(submit);
             await tester.pumpAndSettle();
@@ -1534,7 +1534,7 @@ void main() {
       );
       await tester.enterText(
         find.byKey(const ValueKey('harvest-field-price')),
-        '120000',
+        '120.000',
       );
       await tester.pumpAndSettle();
       expect(find.text('Doanh thu dự kiến: 12.000.000.000 đ'), findsOneWidget);
@@ -1558,7 +1558,7 @@ void main() {
             )
             .controller!
             .text,
-        '120000',
+        '120.000',
       );
     },
   );
@@ -1571,7 +1571,7 @@ void main() {
       await tester.pumpAndSettle();
       for (final entry in {
         'weight': '100000',
-        'price': '120000',
+        'price': '120.000',
         'count': '100001',
         'buyer': 'Người mua',
         'contact': '0901234567',
@@ -1773,7 +1773,7 @@ void main() {
       final field = tester.widget<TextFormField>(
         find.byKey(const ValueKey('harvest-field-weight')),
       );
-      expect(field.controller!.text, '1000');
+      expect(field.controller!.text, '1.000');
       expect(
         await SecureHarvestSubmissionStore(
           const FlutterSecureStorage(),
@@ -1955,7 +1955,7 @@ void main() {
         }
         await tester.enterText(
           find.byKey(const ValueKey('harvest-field-weight')),
-          '1.005',
+          '1,005',
         );
         await tester.pumpAndSettle();
         expect(find.textContaining('Cỡ tôm (số lượng'), findsNothing);
@@ -2586,10 +2586,10 @@ void main() {
         expect(warning, findsNothing);
         expect(confirmation, findsNothing);
         expect(repo.bodies, isEmpty);
-        expect(tester.widget<TextFormField>(count).controller!.text, '1000');
+        expect(tester.widget<TextFormField>(count).controller!.text, '1.000');
         expect(
           tester.widget<TextFormField>(remainder).controller!.text,
-          '5000',
+          '5.000',
         );
         expect(
           tester.widget<TextFormField>(reason).controller!.text,
@@ -2647,7 +2647,7 @@ void main() {
       final count = find.byKey(const ValueKey('harvest-field-count'));
       final reason = find.byKey(const ValueKey('harvest-field-variance'));
       final remainder = find.byKey(const ValueKey('harvest-field-remaining'));
-      expect(tester.widget<TextFormField>(count).controller!.text, '1000');
+      expect(tester.widget<TextFormField>(count).controller!.text, '1.000');
       await tester.ensureVisible(remainder);
       await tester.enterText(remainder, '30');
       await tester.ensureVisible(reason);
@@ -2755,9 +2755,9 @@ void main() {
       expect(await store.read('owner', 'season-1'), isNull);
       expect(find.text('Thu hoạch đang chờ xác nhận'), findsNothing);
       for (final entry in {
-        'weight': '620.0',
-        'count': '31000',
-        'price': '120000',
+        'weight': '620',
+        'count': '31.000',
+        'price': '120.000',
         'buyer': 'Buyer',
         'contact': '0901234567',
         'note': 'Original note',

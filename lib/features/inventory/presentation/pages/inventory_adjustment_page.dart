@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,7 +56,7 @@ class _InventoryAdjustmentPageState
       AppNoticeService.show(
         context,
         message:
-            'Số lượng giảm không thể lớn hơn tồn của lô (${formatInventoryQuantity(lot.quantity)}).',
+            'Số lượng giảm không thể lớn hơn tồn của lô (${formatInventoryExactQuantity(lot.quantity, exact: lot.quantityExact)}).',
         level: AppNoticeLevel.warning,
       );
       return;
@@ -118,6 +119,7 @@ class _InventoryAdjustmentPageState
 
     return InventoryPageFrame(
       title: widget.isStockOut ? 'Xuất kho' : 'Điều chỉnh tồn kho',
+      subtitle: detail.value?.name,
       onBack: context.pop,
       child: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -160,14 +162,12 @@ class _InventoryAdjustmentPageState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      _InformationRow(label: 'Vật tư', value: product.name),
-                      const SizedBox(height: 10),
                       _InformationRow(label: 'Mã lô', value: lot.lotNumber),
                       const SizedBox(height: 10),
                       _InformationRow(
                         label: 'Tồn hiện tại',
                         value:
-                            '${formatInventoryQuantity(lot.quantity)} ${product.unit.label}',
+                            '${formatInventoryExactQuantity(lot.quantity, exact: lot.quantityExact)} ${product.unit.label}',
                       ),
                       const SizedBox(height: 18),
                       if (!widget.isStockOut)
@@ -199,6 +199,9 @@ class _InventoryAdjustmentPageState
                         child: TextFormField(
                           controller: _quantityController,
                           style: inventoryInputTextStyle,
+                          inputFormatters: const [
+                            VietnameseNumberInputFormatter(),
+                          ],
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),

@@ -21,15 +21,19 @@ typedef InventorySupplierDetailResult = ({
   InventorySupplier supplier,
 });
 
-/// Show a directory snapshot immediately, then load current owner-wide references.
+/// Load the supplier and its references, with an optional directory snapshot.
 class InventorySupplierDetailPage extends ConsumerStatefulWidget {
   const InventorySupplierDetailPage({
     required this.farmId,
-    required this.supplier,
+    required this.supplierId,
+    this.initialSupplier,
+    this.allowDelete = true,
     super.key,
   });
   final String farmId;
-  final InventorySupplier supplier;
+  final String supplierId;
+  final InventorySupplier? initialSupplier;
+  final bool allowDelete;
 
   @override
   ConsumerState<InventorySupplierDetailPage> createState() =>
@@ -107,9 +111,23 @@ class _InventorySupplierDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    final key = (farmId: widget.farmId, supplierId: widget.supplier.id);
+    final key = (farmId: widget.farmId, supplierId: widget.supplierId);
     final detail = ref.watch(supplierDetailProvider(key));
-    final supplier = detail.value ?? widget.supplier;
+    final supplier = detail.value ?? widget.initialSupplier;
+    if (supplier == null) {
+      return InventoryPageFrame(
+        title: 'Chi tiết nhà cung cấp',
+        onBack: () => Navigator.pop(context),
+        child: Center(
+          child: detail.hasError
+              ? AppErrorState(
+                  error: detail.error,
+                  onRetry: () => ref.invalidate(supplierDetailProvider(key)),
+                )
+              : const CircularProgressIndicator(),
+        ),
+      );
+    }
     void finish(InventorySupplierAction action) =>
         Navigator.pop(context, (action: action, supplier: supplier));
     return PopScope(
@@ -319,7 +337,11 @@ class _InventorySupplierDetailPageState
               if (!supplier.readOnly)
                 _SupplierSection(
                   title: 'Vật tư của nhà cung cấp',
-                  count: supplier.manufacturedProductCount?.toString(),
+                  count: supplier.manufacturedProductCount == null
+                      ? null
+                      : formatInventoryQuantity(
+                          supplier.manufacturedProductCount!,
+                        ),
                   children: [
                     for (final product
                         in supplier.manufacturedProducts ??
@@ -369,7 +391,7 @@ class _InventorySupplierDetailPageState
                 title: 'Lịch sử nhập hàng',
                 count: supplier.receiptCount == null
                     ? null
-                    : '${supplier.receiptCount} lần',
+                    : '${formatInventoryQuantity(supplier.receiptCount!)} lần',
                 children: [
                   for (final receipt
                       in supplier.receipts ?? <Map<String, dynamic>>[])
@@ -417,7 +439,7 @@ class _InventorySupplierDetailPageState
                   ),
                 ),
               ),
-              if (supplier.canDelete)
+              if (widget.allowDelete && supplier.canDelete)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: SizedBox(
@@ -606,8 +628,11 @@ class _SupplierReceipt extends StatelessWidget {
         .where((value) => value.name.toUpperCase() == rawUnit?.toUpperCase())
         .firstOrNull;
     final unitLabel = unit?.label ?? rawUnit;
-    final quantity =
-        '${receipt['quantityExact']}${unitLabel == null || unitLabel.isEmpty ? '' : ' $unitLabel'}';
+    final exactQuantity = receipt['quantityExact'] as String?;
+    final quantity = num.tryParse(exactQuantity ?? '');
+    final quantityLabel = quantity == null || !quantity.isFinite
+        ? '—'
+        : '${formatInventoryExactQuantity(quantity, exact: exactQuantity)}${unitLabel == null || unitLabel.isEmpty ? '' : ' $unitLabel'}';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
@@ -641,7 +666,7 @@ class _SupplierReceipt extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '${receipt['lotNumber']} · ${receipt['farmName']} · còn $quantity',
+            '${receipt['lotNumber']} · ${receipt['farmName']} · còn $quantityLabel',
             style: const TextStyle(
               color: AppColors.inkMuted,
               fontSize: 10,

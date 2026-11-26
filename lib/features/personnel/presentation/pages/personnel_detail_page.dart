@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -685,12 +686,7 @@ class _AssignmentEmpty extends StatelessWidget {
 
 String _metricLabel(double? value, {required String suffix}) {
   if (value == null) return '—';
-  final rounded = value == value.roundToDouble()
-      ? value.toStringAsFixed(0)
-      : value
-            .toStringAsFixed(2)
-            .replaceFirst(RegExp(r'0+$'), '')
-            .replaceFirst(RegExp(r'\.$'), '');
+  final rounded = formatVietnameseNumber(value, decimalPlaces: 2);
   return '$rounded$suffix';
 }
 

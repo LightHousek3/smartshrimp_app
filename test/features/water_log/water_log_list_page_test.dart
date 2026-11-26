@@ -350,7 +350,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(repository.cursors, [null, null, null]);
     expect(
-      find.text('5.4'),
+      find.text('5,4'),
       findsOneWidget,
     ); // Latest DO remains independent of tab.
   });

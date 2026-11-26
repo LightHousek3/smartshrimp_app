@@ -1,5 +1,7 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show MaxLengthEnforcement;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
@@ -69,15 +71,6 @@ class PondFormPage extends ConsumerStatefulWidget {
 }
 
 class _PondFormPageState extends ConsumerState<PondFormPage> {
-  static final _decimalInputFormatter = TextInputFormatter.withFunction((
-    oldValue,
-    newValue,
-  ) {
-    return RegExp(r'^\d*(?:[.,]\d{0,2})?$').hasMatch(newValue.text)
-        ? newValue
-        : oldValue;
-  });
-
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _area;
@@ -123,9 +116,11 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     super.initState();
     final pond = widget.initialPond;
     _name = TextEditingController(text: pond?.name);
-    _area = TextEditingController(text: pond?.areaM2?.toString() ?? '');
-    _depth = TextEditingController(text: pond?.depthM?.toString() ?? '');
-    _volume = TextEditingController(text: pond?.volumeM3?.toString() ?? '');
+    _area = TextEditingController(text: formatVietnameseNumber(pond?.areaM2));
+    _depth = TextEditingController(text: formatVietnameseNumber(pond?.depthM));
+    _volume = TextEditingController(
+      text: formatVietnameseNumber(pond?.volumeM3),
+    );
     _type = pond?.type ?? PondType.aquaculture;
     _status = pond?.status ?? PondStatus.available;
     // Existing usable volume is intentional; never replace it on opening edit.
@@ -136,7 +131,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
 
   /// Fill only from supported dimensions; invalid dimensions clear an automatic value.
   void _fillVolume() {
-    final text = _calculatedVolume?.toStringAsFixed(2) ?? '';
+    final text = formatVietnameseNumber(_calculatedVolume, decimalPlaces: 2);
     if (_volume.text == text) return;
     _volume.value = TextEditingValue(
       text: text,
@@ -404,7 +399,7 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
         readOnly: readOnly,
         focusNode: identical(controller, _volume) ? _volumeFocus : null,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: <TextInputFormatter>[_decimalInputFormatter],
+        inputFormatters: const [VietnameseNumberInputFormatter()],
         autovalidateMode: AutovalidateMode.onUserInteraction,
         onChanged: (_) => _onNumberChanged(controller),
         validator: readOnly ? null : validator,

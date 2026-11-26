@@ -413,73 +413,71 @@ class _Summary extends StatelessWidget {
   final domain.InventoryHistoryPage history;
 
   @override
-  Widget build(BuildContext context) => InventorySurface(
-    child: Row(
-      children: <Widget>[
-        Expanded(
-          child: _SummaryItem(
-            label: 'Giao dịch',
+  Widget build(BuildContext context) => Table(
+    columnWidths: const {1: FixedColumnWidth(8), 3: FixedColumnWidth(8)},
+    defaultVerticalAlignment: TableCellVerticalAlignment.intrinsicHeight,
+    children: [
+      TableRow(
+        children: [
+          _SummaryItem(
+            label: 'GIAO DỊCH',
             value: formatInventoryQuantity(history.totalResults),
-            color: AppColors.ink,
           ),
-        ),
-        const SizedBox(
-          height: 42,
-          child: VerticalDivider(color: AppColors.line),
-        ),
-        Expanded(
-          child: _SummaryItem(
-            label: 'Giá trị nhập',
-            value: formatInventoryMoney(history.summary.totalInboundValue),
-            color: const Color(0xFF0F9B8E),
+          const SizedBox.shrink(),
+          _SummaryItem(
+            label: 'GIÁ TRỊ NHẬP',
+            value: formatInventoryCompactMoney(
+              history.summary.totalInboundValue,
+            ),
           ),
-        ),
-        const SizedBox(
-          height: 42,
-          child: VerticalDivider(color: AppColors.line),
-        ),
-        Expanded(
-          child: _SummaryItem(
-            label: 'Giá trị xuất',
-            value: formatInventoryMoney(history.summary.totalOutboundValue),
-            color: const Color(0xFFE05638),
+          const SizedBox.shrink(),
+          _SummaryItem(
+            label: 'GIÁ TRỊ XUẤT',
+            value: formatInventoryCompactMoney(
+              history.summary.totalOutboundValue,
+            ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
+    ],
   );
 }
 
 class _SummaryItem extends StatelessWidget {
-  const _SummaryItem({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _SummaryItem({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color color;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: <Widget>[
-      Text(
-        value,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.display(
-          color: color,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) => InventorySurface(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: AppTypography.display(
+              color: AppColors.ink,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
-      ),
-      const SizedBox(height: 3),
-      Text(
-        label,
-        style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
-      ),
-    ],
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.inkMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -492,6 +490,10 @@ class _TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = transaction.transactionType;
     final signedQuantity = type.isInbound ? '+' : '−';
+    final quantity = formatInventoryExactQuantity(
+      transaction.quantity.abs(),
+      exact: transaction.quantityExact,
+    );
     final performer = transaction.performer.fullName?.trim();
     return InventorySurface(
       padding: const EdgeInsets.all(14),
@@ -515,13 +517,16 @@ class _TransactionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                '$signedQuantity${formatInventoryQuantity(transaction.quantity)} ${transaction.unitSnapshot.label}',
-                style: AppTypography.display(
-                  color: type.color,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$signedQuantity$quantity ${transaction.unitSnapshot.label}',
+                  textAlign: TextAlign.end,
+                  style: AppTypography.display(
+                    color: type.color,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -557,11 +562,13 @@ class _TransactionCard extends StatelessWidget {
             _Metadata(label: 'Vụ nuôi', value: transaction.season!.label),
           if ((transaction.reason ?? '').trim().isNotEmpty)
             _Metadata(label: 'Lý do', value: transaction.reason!.trim()),
-          if (transaction.totalAmount > 0)
-            _Metadata(
-              label: 'Giá trị',
-              value: formatInventoryMoney(transaction.totalAmount),
+          _Metadata(
+            label: 'Giá trị',
+            value: formatInventoryMoney(
+              transaction.totalAmount,
+              showSubDong: true,
             ),
+          ),
         ],
       ),
     );

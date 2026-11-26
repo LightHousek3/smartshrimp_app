@@ -1,14 +1,16 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 
 /// Parse số thực hỗ trợ cả dấu `.` và dấu `,` trên bàn phím tiếng Việt.
 double? parseOperationQuantity(String raw) {
-  final normalized = raw.trim().replaceAll(',', '.');
+  final normalized = normalizeVietnameseNumber(raw) ?? '';
   if (!RegExp(r'^(?:\d{1,11}(?:\.\d{0,9})?|\.\d{1,9})$').hasMatch(normalized)) {
     return null;
   }
@@ -20,9 +22,7 @@ double? parseOperationQuantity(String raw) {
 /// Định dạng số gọn đẹp, bỏ số 0 thừa ở phần thập phân.
 String formatOperationCompact(double value, {int maxDecimals = 2}) {
   if (!value.isFinite) return '0';
-  final formatted = value.toStringAsFixed(maxDecimals);
-  if (!formatted.contains('.') || formatted.contains('e')) return formatted;
-  return formatted.replaceFirst(RegExp(r'\.?0+$'), '');
+  return formatVietnameseNumber(value, decimalPlaces: maxDecimals);
 }
 
 /// Preview the same quantity threshold used when saving an execution.
@@ -221,7 +221,7 @@ class OperationExecuteItemCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Kế hoạch: ${formatOperationCompact(schedule.plannedQuantity, maxDecimals: 3)} $unit · Cho phép: ${formatOperationCompact(eval.minAllowed, maxDecimals: 3)} – ${formatOperationCompact(eval.maxAllowed, maxDecimals: 3)} $unit (±${formatOperationCompact(allowedPct)}%)',
+              'Kế hoạch: ${formatInventoryExactQuantity(schedule.plannedQuantity)} $unit · Cho phép: ${formatInventoryExactQuantity(eval.minAllowed)} – ${formatInventoryExactQuantity(eval.maxAllowed)} $unit (±${formatOperationCompact(allowedPct)}%)',
               style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 6),
@@ -232,18 +232,15 @@ class OperationExecuteItemCard extends StatelessWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-              ],
+              inputFormatters: const [VietnameseNumberInputFormatter()],
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
               decoration: InputDecoration(
-                hintText: formatOperationCompact(
+                hintText: formatInventoryExactQuantity(
                   schedule.plannedQuantity,
-                  maxDecimals: 3,
                 ),
                 hintStyle: const TextStyle(
                   color: Color(0xFF94A3B8),
@@ -314,7 +311,7 @@ class OperationExecuteItemCard extends StatelessWidget {
                 level: AppNoticeLevel.danger,
                 title: 'Không đủ vật tư trong kho',
                 message:
-                    'Tồn kho hiện tại của ${schedule.productName} chỉ còn ${formatOperationCompact(schedule.availableStock ?? 0, maxDecimals: 3)} $unit, không đủ cho lượng ${formatOperationCompact(eval.actual ?? schedule.plannedQuantity, maxDecimals: 3)} $unit. Không thể ghi nhận.',
+                    'Tồn kho hiện tại của ${schedule.productName} chỉ còn ${formatInventoryExactQuantity(schedule.availableStock ?? 0)} $unit, không đủ cho lượng ${formatInventoryExactQuantity(eval.actual ?? schedule.plannedQuantity)} $unit. Không thể ghi nhận.',
               ),
             ],
 

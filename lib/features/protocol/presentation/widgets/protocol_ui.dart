@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -56,10 +57,8 @@ String? protocolStatusDescription(
     'Chưa xác định trạng thái phác đồ. Vui lòng tải lại để kiểm tra thông tin mới nhất.',
 };
 
-String protocolNumber(num number) => number
-    .toStringAsFixed(4)
-    .replaceFirst(RegExp(r'\.?0+$'), '')
-    .replaceAll('.', ',');
+String protocolNumber(num number) =>
+    formatVietnameseNumber(number, decimalPlaces: 4);
 String protocolUnit(String unit) => switch (unit) {
   'PACK' => 'gói',
   'BOTTLE' => 'chai',

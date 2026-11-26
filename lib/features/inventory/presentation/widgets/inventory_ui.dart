@@ -197,34 +197,106 @@ class LowStockBadge extends StatelessWidget {
   const LowStockBadge({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+  Widget build(BuildContext context) => const InventoryStatusBadge(
+    label: 'Tồn kho thấp',
+    foreground: AppColors.error,
+    background: Color(0xFFFBE6EA),
+    showDot: false,
+  );
+}
+
+class InventoryStatusBadge extends StatelessWidget {
+  const InventoryStatusBadge({
+    required this.label,
+    required this.foreground,
+    required this.background,
+    this.showDot = true,
+    super.key,
+  });
+
+  final String label;
+  final Color foreground;
+  final Color background;
+  final bool showDot;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: const Color(0xFFFBE6EA),
+      color: background,
       borderRadius: BorderRadius.circular(99),
     ),
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.error,
-            shape: BoxShape.circle,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showDot) ...[
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: foreground,
+                shape: BoxShape.circle,
+              ),
+              child: const SizedBox.square(dimension: 6),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 11,
+                height: 1.25,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-          child: SizedBox.square(dimension: 6),
-        ),
-        SizedBox(width: 6),
-        Text(
-          'Tồn kho thấp',
-          style: TextStyle(
-            color: AppColors.error,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
-        ),
-      ],
+        ],
+      ),
     ),
+  );
+}
+
+class InventoryCompanyLine extends StatelessWidget {
+  const InventoryCompanyLine({
+    required this.text,
+    required this.style,
+    this.alignRight = false,
+    super.key,
+  });
+
+  final String text;
+  final TextStyle style;
+  final bool alignRight;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: alignRight
+        ? MainAxisAlignment.end
+        : MainAxisAlignment.start,
+    children: [
+      InventorySvgIcon(
+        InventoryAssets.supplierDetailTruck,
+        size: 15,
+        colorFilter: ColorFilter.mode(
+          style.color ?? AppColors.inkMuted,
+          BlendMode.srcIn,
+        ),
+      ),
+      const SizedBox(width: 6),
+      Flexible(
+        child: Tooltip(
+          message: text,
+          excludeFromSemantics: true,
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+      ),
+    ],
   );
 }
 
@@ -232,6 +304,7 @@ class InventoryField extends StatelessWidget {
   const InventoryField({
     required this.label,
     required this.child,
+    this.action,
     this.spacing = 7,
     this.labelSize = 13,
     super.key,
@@ -239,27 +312,73 @@ class InventoryField extends StatelessWidget {
 
   final String label;
   final Widget child;
+  final Widget? action;
   final double spacing;
   final double labelSize;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(
-        label,
-        style: TextStyle(
-          color: AppColors.inkSoft,
-          fontSize: labelSize,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
-        ),
+  Widget build(BuildContext context) {
+    final labelText = Text(
+      label,
+      style: TextStyle(
+        color: AppColors.inkSoft,
+        fontSize: labelSize,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
       ),
-      SizedBox(height: spacing),
-      child,
-    ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (action case final action?)
+          Row(
+            children: [
+              Expanded(child: labelText),
+              const SizedBox(width: 8),
+              Flexible(
+                flex: 2,
+                child: Align(alignment: Alignment.centerRight, child: action),
+              ),
+            ],
+          )
+        else
+          labelText,
+        SizedBox(height: spacing),
+        child,
+      ],
+    );
+  }
+}
+
+class InventoryFieldAction extends StatelessWidget {
+  const InventoryFieldAction({
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    style: TextButton.styleFrom(
+      textStyle: inventoryTextButtonTextStyle.copyWith(fontSize: 11),
+      minimumSize: const Size(0, 32),
+      padding: const EdgeInsets.only(left: 4, top: 2, bottom: 2),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    ),
+    onPressed: onPressed,
+    icon: const Icon(Icons.add, size: 14),
+    label: Text(label, textAlign: TextAlign.end),
   );
 }
+
+const inventorySupplierInputIcon = Center(
+  widthFactor: 1,
+  heightFactor: 1,
+  child: InventorySvgIcon(InventoryAssets.formManufacturer, size: 17),
+);
 
 class InventoryFilterChip extends StatelessWidget {
   const InventoryFilterChip({
@@ -294,6 +413,7 @@ class InventoryFilterChip extends StatelessWidget {
 
 InputDecoration inventoryInputDecoration({
   String? hintText,
+  Widget? prefixIcon,
   Widget? suffixIcon,
   EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
     horizontal: 14,
@@ -310,6 +430,7 @@ InputDecoration inventoryInputDecoration({
   filled: true,
   fillColor: Colors.white,
   contentPadding: contentPadding,
+  prefixIcon: prefixIcon,
   suffixIcon: suffixIcon,
   enabledBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),

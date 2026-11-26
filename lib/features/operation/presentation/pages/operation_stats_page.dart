@@ -1,374 +1,323 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 
 class OperationStatsPage extends ConsumerWidget {
   const OperationStatsPage({required this.seasonId, super.key});
 
   final String seasonId;
 
-  Widget _buildSummaryCard({
-    required String label,
-    required String value,
-    Color? color,
-  }) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.inkMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: color ?? AppColors.ink,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildTypeProgressRow({
-    required String label,
-    required int total,
-    required int completed,
-    required Color color,
-  }) {
-    final pct = total > 0 ? completed / total : 0.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
-                ),
-              ),
-              Text(
-                '$completed / $total (${(pct * 100).toStringAsFixed(0)}%)',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkMuted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: pct,
-              minHeight: 8,
-              backgroundColor: const Color(0xFFEFF2F7),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(operationStatsProvider(seasonId));
-    final listState = ref.watch(operationListProvider(seasonId)).value;
+    final provider = operationStatsProvider(seasonId);
+    final state = ref.watch(provider);
+    final stats = state.asData?.value;
     final subtitle = [
-      if (listState?.pondName != null) listState!.pondName,
-      if (listState?.seasonName != null) listState!.seasonName,
-    ].join(' · ');
+      stats?.pondName,
+      stats?.seasonName,
+    ].whereType<String>().join(' · ');
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
         child: SafeArea(
           bottom: false,
-          child: statsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.ocean),
-            ),
-            error: (err, _) => AppErrorState(
-              error: err,
-              onRetry: () => ref.refresh(operationStatsProvider(seasonId)),
-            ),
-            data: (stats) => CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                StickyPageHeader(
-                  title: 'Thống kê vận hành',
-                  subtitle: subtitle.isNotEmpty ? subtitle : null,
-                  onBack: context.pop,
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        // Overall rate card with account-page background
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            image: const DecorationImage(
-                              image: AssetImage(
-                                'assets/images/profile_background.png',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                            boxShadow: const <BoxShadow>[
-                              BoxShadow(
-                                color: Color(0x33205080),
-                                blurRadius: 20,
-                                offset: Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              gradient: const LinearGradient(
-                                colors: <Color>[
-                                  Color(0xCC1467B5),
-                                  Color(0x4412BDD0),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: <Widget>[
-                                      const Text(
-                                        'Tỷ lệ hoàn thành kế hoạch',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          shadows: <Shadow>[
-                                            Shadow(
-                                              color: Color(0x55000000),
-                                              blurRadius: 4,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.22,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.35,
-                                            ),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '${stats.completed}/${stats.total} lịch',
-                                          style: const TextStyle(
-                                            fontSize: 11.5,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    '${stats.completionRate.toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                      fontSize: 38,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: -0.5,
-                                      shadows: <Shadow>[
-                                        Shadow(
-                                          color: Color(0x44000000),
-                                          blurRadius: 5,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: LinearProgressIndicator(
-                                      value: stats.completionRate / 100.0,
-                                      minHeight: 8,
-                                      backgroundColor: Colors.white.withValues(
-                                        alpha: 0.25,
-                                      ),
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Metric Grid
-                        Row(
-                          children: <Widget>[
-                            _buildSummaryCard(
-                              label: 'Tổng số lịch',
-                              value: '${stats.total}',
-                            ),
-                            const SizedBox(width: 10),
-                            _buildSummaryCard(
-                              label: 'Đã hoàn thành',
-                              value: '${stats.completed}',
-                              color: const Color(0xFF0F9B8E),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: <Widget>[
-                            _buildSummaryCard(
-                              label: 'Chờ thực hiện',
-                              value: '${stats.planned}',
-                              color: const Color(0xFF1378D1),
-                            ),
-                            const SizedBox(width: 10),
-                            _buildSummaryCard(
-                              label: 'Đã quá hạn',
-                              value: '${stats.overdue}',
-                              color: stats.overdue > 0
-                                  ? AppColors.error
-                                  : AppColors.inkMuted,
-                            ),
-                            const SizedBox(width: 10),
-                            _buildSummaryCard(
-                              label: 'Đã hủy',
-                              value: '${stats.cancelled}',
-                              color: AppColors.inkMuted,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // By Type Breakdown Card
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            boxShadow: <BoxShadow>[
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              const Text(
-                                'Theo loại hoạt động',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildTypeProgressRow(
-                                label: 'Cho ăn',
-                                total: stats.byType['feeding']?.total ?? 0,
-                                completed:
-                                    stats.byType['feeding']?.completed ?? 0,
-                                color: const Color(0xFF0F9B8E),
-                              ),
-                              _buildTypeProgressRow(
-                                label: 'Khoáng',
-                                total: stats.byType['mineral']?.total ?? 0,
-                                completed:
-                                    stats.byType['mineral']?.completed ?? 0,
-                                color: const Color(0xFF1378D1),
-                              ),
-                              _buildTypeProgressRow(
-                                label: 'Hóa chất',
-                                total: stats.byType['chemical']?.total ?? 0,
-                                completed:
-                                    stats.byType['chemical']?.completed ?? 0,
-                                color: const Color(0xFF7B5BD6),
-                              ),
-                              _buildTypeProgressRow(
-                                label: 'Thuốc điều trị',
-                                total: stats.byType['medicine']?.total ?? 0,
-                                completed:
-                                    stats.byType['medicine']?.completed ?? 0,
-                                color: AppColors.error,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              StickyPageHeader(
+                title: 'Thống kê vận hành',
+                subtitle: subtitle.isEmpty ? null : subtitle,
+                onBack: context.pop,
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                sliver: SliverToBoxAdapter(
+                  child: state.when(
+                    loading: () => const SizedBox(
+                      height: 220,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
+                    error: (error, _) => AppErrorState(
+                      error: error,
+                      onRetry: () => ref.invalidate(provider),
+                    ),
+                    data: (stats) => stats.progress == null
+                        ? AppErrorState(onRetry: () => ref.invalidate(provider))
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _SeasonProgress(progress: stats.progress!),
+                              if (stats.materialProgress
+                                  case final counts?) ...[
+                                const SizedBox(height: 14),
+                                _MaterialProgress(counts: counts),
+                              ],
+                            ],
+                          ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class _SeasonProgress extends StatelessWidget {
+  const _SeasonProgress({required this.progress});
+
+  final OperationProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xFF13579B),
+            borderRadius: BorderRadius.circular(24),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/profile_background.png'),
+              fit: BoxFit.cover,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33205080),
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xCC1467B5), Color(0x4412BDD0)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tỷ lệ đã ghi nhận toàn vụ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (progress.started > 0) ...[
+                  Text(
+                    _percentageText(progress),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progress.fraction,
+                      minHeight: 8,
+                      backgroundColor: Colors.white24,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  progress.started == 0
+                      ? 'Chưa có lượt đã đến giờ'
+                      : '${progress.completed}/${progress.started} lượt đã đến giờ',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Table(
+          defaultVerticalAlignment: TableCellVerticalAlignment.intrinsicHeight,
+          children: [
+            TableRow(
+              children: [
+                _SummaryCard(
+                  label: 'Đã hoàn thành',
+                  count: progress.completed,
+                  color: const Color(0xFF0F766E),
+                ),
+                _SummaryCard(
+                  label: 'Chờ thực hiện',
+                  count: progress.waiting,
+                  color: AppColors.ocean,
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                _SummaryCard(
+                  label: 'Quá hạn',
+                  count: progress.overdue,
+                  color: AppColors.error,
+                ),
+                _SummaryCard(
+                  label: 'Đã khóa ghi nhận',
+                  count: progress.lockedUnrecorded,
+                  color: AppColors.inkSoft,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+String _percentageText(OperationCompletion completion) {
+  final percent = completion.percentage;
+  final decimals = percent % 1 == 0 ? 0 : 1;
+  return '${percent.toStringAsFixed(decimals).replaceFirst('.', ',')}%';
+}
+
+class _MaterialProgress extends StatelessWidget {
+  const _MaterialProgress({required this.counts});
+
+  final Map<String, OperationCompletion> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final types = OperationType.values.where(
+      (type) => (counts[type.name]?.started ?? 0) > 0,
+    );
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Tỷ lệ ghi nhận theo nhóm vật tư',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            types.isEmpty
+                ? 'Chưa có lượt dùng vật tư đã đến giờ.'
+                : 'Tính theo từng vật tư trong các lượt đã đến giờ.',
+            style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+          ),
+          for (final type in types) ...[
+            const SizedBox(height: 16),
+            _MaterialProgressRow(type: type, completion: counts[type.name]!),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MaterialProgressRow extends StatelessWidget {
+  const _MaterialProgressRow({required this.type, required this.completion});
+
+  final OperationType type;
+  final OperationCompletion completion;
+
+  @override
+  Widget build(BuildContext context) {
+    final visuals = OperationTypeVisuals.of(type);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(materialCategoryLabel(type))),
+            const SizedBox(width: 8),
+            Text(
+              _percentageText(completion),
+              style: TextStyle(color: visuals.fg, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: LinearProgressIndicator(
+            value: completion.fraction,
+            backgroundColor: visuals.bg,
+            color: visuals.fg,
+            borderRadius: BorderRadius.circular(6),
+            minHeight: 6,
+          ),
+        ),
+        Text(
+          '${completion.completed}/${completion.started} lượt dùng đã đến giờ',
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.label,
+    required this.count,
+    required this.color,
+  });
+
+  final String label;
+  final int count;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.all(4),
+    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$count',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.inkMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
 }

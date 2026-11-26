@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/domain/repositories/operation_repository.dart';
 import 'package:smartshrimp_app/features/operation/presentation/pages/operation_list_page.dart';
+import 'package:smartshrimp_app/features/operation/presentation/pages/operation_stats_page.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_sheet.dart';
@@ -17,6 +18,55 @@ import 'package:smartshrimp_app/features/operation/presentation/widgets/operatio
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_stats_bar.dart';
 
 void main() {
+  testWidgets(
+    'whole-season stats show locked unfinished work as a fourth card',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const stats = OperationStats(
+        total: 24,
+        planned: 3,
+        completed: 18,
+        cancelled: 3,
+        overdue: 1,
+        completionRate: 85.7,
+        byType: {},
+        materialProgress: {
+          'feeding': OperationCompletion(started: 9, completed: 8),
+        },
+        progress: OperationProgress(
+          started: 20,
+          completed: 18,
+          waiting: 3,
+          overdue: 1,
+          lockedUnrecorded: 1,
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [operationStatsProvider('s').overrideWith((ref) => stats)],
+          child: const MaterialApp(
+            home: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(1.6)),
+              child: OperationStatsPage(seasonId: 's'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('90%'), findsOneWidget);
+      expect(find.text('18/20 lượt đã đến giờ'), findsOneWidget);
+      expect(find.text('Chờ thực hiện'), findsOneWidget);
+      expect(find.text('Đã khóa ghi nhận'), findsOneWidget);
+      expect(find.text('88,8%'), findsOneWidget);
+      expect(find.text('8/9 lượt dùng đã đến giờ'), findsOneWidget);
+      expect(find.text('Đã hủy'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   group('OperationScheduleCard Widget', () {
     testWidgets('renders planned schedule card correctly', (tester) async {
       final schedule = OperationSchedule(
@@ -46,7 +96,7 @@ void main() {
       expect(find.text('Thức ăn CP 01'), findsOneWidget);
       expect(find.text('Đã lên lịch'), findsOneWidget);
       expect(find.text('Cữ 1'), findsOneWidget);
-      expect(find.textContaining('50.0 kg'), findsOneWidget);
+      expect(find.textContaining('50 kg'), findsOneWidget);
     });
 
     testWidgets('renders completed schedule card correctly', (tester) async {
@@ -80,7 +130,7 @@ void main() {
 
       expect(find.text('Khoáng Cal-Phos'), findsOneWidget);
       expect(find.text('Đã thực hiện'), findsOneWidget);
-      expect(find.textContaining('20.0 kg'), findsOneWidget);
+      expect(find.textContaining('20 kg'), findsOneWidget);
     });
 
     testWidgets('renders cancelled schedule card with cancellation reason', (
@@ -114,7 +164,7 @@ void main() {
 
       expect(find.text('BKC 80%'), findsOneWidget);
       expect(find.text('Đã hủy'), findsOneWidget);
-      expect(find.textContaining('5.0 lít'), findsOneWidget);
+      expect(find.textContaining('5 lít'), findsOneWidget);
     });
 
     testWidgets('renders overdue badge when planned schedule passes deadline', (
@@ -150,6 +200,10 @@ void main() {
       expect(find.text('Khoáng Mix'), findsOneWidget);
       expect(find.text('Đã lên lịch'), findsOneWidget);
       expect(find.text('Quá hạn'), findsOneWidget);
+      final category = tester.getCenter(find.text('Khoáng'));
+      final status = tester.getCenter(find.text('Đã lên lịch'));
+      expect(status.dx, greaterThan(category.dx));
+      expect(status.dy, closeTo(category.dy, 1));
     });
   });
 

@@ -42,6 +42,12 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
   var _statusFilter = InventoryArchiveStatus.all;
   InventoryCategory? _categoryFilter; // null = Tất cả
 
+  bool get _hasFilters =>
+      _searchQuery.isNotEmpty ||
+      _categoryFilter != null ||
+      _showLowStockOnly ||
+      _statusFilter != InventoryArchiveStatus.all;
+
   InventoryCatalogKey get _catalogKey => (
     farmId: widget.farmId,
     search: _searchQuery,
@@ -174,14 +180,16 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
               children: <Widget>[
                 Expanded(
                   child: InventorySummaryCard(
-                    value: '${page?.summary.totalProducts ?? 0}',
+                    value: formatInventoryQuantity(
+                      page?.summary.totalProducts ?? 0,
+                    ),
                     label: 'Vật tư',
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: InventorySummaryCard(
-                    value: '$lowStockCount',
+                    value: formatInventoryQuantity(lowStockCount),
                     label: 'Sắp hết',
                     alert: lowStockCount > 0,
                   ),
@@ -225,12 +233,11 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      '${page?.totalResults ?? 0} vật tư',
-                      style: const TextStyle(
+                      'Danh sách vật tư',
+                      style: AppTypography.display(
                         color: AppColors.ink,
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        height: 1.5,
                       ),
                     ),
                   ),
@@ -262,18 +269,10 @@ class _InventoryPageState extends ConsumerState<InventoryPage> {
                   : const Center(child: CircularProgressIndicator())
             else if (products.isEmpty)
               InventoryEmptyState(
-                title:
-                    _searchQuery.isEmpty &&
-                        _categoryFilter == null &&
-                        !_showLowStockOnly
-                    ? 'Chưa có vật tư'
-                    : 'Không tìm thấy vật tư',
-                message:
-                    _searchQuery.isEmpty &&
-                        _categoryFilter == null &&
-                        !_showLowStockOnly
-                    ? 'Thêm vật tư để bắt đầu quản lý kho của trang trại.'
-                    : 'Hãy thử tên hoặc bộ lọc khác.',
+                title: _hasFilters ? 'Không tìm thấy vật tư' : 'Chưa có vật tư',
+                message: _hasFilters
+                    ? 'Hãy thử tên hoặc bộ lọc khác.'
+                    : 'Thêm vật tư để bắt đầu quản lý kho của trang trại.',
               )
             else
               ...products.indexed.map(
@@ -451,7 +450,7 @@ class _ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      'Tồn sổ ${formatInventoryQuantity(product.currentStock)} ${product.unit.label} · ${product.activeLotCount} lô · ${formatInventoryCompactMoney(product.inventoryValue)}',
+                      'Tồn sổ ${formatInventoryQuantity(product.currentStock)} ${product.unit.label} · ${formatInventoryQuantity(product.activeLotCount)} lô · ${formatInventoryCompactMoney(product.inventoryValue)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

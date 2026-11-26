@@ -7,6 +7,7 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_supplier.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_detail_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/supplier_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
@@ -37,7 +38,8 @@ class _InventorySuppliersPageState
           MaterialPageRoute(
             builder: (_) => InventorySupplierDetailPage(
               farmId: widget.farmId,
-              supplier: supplier,
+              supplierId: supplier.id,
+              initialSupplier: supplier,
             ),
           ),
         );
@@ -118,7 +120,9 @@ class _InventorySuppliersPageState
               children: [
                 Expanded(
                   child: InventorySummaryCard(
-                    value: state.value == null ? '—' : '${all.length}',
+                    value: state.value == null
+                        ? '—'
+                        : formatInventoryQuantity(all.length),
                     label: 'Nhà cung cấp',
                     minHeight: 75,
                   ),
@@ -126,7 +130,9 @@ class _InventorySuppliersPageState
                 const SizedBox(width: 8),
                 Expanded(
                   child: InventorySummaryCard(
-                    value: state.value == null ? '—' : '$activeCount',
+                    value: state.value == null
+                        ? '—'
+                        : formatInventoryQuantity(activeCount),
                     label: 'Đang giao dịch',
                     minHeight: 75,
                   ),
@@ -136,7 +142,7 @@ class _InventorySuppliersPageState
                   child: InventorySummaryCard(
                     value: state.value == null
                         ? '—'
-                        : '${all.length - activeCount}',
+                        : formatInventoryQuantity(all.length - activeCount),
                     label: 'Ngừng giao dịch',
                     minHeight: 75,
                   ),
@@ -232,15 +238,12 @@ class _InventorySuppliersPageState
             Row(
               children: [
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Text(
-                      '${items.length} nhà cung cấp',
-                      style: AppTypography.display(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
+                  child: Text(
+                    'Danh sách nhà cung cấp',
+                    style: AppTypography.display(
+                      color: AppColors.ink,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -385,7 +388,7 @@ class _SupplierCard extends StatelessWidget {
                         if (supplier.manufacturedProductCount != null &&
                             supplier.receiptCount != null)
                           Text(
-                            '${supplier.manufacturedProductCount} vật tư cung cấp · ${supplier.receiptCount} lần nhập hàng',
+                            '${formatInventoryQuantity(supplier.manufacturedProductCount!)} vật tư cung cấp · ${formatInventoryQuantity(supplier.receiptCount!)} lần nhập hàng',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

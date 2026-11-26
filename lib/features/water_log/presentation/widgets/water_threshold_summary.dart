@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -313,11 +314,8 @@ class _RateTile extends StatelessWidget {
     final percent = rate! * 100;
     final label = percent > 0 && percent < .1
         ? '<0,1'
-        : percent
-              .toStringAsFixed(1)
-              .replaceFirst(RegExp(r'\.0$'), '')
-              .replaceAll('.', ',');
-    return '$count · $label%';
+        : formatVietnameseNumber(percent, decimalPlaces: 1);
+    return '${formatVietnameseNumber(count)} · $label%';
   }
 
   @override

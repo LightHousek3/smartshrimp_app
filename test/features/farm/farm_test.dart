@@ -123,8 +123,10 @@ void main() {
       expect(FarmRules.validateArea('3,50'), isNull);
       expect(FarmRules.parseArea('3,50'), 3.5);
       expect(FarmRules.validateArea('3.501'), isNull);
-      expect(FarmRules.parseArea('3.501'), 3.5);
-      expect(FarmRules.parseArea('3.506'), 3.51);
+      expect(FarmRules.parseArea('3.501'), 3501);
+      expect(FarmRules.parseArea('3,501'), 3.5);
+      expect(FarmRules.parseArea('3,506'), 3.51);
+      expect(FarmRules.parseCoordinate('3.506'), 3.506);
       expect(FarmRules.validateArea('0'), isNotNull);
     });
   });

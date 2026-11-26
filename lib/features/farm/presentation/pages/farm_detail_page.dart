@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -352,7 +353,7 @@ class _FarmLocationCard extends StatelessWidget {
                   color: const Color(0xFF0B9A8A),
                   label: 'Tọa độ GPS',
                   value:
-                      '${farm.latitude!.toStringAsFixed(4)}, ${farm.longitude!.toStringAsFixed(4)}',
+                      '${formatVietnameseNumber(farm.latitude, decimalPlaces: 4)} · ${formatVietnameseNumber(farm.longitude, decimalPlaces: 4)}',
                   monospaced: true,
                 ),
               ),

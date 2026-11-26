@@ -8,6 +8,31 @@ import 'protocol_fixtures.dart';
 import 'protocol_pages_test.dart' as harness;
 
 void main() {
+  testWidgets('owner audit preserves the recorded quantity and unit', (
+    tester,
+  ) async {
+    final row = dayRowJson(status: 'COMPLETED', medicine: true)
+      ..addAll({'actualQuantity': 0.000001, 'actualUnit': 'ML'});
+    await harness.open(
+      tester,
+      page: Scaffold(
+        body: SingleChildScrollView(
+          child: ProtocolDayAudit(
+            farmId: 'farm-1',
+            protocolStatus: ProtocolStatus.active,
+            day: ProtocolDay.parse({
+              'day': 1,
+              'rows': [row],
+            }),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('0,000001 ml'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'execution notes belong below the person responsible only for completed rows',
     (tester) async {
@@ -64,18 +89,21 @@ void main() {
           find.text('Kiểm tra giao dịch kho'),
           completed && !missingMetadata ? findsOneWidget : findsNothing,
         );
-        if (hasReason)
+        if (hasReason) {
           expect(
             tester.getTopLeft(quantityReason).dy,
             greaterThan(tester.getTopLeft(responsible).dy),
           );
-        if (hasNote)
+        }
+        if (hasNote) {
           expect(
             tester.getTopLeft(executionNote).dy,
             greaterThan(tester.getTopLeft(responsible).dy),
           );
-        if (missingMetadata)
+        }
+        if (missingMetadata) {
           expect(find.textContaining('Chưa có tên'), findsOneWidget);
+        }
         expect(tester.takeException(), isNull);
       }
     },
@@ -226,8 +254,8 @@ void main() {
   });
 
   for (final (unit, stockLabel, actual, variance) in [
-    ('G', 'gói', 25, '+25.0'),
-    ('ML', 'chai', 15, '-25.0'),
+    ('G', 'gói', 25, '+25,0'),
+    ('ML', 'chai', 15, '-25,0'),
     ('G', 'gói', 20, null),
   ]) {
     testWidgets('day audit displays $actual $unit and physical-unit variance', (

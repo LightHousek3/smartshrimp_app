@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
@@ -110,25 +112,25 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
   int? get _basePopulation =>
       ref.read(shrimpHealthPopulationProvider(_populationQuery)).value;
 
-  static double? _parseDouble(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return null;
-    final normalized = trimmed.replaceAll(',', '.');
-    return double.tryParse(normalized);
+  static double? _parseDouble(String text) => parseVietnameseNumber(text);
+
+  static String _formatNumber(int value) => formatVietnameseNumber(value);
+
+  static String? _integerError(String? input, {int minimum = 0}) {
+    if (input == null || input.trim().isEmpty) return null;
+    final value = parseVietnameseInteger(input);
+    return value == null || value < minimum ? 'Số lượng không hợp lệ' : null;
   }
 
-  static String _formatNumber(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (Match m) => '${m[1]}.',
-  );
-
   static String _formatWeight(double val) {
-    if (val == val.roundToDouble()) {
-      return val.toStringAsFixed(0);
-    }
-    if (val >= 100) return val.toStringAsFixed(0);
-    if (val >= 10) return val.toStringAsFixed(1);
-    return val.toStringAsFixed(2);
+    return formatVietnameseNumber(
+      val,
+      decimalPlaces: val >= 100
+          ? 0
+          : val >= 10
+          ? 1
+          : 2,
+    );
   }
 
   static String _formatTimeDayMonth(DateTime dt) {
@@ -144,7 +146,7 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
     final weightKg = _parseDouble(_sampleWeightController.text);
     if (weightKg == null || weightKg <= 0) return null;
 
-    final sampleSize = int.tryParse(_sampleSizeController.text.trim());
+    final sampleSize = parseVietnameseInteger(_sampleSizeController.text);
     if (sampleSize != null && sampleSize > 0) {
       // (weight in kg * 1000) / sampleSize = grams per shrimp
       return (weightKg * 1000) / sampleSize;
@@ -154,13 +156,12 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
 
   int? get _calculatedPopulation {
     final basePop = _basePopulation;
-    final mortality = int.tryParse(_mortalityController.text.trim()) ?? 0;
+    final mortality = parseVietnameseInteger(_mortalityController.text) ?? 0;
     if (basePop != null) {
       final remaining = basePop - mortality;
       return remaining < 0 ? 0 : remaining;
     }
-    final raw = _populationController.text.replaceAll('.', '').trim();
-    return int.tryParse(raw);
+    return parseVietnameseInteger(_populationController.text);
   }
 
   void _recalculateAll() {
@@ -196,10 +197,10 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
         population != null &&
         population > 0) {
       final calculatedBiomass = (population * effectiveWeight) / 1000;
-      final formattedBiomass =
-          calculatedBiomass == calculatedBiomass.roundToDouble()
-          ? calculatedBiomass.toStringAsFixed(0)
-          : calculatedBiomass.toStringAsFixed(1);
+      final formattedBiomass = formatVietnameseNumber(
+        calculatedBiomass,
+        decimalPlaces: 1,
+      );
       if (_biomassController.text != formattedBiomass) {
         _biomassController.text = formattedBiomass;
       }
@@ -277,13 +278,15 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       return;
     }
 
-    final sampleSize = int.tryParse(_sampleSizeController.text.trim());
+    final sampleSize = parseVietnameseInteger(_sampleSizeController.text);
     final avgWeightG = _calculatedAvgWeight ?? widget.previousAvgWeight;
     final avgLengthCm =
         _parseDouble(_avgLengthController.text) ?? widget.previousAvgLength;
-    final mortalityCount = int.tryParse(_mortalityController.text.trim()) ?? 0;
+    final mortalityCount =
+        parseVietnameseInteger(_mortalityController.text) ?? 0;
     final estimatedPopulation = _calculatedPopulation;
-    final estimatedBiomassKg = _parseDouble(_biomassController.text) ??
+    final estimatedBiomassKg =
+        _parseDouble(_biomassController.text) ??
         (avgWeightG != null &&
                 avgWeightG > 0 &&
                 estimatedPopulation != null &&
@@ -648,10 +651,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         unit: 'con',
                         hint: '120',
                         keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly,
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
                         ],
                         onChanged: (_) => _recalculateAll(),
+                        validator: (value) => _integerError(value, minimum: 1),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -660,20 +664,22 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         controller: _sampleWeightController,
                         label: 'Tổng khối lượng mẫu',
                         unit: 'kg',
-                        hint: '1.2',
+                        hint: '1,2',
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*[,.]?\d*'),
-                          ),
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
                         ],
                         onChanged: (_) => _recalculateAll(),
                         validator: (val) {
                           if (val != null && val.trim().isNotEmpty) {
-                            final sampleSize = int.tryParse(
-                              _sampleSizeController.text.trim(),
+                            final weight = _parseDouble(val);
+                            if (weight == null || weight <= 0) {
+                              return 'Khối lượng mẫu phải lớn hơn 0';
+                            }
+                            final sampleSize = parseVietnameseInteger(
+                              _sampleSizeController.text,
                             );
                             if (sampleSize == null || sampleSize <= 0) {
                               return 'Vui lòng nhập số mẫu';
@@ -696,14 +702,21 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         controller: _avgLengthController,
                         label: 'Chiều dài TB',
                         unit: 'cm',
-                        hint: '11.2',
+                        hint: '11,2',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+                          final length = _parseDouble(value);
+                          return length == null || length <= 0
+                              ? 'Chiều dài phải lớn hơn 0'
+                              : null;
+                        },
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*[,.]?\d*'),
-                          ),
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
                         ],
                       ),
                     ),
@@ -715,13 +728,13 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                         unit: 'con',
                         hint: '0',
                         keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly,
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
                         ],
                         onChanged: (_) => _recalculateAll(),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) return null;
-                          final mortality = int.tryParse(val.trim());
+                          final mortality = parseVietnameseInteger(val);
                           if (mortality == null || mortality < 0) {
                             return 'Số lượng không hợp lệ';
                           }
@@ -797,6 +810,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                             _basePopulation != null,
                         label: 'Ước tính đàn',
                         unit: 'con',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
+                        ],
+                        validator: (value) => _integerError(value),
                       ),
                     ),
                   ],

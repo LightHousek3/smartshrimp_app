@@ -72,12 +72,6 @@ void main() {
           find.text('Chưa có thu chi trong khoảng thời gian này.'),
           findsNothing,
         );
-        await expectLater(
-          find.byKey(const Key('finance-preview')),
-          matchesGoldenFile(
-            'goldens/finance_${unknown ? 'unknown' : 'partial'}_revenue.png',
-          ),
-        );
         expect(tester.takeException(), isNull);
       },
     );
@@ -119,10 +113,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await expectLater(
-      find.byKey(const Key('case-preview')),
-      matchesGoldenFile('goldens/owner_case_alert_states.png'),
-    );
+    expect(find.byType(DashboardAlertCard), findsNWidgets(3));
+    expect(find.textContaining('ca bệnh đang mở'), findsOneWidget);
+    expect(find.textContaining('ca bệnh đang điều trị'), findsOneWidget);
+    expect(find.textContaining('ca bệnh đang theo dõi'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -11,6 +11,36 @@ import 'package:smartshrimp_app/features/operation/presentation/pages/operation_
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 
 void main() {
+  for (final (quantity, label) in [(.1, '0,1 ml'), (.000001, '0,000001 ml')]) {
+    testWidgets('completed execution preserves the recorded amount $label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            assignedSeasonCanWriteProvider(
+              'season',
+            ).overrideWith((ref) => true),
+            operationRepositoryProvider.overrideWithValue(
+              _Operations(actualQuantity: quantity),
+            ),
+          ],
+          child: const MaterialApp(
+            home: OperationDetailPage(
+              seasonId: 'season',
+              scheduleId: 'schedule',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Đã dùng $label'), findsOneWidget);
+      expect(find.text(label), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final restriction in ['future', 'stock']) {
     testWidgets('active season checks $restriction at the appropriate step', (
       tester,
@@ -138,9 +168,10 @@ void main() {
 }
 
 class _Operations implements OperationRepository {
-  _Operations({this.scheduledAt, this.stock = 100});
+  _Operations({this.scheduledAt, this.stock = 100, this.actualQuantity});
   final DateTime? scheduledAt;
   final double stock;
+  final double? actualQuantity;
 
   @override
   Future<OperationListResult> getSchedules(
@@ -162,12 +193,21 @@ class _Operations implements OperationRepository {
         scheduledAt:
             scheduledAt ?? DateTime.now().subtract(const Duration(hours: 1)),
         plannedQuantity: 10,
-        unit: 'KG',
+        unit: actualQuantity == null ? 'KG' : 'ML',
         doseBasisSnapshot: 'FIXED_QUANTITY',
         doseValueSnapshot: 10,
         calculationVersion: 'v1',
-        status: OperationStatus.planned,
+        status: actualQuantity == null
+            ? OperationStatus.planned
+            : OperationStatus.completed,
         availableStock: stock,
+        execution: actualQuantity == null
+            ? null
+            : OperationExecution(
+                id: 'execution',
+                actualQuantity: actualQuantity!,
+                executedAt: DateTime.now(),
+              ),
         protocolItem: const OperationProtocolItem(id: 'item', dueAtMinutes: 30),
       );
   @override

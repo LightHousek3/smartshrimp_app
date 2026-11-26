@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -172,9 +173,7 @@ class WaterLogWarningDialog extends StatelessWidget {
 }
 
 // Preserve the entered precision so a small exceedance is visible.
-String _number(double value) => value == value.truncateToDouble()
-    ? value.toStringAsFixed(0)
-    : value.toString();
+String _number(double value) => formatVietnameseNumber(value);
 
 class _WarningTile extends StatelessWidget {
   const _WarningTile({required this.warning});

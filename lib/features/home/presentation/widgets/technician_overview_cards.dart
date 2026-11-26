@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
@@ -42,12 +43,9 @@ String technicianDateTime(DateTime at) {
 /// Display precision never changes a planned dose; very small positive doses remain visible.
 String technicianQuantity(double value) {
   if (value != 0 && value.abs() < 0.000000001) {
-    return value.toStringAsPrecision(3);
+    return formatVietnameseNumber(double.parse(value.toStringAsPrecision(3)));
   }
-  return value
-      .toStringAsFixed(9)
-      .replaceFirst(RegExp(r'\.?0+$'), '')
-      .replaceAll('.', ',');
+  return formatVietnameseNumber(value, decimalPlaces: 9);
 }
 
 String _unit(String value) => switch (value) {
@@ -184,9 +182,9 @@ class TechnicianAlertCard extends StatelessWidget {
     final title = switch (alert.kind) {
       TechnicianAlertKind.water => '${alert.count} chỉ số nước ngoài ngưỡng',
       TechnicianAlertKind.overdueOperations =>
-        '${alert.count} cữ quá giờ chưa thực hiện',
+        '${alert.count} lượt vận hành quá hạn',
       TechnicianAlertKind.scheduleBlocked =>
-        '${alert.count} cữ chưa đủ dữ liệu tính liều',
+        '${alert.count} lượt chưa đủ dữ liệu tính liều',
       TechnicianAlertKind.unknown => 'Vấn đề vận hành',
     };
     final place = '${alert.pondName} · ${alert.farmName}';
@@ -200,7 +198,7 @@ class TechnicianAlertCard extends StatelessWidget {
             )
             .join(' · '),
       TechnicianAlertKind.overdueOperations =>
-        'Cữ sớm nhất: ${technicianDateTime(alert.observedAt)}',
+        'Lịch sớm nhất: ${technicianDateTime(alert.observedAt)}',
       TechnicianAlertKind.scheduleBlocked =>
         '${_blockerText(alert)} Cữ sớm nhất: ${technicianDateTime(alert.observedAt)}',
       TechnicianAlertKind.unknown =>
@@ -440,9 +438,15 @@ class TechnicianOperationRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              '${group.items.length} cữ',
-              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                group.occurrenceCount == null
+                    ? '${group.items.length} vật tư'
+                    : '${group.occurrenceCount} lượt vận hành',
+                textAlign: TextAlign.end,
+                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+              ),
             ),
           ],
         ),

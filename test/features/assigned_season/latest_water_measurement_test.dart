@@ -65,7 +65,7 @@ void main() {
   for (final entry in [
     (label: 'Sức khỏe', path: 'shrimp-health'),
     (label: 'Vận hành', path: 'operations'),
-    (label: 'Trợ lý AI', path: 'rag'),
+    (label: 'Trợ lý Aquabot', path: 'rag'),
     (label: 'Đo nước', path: 'water-logs'),
     (label: 'AI nhận diện', path: 'ai-diagnoses'),
     (label: 'Ca bệnh', path: 'disease-cases'),
@@ -129,7 +129,7 @@ void main() {
         if (status == AssignedSeasonStatus.completed) {
           expect(find.text('Sức khỏe'), findsOneWidget);
           expect(find.text('Vận hành'), findsOneWidget);
-          expect(find.text('Trợ lý AI'), findsOneWidget);
+          expect(find.text('Trợ lý Aquabot'), findsOneWidget);
           expect(find.text('Đo nước'), findsOneWidget);
           expect(find.text('AI nhận diện'), findsOneWidget);
           expect(find.text('Ca bệnh'), findsOneWidget);
@@ -171,9 +171,9 @@ void main() {
       }
       expect(find.text('Min: 25'), findsOneWidget);
       expect(find.text('Max: 33'), findsOneWidget);
-      expect(find.text('Max: 0.05'), findsOneWidget);
+      expect(find.text('Max: 0,05'), findsOneWidget);
       expect(find.text('Min: —'), findsNWidgets(3));
-      final measuredValue = find.text(exceeded.isEmpty ? '0.00001' : '0.05001');
+      final measuredValue = find.text(exceeded.isEmpty ? '0,00001' : '0,05001');
       expect(
         tester.renderObject<RenderParagraph>(measuredValue).didExceedMaxLines,
         isFalse,

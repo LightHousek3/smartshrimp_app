@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_cont
 import 'package:smartshrimp_app/features/home/domain/entities/technician_dashboard.dart';
 import 'package:smartshrimp_app/features/home/presentation/pages/technician_home_page.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
+import 'package:smartshrimp_app/features/home/presentation/widgets/dashboard_widgets.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/technician_overview_cards.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
@@ -42,6 +43,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(TechnicianAlertCard), findsNWidgets(4));
+      expect(find.text('1 lượt vận hành quá hạn'), findsOneWidget);
+      expect(find.text('Lịch sớm nhất: 13:00 08/11/2026'), findsOneWidget);
       for (final card in find.byType(TechnicianAlertCard).evaluate()) {
         final rows = find.descendant(
           of: find.byWidget(card.widget),
@@ -270,13 +273,77 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Kiểm tra quạt nước'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Không còn cữ đã lên lịch trong hôm nay.'),
+        find.text('Không có lượt vận hành nào còn lại hôm nay.'),
         180,
       );
       expect(
-        find.text('Không còn cữ đã lên lịch trong hôm nay.'),
+        find.text('Không có lượt vận hành nào còn lại hôm nay.'),
         findsOneWidget,
       );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'empty technician sections have separate centered icons without cards',
+    (tester) async {
+      final json = technicianDashboardJson();
+      json['summary']['activeSeasonCount'] = 0;
+      json['summary']['unresolvedActiveSeasonCaseCount'] = 0;
+      json['summary']['openTaskCount'] = 0;
+      for (final key in ['alerts', 'tasks', 'seasons', 'operationGroups']) {
+        json[key] = [];
+      }
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(
+              const DashboardFixtureAuth(role: AccountRole.technician),
+            ),
+            technicianDashboardProvider.overrideWith(
+              (ref) async => TechnicianDashboard.parse(json),
+            ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: TechnicianHomePage())),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final (message, icon) in [
+        (
+          'Chưa ghi nhận vấn đề vận hành cần chú ý.',
+          AppSvgIconName.shieldOutline,
+        ),
+        ('Không có nhiệm vụ đang mở.', AppSvgIconName.tasks),
+        (
+          'Không có lượt vận hành nào còn lại hôm nay.',
+          AppSvgIconName.calendarDays,
+        ),
+        ('Chưa có vụ đang nuôi được phân công.', AppSvgIconName.shrimp),
+      ]) {
+        final text = find.text(message);
+        await tester.scrollUntilVisible(text, 150);
+        expect(tester.widget<Text>(text).textAlign, TextAlign.center);
+        final section = find.byWidgetPredicate(
+          (widget) =>
+              widget is Column &&
+              widget.children.any(
+                (child) => child is Text && child.data == message,
+              ),
+        );
+        expect(
+          find.descendant(
+            of: section,
+            matching: find.byWidgetPredicate(
+              (widget) => widget is AppSvgIcon && widget.icon == icon,
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.ancestor(of: text, matching: find.byType(DashboardCard)),
+          findsNothing,
+        );
+      }
       expect(tester.takeException(), isNull);
     },
   );

@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
@@ -97,7 +98,9 @@ class SeasonProgress extends StatelessWidget {
         const SizedBox(height: 12),
         Semantics(
           label: 'Tiến trình thời gian nuôi',
-          value: valid ? '${(progress * 100).toStringAsFixed(1)}%' : message,
+          value: valid
+              ? '${formatVietnameseDecimal((progress * 100).toStringAsFixed(1), trimTrailingZeroes: false)}%'
+              : message,
           child: ExcludeSemantics(
             child: SizedBox(
               height: 18,
@@ -132,7 +135,7 @@ class SeasonProgress extends StatelessWidget {
         const SizedBox(height: 10),
         if (valid) ...[
           Text(
-            '$doc / $totalDays ngày · ${(progress * 100).toStringAsFixed(1).replaceAll('.', ',')}%',
+            '$doc / $totalDays ngày · ${formatVietnameseDecimal((progress * 100).toStringAsFixed(1), trimTrailingZeroes: false)}%',
             style: const TextStyle(
               color: AppColors.ink,
               fontSize: 13,

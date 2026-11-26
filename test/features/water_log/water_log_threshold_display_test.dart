@@ -54,14 +54,17 @@ void main() {
               find.byKey(Key('water_threshold_${metric.field}_${bound.name}')),
             );
             final value =
-                bound.value?.toString().replaceFirst(RegExp(r'\.0$'), '') ??
+                bound.value
+                    ?.toString()
+                    .replaceFirst(RegExp(r'\.0$'), '')
+                    .replaceAll('.', ',') ??
                 '—';
             expect(text.data, '${bound.label}: $value');
           }
         }
         expect(tester.takeException(), isNull);
         expect(find.byType(Tooltip), findsNothing);
-        final value = find.text('0.00001');
+        final value = find.text('0,00001');
         expect(value, findsOneWidget);
         expect(
           tester.renderObject<RenderParagraph>(value).didExceedMaxLines,

@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
@@ -61,12 +62,16 @@ class _ShrimpHealthDetailSheetState
     final month = local.month.toString().padLeft(2, '0');
 
     final now = DateTime.now();
-    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
       return '$hour:$minute • Hôm nay ($day/$month)';
     }
 
     final yesterday = now.subtract(const Duration(days: 1));
-    if (local.year == yesterday.year && local.month == yesterday.month && local.day == yesterday.day) {
+    if (local.year == yesterday.year &&
+        local.month == yesterday.month &&
+        local.day == yesterday.day) {
       return '$hour:$minute • Hôm qua ($day/$month)';
     }
 
@@ -79,20 +84,7 @@ class _ShrimpHealthDetailSheetState
 
   static String _formatNumber(num? value, {int fractionDigits = 1}) {
     if (value == null) return '-';
-    if (value is int || fractionDigits == 0 || value == value.roundToDouble()) {
-      final intVal = fractionDigits == 0 ? value.round() : value.toInt();
-      return intVal.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
-    }
-    final fixed = value.toStringAsFixed(fractionDigits);
-    final parts = fixed.split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
-    return parts.length > 1 ? '$intPart,${parts[1]}' : intPart;
+    return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
   }
 
   Widget _buildStatusBadge() {
@@ -353,7 +345,9 @@ class _ShrimpHealthDetailSheetState
                   Expanded(
                     child: _buildTile(
                       'Cỡ mẫu',
-                      log.sampleSize != null ? '${log.sampleSize}' : '-',
+                      log.sampleSize != null
+                          ? formatVietnameseNumber(log.sampleSize)
+                          : '-',
                       'con',
                     ),
                   ),

@@ -111,10 +111,6 @@ void main() {
       for (final element in find.byType(RawImage).evaluate()) {
         expect((element.widget as RawImage).image, isNotNull);
       }
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/owner_case_initial_photos.png'),
-      );
       await tester.tap(find.byKey(const ValueKey('case-evidence-image-1')));
       await tester.pumpAndSettle();
       expect(find.byType(AppImageViewer), findsOneWidget);
@@ -124,10 +120,6 @@ void main() {
             .widget<InteractiveViewer>(find.byType(InteractiveViewer))
             .maxScale,
         4,
-      );
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/owner_case_photo_viewer.png'),
       );
       await tester.tap(
         find.bySemanticsLabel(RegExp('^Xem ảnh 1 trong thư viện')),

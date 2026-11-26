@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
@@ -24,7 +25,7 @@ class OperationScheduleCard extends StatelessWidget {
     final isOverdue = schedule.isOverdue;
 
     final quantityStr =
-        '${schedule.plannedQuantity} ${schedule.unit.toLowerCase()}';
+        '${formatVietnameseNumber(schedule.plannedQuantity, decimalPlaces: 9)} ${schedule.unit.toLowerCase()}';
     final mealStr = schedule.protocolItem?.mealNumber != null
         ? 'Cữ ${schedule.protocolItem!.mealNumber}'
         : null;
@@ -88,18 +89,30 @@ class OperationScheduleCard extends StatelessWidget {
                     children: <Widget>[
                       Row(
                         children: <Widget>[
-                          OperationTypeBadge(type: schedule.operationType),
-                          if (mealStr != null) ...<Widget>[
-                            const SizedBox(width: 8),
-                            Text(
-                              mealStr,
-                              style: const TextStyle(
-                                color: AppColors.inkSoft,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          Flexible(
+                            flex: 2,
+                            child: OperationTypeBadge(
+                              type: schedule.operationType,
                             ),
-                          ],
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 3,
+                            child: OperationStatusLine(
+                              badge: OperationStatusBadge(
+                                status: schedule.status,
+                              ),
+                              label: schedule.status == OperationStatus.planned
+                                  ? schedule.activatedAt != null
+                                        ? const OperationUnrecordedBadge()
+                                        : isOverdue
+                                        ? const OperationOverdueBadge(
+                                            compact: true,
+                                          )
+                                        : null
+                                  : null,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -149,14 +162,20 @@ class OperationScheduleCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                          if (mealStr != null) ...<Widget>[
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                mealStr,
+                                style: const TextStyle(
+                                  color: AppColors.inkSoft,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ),
-                      const SizedBox(height: 6),
-                      OperationStatusLine(
-                        badge: OperationStatusBadge(status: schedule.status),
-                        label: isOverdue
-                            ? const OperationOverdueBadge(compact: true)
-                            : null,
                       ),
                     ],
                   ),

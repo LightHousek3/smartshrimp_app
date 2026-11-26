@@ -1,5 +1,6 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
@@ -108,17 +109,19 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   }) {
     final raw = text?.trim() ?? '';
     if (raw.isEmpty) return required ? 'Vui lòng nhập giá trị.' : null;
-    if (!RegExp(r'^-?\d+(?:[.,]\d+)?$').hasMatch(raw)) {
+    final normalized = normalizeVietnameseNumber(raw);
+    if (normalized == null ||
+        !RegExp(r'^-?\d+(?:\.\d+)?$').hasMatch(normalized)) {
       return 'Vui lòng chỉ nhập số';
     }
-    final value = double.tryParse(raw.replaceAll(',', '.'));
+    final value = double.tryParse(normalized);
     if (value == null || !value.isFinite) return 'Giá trị quá lớn';
     if (zero ? value < 0 : value <= 0) {
       return zero
           ? 'Giá trị phải lớn hơn hoặc bằng 0'
           : 'Giá trị phải lớn hơn 0';
     }
-    final fraction = raw.split(RegExp('[.,]'));
+    final fraction = normalized.split('.');
     if (fraction.length > 1 && fraction.last.length > decimals) {
       return decimals == 0
           ? 'Vui lòng nhập số nguyên'
@@ -129,7 +132,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   }
 
   num? _value(String key) =>
-      num.tryParse(_fields[key]!.text.trim().replaceAll(',', '.'));
+      num.tryParse(normalizeVietnameseNumber(_fields[key]!.text) ?? '');
 
   String? _validateTime(AquacultureSeason season) =>
       validateHarvestTime(_time, season.stockingDate);
@@ -164,7 +167,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       : null;
 
   bool _reachesCorrectionThreshold(BigInt? available) {
-    final count = BigInt.tryParse(_fields['count']!.text.trim());
+    final count = BigInt.tryParse(
+      normalizeVietnameseNumber(_fields['count']!.text) ?? '',
+    );
     return available != null &&
         count != null &&
         count > BigInt.zero &&
@@ -172,10 +177,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         (_final ? count > available : count >= available);
   }
 
-  String _countLabel(String value) => value.replaceAllMapped(
-    RegExp(r'(\d)(?=(\d{3})+$)'),
-    (match) => '${match[1]}.',
-  );
+  String _countLabel(String value) => groupVietnameseDigits(value);
 
   _QuantityValidationError? _validateQuantity(
     ShrimpType species, {
@@ -215,7 +217,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         return null;
       }
     }
-    final raw = _fields['count']!.text.trim();
+    final raw = normalizeVietnameseNumber(_fields['count']!.text) ?? '';
     final harvestedCount = BigInt.tryParse(raw);
     if (!RegExp(r'^\d+$').hasMatch(raw) ||
         harvestedCount == null ||
@@ -529,7 +531,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           content: Text(
             '${isFinal ? 'Thu hoạch cuối' : 'Thu tỉa'} · ${harvestNumber(body['totalWeightKg'] as num)} kg\n'
             '${harvestDate(DateTime.parse(body['harvestedAt'] as String))}'
-            '${body['quantityCount'] == null ? '' : '\nSố lượng thu: ${body['quantityCount']} con'}'
+            '${body['quantityCount'] == null ? '' : '\nSố lượng thu: ${harvestNumber(body['quantityCount'] as num?)} con'}'
             '${body['pricePerKg'] == null ? '\nĐơn giá và doanh thu chưa xác định.' : ''}'
             '${isFinal
                 ? ''
@@ -561,7 +563,10 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       'note': 'note',
       'varianceReason': 'variance',
     }.entries) {
-      _fields[entry.value]!.text = body[entry.key]?.toString() ?? '';
+      final value = body[entry.key];
+      _fields[entry.value]!.text = value is num
+          ? formatVietnameseNumber(value)
+          : value?.toString() ?? '';
     }
     _time = DateTime.parse(body['harvestedAt'] as String).toLocal();
     _final = body['harvestType'] == 'FINAL';
@@ -1191,13 +1196,8 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           forceErrorText: fieldError,
           enabled: !busy,
           keyboardType: TextInputType.numberWithOptions(decimal: decimals > 0),
-          inputFormatters: [
-            TextInputFormatter.withFunction(
-              (oldValue, newValue) =>
-                  RegExp(r'^[0-9.,]*$').hasMatch(newValue.text)
-                  ? newValue
-                  : oldValue,
-            ),
+          inputFormatters: const [
+            VietnameseNumberInputFormatter(rejectNonNumeric: true),
           ],
           style: const TextStyle(fontSize: 13, color: AppColors.ink),
           decoration: InputDecoration(

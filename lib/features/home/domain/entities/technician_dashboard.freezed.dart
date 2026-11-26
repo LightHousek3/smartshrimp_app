@@ -1145,7 +1145,7 @@ as String?,
 /// @nodoc
 mixin _$TechnicianOperationGroup {
 
- String get seasonId; String get seasonName; String get pondName; String get farmName; List<TechnicianOperation> get items;
+ String get seasonId; String get seasonName; String get pondName; String get farmName; List<TechnicianOperation> get items; int? get occurrenceCount;
 /// Create a copy of TechnicianOperationGroup
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1158,16 +1158,16 @@ $TechnicianOperationGroupCopyWith<TechnicianOperationGroup> get copyWith => _$Te
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TechnicianOperationGroup&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&const DeepCollectionEquality().equals(other.items, items));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TechnicianOperationGroup&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.occurrenceCount, occurrenceCount) || other.occurrenceCount == occurrenceCount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,seasonId,seasonName,pondName,farmName,const DeepCollectionEquality().hash(items));
+int get hashCode => Object.hash(runtimeType,seasonId,seasonName,pondName,farmName,const DeepCollectionEquality().hash(items),occurrenceCount);
 
 @override
 String toString() {
-  return 'TechnicianOperationGroup(seasonId: $seasonId, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, items: $items)';
+  return 'TechnicianOperationGroup(seasonId: $seasonId, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, items: $items, occurrenceCount: $occurrenceCount)';
 }
 
 
@@ -1178,7 +1178,7 @@ abstract mixin class $TechnicianOperationGroupCopyWith<$Res>  {
   factory $TechnicianOperationGroupCopyWith(TechnicianOperationGroup value, $Res Function(TechnicianOperationGroup) _then) = _$TechnicianOperationGroupCopyWithImpl;
 @useResult
 $Res call({
- String seasonId, String seasonName, String pondName, String farmName, List<TechnicianOperation> items
+ String seasonId, String seasonName, String pondName, String farmName, List<TechnicianOperation> items, int? occurrenceCount
 });
 
 
@@ -1195,14 +1195,15 @@ class _$TechnicianOperationGroupCopyWithImpl<$Res>
 
 /// Create a copy of TechnicianOperationGroup
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? seasonId = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? items = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? seasonId = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? items = null,Object? occurrenceCount = freezed,}) {
   return _then(_self.copyWith(
 seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
 as String,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
 as String,pondName: null == pondName ? _self.pondName : pondName // ignore: cast_nullable_to_non_nullable
 as String,farmName: null == farmName ? _self.farmName : farmName // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
-as List<TechnicianOperation>,
+as List<TechnicianOperation>,occurrenceCount: freezed == occurrenceCount ? _self.occurrenceCount : occurrenceCount // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -1287,10 +1288,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items,  int? occurrenceCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TechnicianOperationGroup() when $default != null:
-return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items);case _:
+return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items,_that.occurrenceCount);case _:
   return orElse();
 
 }
@@ -1308,10 +1309,10 @@ return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items,  int? occurrenceCount)  $default,) {final _that = this;
 switch (_that) {
 case _TechnicianOperationGroup():
-return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items);case _:
+return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items,_that.occurrenceCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1328,10 +1329,10 @@ return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String seasonId,  String seasonName,  String pondName,  String farmName,  List<TechnicianOperation> items,  int? occurrenceCount)?  $default,) {final _that = this;
 switch (_that) {
 case _TechnicianOperationGroup() when $default != null:
-return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items);case _:
+return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_that.items,_that.occurrenceCount);case _:
   return null;
 
 }
@@ -1343,7 +1344,7 @@ return $default(_that.seasonId,_that.seasonName,_that.pondName,_that.farmName,_t
 
 @JsonSerializable(checked: true)
 class _TechnicianOperationGroup implements TechnicianOperationGroup {
-  const _TechnicianOperationGroup({required this.seasonId, required this.seasonName, required this.pondName, required this.farmName, required final  List<TechnicianOperation> items}): _items = items;
+  const _TechnicianOperationGroup({required this.seasonId, required this.seasonName, required this.pondName, required this.farmName, required final  List<TechnicianOperation> items, this.occurrenceCount}): _items = items;
   factory _TechnicianOperationGroup.fromJson(Map<String, dynamic> json) => _$TechnicianOperationGroupFromJson(json);
 
 @override final  String seasonId;
@@ -1357,6 +1358,7 @@ class _TechnicianOperationGroup implements TechnicianOperationGroup {
   return EqualUnmodifiableListView(_items);
 }
 
+@override final  int? occurrenceCount;
 
 /// Create a copy of TechnicianOperationGroup
 /// with the given fields replaced by the non-null parameter values.
@@ -1371,16 +1373,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TechnicianOperationGroup&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&const DeepCollectionEquality().equals(other._items, _items));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TechnicianOperationGroup&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.seasonName, seasonName) || other.seasonName == seasonName)&&(identical(other.pondName, pondName) || other.pondName == pondName)&&(identical(other.farmName, farmName) || other.farmName == farmName)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.occurrenceCount, occurrenceCount) || other.occurrenceCount == occurrenceCount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,seasonId,seasonName,pondName,farmName,const DeepCollectionEquality().hash(_items));
+int get hashCode => Object.hash(runtimeType,seasonId,seasonName,pondName,farmName,const DeepCollectionEquality().hash(_items),occurrenceCount);
 
 @override
 String toString() {
-  return 'TechnicianOperationGroup(seasonId: $seasonId, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, items: $items)';
+  return 'TechnicianOperationGroup(seasonId: $seasonId, seasonName: $seasonName, pondName: $pondName, farmName: $farmName, items: $items, occurrenceCount: $occurrenceCount)';
 }
 
 
@@ -1391,7 +1393,7 @@ abstract mixin class _$TechnicianOperationGroupCopyWith<$Res> implements $Techni
   factory _$TechnicianOperationGroupCopyWith(_TechnicianOperationGroup value, $Res Function(_TechnicianOperationGroup) _then) = __$TechnicianOperationGroupCopyWithImpl;
 @override @useResult
 $Res call({
- String seasonId, String seasonName, String pondName, String farmName, List<TechnicianOperation> items
+ String seasonId, String seasonName, String pondName, String farmName, List<TechnicianOperation> items, int? occurrenceCount
 });
 
 
@@ -1408,14 +1410,15 @@ class __$TechnicianOperationGroupCopyWithImpl<$Res>
 
 /// Create a copy of TechnicianOperationGroup
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? seasonId = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? items = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? seasonId = null,Object? seasonName = null,Object? pondName = null,Object? farmName = null,Object? items = null,Object? occurrenceCount = freezed,}) {
   return _then(_TechnicianOperationGroup(
 seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
 as String,seasonName: null == seasonName ? _self.seasonName : seasonName // ignore: cast_nullable_to_non_nullable
 as String,pondName: null == pondName ? _self.pondName : pondName // ignore: cast_nullable_to_non_nullable
 as String,farmName: null == farmName ? _self.farmName : farmName // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
-as List<TechnicianOperation>,
+as List<TechnicianOperation>,occurrenceCount: freezed == occurrenceCount ? _self.occurrenceCount : occurrenceCount // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

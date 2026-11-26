@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 
@@ -191,6 +192,7 @@ abstract final class InventoryRules {
   static const maxDescriptionLength = 500;
   static const maxLotLength = 100;
   static const maxSupplierLength = 255;
+  static const maxSupplierPhoneInputLength = 32;
   static const maxReasonLength = 255;
   static const maxQuantity = 99999999999.999;
   static const maxUnitPrice = 999999999999.99;
@@ -198,8 +200,9 @@ abstract final class InventoryRules {
 
   /// Preserve decimal text all the way to the API instead of rounding through double.
   static String normalizedQuantity(String text) {
-    final normalized = text.trim().replaceAll(',', '.');
-    if (!RegExp(r'^\d+(?:\.\d+)?$').hasMatch(normalized)) {
+    final normalized = normalizeVietnameseNumber(text);
+    if (normalized == null ||
+        !RegExp(r'^\d+(?:\.\d+)?$').hasMatch(normalized)) {
       throw const FormatException('Số lượng không hợp lệ');
     }
     final parts = normalized.split('.');
@@ -222,19 +225,43 @@ abstract final class InventoryRules {
 
   static String? expiryDateError(DateTime? date) {
     if (date == null) return 'Vui lòng chọn hạn sử dụng';
-    final today = DateTime.now().toUtc().add(const Duration(hours: 7));
-    return dateText(date).compareTo(dateText(today)) < 0
+    return isExpiredOn(date, at: DateTime.now())
         ? 'Hạn sử dụng không được trong quá khứ'
         : null;
   }
 
+  /// A lot remains valid through the end of its expiry date in Vietnam.
+  static bool isExpiredOn(DateTime expiryDate, {required DateTime at}) =>
+      dateText(expiryDate).compareTo(dateText(vietnamTime(at))) < 0;
+
+  static DateTime vietnamTime(DateTime instant) =>
+      instant.toUtc().add(const Duration(hours: 7));
+
   static DateTime get today {
-    final now = DateTime.now().toUtc().add(const Duration(hours: 7));
+    final now = vietnamTime(DateTime.now());
     return DateTime(now.year, now.month, now.day);
   }
 
   static String normalizeText(String value) =>
       value.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+  static final _supplierPhoneLayout = RegExp(
+    r'^(?:\+[1-9]|[0-9]|\([0-9]+\))(?:[0-9]|\([0-9]+\)|[ .-]+(?=[0-9(]))*$',
+  );
+  static final _compactSupplierPhone = RegExp(r'^\+?[0-9]{6,15}$');
+
+  static String? supplierPhoneError(String? value) {
+    final phone = value?.trim() ?? '';
+    if (phone.isEmpty) return 'Vui lòng nhập số điện thoại';
+    final compact = phone.replaceAll(RegExp(r'[ ().-]'), '');
+    if (phone.length > maxSupplierPhoneInputLength ||
+        !_supplierPhoneLayout.hasMatch(phone) ||
+        !_compactSupplierPhone.hasMatch(compact) ||
+        !RegExp(r'[1-9]').hasMatch(compact)) {
+      return 'Số điện thoại không hợp lệ';
+    }
+    return null;
+  }
 
   static bool isPackaged(InventoryProductUnit unit) =>
       unit == InventoryProductUnit.pack || unit == InventoryProductUnit.bottle;
@@ -257,12 +284,14 @@ abstract final class InventoryRules {
     _ => const [],
   };
 
-  /// Accept decimal commas or dots without interpreting grouping or exponents.
   static double? parseNumber(String? value) {
-    final text = value?.trim() ?? '';
-    if (!RegExp(r'^\d+(?:[.,]\d+)?$').hasMatch(text)) return null;
-    final number = double.tryParse(text.replaceAll(',', '.'));
-    return number != null && number.isFinite ? number : null;
+    final normalized = normalizeVietnameseNumber(value);
+    if (normalized == null ||
+        !RegExp(r'^\d+(?:\.\d+)?$').hasMatch(normalized)) {
+      return null;
+    }
+    final number = double.tryParse(normalized);
+    return number?.isFinite == true ? number : null;
   }
 
   /// Keep movement quantities positive; stock thresholds may use zero and lower precision.
@@ -310,7 +339,7 @@ abstract final class InventoryRules {
       return '$label phải là số ${allowZero ? 'không âm' : 'lớn hơn 0'}';
     }
     if (number > maximum) return '$label vượt quá giới hạn cho phép';
-    final parts = value!.trim().replaceAll(',', '.').split('.');
+    final parts = normalizeVietnameseNumber(value)!.split('.');
     final decimalPlaces = parts.length == 1
         ? 0
         : parts.last.replaceFirst(RegExp(r'0+$'), '').length;

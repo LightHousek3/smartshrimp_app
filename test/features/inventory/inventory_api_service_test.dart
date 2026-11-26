@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,8 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
 import 'package:smartshrimp_app/core/storage/session_store.dart';
 import 'package:smartshrimp_app/features/inventory/data/services/inventory_api_service.dart';
+
+import 'inventory_test_data.dart';
 
 void main() {
   test(
@@ -129,6 +132,16 @@ void main() {
     'history forwards filter query, authentication and matching summary',
     () async {
       late RequestOptions captured;
+      final movement =
+          jsonDecode(jsonEncode(inventoryTestTransaction))
+              as Map<String, dynamic>;
+      movement.addAll({
+        'transactionType': 'STOCK_OUT',
+        'unitSnapshot': 'PACK',
+        'quantity': 0.000001,
+        'quantityExact': '0.000001',
+        'totalAmount': .10,
+      });
       final service = InventoryApiService(
         ApiClient(
           _dioWithHandler((request, handler) {
@@ -136,15 +149,15 @@ void main() {
             handler.resolve(
               _success(
                 request,
-                data: <Map<String, dynamic>>[],
+                data: [movement],
                 meta: <String, dynamic>{
                   'limit': 100,
-                  'totalResults': 0,
+                  'totalResults': 1,
                   'hasNextPage': false,
                   'nextCursor': null,
                   'summary': <String, dynamic>{
                     'totalInboundValue': 0,
-                    'totalOutboundValue': 0,
+                    'totalOutboundValue': .10,
                   },
                 },
               ),
@@ -166,8 +179,9 @@ void main() {
       expect(captured.uri.path, '/owner/farms/farm-1/inventory-transactions');
       expect(captured.queryParameters, query);
       expect(captured.headers['Authorization'], 'Bearer access-token');
-      expect(page.totalResults, 0);
-      expect(page.summary.totalOutboundValue, 0);
+      expect(page.totalResults, 1);
+      expect(page.summary.totalOutboundValue, .10);
+      expect(page.items.single.quantityExact, '0.000001');
     },
   );
 

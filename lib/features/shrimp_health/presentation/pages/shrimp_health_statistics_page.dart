@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,19 +34,7 @@ class _ShrimpHealthStatisticsPageState
 
   String _formatNumber(num? value, {int fractionDigits = 1}) {
     if (value == null) return '-';
-    if (value is int || fractionDigits == 0 || value == value.roundToDouble()) {
-      final intVal = fractionDigits == 0 ? value.round() : value.toInt();
-      return intVal.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]},',
-      );
-    }
-    final parts = value.toStringAsFixed(fractionDigits).split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
-    return parts.length > 1 ? '$intPart.${parts[1]}' : intPart;
+    return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
   }
 
   Widget _buildMetricCard({
@@ -343,7 +332,7 @@ class _ShrimpHealthStatisticsPageState
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            '${growthVal >= 0 ? '+' : ''}${growthVal.toStringAsFixed(1)} $unitStr',
+                            '${growthVal >= 0 ? '+' : ''}${formatVietnameseNumber(growthVal, decimalPlaces: 1)} $unitStr',
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
@@ -664,7 +653,7 @@ class _ShrimpHealthStatisticsPageState
                 ),
               ),
               Text(
-                '$count lần · ${percent.toStringAsFixed(1)}%',
+                '${formatVietnameseNumber(count)} lần · ${formatVietnameseNumber(percent, decimalPlaces: 1)}%',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -1030,7 +1019,7 @@ class _LineChartPainter extends CustomPainter {
 
       final val = maxVal - (range / 2) * i;
       final textSpan = TextSpan(
-        text: val.toStringAsFixed(isBiomass ? 0 : 1),
+        text: formatVietnameseNumber(val, decimalPlaces: isBiomass ? 0 : 1),
         style: const TextStyle(
           color: Color(0xFF94A3B8),
           fontSize: 9.5,
@@ -1090,7 +1079,8 @@ class _LineChartPainter extends CustomPainter {
 
     final lastPoint = points.last;
     final lastLocal = lastPoint.recordedAt.toLocal();
-    final isRecordedToday = lastLocal.year == now.year &&
+    final isRecordedToday =
+        lastLocal.year == now.year &&
         lastLocal.month == now.month &&
         lastLocal.day == now.day;
     final endDt = isRecordedToday ? now : lastLocal;
@@ -1112,10 +1102,7 @@ class _LineChartPainter extends CustomPainter {
     )..layout();
     startPainter.paint(
       canvas,
-      Offset(
-        leftPadding,
-        size.height - bottomPadding + 6,
-      ),
+      Offset(leftPadding, size.height - bottomPadding + 6),
     );
 
     // Right milestone: Today if recorded, or latest recorded date (e.g. 24/11)

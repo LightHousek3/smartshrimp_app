@@ -221,6 +221,15 @@ void main() {
       expect(stats.completionRate, 50.0);
       expect(stats.byType['FEEDING']?.completed, 4);
       expect(stats.byType['MINERAL']?.cancelled, 1);
+      expect(stats.materialProgress, isNull);
+
+      final statsWithMaterials = OperationStats.fromJson({
+        ...statsJson,
+        'materialProgress': {
+          'feeding': {'started': 6, 'completed': 4},
+        },
+      });
+      expect(statsWithMaterials.materialProgress?['feeding']?.percentage, 66.6);
     });
 
     test(
@@ -331,140 +340,146 @@ void main() {
       expect(tomorrowGroup.feedings.first.id, 'feed-d2-m1');
     });
 
-    test('FeedingMedicineMealGroup.group creates Box Điều trị for treatment protocols and separates items with different times', () {
-      const treatmentProtocol = OperationProtocol(
-        id: 'proto-treat-1',
-        title: 'Phác đồ điều trị phân trắng',
-        protocolType: 'TREATMENT',
-      );
+    test(
+      'treatment keeps its meal number and separates outside-meal operations',
+      () {
+        const treatmentProtocol = OperationProtocol(
+          id: 'proto-treat-1',
+          title: 'Phác đồ điều trị phân trắng',
+          protocolType: 'TREATMENT',
+        );
 
-      const productionProtocol = OperationProtocol(
-        id: 'proto-prod-1',
-        title: 'Phác đồ nuôi chuẩn',
-        protocolType: 'PRODUCTION',
-      );
+        const productionProtocol = OperationProtocol(
+          id: 'proto-prod-1',
+          title: 'Phác đồ nuôi chuẩn',
+          protocolType: 'PRODUCTION',
+        );
 
-      // 1. Hai thành phần điều trị CÙNG THỜI GIAN (08:00 sáng) -> phải gom chung vào 1 Box "Điều trị"
-      final sTreatMorningFeed = OperationSchedule(
-        id: 'treat-feed-1',
-        seasonId: 'season-1',
-        protocolItemId: 'item-t1',
-        operationType: OperationType.feeding,
-        scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
-        plannedQuantity: 1.5,
-        unit: 'kg',
-        doseBasisSnapshot: 'PERCENT_BIOMASS',
-        doseValueSnapshot: 2.0,
-        calculationVersion: 'v1',
-        status: OperationStatus.planned,
-        product: const OperationProduct(id: 'p1', name: 'Thức ăn trộn'),
-        protocolItem: const OperationProtocolItem(
-          id: 'item-t1',
-          protocol: treatmentProtocol,
-        ),
-      );
+        final sTreatMorningFeed = OperationSchedule(
+          id: 'treat-feed-1',
+          seasonId: 'season-1',
+          protocolItemId: 'item-t1',
+          operationType: OperationType.feeding,
+          scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
+          plannedQuantity: 1.5,
+          unit: 'kg',
+          doseBasisSnapshot: 'PERCENT_BIOMASS',
+          doseValueSnapshot: 2.0,
+          calculationVersion: 'v1',
+          status: OperationStatus.planned,
+          product: const OperationProduct(id: 'p1', name: 'Thức ăn trộn'),
+          protocolItem: const OperationProtocolItem(
+            id: 'item-t1',
+            productionMealId: 'treatment-meal',
+            mealNumber: 2,
+            protocol: treatmentProtocol,
+          ),
+        );
 
-      final sTreatMorningMed = OperationSchedule(
-        id: 'treat-med-1',
-        seasonId: 'season-1',
-        protocolItemId: 'item-t2',
-        operationType: OperationType.medicine,
-        scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
-        plannedQuantity: 200,
-        unit: 'ml',
-        doseBasisSnapshot: 'PER_KG_FEED',
-        doseValueSnapshot: 50.0,
-        calculationVersion: 'v1',
-        status: OperationStatus.planned,
-        product: const OperationProduct(id: 'p2', name: 'Kháng sinh điều trị'),
-        protocolItem: const OperationProtocolItem(
-          id: 'item-t2',
-          protocol: treatmentProtocol,
-        ),
-      );
+        final sTreatMorningMed = OperationSchedule(
+          id: 'treat-med-1',
+          seasonId: 'season-1',
+          protocolItemId: 'item-t2',
+          operationType: OperationType.medicine,
+          scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
+          plannedQuantity: 200,
+          unit: 'ml',
+          doseBasisSnapshot: 'PER_KG_FEED',
+          doseValueSnapshot: 50.0,
+          calculationVersion: 'v1',
+          status: OperationStatus.planned,
+          product: const OperationProduct(
+            id: 'p2',
+            name: 'Kháng sinh điều trị',
+          ),
+          protocolItem: const OperationProtocolItem(
+            id: 'item-t2',
+            productionMealId: 'treatment-meal',
+            mealNumber: 2,
+            protocol: treatmentProtocol,
+          ),
+        );
 
-      // 2. Một thành phần điều trị KHÁC THỜI GIAN (14:00 chiều) -> phải tách riêng hoàn toàn thành 1 box khác
-      final sTreatAfternoonMed = OperationSchedule(
-        id: 'treat-med-2',
-        seasonId: 'season-1',
-        protocolItemId: 'item-t3',
-        operationType: OperationType.medicine,
-        scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'), // 14:00 +07:00
-        plannedQuantity: 100,
-        unit: 'g',
-        doseBasisSnapshot: 'PER_KG_FEED',
-        doseValueSnapshot: 25.0,
-        calculationVersion: 'v1',
-        status: OperationStatus.planned,
-        product: const OperationProduct(id: 'p3', name: 'Men tiêu hóa điều trị'),
-        protocolItem: const OperationProtocolItem(
-          id: 'item-t3',
-          protocol: treatmentProtocol,
-        ),
-      );
+        final sTreatAfternoonMed = OperationSchedule(
+          id: 'treat-med-2',
+          seasonId: 'season-1',
+          protocolItemId: 'item-t3',
+          operationType: OperationType.medicine,
+          scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'), // 14:00 +07:00
+          plannedQuantity: 100,
+          unit: 'g',
+          doseBasisSnapshot: 'PER_KG_FEED',
+          doseValueSnapshot: 25.0,
+          calculationVersion: 'v1',
+          status: OperationStatus.planned,
+          product: const OperationProduct(
+            id: 'p3',
+            name: 'Men tiêu hóa điều trị',
+          ),
+          protocolItem: const OperationProtocolItem(
+            id: 'item-t3',
+            protocol: treatmentProtocol,
+          ),
+        );
 
-      // 3. Cữ nuôi thông thường cùng 08:00 sáng -> KHÔNG ĐƯỢC gom lẫn vào Box Điều trị
-      final sProdMeal1 = OperationSchedule(
-        id: 'prod-feed-1',
-        seasonId: 'season-1',
-        protocolItemId: 'item-p1',
-        operationType: OperationType.feeding,
-        scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
-        plannedQuantity: 3.0,
-        unit: 'kg',
-        doseBasisSnapshot: 'PERCENT_BIOMASS',
-        doseValueSnapshot: 3.5,
-        calculationVersion: 'v1',
-        status: OperationStatus.planned,
-        product: const OperationProduct(id: 'p4', name: 'Thức ăn nuôi'),
-        protocolItem: const OperationProtocolItem(
-          id: 'item-p1',
-          mealNumber: 1,
-          protocol: productionProtocol,
-        ),
-      );
+        final sProdMeal1 = OperationSchedule(
+          id: 'prod-feed-1',
+          seasonId: 'season-1',
+          protocolItemId: 'item-p1',
+          operationType: OperationType.feeding,
+          scheduledAt: DateTime.parse('2026-11-19T01:00:00Z'), // 08:00 +07:00
+          plannedQuantity: 3.0,
+          unit: 'kg',
+          doseBasisSnapshot: 'PERCENT_BIOMASS',
+          doseValueSnapshot: 3.5,
+          calculationVersion: 'v1',
+          status: OperationStatus.planned,
+          product: const OperationProduct(id: 'p4', name: 'Thức ăn nuôi'),
+          protocolItem: const OperationProtocolItem(
+            id: 'item-p1',
+            mealNumber: 1,
+            protocol: productionProtocol,
+          ),
+        );
 
-      expect(sTreatMorningFeed.isTreatment, isTrue);
-      expect(sTreatMorningMed.isTreatment, isTrue);
-      expect(sTreatAfternoonMed.isTreatment, isTrue);
-      expect(sProdMeal1.isTreatment, isFalse);
+        expect(sTreatMorningFeed.isTreatment, isTrue);
+        expect(sTreatMorningMed.isTreatment, isTrue);
+        expect(sTreatAfternoonMed.isTreatment, isTrue);
+        expect(sProdMeal1.isTreatment, isFalse);
 
-      final groups = FeedingMedicineMealGroup.group([
-        sTreatMorningFeed,
-        sTreatMorningMed,
-        sTreatAfternoonMed,
-        sProdMeal1,
-      ]);
+        final groups = FeedingMedicineMealGroup.group([
+          sTreatMorningFeed,
+          sTreatMorningMed,
+          sTreatAfternoonMed,
+          sProdMeal1,
+        ]);
 
-      // Phải có đúng 3 nhóm riêng biệt:
-      // - 1 cữ nuôi thông thường Cữ 1 (08:00)
-      // - 1 Box Điều trị buổi sáng (08:00)
-      // - 1 Box Điều trị buổi chiều (14:00) tách riêng hoàn toàn vì khác thời gian
-      expect(groups.length, 3);
+        expect(groups.length, 3);
 
-      final treatMorningGroup = groups.firstWhere(
-        (g) => g.isTreatment && g.time == '08:00',
-      );
-      expect(treatMorningGroup.cardTitle, 'Điều trị');
-      expect(treatMorningGroup.isTreatment, isTrue);
-      expect(treatMorningGroup.allSchedules.length, 2);
-      expect(treatMorningGroup.feedings.length, 1);
-      expect(treatMorningGroup.medicines.length, 1);
+        final treatMorningGroup = groups.firstWhere(
+          (g) => g.isTreatment && g.time == '08:00',
+        );
+        expect(treatMorningGroup.cardTitle, 'Cữ 2');
+        expect(treatMorningGroup.isTreatment, isTrue);
+        expect(treatMorningGroup.allSchedules.length, 2);
+        expect(treatMorningGroup.feedings.length, 1);
+        expect(treatMorningGroup.medicines.length, 1);
 
-      final treatAfternoonGroup = groups.firstWhere(
-        (g) => g.isTreatment && g.time == '14:00',
-      );
-      expect(treatAfternoonGroup.cardTitle, 'Điều trị');
-      expect(treatAfternoonGroup.isTreatment, isTrue);
-      expect(treatAfternoonGroup.allSchedules.length, 1);
-      expect(treatAfternoonGroup.medicines.first.id, 'treat-med-2');
+        final treatAfternoonGroup = groups.firstWhere(
+          (g) => g.isTreatment && g.time == '14:00',
+        );
+        expect(treatAfternoonGroup.cardTitle, 'Điều trị');
+        expect(treatAfternoonGroup.isTreatment, isTrue);
+        expect(treatAfternoonGroup.allSchedules.length, 1);
+        expect(treatAfternoonGroup.medicines.first.id, 'treat-med-2');
 
-      final prodGroup = groups.firstWhere((g) => !g.isTreatment);
-      expect(prodGroup.cardTitle, 'Cữ 1');
-      expect(prodGroup.isTreatment, isFalse);
-      expect(prodGroup.allSchedules.length, 1);
-      expect(prodGroup.feedings.first.id, 'prod-feed-1');
-    });
+        final prodGroup = groups.firstWhere((g) => !g.isTreatment);
+        expect(prodGroup.cardTitle, 'Cữ 1');
+        expect(prodGroup.isTreatment, isFalse);
+        expect(prodGroup.allSchedules.length, 1);
+        expect(prodGroup.feedings.first.id, 'prod-feed-1');
+      },
+    );
 
     test('isOverdueAt matches BE timingComparison deadline rule', () {
       final schedule = OperationSchedule(
@@ -518,161 +533,176 @@ void main() {
       );
     });
 
-    test('FeedingMedicineMealGroup.pickNearestKey prioritizes active, overdue, then closest', () {
-      OperationSchedule makeMeal(String id, int mealNum, String isoUtc) =>
-          OperationSchedule(
-            id: id,
-            seasonId: 'season-1',
-            protocolItemId: 'item-$mealNum',
-            operationType: OperationType.feeding,
-            scheduledAt: DateTime.parse(isoUtc),
-            plannedQuantity: 10,
-            unit: 'g',
-            doseBasisSnapshot: 'FIXED_QUANTITY',
-            doseValueSnapshot: 10,
-            calculationVersion: 'v3',
-            status: OperationStatus.planned,
-            protocolItem: OperationProtocolItem(
-              id: 'item-$mealNum',
-              mealNumber: mealNum,
-              dueAtMinutes: 30,
-            ),
-          );
+    test(
+      'FeedingMedicineMealGroup.pickNearestKey prioritizes active, overdue, then closest',
+      () {
+        OperationSchedule makeMeal(String id, int mealNum, String isoUtc) =>
+            OperationSchedule(
+              id: id,
+              seasonId: 'season-1',
+              protocolItemId: 'item-$mealNum',
+              operationType: OperationType.feeding,
+              scheduledAt: DateTime.parse(isoUtc),
+              plannedQuantity: 10,
+              unit: 'g',
+              doseBasisSnapshot: 'FIXED_QUANTITY',
+              doseValueSnapshot: 10,
+              calculationVersion: 'v3',
+              status: OperationStatus.planned,
+              protocolItem: OperationProtocolItem(
+                id: 'item-$mealNum',
+                mealNumber: mealNum,
+                dueAtMinutes: 30,
+              ),
+            );
 
-      final groups = FeedingMedicineMealGroup.group([
-        makeMeal('m2', 2, '2026-11-18T05:00:00Z'), // 12:00 - 12:30 +07:00
-        makeMeal('m3', 3, '2026-11-18T10:00:00Z'), // 17:00 - 17:30 +07:00
-        makeMeal('m4', 4, '2026-11-18T15:00:00Z'), // 22:00 - 22:30 +07:00
-      ]);
+        final groups = FeedingMedicineMealGroup.group([
+          makeMeal('m2', 2, '2026-11-18T05:00:00Z'), // 12:00 - 12:30 +07:00
+          makeMeal('m3', 3, '2026-11-18T10:00:00Z'), // 17:00 - 17:30 +07:00
+          makeMeal('m4', 4, '2026-11-18T15:00:00Z'), // 22:00 - 22:30 +07:00
+        ]);
 
-      // Lúc 09:53 +07:00 (02:53Z) => gần nhất là Cữ 2 (12:00)
-      expect(
-        FeedingMedicineMealGroup.pickNearestKey(
-          groups,
-          DateTime.parse('2026-11-18T02:53:00Z'),
-        ),
-        groups[0].key,
-      );
+        // Lúc 09:53 +07:00 (02:53Z) => gần nhất là Cữ 2 (12:00)
+        expect(
+          FeedingMedicineMealGroup.pickNearestKey(
+            groups,
+            DateTime.parse('2026-11-18T02:53:00Z'),
+          ),
+          groups[0].key,
+        );
 
-      // Lúc 17:10 +07:00 (10:10Z) => đang trong khung Cữ 3 (17:00 - 17:30)
-      expect(
-        FeedingMedicineMealGroup.pickNearestKey(
-          groups,
-          DateTime.parse('2026-11-18T10:10:00Z'),
-        ),
-        groups[1].key,
-      );
+        // Lúc 17:10 +07:00 (10:10Z) => đang trong khung Cữ 3 (17:00 - 17:30)
+        expect(
+          FeedingMedicineMealGroup.pickNearestKey(
+            groups,
+            DateTime.parse('2026-11-18T10:10:00Z'),
+          ),
+          groups[1].key,
+        );
 
-      // Lúc 15:00 +07:00 (08:00Z) => Cữ 2 quá hạn chờ xử lý
-      expect(
-        FeedingMedicineMealGroup.pickNearestKey(
-          groups,
-          DateTime.parse('2026-11-18T08:00:00Z'),
-        ),
-        groups[0].key,
-      );
-    });
+        // Lúc 15:00 +07:00 (08:00Z) => Cữ 2 quá hạn chờ xử lý
+        expect(
+          FeedingMedicineMealGroup.pickNearestKey(
+            groups,
+            DateTime.parse('2026-11-18T08:00:00Z'),
+          ),
+          groups[0].key,
+        );
+      },
+    );
 
-    test('OperationListResult parses seasonStartDate from stockingDate and createdAt', () {
-      final jsonWithStockingDate = <String, dynamic>{
-        'summary': {'planned': 1, 'completed': 0, 'cancelled': 0, 'total': 1},
-        'banner': {'hasBiomassWarning': false},
-        'schedules': <dynamic>[],
-        'season': {
-          'id': 'season-1',
-          'name': 'Vụ 1',
-          'stockingDate': '2026-10-15T00:00:00.000Z',
-          'createdAt': '2026-10-10T08:30:00.000Z',
-        },
-      };
-      final res1 = OperationListResult.fromJson(jsonWithStockingDate);
-      expect(res1.seasonStartDate, DateTime.parse('2026-10-15T00:00:00.000Z'));
+    test(
+      'OperationListResult parses seasonStartDate from stockingDate and createdAt',
+      () {
+        final jsonWithStockingDate = <String, dynamic>{
+          'summary': {'planned': 1, 'completed': 0, 'cancelled': 0, 'total': 1},
+          'banner': {'hasBiomassWarning': false},
+          'schedules': <dynamic>[],
+          'season': {
+            'id': 'season-1',
+            'name': 'Vụ 1',
+            'stockingDate': '2026-10-15T00:00:00.000Z',
+            'createdAt': '2026-10-10T08:30:00.000Z',
+          },
+        };
+        final res1 = OperationListResult.fromJson(jsonWithStockingDate);
+        expect(
+          res1.seasonStartDate,
+          DateTime.parse('2026-10-15T00:00:00.000Z'),
+        );
 
-      final jsonWithCreatedAtOnly = <String, dynamic>{
-        'summary': {'planned': 1, 'completed': 0, 'cancelled': 0, 'total': 1},
-        'banner': {'hasBiomassWarning': false},
-        'schedules': <dynamic>[],
-        'season': {
-          'id': 'season-2',
-          'name': 'Vụ 2',
-          'stockingDate': null,
-          'createdAt': '2026-10-10T08:30:00.000Z',
-        },
-      };
-      final res2 = OperationListResult.fromJson(jsonWithCreatedAtOnly);
-      expect(res2.seasonStartDate, DateTime.parse('2026-10-10T08:30:00.000Z'));
-    });
+        final jsonWithCreatedAtOnly = <String, dynamic>{
+          'summary': {'planned': 1, 'completed': 0, 'cancelled': 0, 'total': 1},
+          'banner': {'hasBiomassWarning': false},
+          'schedules': <dynamic>[],
+          'season': {
+            'id': 'season-2',
+            'name': 'Vụ 2',
+            'stockingDate': null,
+            'createdAt': '2026-10-10T08:30:00.000Z',
+          },
+        };
+        final res2 = OperationListResult.fromJson(jsonWithCreatedAtOnly);
+        expect(
+          res2.seasonStartDate,
+          DateTime.parse('2026-10-10T08:30:00.000Z'),
+        );
+      },
+    );
 
-    test('FeedingMedicineMealGroup.overallStatus partitions groups into exact matching status', () {
-      OperationSchedule makeItem(String id, OperationStatus status) =>
-          OperationSchedule(
-            id: id,
-            seasonId: 'season-1',
-            protocolItemId: 'item-$id',
-            operationType: OperationType.feeding,
-            scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'),
-            plannedQuantity: 10,
-            unit: 'kg',
-            doseBasisSnapshot: 'FIXED_QUANTITY',
-            doseValueSnapshot: 10,
-            calculationVersion: 'v1',
-            status: status,
-          );
+    test(
+      'FeedingMedicineMealGroup.overallStatus partitions groups into exact matching status',
+      () {
+        OperationSchedule makeItem(String id, OperationStatus status) =>
+            OperationSchedule(
+              id: id,
+              seasonId: 'season-1',
+              protocolItemId: 'item-$id',
+              operationType: OperationType.feeding,
+              scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'),
+              plannedQuantity: 10,
+              unit: 'kg',
+              doseBasisSnapshot: 'FIXED_QUANTITY',
+              doseValueSnapshot: 10,
+              calculationVersion: 'v1',
+              status: status,
+            );
 
-      // 1. All planned -> planned
-      final g1 = FeedingMedicineMealGroup(
-        key: 'g1',
-        mealNumber: 1,
-        time: '07:00',
-        scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'),
-        feedings: [makeItem('1', OperationStatus.planned)],
-        medicines: [makeItem('2', OperationStatus.planned)],
-      );
-      expect(g1.overallStatus, OperationStatus.planned);
+        // 1. All planned -> planned
+        final g1 = FeedingMedicineMealGroup(
+          key: 'g1',
+          mealNumber: 1,
+          time: '07:00',
+          scheduledAt: DateTime.parse('2026-11-19T07:00:00Z'),
+          feedings: [makeItem('1', OperationStatus.planned)],
+          medicines: [makeItem('2', OperationStatus.planned)],
+        );
+        expect(g1.overallStatus, OperationStatus.planned);
 
-      // 2. Partial planned (1 planned, 1 completed) -> still planned (waiting to finish)
-      final g2 = FeedingMedicineMealGroup(
-        key: 'g2',
-        mealNumber: 2,
-        time: '11:00',
-        scheduledAt: DateTime.parse('2026-11-19T11:00:00Z'),
-        feedings: [makeItem('3', OperationStatus.completed)],
-        medicines: [makeItem('4', OperationStatus.planned)],
-      );
-      expect(g2.overallStatus, OperationStatus.planned);
+        // 2. Partial planned (1 planned, 1 completed) -> still planned (waiting to finish)
+        final g2 = FeedingMedicineMealGroup(
+          key: 'g2',
+          mealNumber: 2,
+          time: '11:00',
+          scheduledAt: DateTime.parse('2026-11-19T11:00:00Z'),
+          feedings: [makeItem('3', OperationStatus.completed)],
+          medicines: [makeItem('4', OperationStatus.planned)],
+        );
+        expect(g2.overallStatus, OperationStatus.planned);
 
-      // 3. All completed -> completed
-      final g3 = FeedingMedicineMealGroup(
-        key: 'g3',
-        mealNumber: 3,
-        time: '14:00',
-        scheduledAt: DateTime.parse('2026-11-19T14:00:00Z'),
-        feedings: [makeItem('5', OperationStatus.completed)],
-        medicines: [makeItem('6', OperationStatus.completed)],
-      );
-      expect(g3.overallStatus, OperationStatus.completed);
+        // 3. All completed -> completed
+        final g3 = FeedingMedicineMealGroup(
+          key: 'g3',
+          mealNumber: 3,
+          time: '14:00',
+          scheduledAt: DateTime.parse('2026-11-19T14:00:00Z'),
+          feedings: [makeItem('5', OperationStatus.completed)],
+          medicines: [makeItem('6', OperationStatus.completed)],
+        );
+        expect(g3.overallStatus, OperationStatus.completed);
 
-      // 4. 1 completed, 1 cancelled, 0 planned -> completed
-      final g4 = FeedingMedicineMealGroup(
-        key: 'g4',
-        mealNumber: 4,
-        time: '17:00',
-        scheduledAt: DateTime.parse('2026-11-19T17:00:00Z'),
-        feedings: [makeItem('7', OperationStatus.completed)],
-        medicines: [makeItem('8', OperationStatus.cancelled)],
-      );
-      expect(g4.overallStatus, OperationStatus.completed);
+        // 4. 1 completed, 1 cancelled, 0 planned -> completed
+        final g4 = FeedingMedicineMealGroup(
+          key: 'g4',
+          mealNumber: 4,
+          time: '17:00',
+          scheduledAt: DateTime.parse('2026-11-19T17:00:00Z'),
+          feedings: [makeItem('7', OperationStatus.completed)],
+          medicines: [makeItem('8', OperationStatus.cancelled)],
+        );
+        expect(g4.overallStatus, OperationStatus.completed);
 
-      // 5. All cancelled -> cancelled
-      final g5 = FeedingMedicineMealGroup(
-        key: 'g5',
-        mealNumber: 5,
-        time: '20:00',
-        scheduledAt: DateTime.parse('2026-11-19T20:00:00Z'),
-        feedings: [makeItem('9', OperationStatus.cancelled)],
-        medicines: [makeItem('10', OperationStatus.cancelled)],
-      );
-      expect(g5.overallStatus, OperationStatus.cancelled);
-    });
+        // 5. All cancelled -> cancelled
+        final g5 = FeedingMedicineMealGroup(
+          key: 'g5',
+          mealNumber: 5,
+          time: '20:00',
+          scheduledAt: DateTime.parse('2026-11-19T20:00:00Z'),
+          feedings: [makeItem('9', OperationStatus.cancelled)],
+          medicines: [makeItem('10', OperationStatus.cancelled)],
+        );
+        expect(g5.overallStatus, OperationStatus.cancelled);
+      },
+    );
   });
 }

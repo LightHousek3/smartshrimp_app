@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+
 /// Form validation matching the pond API; ownership/season rules remain server-side.
 abstract final class PondRules {
   static const nameMaxLength = 255;
@@ -18,11 +20,7 @@ abstract final class PondRules {
     return null;
   }
 
-  /// Accept either decimal separator; an empty optional field has no value.
-  static double? parseNumber(String value) {
-    final normalized = value.trim().replaceAll(',', '.');
-    return normalized.isEmpty ? null : double.tryParse(normalized);
-  }
+  static double? parseNumber(String value) => parseVietnameseNumber(value);
 
   /// Validate user text before converting it to a numeric JSON body value.
   static String? validatePositiveNumber(
@@ -37,7 +35,9 @@ abstract final class PondRules {
     if (number == null || !number.isFinite || number <= 0) {
       return '$label phải là số lớn hơn 0.';
     }
-    if (!RegExp(r'^\d+(?:[.,]\d{1,2})?$').hasMatch(raw)) {
+    if (!RegExp(
+      r'^\d+(?:\.\d{1,2})?$',
+    ).hasMatch(normalizeVietnameseNumber(raw)!)) {
       return '$label chỉ được có tối đa 2 chữ số thập phân.';
     }
     if (max != null && number > max) {
@@ -99,5 +99,5 @@ abstract final class PondRules {
   }
 
   static String _formatLimit(double value) =>
-      value.toStringAsFixed(2).replaceFirst(RegExp(r'\.00$'), '');
+      formatVietnameseNumber(value, decimalPlaces: 2);
 }

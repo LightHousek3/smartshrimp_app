@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -39,11 +40,8 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
     final isTreatment = group.isTreatment;
     final title = group.cardTitle;
 
-    final headerBg = isTreatment ? const Color(0xFFFBE6EA) : _blueBg;
-    final headerFg = isTreatment ? const Color(0xFFD43B57) : _blueFg;
-    final headerSvg = isTreatment
-        ? AppSvgIconName.medicine
-        : AppSvgIconName.calendarDays;
+    final headerBg = isTreatment ? AppColors.treatmentSurface : _blueBg;
+    final headerFg = isTreatment ? AppColors.treatmentAccent : _blueFg;
 
     final primaryFeeding = group.primaryFeeding;
     final primarySchedule = group.activeSchedules.isNotEmpty
@@ -98,7 +96,11 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: AppSvgIcon(headerSvg, color: headerFg, size: 19),
+                        child: AppSvgIcon(
+                          AppSvgIconName.calendarDays,
+                          color: headerFg,
+                          size: 19,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -221,7 +223,8 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
 
   Widget _buildScheduleItemRow(BuildContext context, OperationSchedule s) {
     final visuals = OperationTypeVisuals.of(s.operationType);
-    final quantityStr = '${s.plannedQuantity} ${s.unit.toLowerCase()}';
+    final quantityStr =
+        '${formatVietnameseNumber(s.plannedQuantity, decimalPlaces: 9)} ${s.unit.toLowerCase()}';
 
     return Container(
       decoration: BoxDecoration(

@@ -282,34 +282,32 @@ class _DiseaseCaseDetailPageState extends ConsumerState<DiseaseCaseDetailPage> {
                     contentPadding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: Tooltip(
-                        message: 'Gửi phản hồi',
-                        child: IconButton.filled(
-                          key: const ValueKey('case-send-response'),
-                          onPressed: busy ? null : () => _respond(item),
-                          style: IconButton.styleFrom(
-                            backgroundColor: AppColors.ocean,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: AppColors.ocean.withValues(
-                              alpha: 0.4,
-                            ),
-                            disabledForegroundColor: Colors.white,
-                            minimumSize: const Size(40, 40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                      child: IconButton.filled(
+                        tooltip: 'Gửi phản hồi',
+                        key: const ValueKey('case-send-response'),
+                        onPressed: busy ? null : () => _respond(item),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.ocean,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors.ocean.withValues(
+                            alpha: 0.4,
                           ),
-                          icon: sending
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.send_rounded, size: 18),
+                          disabledForegroundColor: Colors.white,
+                          minimumSize: const Size(40, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
+                        icon: sending
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.send_rounded, size: 18),
                       ),
                     ),
                     suffixIconConstraints: const BoxConstraints(

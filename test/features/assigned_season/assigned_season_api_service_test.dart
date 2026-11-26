@@ -90,7 +90,7 @@ void main() {
           ShrimpType.blackTiger => 'Tôm sú',
           ShrimpType.unknown => 'Không rõ',
         };
-        expect(find.text('$label · 5000 m² · 7500 m³'), findsOneWidget);
+        expect(find.text('$label · 5.000 m² · 7.500 m³'), findsOneWidget);
         if (entry.value == ShrimpType.unknown) {
           expect(find.textContaining('Tôm sú'), findsNothing);
         }

@@ -44,13 +44,17 @@ final class NotificationVisuals {
         NotificationType.system || NotificationType.unknown => 'Hệ thống',
       };
 
-  static Widget icon(
-    AppNotification notification, {
-    double size = 20,
-    Color? color,
-  }) {
+  static bool _usesTreatmentCalendar(AppNotification notification) =>
+      notification.isTreatmentOperation ||
+      notification.type == NotificationType.treatmentScheduleReady ||
+      notification.type == NotificationType.treatmentScheduleCompleted;
+
+  static Widget icon(AppNotification notification, {double size = 20}) {
+    final accent = color(notification);
+    if (_usesTreatmentCalendar(notification)) {
+      return AppSvgIcon(AppSvgIconName.calendarDays, size: size, color: accent);
+    }
     final type = notification.type;
-    final accent = color ?? NotificationVisuals.color(type);
     final iconData = switch (type) {
       NotificationType.waterThresholdExceeded ||
       NotificationType.scheduleGenerationFailed => Icons.warning_amber_rounded,
@@ -93,80 +97,91 @@ final class NotificationVisuals {
         : Icon(iconData, size: size, color: accent);
   }
 
-  static Color color(NotificationType type) => switch (type) {
-    NotificationType.waterThresholdExceeded ||
-    NotificationType.scheduleGenerationFailed => const Color(0xFFD98314),
-    NotificationType.operationDue ||
-    NotificationType.operationOverdue ||
-    NotificationType.operationCancelled => const Color(0xFF0F9B8E),
-    NotificationType.diseaseCaseCreated ||
-    NotificationType.diseaseCaseResponse ||
-    NotificationType.diseaseCaseWaitingInfo ||
-    NotificationType.diseaseCaseMonitoring ||
-    NotificationType.diseaseCaseResolved ||
-    NotificationType.emergencyCaseUpdate => const Color(0xFFD43B57),
-    NotificationType.productionProtocolPending ||
-    NotificationType.productionProtocolReviewed ||
-    NotificationType.treatmentProtocolPending ||
-    NotificationType.treatmentProtocolReviewed ||
-    NotificationType.treatmentProtocolAborted ||
-    NotificationType.treatmentScheduleReady ||
-    NotificationType.treatmentScheduleCompleted => const Color(0xFF7B5BD6),
-    NotificationType.inventoryLow ||
-    NotificationType.inventoryInsufficient ||
-    NotificationType.seasonAssignmentCreated ||
-    NotificationType.seasonAssignmentReplaced ||
-    NotificationType.seasonStatusChanged ||
-    NotificationType.harvestDue ||
-    NotificationType.harvestRecorded ||
-    NotificationType.seasonCompleted ||
-    NotificationType.system ||
-    NotificationType.unknown => const Color(0xFF64748B),
-    _ => AppColors.ocean,
-  };
+  static Color color(AppNotification notification) =>
+      _usesTreatmentCalendar(notification)
+      ? AppColors.treatmentAccent
+      : switch (notification.type) {
+          NotificationType.waterThresholdExceeded ||
+          NotificationType.scheduleGenerationFailed => const Color(0xFFD98314),
+          NotificationType.operationDue ||
+          NotificationType.operationOverdue ||
+          NotificationType.operationCancelled => const Color(0xFF0F9B8E),
+          NotificationType.diseaseCaseCreated ||
+          NotificationType.diseaseCaseResponse ||
+          NotificationType.diseaseCaseWaitingInfo ||
+          NotificationType.diseaseCaseMonitoring ||
+          NotificationType.diseaseCaseResolved ||
+          NotificationType.emergencyCaseUpdate => const Color(0xFFD43B57),
+          NotificationType.productionProtocolPending ||
+          NotificationType.productionProtocolReviewed ||
+          NotificationType.treatmentProtocolPending ||
+          NotificationType.treatmentProtocolReviewed ||
+          NotificationType.treatmentProtocolAborted ||
+          NotificationType.treatmentScheduleReady ||
+          NotificationType.treatmentScheduleCompleted => const Color(
+            0xFF7B5BD6,
+          ),
+          NotificationType.inventoryLow ||
+          NotificationType.inventoryInsufficient ||
+          NotificationType.seasonAssignmentCreated ||
+          NotificationType.seasonAssignmentReplaced ||
+          NotificationType.seasonStatusChanged ||
+          NotificationType.harvestDue ||
+          NotificationType.harvestRecorded ||
+          NotificationType.seasonCompleted ||
+          NotificationType.system ||
+          NotificationType.unknown => const Color(0xFF64748B),
+          _ => AppColors.ocean,
+        };
 
-  static Color badgeTextColor(NotificationType type) => switch (type) {
-    NotificationType.taskAssigned ||
-    NotificationType.taskUpdated ||
-    NotificationType.taskDueSoon ||
-    NotificationType.taskOverdue ||
-    NotificationType.taskCompleted ||
-    NotificationType.managedAccountActivated ||
-    NotificationType.accountStatusChanged => const Color(0xFF0C4E8F),
-    _ => color(type),
-  };
+  static Color badgeTextColor(AppNotification notification) =>
+      switch (notification.type) {
+        NotificationType.taskAssigned ||
+        NotificationType.taskUpdated ||
+        NotificationType.taskDueSoon ||
+        NotificationType.taskOverdue ||
+        NotificationType.taskCompleted ||
+        NotificationType.managedAccountActivated ||
+        NotificationType.accountStatusChanged => const Color(0xFF0C4E8F),
+        _ => color(notification),
+      };
 
-  static Color backgroundColor(NotificationType type) => switch (type) {
-    NotificationType.waterThresholdExceeded ||
-    NotificationType.scheduleGenerationFailed => const Color(0xFFFBF0DC),
-    NotificationType.operationDue ||
-    NotificationType.operationOverdue ||
-    NotificationType.operationCancelled => const Color(0xFFE2F6F3),
-    NotificationType.diseaseCaseCreated ||
-    NotificationType.diseaseCaseResponse ||
-    NotificationType.diseaseCaseWaitingInfo ||
-    NotificationType.diseaseCaseMonitoring ||
-    NotificationType.diseaseCaseResolved ||
-    NotificationType.emergencyCaseUpdate => const Color(0xFFFBE6EA),
-    NotificationType.productionProtocolPending ||
-    NotificationType.productionProtocolReviewed ||
-    NotificationType.treatmentProtocolPending ||
-    NotificationType.treatmentProtocolReviewed ||
-    NotificationType.treatmentProtocolAborted ||
-    NotificationType.treatmentScheduleReady ||
-    NotificationType.treatmentScheduleCompleted => const Color(0xFFEFEAFC),
-    NotificationType.inventoryLow ||
-    NotificationType.inventoryInsufficient ||
-    NotificationType.seasonAssignmentCreated ||
-    NotificationType.seasonAssignmentReplaced ||
-    NotificationType.seasonStatusChanged ||
-    NotificationType.harvestDue ||
-    NotificationType.harvestRecorded ||
-    NotificationType.seasonCompleted ||
-    NotificationType.system ||
-    NotificationType.unknown => const Color(0xFFEEF1F6),
-    _ => const Color(0xFFEAF4FF),
-  };
+  static Color backgroundColor(AppNotification notification) =>
+      _usesTreatmentCalendar(notification)
+      ? AppColors.treatmentSurface
+      : switch (notification.type) {
+          NotificationType.waterThresholdExceeded ||
+          NotificationType.scheduleGenerationFailed => const Color(0xFFFBF0DC),
+          NotificationType.operationDue ||
+          NotificationType.operationOverdue ||
+          NotificationType.operationCancelled => const Color(0xFFE2F6F3),
+          NotificationType.diseaseCaseCreated ||
+          NotificationType.diseaseCaseResponse ||
+          NotificationType.diseaseCaseWaitingInfo ||
+          NotificationType.diseaseCaseMonitoring ||
+          NotificationType.diseaseCaseResolved ||
+          NotificationType.emergencyCaseUpdate => const Color(0xFFFBE6EA),
+          NotificationType.productionProtocolPending ||
+          NotificationType.productionProtocolReviewed ||
+          NotificationType.treatmentProtocolPending ||
+          NotificationType.treatmentProtocolReviewed ||
+          NotificationType.treatmentProtocolAborted ||
+          NotificationType.treatmentScheduleReady ||
+          NotificationType.treatmentScheduleCompleted => const Color(
+            0xFFEFEAFC,
+          ),
+          NotificationType.inventoryLow ||
+          NotificationType.inventoryInsufficient ||
+          NotificationType.seasonAssignmentCreated ||
+          NotificationType.seasonAssignmentReplaced ||
+          NotificationType.seasonStatusChanged ||
+          NotificationType.harvestDue ||
+          NotificationType.harvestRecorded ||
+          NotificationType.seasonCompleted ||
+          NotificationType.system ||
+          NotificationType.unknown => const Color(0xFFEEF1F6),
+          _ => const Color(0xFFEAF4FF),
+        };
 
   static bool isWarning(NotificationType type) => switch (type) {
     NotificationType.waterThresholdExceeded ||
