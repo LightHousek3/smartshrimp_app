@@ -106,7 +106,7 @@ class InventoryStockOutLotPicker extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${lots.length} lô còn hàng',
+                  '${formatInventoryQuantity(lots.length)} lô còn hàng',
                   style: const TextStyle(
                     color: AppColors.inkMuted,
                     fontSize: 11,
@@ -218,7 +218,7 @@ class _LotOption extends StatelessWidget {
                     ],
                     const SizedBox(height: 10),
                     Text(
-                      'Còn ${formatInventoryQuantity(lot.quantity)} ${unit.label}',
+                      'Còn ${formatInventoryExactQuantity(lot.quantity, exact: lot.quantityExact)} ${unit.label}',
                       style: const TextStyle(
                         color: Color(0xFF0F9B8E),
                         fontSize: 14,

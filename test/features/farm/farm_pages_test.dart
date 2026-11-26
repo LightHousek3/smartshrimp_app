@@ -39,10 +39,10 @@ void main() {
       await tester.enterText(fields.at(1), '1000');
       await tester.enterText(fields.at(2), '1.5');
       await tester.pump();
-      expect(volume(), '1500.00');
+      expect(volume(), '1.500');
       await tester.enterText(fields.at(2), '2');
       await tester.pump();
-      expect(volume(), '2000.00');
+      expect(volume(), '2.000');
       await tester.enterText(fields.at(1), '');
       await tester.pump();
       expect(volume(), isEmpty);
@@ -50,17 +50,17 @@ void main() {
       await tester.enterText(fields.at(3), '1400');
       await tester.enterText(fields.at(2), '1.8');
       await tester.pump();
-      expect(volume(), '1400');
+      expect(volume(), '1.400');
 
       await tester.enterText(fields.at(3), '');
       await tester.pump();
       expect(volume(), isEmpty);
       await tester.tap(fields.at(0));
       await tester.pump();
-      expect(volume(), '1800.00');
+      expect(volume(), '1.800');
       await tester.enterText(fields.at(2), '2');
       await tester.pump();
-      expect(volume(), '2000.00');
+      expect(volume(), '2.000');
       expect(tester.takeException(), isNull);
     },
   );
@@ -79,7 +79,7 @@ void main() {
           null;
       expect(
         tester.widget<TextFormField>(fields.at(3)).controller!.text,
-        '1400.0',
+        '1.400',
       );
       expect(canSave(), isFalse);
       expect(
@@ -94,7 +94,7 @@ void main() {
       await tester.pump();
       expect(
         tester.widget<TextFormField>(fields.at(3)).controller!.text,
-        '1300',
+        '1.300',
       );
       expect(canSave(), isTrue);
       await tester.enterText(fields.at(3), '1400.00');
@@ -238,7 +238,7 @@ void main() {
           .widget<TextFormField>(find.byType(TextFormField).at(3))
           .controller!
           .text,
-      '1300',
+      '1.300',
     );
     expect(tester.takeException(), isNull);
   });

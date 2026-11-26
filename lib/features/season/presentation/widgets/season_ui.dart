@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -193,18 +194,12 @@ String seasonDateLabel(DateTime? value) {
 
 String seasonIntegerLabel(int? value) {
   if (value == null) return '—';
-  final raw = value.toString();
-  final buffer = StringBuffer();
-  for (var index = 0; index < raw.length; index++) {
-    if (index > 0 && (raw.length - index) % 3 == 0) buffer.write('.');
-    buffer.write(raw[index]);
-  }
-  return buffer.toString();
+  return formatVietnameseNumber(value);
 }
 
 String seasonDecimalLabel(double? value, {int digits = 2}) {
   if (value == null) return '—';
-  return value.toStringAsFixed(digits).replaceFirst(RegExp(r'\.?0+$'), '');
+  return formatVietnameseNumber(value, decimalPlaces: digits);
 }
 
 String activationConditionLabel(String code) => switch (code) {

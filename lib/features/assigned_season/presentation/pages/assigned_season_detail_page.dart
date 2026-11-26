@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -287,7 +288,7 @@ class _PondCard extends ConsumerWidget {
                 'SỐ LƯỢNG THẢ',
                 season.initialQuantity == null
                     ? '—'
-                    : '${season.initialQuantity} con',
+                    : '${formatVietnameseNumber(season.initialQuantity)} con',
               ),
               const SizedBox(width: 10),
               _Metric(
@@ -1134,11 +1135,8 @@ class _Title extends StatelessWidget {
   );
 }
 
-String _num(num? value) => value == null
-    ? '—'
-    : value % 1 == 0
-    ? value.toInt().toString()
-    : value.toStringAsFixed(1);
+String _num(num? value) =>
+    value == null ? '—' : formatVietnameseNumber(value, decimalPlaces: 1);
 String _date(DateTime? value) => value == null
     ? 'Chưa cập nhật'
     : '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';

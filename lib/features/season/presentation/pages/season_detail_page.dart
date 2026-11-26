@@ -138,7 +138,7 @@ class _SeasonDetailContent extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _protocol(context),
                 if (season.status != SeasonStatus.planning) ...<Widget>[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   _diseaseCard(context),
                 ],
                 if (season.status == SeasonStatus.planning) ...<Widget>[

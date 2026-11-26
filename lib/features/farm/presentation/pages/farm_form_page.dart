@@ -1,5 +1,6 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
@@ -101,10 +102,10 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
           : formatCompactNumber(farm!.totalAreaHectares),
     );
     _latitudeController = TextEditingController(
-      text: farm?.latitude?.toStringAsFixed(4) ?? '',
+      text: formatVietnameseNumber(farm?.latitude),
     );
     _longitudeController = TextEditingController(
-      text: farm?.longitude?.toStringAsFixed(4) ?? '',
+      text: formatVietnameseNumber(farm?.longitude),
     );
     _lastGeocodedAddress = FarmRules.normalizeText(farm?.address ?? '');
     _addressFocusNode = FocusNode()..addListener(_handleAddressFocus);
@@ -249,10 +250,8 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9.,]'),
-                            ),
+                          inputFormatters: const [
+                            VietnameseNumberInputFormatter(),
                           ],
                           maxLines: 1,
                           textInputAction: TextInputAction.done,
@@ -494,8 +493,8 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
       signed: true,
       decimal: true,
     ),
-    inputFormatters: <TextInputFormatter>[
-      FilteringTextInputFormatter.allow(RegExp(r'[-+0-9.,]')),
+    inputFormatters: const [
+      VietnameseNumberInputFormatter(groupThousands: false),
     ],
     maxLines: 1,
     style: AppTypography.mono(color: AppColors.ink, fontSize: 14),
@@ -676,8 +675,14 @@ class _FarmFormPageState extends ConsumerState<FarmFormPage> {
   }
 
   void _applyLocation(FarmLocation location) {
-    _latitudeController.text = location.latitude.toStringAsFixed(6);
-    _longitudeController.text = location.longitude.toStringAsFixed(6);
+    _latitudeController.text = formatVietnameseNumber(
+      location.latitude,
+      decimalPlaces: 6,
+    );
+    _longitudeController.text = formatVietnameseNumber(
+      location.longitude,
+      decimalPlaces: 6,
+    );
     _coordinateKey.currentState?.didChange('');
     setState(() {});
   }

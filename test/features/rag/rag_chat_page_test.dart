@@ -124,7 +124,7 @@ void main() {
       );
       await tester.runAsync(() => GoogleFonts.pendingFonts());
       await tester.pumpAndSettle();
-      expect(find.text('Hỏi chuyên gia AI'), findsOneWidget);
+      expect(find.text('Hỏi trợ lý Aquabot'), findsOneWidget);
       expect(find.text('Ao A3'), findsOneWidget);
       expect(find.text('Trại Cửa Lấp  ›  Vụ Đông Xuân 2025'), findsOneWidget);
       expect(tester.takeException(), isNull);

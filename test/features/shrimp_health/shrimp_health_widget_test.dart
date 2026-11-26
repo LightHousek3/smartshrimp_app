@@ -532,7 +532,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Enter sample weight = 1.2 (kg)
-      final weightField = find.widgetWithText(TextFormField, '1.2');
+      final weightField = find.widgetWithText(TextFormField, '1,2');
       await tester.enterText(weightField, '1.2');
       await tester.pumpAndSettle();
 
@@ -540,7 +540,7 @@ void main() {
       expect(find.text('12'), findsOneWidget);
 
       // Biomass is auto-calculated: 299000 * 12 / 1000 = 3588 kg
-      expect(find.text('3588'), findsOneWidget);
+      expect(find.text('3.588'), findsOneWidget);
     },
   );
 
@@ -1056,9 +1056,15 @@ void main() {
 
       // Kiểm tra 3 thẻ KPI vẫn hiển thị giá trị hợp lệ từ log trước đó chứ không bị '-'
       expect(find.text('SINH KHỐI'), findsOneWidget);
-      expect(find.text('202'), findsNWidgets(2)); // KPI card and ShrimpHealthCard tile
+      expect(
+        find.text('202'),
+        findsNWidgets(2),
+      ); // KPI card and ShrimpHealthCard tile
       expect(find.text('CỠ TB'), findsOneWidget);
-      expect(find.text('15,5'), findsNWidgets(2)); // KPI card and ShrimpHealthCard tile
+      expect(
+        find.text('15,5'),
+        findsNWidgets(2),
+      ); // KPI card and ShrimpHealthCard tile
     },
   );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
+import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/tab_page_layout.dart';
 import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_controller.dart';
@@ -52,16 +53,20 @@ class TechnicianHomePage extends ConsumerWidget {
                     TechnicianSummaryRow(dashboard.summary),
                     const DashboardSectionTitle('Cần chú ý'),
                     if (dashboard.alerts.isEmpty)
-                      const _CompactEmpty(
+                      const _SectionEmpty(
+                        AppSvgIconName.shieldOutline,
                         'Chưa ghi nhận vấn đề vận hành cần chú ý.',
                       ),
-                    for (final alert in dashboard.alerts)
+                    for (final (index, alert) in dashboard.alerts.indexed)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: EdgeInsets.only(
+                          bottom: index == dashboard.alerts.length - 1 ? 0 : 8,
+                        ),
                         child: TechnicianAlertCard(alert),
                       ),
                     DashboardSectionTitle(
                       'Nhiệm vụ cần làm',
+                      topSpacing: 4,
                       trailing: TextButton(
                         style: technicianDashboardLinkStyle(context),
                         onPressed: () => context.go('/tasks'),
@@ -69,16 +74,20 @@ class TechnicianHomePage extends ConsumerWidget {
                       ),
                     ),
                     if (dashboard.tasks.isEmpty)
-                      const _CompactEmpty('Không có nhiệm vụ đang mở.')
+                      const _SectionEmpty(
+                        AppSvgIconName.tasks,
+                        'Không có nhiệm vụ đang mở.',
+                      )
                     else
                       TechnicianTaskPreview(
                         tasks: dashboard.tasks,
                         now: dashboard.serverNow,
                       ),
-                    const DashboardSectionTitle('Cữ còn lại hôm nay'),
+                    const DashboardSectionTitle('Vận hành còn lại hôm nay'),
                     if (dashboard.operationGroups.isEmpty)
-                      const _CompactEmpty(
-                        'Không còn cữ đã lên lịch trong hôm nay.',
+                      const _SectionEmpty(
+                        AppSvgIconName.calendarDays,
+                        'Không có lượt vận hành nào còn lại hôm nay.',
                       ),
                     for (final group in dashboard.operationGroups)
                       TechnicianOperationRow(
@@ -94,7 +103,8 @@ class TechnicianHomePage extends ConsumerWidget {
                       ),
                     ),
                     if (dashboard.seasons.isEmpty)
-                      const _CompactEmpty(
+                      const _SectionEmpty(
+                        AppSvgIconName.shrimp,
                         'Chưa có vụ đang nuôi được phân công.',
                       ),
                     for (final season in dashboard.seasons)
@@ -113,17 +123,29 @@ class TechnicianHomePage extends ConsumerWidget {
   }
 }
 
-class _CompactEmpty extends StatelessWidget {
-  const _CompactEmpty(this.message);
+class _SectionEmpty extends StatelessWidget {
+  const _SectionEmpty(this.icon, this.message);
+  final AppSvgIconName icon;
   final String message;
   @override
-  Widget build(BuildContext context) => DashboardCard(
-    child: Text(
-      message,
-      style: const TextStyle(
-        fontSize: 12,
-        color: AppColors.inkMuted,
-        height: 1.5,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+    child: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSvgIcon(icon, color: AppColors.inkSoft, size: 25),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.inkSoft,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     ),
   );

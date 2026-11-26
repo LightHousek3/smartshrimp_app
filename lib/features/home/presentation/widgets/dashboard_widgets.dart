@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
@@ -118,9 +119,10 @@ String dashboardMoney(double value, {bool signed = false}) {
       : divisor == 1
       ? 0
       : 1;
-  final number = (absolute / divisor)
-      .toStringAsFixed(digits)
-      .replaceAll('.', ',');
+  final number = formatVietnameseDecimal(
+    (absolute / divisor).toStringAsFixed(digits),
+    trimTrailingZeroes: false,
+  );
   return '${value < 0
       ? '−'
       : signed && value > 0
@@ -133,20 +135,22 @@ String dashboardDate(String date) {
   return '${parsed.day}/${parsed.month}/${parsed.year}';
 }
 
-String dashboardQuantity(double? value) => value == null
-    ? '—'
-    : value
-          .toStringAsFixed(3)
-          .replaceFirst(RegExp(r'\.?0+$'), '')
-          .replaceAll('.', ',');
+String dashboardQuantity(double? value) =>
+    value == null ? '—' : formatVietnameseNumber(value, decimalPlaces: 3);
 
 class DashboardSectionTitle extends StatelessWidget {
-  const DashboardSectionTitle(this.title, {this.trailing, super.key});
+  const DashboardSectionTitle(
+    this.title, {
+    this.trailing,
+    this.topSpacing = 16,
+    super.key,
+  });
   final String title;
   final Widget? trailing;
+  final double topSpacing;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(4, 16, 4, 10),
+    padding: EdgeInsets.fromLTRB(4, topSpacing, 4, 10),
     child: Row(
       children: [
         Expanded(

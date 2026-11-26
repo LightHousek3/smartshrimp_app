@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppColors {
+  static const treatmentSurface = Color(0xFFFBE6EA);
+  static const treatmentAccent = Color(0xFFD43B57);
   static const ink = Color(0xFF0F1C2E);
   static const inkSoft = Color(0xFF3A4A63);
   static const inkMuted = Color(0xFF6A7994);

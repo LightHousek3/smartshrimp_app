@@ -1,16 +1,12 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log.dart';
 import 'package:smartshrimp_app/features/water_log/domain/entities/water_log_metadata.dart';
 
-/// Định dạng số gọn: 18.0 -> '18', 29.4 -> '29.4'.
-String formatWaterValue(double? value) {
-  if (value == null) return '—';
-  if (value == value.roundToDouble()) return value.toInt().toString();
-  // Giữ đủ độ chính xác lưu trữ của NH3, NO2 và H2S (5 chữ số).
-  final text = value.toStringAsFixed(5);
-  return text.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
-}
+/// Retain the five decimal places used by water measurements.
+String formatWaterValue(double? value) =>
+    value == null ? '—' : formatVietnameseNumber(value, decimalPlaces: 5);
 
 /// Chỉ số đo nước, với biến thể ô nền dùng trong card danh sách.
 class WaterParamTiles extends StatelessWidget {

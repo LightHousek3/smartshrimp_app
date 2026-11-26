@@ -204,7 +204,7 @@ void main() {
       expect(find.text('Nhật ký đo nước'), findsOneWidget);
       expect(find.text('Hao hụt'), findsOneWidget);
       expect(find.text('12.4'), findsOneWidget);
-      expect(find.text('8.6'), findsOneWidget);
+      expect(find.text('8,6'), findsOneWidget);
       expect(find.text('Cần chú ý'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Trò chuyện với chuyên gia'),

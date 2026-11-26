@@ -373,6 +373,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         routes: [
                           GoRoute(
                             path: 'stats',
+                            redirect: (_, _) =>
+                                ref.read(authControllerProvider).value?.role ==
+                                    AccountRole.technician
+                                ? null
+                                : AppRoutes.home,
                             builder: (_, state) => OperationStatsPage(
                               seasonId: state.pathParameters['seasonId']!,
                             ),

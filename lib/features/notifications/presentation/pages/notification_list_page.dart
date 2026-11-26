@@ -431,7 +431,6 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unread = notification.isUnread;
-    final accent = NotificationVisuals.color(notification.type);
     final content = notification.content?.trim();
     return Semantics(
       button: true,
@@ -471,17 +470,11 @@ class _NotificationCard extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: NotificationVisuals.backgroundColor(
-                        notification.type,
-                      ),
+                      color: NotificationVisuals.backgroundColor(notification),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
-                    child: NotificationVisuals.icon(
-                      notification,
-                      color: accent,
-                      size: 17,
-                    ),
+                    child: NotificationVisuals.icon(notification, size: 17),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -497,7 +490,7 @@ class _NotificationCard extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: NotificationVisuals.backgroundColor(
-                                  notification.type,
+                                  notification,
                                 ),
                                 borderRadius: BorderRadius.circular(99),
                               ),
@@ -505,7 +498,7 @@ class _NotificationCard extends StatelessWidget {
                                 NotificationVisuals.label(notification),
                                 style: TextStyle(
                                   color: NotificationVisuals.badgeTextColor(
-                                    notification.type,
+                                    notification,
                                   ),
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,

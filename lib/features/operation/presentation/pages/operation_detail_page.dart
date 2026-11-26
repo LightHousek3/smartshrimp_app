@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/assigned_season/presentation/view_models/assigned_season_controller.dart';
@@ -9,12 +10,14 @@ import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
-import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_sheet.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
+import 'package:smartshrimp_app/features/protocol/presentation/widgets/protocol_ui.dart'
+    show protocolUnit;
 
 class OperationDetailPage extends ConsumerStatefulWidget {
   const OperationDetailPage({
@@ -81,31 +84,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     return parts.isEmpty ? null : parts.join(' · ');
   }
 
-  String _formatCompactNumber(double val) {
-    if (val == val.roundToDouble()) {
-      return val.toInt().toString();
-    }
-    return val.toStringAsFixed(1);
-  }
-
-  String _formatBasisQuantity(double val) {
-    if (val == val.roundToDouble()) {
-      final intVal = val.toInt();
-      if (intVal >= 1000) {
-        final str = intVal.toString();
-        final buffer = StringBuffer();
-        for (var i = 0; i < str.length; i++) {
-          if (i > 0 && (str.length - i) % 3 == 0) {
-            buffer.write('.');
-          }
-          buffer.write(str[i]);
-        }
-        return buffer.toString();
-      }
-      return intVal.toString();
-    }
-    return val.toStringAsFixed(1);
-  }
+  String _formatCompactNumber(double value) =>
+      formatVietnameseNumber(value, decimalPlaces: 1);
 
   String _formatBasisUnit(String? unit) {
     if (unit == null || unit.isEmpty) return '';
@@ -186,7 +166,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final pillFg = visuals.fg;
 
     final itemTimeStr = item.timeRangeText;
-    final quantityStr = '${item.plannedQuantity} ${item.unit.toLowerCase()}';
+    final unit = protocolUnit(item.unit);
+    final quantityStr =
+        '${formatInventoryExactQuantity(item.plannedQuantity)} $unit';
     final instructions = item.protocolItem?.instructions?.trim();
     final productUsage = item.product?.usageInstructions?.trim();
     final showProductUsage =
@@ -202,8 +184,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
       _ => 'Liều kế hoạch',
     };
 
-    final actualQuantitySub = isCompleted && item.execution != null
-        ? 'Thực tế: ${item.execution!.actualQuantity} ${item.unit.toLowerCase()}'
+    final actualQuantity = item.execution?.actualQuantity;
+    final actualQuantitySub = isCompleted && actualQuantity != null
+        ? 'Đã dùng ${formatInventoryExactQuantity(actualQuantity)} $unit'
         : null;
 
     // Ô 4 theo đúng nghiệp vụ từng loại & 100% từ DB
@@ -223,8 +206,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
       final basisUnit = _formatBasisUnit(item.basisUnit);
       fourthLabel = 'Dữ liệu tính liều';
       fourthValue = basisUnit.isNotEmpty
-          ? '${_formatBasisQuantity(item.basisQuantity!)} $basisUnit'
-          : _formatBasisQuantity(item.basisQuantity!);
+          ? '${_formatCompactNumber(item.basisQuantity!)} $basisUnit'
+          : _formatCompactNumber(item.basisQuantity!);
     } else if (varianceText != null) {
       fourthLabel = 'Sai số cho phép';
       fourthValue = varianceText;
@@ -733,11 +716,9 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                   Builder(
                     builder: (_) {
                       final item = itemsWithExec[i];
-                      final unit = item.unit.toLowerCase();
-                      final actualVal = item.execution!.actualQuantity;
-                      final actualStr = formatOperationCompact(
-                        actualVal,
-                        maxDecimals: 3,
+                      final unit = protocolUnit(item.unit);
+                      final actual = formatInventoryExactQuantity(
+                        item.execution!.actualQuantity,
                       );
 
                       return Padding(
@@ -770,7 +751,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '$actualStr $unit',
+                              '$actual $unit',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -928,19 +909,15 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         allItems.any((e) => e.isTreatment);
     final mealNumber =
         schedule.protocolItem?.mealNumber ?? mealGroup?.mealNumber;
-    final headerTitle = isTreatment
+    final headerTitle = mealNumber != null
+        ? 'Cữ $mealNumber'
+        : isTreatment
         ? 'Điều trị'
-        : (mealNumber != null
-              ? 'Cữ $mealNumber'
-              : materialCategoryLabel(schedule.operationType));
+        : materialCategoryLabel(schedule.operationType);
 
-    final (iconBg, iconFg, svgName) = isTreatment
-        ? (
-            const Color(0xFFFBE6EA),
-            const Color(0xFFD43B57),
-            AppSvgIconName.medicine,
-          )
-        : (_blueBg, _blueFg, AppSvgIconName.calendarDays);
+    final (iconBg, iconFg) = isTreatment
+        ? (AppColors.treatmentSurface, AppColors.treatmentAccent)
+        : (_blueBg, _blueFg);
 
     // Khoảng giờ thực hiện của cữ (bao gồm deadline nếu có dueAtMinutes)
     final mealTimeStr = mealGroup?.timeRangeText ?? schedule.timeRangeText;
@@ -984,7 +961,11 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child: AppSvgIcon(svgName, color: iconFg, size: 22),
+                    child: AppSvgIcon(
+                      AppSvgIconName.calendarDays,
+                      color: iconFg,
+                      size: 22,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

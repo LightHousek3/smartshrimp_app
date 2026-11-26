@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_compliance.dart';
@@ -234,30 +236,31 @@ class InventoryComplianceEditor extends StatelessWidget {
           labelSize: 12,
           spacing: 6,
           child: TextFormField(
-            initialValue: value.withdrawalDays?.toString(),
+            initialValue: formatVietnameseNumber(value.withdrawalDays),
             enabled: enabled,
             style: inventoryInputTextStyle,
             decoration: inventoryInputDecoration(
               hintText: '0 nếu không áp dụng',
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: const [VietnameseNumberInputFormatter()],
             onChanged: (text) => onChanged(
-              value.copyWith(
-                withdrawalDays: double.tryParse(text.replaceAll(',', '.')),
-              ),
+              value.copyWith(withdrawalDays: parseVietnameseNumber(text)),
             ),
             validator: (text) {
               if (!enabled) return null;
               if (text == null || text.trim().isEmpty) {
                 return 'Vui lòng nhập thời gian ngừng; nhập 0 nếu không áp dụng';
               }
-              final number = double.tryParse(text.replaceAll(',', '.'));
+              final number = parseVietnameseNumber(text);
               return number == null ||
                       !number.isFinite ||
                       number < 0 ||
                       number > 9999.999 ||
-                      !RegExp(r'^\d+(?:[.,]\d{1,3})?$').hasMatch(text)
-                  ? 'Nhập số từ 0 đến 9999,999, tối đa 3 số lẻ'
+                      !RegExp(
+                        r'^\d+(?:\.\d{1,3})?$',
+                      ).hasMatch(normalizeVietnameseNumber(text) ?? '')
+                  ? 'Nhập số từ 0 đến 9.999,999, tối đa 3 số lẻ'
                   : null;
             },
           ),

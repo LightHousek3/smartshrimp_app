@@ -134,7 +134,8 @@ void main() {
     expect(PondRules.validatePositiveNumber('1,50', 'Độ sâu'), isNull);
     expect(PondRules.parseNumber('1,50'), 1.5);
     expect(PondRules.validatePositiveNumber('0', 'Độ sâu'), isNotNull);
-    expect(PondRules.validatePositiveNumber('1.234', 'Độ sâu'), isNotNull);
+    expect(PondRules.validatePositiveNumber('1,234', 'Độ sâu'), isNotNull);
+    expect(PondRules.parseNumber('1.234,50'), 1234.5);
     expect(
       PondRules.validatePositiveNumber('', 'Độ sâu', required: true),
       isNotNull,

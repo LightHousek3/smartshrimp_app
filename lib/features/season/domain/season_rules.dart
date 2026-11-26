@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart'
     show FarmStatus;
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
@@ -39,7 +40,7 @@ abstract final class SeasonRules {
   static String? validateQuantity(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) return null;
-    final quantity = int.tryParse(text);
+    final quantity = parseVietnameseInteger(text);
     if (quantity == null || quantity <= 0) {
       return 'Số lượng phải là số nguyên lớn hơn 0.';
     }
@@ -67,8 +68,7 @@ abstract final class SeasonRules {
     return null;
   }
 
-  static int? parseQuantity(String value) =>
-      value.trim().isEmpty ? null : int.tryParse(value.trim());
+  static int? parseQuantity(String value) => parseVietnameseInteger(value);
 
   static double? calculateDensity(int? quantity, double? areaM2) =>
       quantity == null || areaM2 == null || areaM2 <= 0

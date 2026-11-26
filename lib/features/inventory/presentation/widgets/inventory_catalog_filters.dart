@@ -135,7 +135,7 @@ class InventoryCatalogFilters extends StatelessWidget {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            'Sắp hết ($lowStockCount)',
+                            'Sắp hết (${formatInventoryQuantity(lowStockCount)})',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

@@ -56,6 +56,43 @@ void main() {
   }
 
   testWidgets(
+    'fractional stock-out shows each lot quantity and distinguishes amounts below one đồng',
+    (tester) async {
+      final movement = inventoryTestTransaction.copyWith(
+        transactionType: domain.InventoryTransactionType.stockOut,
+        unitSnapshot: domain.InventoryProductUnit.pack,
+        referenceType: 'operation_execution',
+        referenceId: 'execution-1',
+      );
+      remote.itemsOverride = [
+        movement.copyWith(
+          quantity: 0.0000004,
+          quantityExact: '0.0000004',
+          totalAmount: .10,
+        ),
+        movement.copyWith(
+          id: 'stock-out-second-lot',
+          inventoryBalanceId: 'second-lot',
+          inventoryBalance: movement.inventoryBalance.copyWith(
+            id: 'second-lot',
+            lotNumber: 'SECOND-LOT',
+          ),
+          quantity: 0.0000006,
+          totalAmount: 0,
+        ),
+      ];
+      await openPage(tester, width: 320, expandFilters: false);
+
+      expect(find.text('−0,0000004 gói'), findsOneWidget);
+      expect(find.text('−0,0000006 gói'), findsOneWidget);
+      expect(find.textContaining('SECOND-LOT'), findsOneWidget);
+      expect(find.text('< 1 ₫'), findsOneWidget);
+      expect(find.text('0 ₫'), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'opens stock history scoped to the selected execution and resets the scope',
     (tester) async {
       await openPage(
@@ -196,7 +233,7 @@ void main() {
         'seasonId': 'season-1',
       });
       expect(find.text('350.000 ₫'), findsWidgets);
-      expect(find.text('2.920.000 ₫'), findsNothing);
+      expect(find.text('2,9 tr ₫'), findsNothing);
       expect(find.text('Giao dịch nhập CP'), findsNothing);
       final products = dropdown('Vật tư', tester);
       expect(products.items, hasLength(3));
@@ -271,7 +308,7 @@ void main() {
       expect(find.text('Tất cả vật tư'), findsOneWidget);
       expect(find.text('Tất cả, kể cả không gắn vụ'), findsOneWidget);
       expect(find.text('Giao dịch nhập CP'), findsOneWidget);
-      expect(find.text('2.920.000 ₫'), findsOneWidget);
+      expect(find.text('2,9 tr ₫'), findsOneWidget);
       expect(find.text('Không có giao dịch phù hợp'), findsNothing);
       expect(tester.takeException(), isNull);
     },
@@ -284,7 +321,7 @@ void main() {
       await tester.ensureVisible(searchField());
       await tester.enterText(searchField(), 'không có vật tư');
       await tester.pump(const Duration(milliseconds: 349));
-      expect(find.text('2.920.000 ₫'), findsOneWidget);
+      expect(find.text('2,9 tr ₫'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pumpAndSettle();
       expect(find.text('Không có giao dịch phù hợp'), findsOneWidget);
@@ -292,7 +329,8 @@ void main() {
       await tester.enterText(searchField(), 'CP');
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
-      expect(find.text('2.800.000 ₫'), findsWidgets);
+      expect(find.text('2,8 tr ₫'), findsOneWidget);
+      expect(find.text('2.800.000 ₫'), findsOneWidget);
       expect(find.text('350.000 ₫'), findsWidgets);
       expect(find.text('Giao dịch nhập thuốc'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
@@ -465,10 +503,10 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.tap(find.text('Đặt lại'));
       await tester.pump();
-      expect(find.text('2.920.000 ₫'), findsOneWidget);
+      expect(find.text('2,9 tr ₫'), findsOneWidget);
       remote.pending!.complete(_page(<domain.InventoryTransaction>[]));
       await tester.pumpAndSettle();
-      expect(find.text('2.920.000 ₫'), findsOneWidget);
+      expect(find.text('2,9 tr ₫'), findsOneWidget);
       expect(find.text('Không có giao dịch phù hợp'), findsNothing);
       expect(tester.takeException(), isNull);
     },

@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -136,7 +138,7 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
     final season = widget.initialSeason;
     _name = TextEditingController(text: season?.name ?? '');
     _quantity = TextEditingController(
-      text: season?.initialQuantity?.toString() ?? '',
+      text: formatVietnameseNumber(season?.initialQuantity),
     );
     _shrimpType = season?.shrimpType ?? ShrimpType.whiteleg;
     _stockingDate = season?.plannedStockingDate ?? season?.stockingDate;
@@ -303,6 +305,7 @@ class _SeasonFormPageState extends ConsumerState<SeasonFormPage> {
         controller: controller,
         enabled: enabled,
         keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+        inputFormatters: const [VietnameseNumberInputFormatter()],
         validator: validator,
         onChanged: (_) => setState(() {}),
         style: const TextStyle(

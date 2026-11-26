@@ -379,6 +379,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
     @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)
     required InventoryTransactionType transactionType,
     required double quantity,
+    String? quantityExact,
     @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)
     required InventoryProductUnit unitSnapshot,
     required double totalAmount,

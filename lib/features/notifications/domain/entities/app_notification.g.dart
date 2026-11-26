@@ -22,6 +22,7 @@ _AppNotification _$AppNotificationFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['readAt'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       content: json['content'] as String?,
+      isTreatmentOperation: json['isTreatmentOperation'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$AppNotificationToJson(_AppNotification instance) =>
@@ -34,6 +35,7 @@ Map<String, dynamic> _$AppNotificationToJson(_AppNotification instance) =>
       'readAt': instance.readAt?.toIso8601String(),
       'createdAt': instance.createdAt.toIso8601String(),
       'content': instance.content,
+      'isTreatmentOperation': instance.isTreatmentOperation,
     };
 
 const _$NotificationTypeEnumMap = {

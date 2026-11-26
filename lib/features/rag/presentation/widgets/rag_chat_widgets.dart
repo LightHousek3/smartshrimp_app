@@ -1,7 +1,9 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/rag/domain/entities/rag_models.dart';
 import 'package:smartshrimp_app/features/rag/presentation/widgets/rag_answer_body.dart';
@@ -305,13 +307,15 @@ class RagMessagePair extends StatelessWidget {
                       children: [
                         SvgPicture.asset(RagAssets.assistant),
                         const SizedBox(width: 6),
-                        const Text(
-                          'Trợ lý Aquabot',
-                          style: TextStyle(
-                            color: Color(0xFF7B5BD6),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,
+                        const Flexible(
+                          child: Text(
+                            'Trợ lý Aquabot',
+                            style: TextStyle(
+                              color: Color(0xFF7B5BD6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ],
@@ -368,7 +372,7 @@ class RagMessagePair extends StatelessWidget {
                                 ),
                               ),
                               SelectableText(
-                                '${(chunk.similarity * 100).toStringAsFixed(1)}% tương đồng\n${chunk.content}',
+                                '${formatVietnameseNumber(chunk.similarity * 100, decimalPlaces: 1)}% tương đồng\n${chunk.content}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppColors.inkMuted,

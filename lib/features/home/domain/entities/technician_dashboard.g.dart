@@ -170,6 +170,10 @@ _TechnicianOperationGroup _$TechnicianOperationGroupFromJson(
           .map((e) => TechnicianOperation.fromJson(e as Map<String, dynamic>))
           .toList(),
     ),
+    occurrenceCount: $checkedConvert(
+      'occurrenceCount',
+      (v) => (v as num?)?.toInt(),
+    ),
   );
   return val;
 });
@@ -182,6 +186,7 @@ Map<String, dynamic> _$TechnicianOperationGroupToJson(
   'pondName': instance.pondName,
   'farmName': instance.farmName,
   'items': instance.items,
+  'occurrenceCount': instance.occurrenceCount,
 };
 
 _TechnicianSeasonSnapshot _$TechnicianSeasonSnapshotFromJson(

@@ -276,6 +276,8 @@ class _DetailContent extends ConsumerWidget {
                       farmId: detail.farmId,
                       day: data,
                       protocolStatus: detail.card.status,
+                      isTreatment:
+                          detail.card.protocolType == ProtocolType.treatment,
                       mealNumbersByItem: {
                         for (final item in detail.materialReviews)
                           item.itemId: ?item.mealNumber,

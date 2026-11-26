@@ -235,7 +235,7 @@ void main() {
     final repository = _Repository()
       ..metadata = WaterLogMetadata.legacy(ShrimpType.whiteleg);
     await _open(tester, repository);
-    await tester.enterText(find.byType(TextField).at(1), '8.504');
+    await tester.enterText(find.byType(TextField).at(1), '8,504');
     await _save(tester);
     expect(find.byKey(const Key('water_log_warning_dialog')), findsNothing);
     expect(repository.payloads.single['ph'], 8.5);

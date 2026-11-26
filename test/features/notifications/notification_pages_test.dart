@@ -32,7 +32,38 @@ import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_
 import 'package:smartshrimp_app/features/personnel/presentation/pages/personnel_list_page.dart';
 import 'package:smartshrimp_app/features/personnel/presentation/view_models/personnel_controller.dart';
 
+AppNotification visualNotification(
+  NotificationType type, {
+  bool treatment = false,
+}) => AppNotification(
+  id: 'notice',
+  title: 'Thông báo',
+  type: type,
+  createdAt: DateTime(2026),
+  isTreatmentOperation: treatment,
+);
+
 void main() {
+  test(
+    'treatment schedules use the rose calendar for reminders and lifecycle notices',
+    () {
+      for (final notification in [
+        visualNotification(NotificationType.operationDue, treatment: true),
+        visualNotification(NotificationType.operationOverdue, treatment: true),
+        visualNotification(NotificationType.treatmentScheduleReady),
+        visualNotification(NotificationType.treatmentScheduleCompleted),
+      ]) {
+        final icon = NotificationVisuals.icon(notification) as AppSvgIcon;
+        expect(icon.icon, AppSvgIconName.calendarDays);
+        expect(icon.color, const Color(0xFFD43B57));
+        expect(
+          NotificationVisuals.backgroundColor(notification),
+          const Color(0xFFFBE6EA),
+        );
+      }
+    },
+  );
+
   testWidgets(
     'owner reads pending protocol content with protocol detail navigation',
     (tester) async {
@@ -517,12 +548,14 @@ void main() {
     );
     expect(NotificationVisuals.label(partialHarvest), 'Thu hoạch');
     expect(
-      NotificationVisuals.color(partialHarvest.type),
-      NotificationVisuals.color(NotificationType.system),
+      NotificationVisuals.color(partialHarvest),
+      NotificationVisuals.color(visualNotification(NotificationType.system)),
     );
     expect(
-      NotificationVisuals.backgroundColor(partialHarvest.type),
-      NotificationVisuals.backgroundColor(NotificationType.system),
+      NotificationVisuals.backgroundColor(partialHarvest),
+      NotificationVisuals.backgroundColor(
+        visualNotification(NotificationType.system),
+      ),
     );
     final oldPartialHarvest = partialHarvest.copyWith(
       type: NotificationType.system,
@@ -555,23 +588,33 @@ void main() {
 
   test('notification task and season colors match the UI sample', () {
     expect(
-      NotificationVisuals.color(NotificationType.taskCompleted),
+      NotificationVisuals.color(
+        visualNotification(NotificationType.taskCompleted),
+      ),
       const Color(0xFF0F62B4),
     );
     expect(
-      NotificationVisuals.badgeTextColor(NotificationType.taskCompleted),
+      NotificationVisuals.badgeTextColor(
+        visualNotification(NotificationType.taskCompleted),
+      ),
       const Color(0xFF0C4E8F),
     );
     expect(
-      NotificationVisuals.backgroundColor(NotificationType.taskCompleted),
+      NotificationVisuals.backgroundColor(
+        visualNotification(NotificationType.taskCompleted),
+      ),
       const Color(0xFFEAF4FF),
     );
     expect(
-      NotificationVisuals.color(NotificationType.seasonStatusChanged),
+      NotificationVisuals.color(
+        visualNotification(NotificationType.seasonStatusChanged),
+      ),
       const Color(0xFF64748B),
     );
     expect(
-      NotificationVisuals.backgroundColor(NotificationType.seasonStatusChanged),
+      NotificationVisuals.backgroundColor(
+        visualNotification(NotificationType.seasonStatusChanged),
+      ),
       const Color(0xFFEEF1F6),
     );
   });

@@ -1,3 +1,5 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
+
 abstract final class FarmRules {
   static const nameMaxLength = 255;
   static const addressMaxLength = 500;
@@ -24,8 +26,8 @@ abstract final class FarmRules {
   }
 
   static double? parseArea(String value) {
-    final normalized = value.trim().replaceAll(',', '.');
-    if (normalized.isEmpty) return null;
+    final normalized = normalizeVietnameseNumber(value);
+    if (normalized == null) return null;
     final area = double.tryParse(normalized);
     if (area == null || !area.isFinite) return null;
     return _roundAreaText(normalized);
@@ -68,8 +70,8 @@ abstract final class FarmRules {
   }
 
   static double? parseCoordinate(String value) {
-    final normalized = value.trim().replaceAll(',', '.');
-    return normalized.isEmpty ? null : double.tryParse(normalized);
+    final normalized = normalizeVietnameseNumber(value, groupThousands: false);
+    return normalized == null ? null : double.tryParse(normalized);
   }
 
   static String? validateLatitude(String? value) =>
@@ -98,7 +100,9 @@ abstract final class FarmRules {
     if (coordinate < minimum || coordinate > maximum) {
       return '$label phải nằm trong khoảng $minimum đến $maximum.';
     }
-    if (!RegExp(r'^[-+]?\d+(?:[.,]\d{1,8})?$').hasMatch(raw)) {
+    if (!RegExp(
+      r'^[-+]?\d+(?:\.\d{1,8})?$',
+    ).hasMatch(normalizeVietnameseNumber(raw, groupThousands: false)!)) {
       return '$label chỉ được có tối đa 8 chữ số thập phân.';
     }
     return null;
@@ -107,8 +111,7 @@ abstract final class FarmRules {
   static String? validateArea(String? value) {
     final raw = value?.trim() ?? '';
     if (raw.isEmpty) return null;
-    final normalized = raw.replaceAll(',', '.');
-    final area = parseArea(normalized);
+    final area = parseArea(raw);
     if (area == null) return 'Diện tích phải là một số hợp lệ.';
     if (area <= 0 || area > maxAreaHectares) {
       return 'Diện tích phải lớn hơn 0 và không vượt quá $maxAreaHectares ha.';

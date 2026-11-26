@@ -1,13 +1,10 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/shrimp_health/domain/entities/shrimp_health_models.dart';
 
 class ShrimpHealthCard extends StatelessWidget {
-  const ShrimpHealthCard({
-    required this.log,
-    required this.onTap,
-    super.key,
-  });
+  const ShrimpHealthCard({required this.log, required this.onTap, super.key});
 
   final ShrimpHealthLog log;
   final VoidCallback onTap;
@@ -25,12 +22,16 @@ class ShrimpHealthCard extends StatelessWidget {
     final month = local.month.toString().padLeft(2, '0');
 
     final now = DateTime.now();
-    if (local.year == now.year && local.month == now.month && local.day == now.day) {
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
       return 'Hôm nay ($day/$month)';
     }
 
     final yesterday = now.subtract(const Duration(days: 1));
-    if (local.year == yesterday.year && local.month == yesterday.month && local.day == yesterday.day) {
+    if (local.year == yesterday.year &&
+        local.month == yesterday.month &&
+        local.day == yesterday.day) {
       return 'Hôm qua ($day/$month)';
     }
 
@@ -43,20 +44,7 @@ class ShrimpHealthCard extends StatelessWidget {
 
   static String _formatNumber(num? value, {int fractionDigits = 1}) {
     if (value == null) return '-';
-    if (value is int || fractionDigits == 0 || value == value.roundToDouble()) {
-      final intVal = fractionDigits == 0 ? value.round() : value.toInt();
-      return intVal.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]}.',
-      );
-    }
-    final fixed = value.toStringAsFixed(fractionDigits);
-    final parts = fixed.split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
-    return parts.length > 1 ? '$intPart,${parts[1]}' : intPart;
+    return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
   }
 
   Widget _buildStatusBadge() {
@@ -218,8 +206,12 @@ class ShrimpHealthCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
-                              color: log.isVoided ? AppColors.inkMuted : const Color(0xFF0F1C2E),
-                              decoration: log.isVoided ? TextDecoration.lineThrough : null,
+                              color: log.isVoided
+                                  ? AppColors.inkMuted
+                                  : const Color(0xFF0F1C2E),
+                              decoration: log.isVoided
+                                  ? TextDecoration.lineThrough
+                                  : null,
                             ),
                           ),
                           const SizedBox(height: 1),
@@ -243,30 +235,75 @@ class ShrimpHealthCard extends StatelessWidget {
                 // Metric Grid: 3 columns x 2 rows
                 Row(
                   children: <Widget>[
-                    Expanded(child: _buildTile('Cỡ TB', _formatNumber(log.avgWeightG, fractionDigits: 1), 'g')),
+                    Expanded(
+                      child: _buildTile(
+                        'Cỡ TB',
+                        _formatNumber(log.avgWeightG, fractionDigits: 1),
+                        'g',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTile('Dài TB', _formatNumber(log.avgLengthCm, fractionDigits: 1), 'cm')),
+                    Expanded(
+                      child: _buildTile(
+                        'Dài TB',
+                        _formatNumber(log.avgLengthCm, fractionDigits: 1),
+                        'cm',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTile('Sinh khối', _formatNumber(log.estimatedBiomassKg, fractionDigits: 0), 'kg')),
+                    Expanded(
+                      child: _buildTile(
+                        'Sinh khối',
+                        _formatNumber(
+                          log.estimatedBiomassKg,
+                          fractionDigits: 0,
+                        ),
+                        'kg',
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: <Widget>[
-                    Expanded(child: _buildTile('Ước tính đàn', _formatNumber(log.estimatedPopulation), 'con')),
+                    Expanded(
+                      child: _buildTile(
+                        'Ước tính đàn',
+                        _formatNumber(log.estimatedPopulation),
+                        'con',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTile('Cỡ mẫu', log.sampleSize != null ? '${log.sampleSize}' : '-', 'con')),
+                    Expanded(
+                      child: _buildTile(
+                        'Cỡ mẫu',
+                        log.sampleSize != null
+                            ? formatVietnameseNumber(log.sampleSize)
+                            : '-',
+                        'con',
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTile('Hao hụt', '${log.mortalityCount}', 'con')),
+                    Expanded(
+                      child: _buildTile(
+                        'Hao hụt',
+                        '${log.mortalityCount}',
+                        'con',
+                      ),
+                    ),
                   ],
                 ),
 
                 // Observation note if present
-                if (log.note != null && log.note!.trim().isNotEmpty) ...<Widget>[
+                if (log.note != null &&
+                    log.note!.trim().isNotEmpty) ...<Widget>[
                   const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEEF1F6),
                       borderRadius: BorderRadius.circular(12),

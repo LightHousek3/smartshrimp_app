@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppNotification {
 
- String get id; String get title;@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType get type; String? get referenceType; String? get referenceId; DateTime? get readAt; DateTime get createdAt; String? get content;
+ String get id; String get title;@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType get type; String? get referenceType; String? get referenceId; DateTime? get readAt; DateTime get createdAt; String? get content; bool get isTreatmentOperation;
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AppNotificationCopyWith<AppNotification> get copyWith => _$AppNotificationCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppNotification&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.readAt, readAt) || other.readAt == readAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppNotification&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.readAt, readAt) || other.readAt == readAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.isTreatmentOperation, isTreatmentOperation) || other.isTreatmentOperation == isTreatmentOperation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,type,referenceType,referenceId,readAt,createdAt,content);
+int get hashCode => Object.hash(runtimeType,id,title,type,referenceType,referenceId,readAt,createdAt,content,isTreatmentOperation);
 
 @override
 String toString() {
-  return 'AppNotification(id: $id, title: $title, type: $type, referenceType: $referenceType, referenceId: $referenceId, readAt: $readAt, createdAt: $createdAt, content: $content)';
+  return 'AppNotification(id: $id, title: $title, type: $type, referenceType: $referenceType, referenceId: $referenceId, readAt: $readAt, createdAt: $createdAt, content: $content, isTreatmentOperation: $isTreatmentOperation)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AppNotificationCopyWith<$Res>  {
   factory $AppNotificationCopyWith(AppNotification value, $Res Function(AppNotification) _then) = _$AppNotificationCopyWithImpl;
 @useResult
 $Res call({
- String id, String title,@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType type, String? referenceType, String? referenceId, DateTime? readAt, DateTime createdAt, String? content
+ String id, String title,@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType type, String? referenceType, String? referenceId, DateTime? readAt, DateTime createdAt, String? content, bool isTreatmentOperation
 });
 
 
@@ -65,7 +65,7 @@ class _$AppNotificationCopyWithImpl<$Res>
 
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? type = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? readAt = freezed,Object? createdAt = null,Object? content = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? type = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? readAt = freezed,Object? createdAt = null,Object? content = freezed,Object? isTreatmentOperation = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,8 @@ as String?,referenceId: freezed == referenceId ? _self.referenceId : referenceId
 as String?,readAt: freezed == readAt ? _self.readAt : readAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isTreatmentOperation: null == isTreatmentOperation ? _self.isTreatmentOperation : isTreatmentOperation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -160,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content,  bool isTreatmentOperation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
-return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content,_that.isTreatmentOperation);case _:
   return orElse();
 
 }
@@ -181,10 +182,10 @@ return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.refere
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content,  bool isTreatmentOperation)  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification():
-return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content,_that.isTreatmentOperation);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +202,10 @@ return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.refere
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title, @JsonKey(unknownEnumValue: NotificationType.unknown)  NotificationType type,  String? referenceType,  String? referenceId,  DateTime? readAt,  DateTime createdAt,  String? content,  bool isTreatmentOperation)?  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
-return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.referenceId,_that.readAt,_that.createdAt,_that.content,_that.isTreatmentOperation);case _:
   return null;
 
 }
@@ -216,7 +217,7 @@ return $default(_that.id,_that.title,_that.type,_that.referenceType,_that.refere
 @JsonSerializable()
 
 class _AppNotification extends AppNotification {
-  const _AppNotification({required this.id, required this.title, @JsonKey(unknownEnumValue: NotificationType.unknown) required this.type, this.referenceType, this.referenceId, this.readAt, required this.createdAt, this.content}): super._();
+  const _AppNotification({required this.id, required this.title, @JsonKey(unknownEnumValue: NotificationType.unknown) required this.type, this.referenceType, this.referenceId, this.readAt, required this.createdAt, this.content, this.isTreatmentOperation = false}): super._();
   factory _AppNotification.fromJson(Map<String, dynamic> json) => _$AppNotificationFromJson(json);
 
 @override final  String id;
@@ -227,6 +228,7 @@ class _AppNotification extends AppNotification {
 @override final  DateTime? readAt;
 @override final  DateTime createdAt;
 @override final  String? content;
+@override@JsonKey() final  bool isTreatmentOperation;
 
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppNotification&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.readAt, readAt) || other.readAt == readAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppNotification&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.readAt, readAt) || other.readAt == readAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.isTreatmentOperation, isTreatmentOperation) || other.isTreatmentOperation == isTreatmentOperation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,type,referenceType,referenceId,readAt,createdAt,content);
+int get hashCode => Object.hash(runtimeType,id,title,type,referenceType,referenceId,readAt,createdAt,content,isTreatmentOperation);
 
 @override
 String toString() {
-  return 'AppNotification(id: $id, title: $title, type: $type, referenceType: $referenceType, referenceId: $referenceId, readAt: $readAt, createdAt: $createdAt, content: $content)';
+  return 'AppNotification(id: $id, title: $title, type: $type, referenceType: $referenceType, referenceId: $referenceId, readAt: $readAt, createdAt: $createdAt, content: $content, isTreatmentOperation: $isTreatmentOperation)';
 }
 
 
@@ -261,7 +263,7 @@ abstract mixin class _$AppNotificationCopyWith<$Res> implements $AppNotification
   factory _$AppNotificationCopyWith(_AppNotification value, $Res Function(_AppNotification) _then) = __$AppNotificationCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title,@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType type, String? referenceType, String? referenceId, DateTime? readAt, DateTime createdAt, String? content
+ String id, String title,@JsonKey(unknownEnumValue: NotificationType.unknown) NotificationType type, String? referenceType, String? referenceId, DateTime? readAt, DateTime createdAt, String? content, bool isTreatmentOperation
 });
 
 
@@ -278,7 +280,7 @@ class __$AppNotificationCopyWithImpl<$Res>
 
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? type = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? readAt = freezed,Object? createdAt = null,Object? content = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? type = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? readAt = freezed,Object? createdAt = null,Object? content = freezed,Object? isTreatmentOperation = null,}) {
   return _then(_AppNotification(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -288,7 +290,8 @@ as String?,referenceId: freezed == referenceId ? _self.referenceId : referenceId
 as String?,readAt: freezed == readAt ? _self.readAt : readAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isTreatmentOperation: null == isTreatmentOperation ? _self.isTreatmentOperation : isTreatmentOperation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

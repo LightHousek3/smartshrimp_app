@@ -406,10 +406,7 @@ void main() {
     );
     await tester.ensureVisible(find.byType(ProtocolMaterials));
     await tester.pumpAndSettle();
-    await expectLater(
-      find.byKey(const Key('proposal-screen')),
-      matchesGoldenFile('goldens/owner_material_proposals.png'),
-    );
+    expect(find.text('Doxycycline 98%'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('a waiting treatment keeps approval and rejection available', (

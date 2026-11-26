@@ -5,6 +5,64 @@ import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 void main() {
   group('InventoryRules', () {
     test(
+      'supplier contacts support local landlines and international numbers',
+      () {
+        for (final phone in [
+          '(028) 7300.1234',
+          '+1 (202) 555-0123',
+          '+123 456 789 012 345',
+          '1800-1234',
+        ]) {
+          expect(
+            InventoryRules.supplierPhoneError(phone),
+            isNull,
+            reason: phone,
+          );
+        }
+        for (final phone in [
+          '() -- .',
+          '+1 - 2',
+          '+01234567',
+          '000000',
+          '+1234567890123456',
+          '+1 (202 555-0123',
+          '123456-',
+        ]) {
+          expect(
+            InventoryRules.supplierPhoneError(phone),
+            isNotNull,
+            reason: phone,
+          );
+        }
+        expect(
+          InventoryRules.supplierPhoneError(' '),
+          'Vui lòng nhập số điện thoại',
+        );
+      },
+    );
+
+    test(
+      'lot expiry is inclusive through the end of the Vietnam calendar day',
+      () {
+        final expiry = DateTime.utc(2026, 11, 26);
+        expect(
+          InventoryRules.isExpiredOn(
+            expiry,
+            at: DateTime.utc(2026, 11, 26, 16, 59, 59),
+          ),
+          isFalse,
+        );
+        expect(
+          InventoryRules.isExpiredOn(
+            expiry,
+            at: DateTime.utc(2026, 11, 26, 17),
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
       'preserves special names and raw punctuation while splitting mobile lists',
       () {
         final examples = <(String, List<String>)>[
@@ -92,7 +150,9 @@ void main() {
         expect(InventoryRules.parseNumber('35000.50'), 35000.5);
         expect(InventoryRules.parseNumber('35000,50'), 35000.5);
         expect(InventoryRules.parseNumber(' 80 '), 80);
-        expect(InventoryRules.parseNumber('1.000.000'), isNull);
+        expect(InventoryRules.parseNumber('1.000.000'), 1000000);
+        expect(InventoryRules.parseNumber('12.34,50'), isNull);
+        expect(InventoryRules.normalizedQuantity('1.250,375'), '1250.375');
         expect(InventoryRules.parseNumber('NaN'), isNull);
         expect(InventoryRules.parseNumber('Infinity'), isNull);
       },

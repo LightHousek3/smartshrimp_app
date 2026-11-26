@@ -207,7 +207,6 @@ class _NotificationInformation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = NotificationVisuals.color(notification.type);
     final content = notification.content?.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,15 +218,11 @@ class _NotificationInformation extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: NotificationVisuals.backgroundColor(notification.type),
+                color: NotificationVisuals.backgroundColor(notification),
                 borderRadius: BorderRadius.circular(15),
               ),
               alignment: Alignment.center,
-              child: NotificationVisuals.icon(
-                notification,
-                color: accent,
-                size: 20,
-              ),
+              child: NotificationVisuals.icon(notification, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -240,17 +235,13 @@ class _NotificationInformation extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: NotificationVisuals.backgroundColor(
-                        notification.type,
-                      ),
+                      color: NotificationVisuals.backgroundColor(notification),
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
                       NotificationVisuals.label(notification),
                       style: TextStyle(
-                        color: NotificationVisuals.badgeTextColor(
-                          notification.type,
-                        ),
+                        color: NotificationVisuals.badgeTextColor(notification),
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
                         height: 1,

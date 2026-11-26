@@ -217,6 +217,7 @@ void main() {
     (tester) async {
       final h = _Harness();
       await h.open(tester, route: _seasonPath);
+      expect(find.text('Thống kê vận hành'), findsNothing);
       await tester.ensureVisible(find.text('Đo nước'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Đo nước'));
@@ -267,6 +268,25 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('owners cannot open operation reports by either route', (
+    tester,
+  ) async {
+    final h = _Harness();
+    await h.open(tester, route: _seasonPath);
+    final router = h.container.read(appRouterProvider);
+    router.go('$_seasonPath/operation-stats');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Không tìm thấy trang.'), findsOneWidget);
+    router.go('/seasons/season/operations/stats');
+    await tester.pumpAndSettle();
+    expect(router.routerDelegate.currentConfiguration.uri.path, AppRoutes.home);
+    expect(
+      h.requests.where((request) => request.path.endsWith('/stats')),
+      isEmpty,
+    );
+  });
 
   testWidgets(
     'Owner filters, void audit, pagination retry and refresh reuse shared reads',

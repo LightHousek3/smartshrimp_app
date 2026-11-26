@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -619,7 +620,7 @@ class _SeasonCard extends StatelessWidget {
                     'MẬT ĐỘ',
                     season.initialDensityPerM2 == null
                         ? '—'
-                        : '${season.initialDensityPerM2!.toStringAsFixed(season.initialDensityPerM2! % 1 == 0 ? 0 : 1)} con/m²',
+                        : '${formatVietnameseNumber(season.initialDensityPerM2, decimalPlaces: 1)} con/m²',
                   ),
                   const SizedBox(width: 8),
                   _HealthStat(season.currentHealthStatus),

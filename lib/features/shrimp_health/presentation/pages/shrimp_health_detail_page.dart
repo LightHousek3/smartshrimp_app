@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,19 +30,7 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
 
   String _formatNumber(num? value, {int fractionDigits = 2}) {
     if (value == null) return '-';
-    if (value is int || fractionDigits == 0 || value == value.roundToDouble()) {
-      final intVal = fractionDigits == 0 ? value.round() : value.toInt();
-      return intVal.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]},',
-      );
-    }
-    final parts = value.toStringAsFixed(fractionDigits).split('.');
-    final intPart = parts[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
-    return parts.length > 1 ? '$intPart.${parts[1]}' : intPart;
+    return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
   }
 
   Widget _buildDetailRow({
@@ -402,7 +391,7 @@ class ShrimpHealthDetailPage extends ConsumerWidget {
                                   icon: Icons.catching_pokemon_rounded,
                                   label: 'Số lượng mẫu bắt kiểm tra',
                                   value: log.sampleSize != null
-                                      ? '${log.sampleSize}'
+                                      ? formatVietnameseNumber(log.sampleSize)
                                       : '-',
                                   unit: 'con',
                                 ),

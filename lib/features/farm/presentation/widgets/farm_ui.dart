@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/features/farm/domain/entities/farm.dart';
 
@@ -7,8 +8,7 @@ const farmCardShadow = <BoxShadow>[
 
 String formatCompactNumber(double? value, {int fractionDigits = 2}) {
   if (value == null) return '—';
-  final fixed = value.toStringAsFixed(fractionDigits);
-  return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+  return formatVietnameseNumber(value, decimalPlaces: fractionDigits);
 }
 
 String farmStatusLabel(FarmStatus status) => switch (status) {

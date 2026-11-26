@@ -101,6 +101,7 @@ abstract class TechnicianOperationGroup with _$TechnicianOperationGroup {
     required String pondName,
     required String farmName,
     required List<TechnicianOperation> items,
+    int? occurrenceCount,
   }) = _TechnicianOperationGroup;
   factory TechnicianOperationGroup.fromJson(Map<String, dynamic> json) =>
       _$TechnicianOperationGroupFromJson(json);
@@ -173,7 +174,10 @@ abstract class TechnicianDashboard with _$TechnicianDashboard {
           group.pondName,
           group.farmName,
         ]);
-        if (!seasonIds.add(group.seasonId) || group.items.isEmpty) {
+        final count = group.occurrenceCount;
+        if (!seasonIds.add(group.seasonId) ||
+            group.items.isEmpty ||
+            (count != null && (count < 1 || count > group.items.length))) {
           throw const InvalidResponseException();
         }
         final ids = <String>{};

@@ -1,3 +1,4 @@
+import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -163,6 +164,7 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
 
     return InventoryPageFrame(
       title: 'Nhập kho',
+      subtitle: detail.value?.name,
       onBack: context.pop,
       child: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -182,178 +184,160 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
             : Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   children: <Widget>[
-                    InventorySurface(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          InventoryField(
-                            label: 'Vật tư',
-                            child: _ReadOnlyValue(value: product.name),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Mã lô *',
-                            child: TextFormField(
-                              controller: _lotController,
-                              style: inventoryInputTextStyle,
-                              maxLength: InventoryRules.maxLotLength,
-                              textCapitalization: TextCapitalization.characters,
-                              decoration: inventoryInputDecoration(
-                                hintText: 'VD: LO-2026-001',
-                              ).copyWith(counterText: ''),
-                              validator: _requiredText('Vui lòng nhập mã lô'),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Số lượng nhập *',
-                            child: TextFormField(
-                              controller: _quantityController,
-                              style: inventoryInputTextStyle,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration:
-                                  inventoryInputDecoration(
-                                    hintText: 'VD: 100',
-                                    suffixIcon: _UnitSuffix(product.unit.label),
-                                  ).copyWith(
-                                    suffixIconConstraints: const BoxConstraints(
-                                      minHeight: 0,
-                                    ),
-                                  ),
-                              validator: InventoryRules.quantityError,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Đơn giá (₫/${product.unit.label}) *',
-                            child: TextFormField(
-                              controller: _priceController,
-                              style: inventoryInputTextStyle,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: inventoryInputDecoration(
-                                hintText: 'VD: 35000',
-                              ),
-                              validator: InventoryRules.unitPriceError,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Ngày nhập *',
-                            child: TextFormField(
-                              controller: _dateController,
-                              style: inventoryInputTextStyle,
-                              readOnly: true,
-                              onTap: _pickDate,
-                              decoration: inventoryInputDecoration(
-                                suffixIcon: const Icon(
-                                  Icons.calendar_today_outlined,
-                                  size: 19,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Hạn sử dụng *',
-                            child: TextFormField(
-                              controller: _expiryController,
-                              validator: (_) =>
-                                  InventoryRules.expiryDateError(_expiryDate),
-                              style: inventoryInputTextStyle,
-                              readOnly: true,
-                              onTap: _pickExpiryDate,
-                              decoration:
-                                  inventoryInputDecoration(
-                                    hintText: 'dd/MM/yyyy',
-                                    suffixIcon: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        if (_expiryDate != null)
-                                          IconButton(
-                                            tooltip: 'Xóa hạn sử dụng',
-                                            icon: const Icon(
-                                              Icons.close,
-                                              size: 19,
-                                            ),
-                                            color: AppColors.inkMuted,
-                                            onPressed: () => setState(() {
-                                              _expiryDate = null;
-                                              _expiryController.clear();
-                                            }),
-                                          ),
-                                        const Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
-                                          child: Icon(
-                                            Icons.calendar_today_outlined,
-                                            size: 19,
-                                            color: AppColors.inkMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ).copyWith(
-                                    helperText:
-                                        'Bắt buộc nhập hạn sử dụng từ hôm nay trở đi.',
-                                    helperMaxLines: 3,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Nhà cung cấp *',
-                            child: TextFormField(
-                              controller: _supplierController,
-                              readOnly: true,
-                              onTap: mutation.isLoading
-                                  ? null
-                                  : _selectSupplier,
-                              style: inventoryInputTextStyle,
-                              maxLength: InventoryRules.maxSupplierLength,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: inventoryInputDecoration(
-                                hintText: 'Chọn từ danh bạ nhà cung cấp',
-                                suffixIcon: const Icon(Icons.expand_more),
-                              ).copyWith(counterText: ''),
-                              validator: (_) => _supplierId == null
-                                  ? 'Vui lòng chọn nhà cung cấp'
-                                  : null,
-                            ),
-                          ),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              textStyle: inventoryTextButtonTextStyle,
-                            ),
-                            onPressed: mutation.isLoading
-                                ? null
-                                : _createSupplier,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Thêm nhà cung cấp'),
-                          ),
-                          const SizedBox(height: 14),
-                          InventoryField(
-                            label: 'Ghi chú (tùy chọn)',
-                            child: TextFormField(
-                              controller: _reasonController,
-                              style: inventoryInputTextStyle,
-                              maxLength: InventoryRules.maxReasonLength,
-                              maxLines: 3,
-                              decoration: inventoryInputDecoration(
-                                hintText: 'Thông tin bổ sung cho lần nhập kho',
-                              ).copyWith(counterText: ''),
-                            ),
-                          ),
+                    InventoryField(
+                      label: 'Mã lô *',
+                      child: TextFormField(
+                        controller: _lotController,
+                        style: inventoryInputTextStyle,
+                        maxLength: InventoryRules.maxLotLength,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: inventoryInputDecoration(
+                          hintText: 'VD: LO-2026-001',
+                        ).copyWith(counterText: ''),
+                        validator: _requiredText('Vui lòng nhập mã lô'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Số lượng nhập *',
+                      child: TextFormField(
+                        controller: _quantityController,
+                        style: inventoryInputTextStyle,
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
                         ],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration:
+                            inventoryInputDecoration(
+                              hintText: 'VD: 1.250,5',
+                              suffixIcon: _UnitSuffix(product.unit.label),
+                            ).copyWith(
+                              suffixIconConstraints: const BoxConstraints(
+                                minHeight: 0,
+                              ),
+                            ),
+                        validator: InventoryRules.quantityError,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Đơn giá (₫/${product.unit.label}) *',
+                      child: TextFormField(
+                        controller: _priceController,
+                        style: inventoryInputTextStyle,
+                        inputFormatters: const [
+                          VietnameseNumberInputFormatter(),
+                        ],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: inventoryInputDecoration(
+                          hintText: 'VD: 35.000',
+                        ),
+                        validator: InventoryRules.unitPriceError,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Ngày nhập *',
+                      child: TextFormField(
+                        controller: _dateController,
+                        style: inventoryInputTextStyle,
+                        readOnly: true,
+                        onTap: _pickDate,
+                        decoration: inventoryInputDecoration(
+                          suffixIcon: const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 19,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Hạn sử dụng *',
+                      child: TextFormField(
+                        controller: _expiryController,
+                        validator: (_) =>
+                            InventoryRules.expiryDateError(_expiryDate),
+                        style: inventoryInputTextStyle,
+                        readOnly: true,
+                        onTap: _pickExpiryDate,
+                        decoration:
+                            inventoryInputDecoration(
+                              hintText: 'dd/MM/yyyy',
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  if (_expiryDate != null)
+                                    IconButton(
+                                      tooltip: 'Xóa hạn sử dụng',
+                                      icon: const Icon(Icons.close, size: 19),
+                                      color: AppColors.inkMuted,
+                                      onPressed: () => setState(() {
+                                        _expiryDate = null;
+                                        _expiryController.clear();
+                                      }),
+                                    ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    child: Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 19,
+                                      color: AppColors.inkMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ).copyWith(
+                              helperText:
+                                  'Bắt buộc nhập hạn sử dụng từ hôm nay trở đi.',
+                              helperMaxLines: 3,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Nhà cung cấp *',
+                      action: InventoryFieldAction(
+                        onPressed: mutation.isLoading ? null : _createSupplier,
+                        label: 'Thêm nhà cung cấp',
+                      ),
+                      child: TextFormField(
+                        controller: _supplierController,
+                        readOnly: true,
+                        onTap: mutation.isLoading ? null : _selectSupplier,
+                        style: inventoryInputTextStyle,
+                        maxLength: InventoryRules.maxSupplierLength,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: inventoryInputDecoration(
+                          hintText: 'Chọn từ danh bạ nhà cung cấp',
+                          prefixIcon: inventorySupplierInputIcon,
+                          suffixIcon: const Icon(Icons.expand_more),
+                        ).copyWith(counterText: ''),
+                        validator: (_) => _supplierId == null
+                            ? 'Vui lòng chọn nhà cung cấp'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    InventoryField(
+                      label: 'Ghi chú (tùy chọn)',
+                      child: TextFormField(
+                        controller: _reasonController,
+                        style: inventoryInputTextStyle,
+                        maxLength: InventoryRules.maxReasonLength,
+                        maxLines: 3,
+                        decoration: inventoryInputDecoration(
+                          hintText: 'Thông tin bổ sung cho lần nhập kho',
+                        ).copyWith(counterText: ''),
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -370,24 +354,6 @@ class _InventoryStockInPageState extends ConsumerState<InventoryStockInPage> {
       ),
     );
   }
-}
-
-class _ReadOnlyValue extends StatelessWidget {
-  const _ReadOnlyValue({required this.value});
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF6F8FB),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppColors.line),
-    ),
-    child: Text(value, style: inventoryInputTextStyle),
-  );
 }
 
 class _UnitSuffix extends StatelessWidget {

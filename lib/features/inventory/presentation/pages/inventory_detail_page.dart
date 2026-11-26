@@ -2,6 +2,8 @@ import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_directory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_empty_state.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_details.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_receipt_card.dart';
 import 'package:flutter/material.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
@@ -12,51 +14,12 @@ import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
+import 'package:smartshrimp_app/features/inventory/presentation/pages/inventory_supplier_detail_page.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/view_models/inventory_controller.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_stock_out_lot_picker.dart';
-
-/// Show product lots and expose actions allowed by the loaded product state.
-/// Pause eligibility is a UI hint; the backend rechecks stock and planned use.
-class _ProductInfoRow extends StatelessWidget {
-  const _ProductInfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 130,
-          child: Text(
-            '$label:',
-            style: const TextStyle(
-              color: AppColors.inkMuted,
-              fontSize: 13,
-              height: 1.5,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.inkSoft,
-              fontSize: 13,
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_supplier_dialog.dart';
 
 class InventoryDetailPage extends ConsumerWidget {
   const InventoryDetailPage({
@@ -68,15 +31,43 @@ class InventoryDetailPage extends ConsumerWidget {
   final String farmId;
   final String productId;
 
+  Future<void> _openManufacturer(
+    BuildContext context,
+    String manufacturerId,
+  ) async {
+    final result = await Navigator.of(context)
+        .push<InventorySupplierDetailResult>(
+          MaterialPageRoute(
+            builder: (_) => InventorySupplierDetailPage(
+              farmId: farmId,
+              supplierId: manufacturerId,
+              allowDelete: false,
+            ),
+          ),
+        );
+    if (!context.mounted ||
+        result == null ||
+        result.action != InventorySupplierAction.edit) {
+      return;
+    }
+    final supplier = result.supplier;
+    await context.push(
+      '/farms/$farmId/inventory/suppliers/${supplier.id}/edit',
+      extra: supplier,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final key = (farmId: farmId, productId: productId);
     final productState = ref.watch(inventoryDetailControllerProvider(key));
     final mutation = ref.watch(inventoryMutationControllerProvider(farmId));
     final product = productState.value;
+    final manufacturerId = product?.manufacturerId.trim();
 
     return InventoryPageFrame(
-      title: product?.name ?? 'Chi tiết vật tư',
+      title: 'Chi tiết vật tư',
+      subtitle: product?.name,
       onBack: context.pop,
       trailing: product != null && !product.isArchived && !product.readOnly
           ? Semantics(
@@ -125,6 +116,10 @@ class InventoryDetailPage extends ConsumerWidget {
               child: _DetailContent(
                 product: product,
                 farmId: farmId,
+                onOpenManufacturer:
+                    manufacturerId == null || manufacturerId.isEmpty
+                    ? null
+                    : () => _openManufacturer(context, manufacturerId),
                 onPause: (mutation.isLoading || product.readOnly)
                     ? null
                     : () => _pause(context, ref, product),
@@ -312,6 +307,7 @@ class _DetailContent extends StatelessWidget {
   const _DetailContent({
     required this.product,
     required this.farmId,
+    this.onOpenManufacturer,
     required this.onPause,
     required this.onRestore,
     this.onDelete,
@@ -319,6 +315,7 @@ class _DetailContent extends StatelessWidget {
   });
   final InventoryProduct product;
   final String farmId;
+  final VoidCallback? onOpenManufacturer;
   final VoidCallback? onPause;
   final VoidCallback? onRestore;
   final VoidCallback? onDelete;
@@ -326,6 +323,7 @@ class _DetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     final lots = [...product.lots]
       ..sort((a, b) {
         final expiry = a.expiryDate == null
@@ -338,171 +336,43 @@ class _DetailContent extends StatelessWidget {
         return date == 0 ? a.id.compareTo(b.id) : date;
       });
     final available = lots.where((lot) => lot.quantity > 0).toList();
+    final priorityLot = product.isArchived
+        ? null
+        : available.where((lot) {
+            final expiry = lot.expiryDate;
+            return expiry != null &&
+                !InventoryRules.isExpiredOn(expiry, at: now) &&
+                !lot.receivedAt.isAfter(now);
+          }).firstOrNull;
+    final photos = product.effectiveImageUrls;
+    final actionHeight =
+        45.0 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 1.6);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 32),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
         if (product.readOnly) const InventoryReadOnlyNotice(),
-        if (!product.readOnly && product.manufacturerId.isEmpty)
+        if (!product.readOnly &&
+            !product.isArchived &&
+            product.manufacturerId.isEmpty)
           const Padding(
             padding: EdgeInsets.only(bottom: 16),
-            child: Text(
-              'Vật tư cũ chưa có nhà cung cấp. Chọn chỉnh sửa để bổ sung.',
-            ),
+            child: Text('Chưa có nhà sản xuất. Chọn chỉnh sửa để bổ sung.'),
           ),
-        InventorySurface(
-          radius: 18,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF4FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Center(
-                      child: InventorySvgIcon(
-                        InventoryAssets.inventoryBox,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  InventoryCategoryBadge(category: product.category),
-                  if (product.isArchived)
-                    const Text(
-                      'Tạm ngưng',
-                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
-                    )
-                  else
-                    const Text(
-                      'Đang sử dụng',
-                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
-                    ),
-                  if (product.isLowStock) const LowStockBadge(),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _StatCell(
-                      label: 'TỒN DÙNG ĐƯỢC',
-                      value: product.usableStock == null
-                          ? 'Chưa xác định'
-                          : formatInventoryQuantity(product.usableStock!),
-                      caption: product.unit.label,
-                      color: product.isLowStock
-                          ? AppColors.error
-                          : const Color(0xFF0F9B8E),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatCell(
-                      label: 'NGƯỠNG CẢNH BÁO',
-                      value: formatInventoryQuantity(product.minAlertQuantity),
-                      caption: product.alertUnitLabel,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatCell(
-                      label: 'GIÁ TRỊ TỒN',
-                      value: _compactMoney(product.inventoryValue),
-                      caption: 'Theo giá nhập',
-                      color: const Color(0xFF0F62B4),
-                      valueSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 20, color: AppColors.line),
-              Text(
-                'Tồn trên sổ: ${formatInventoryQuantity(product.currentStock)} ${product.unit.label}. '
-                'Tồn dùng được không tính hàng thiếu hạn hoặc hết hạn.',
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              Text.rich(
-                TextSpan(
-                  text: 'Đơn vị: ',
-                  children: [
-                    TextSpan(
-                      text: product.unit.label,
-                      style: const TextStyle(
-                        color: Color(0xFF0C4E8F),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
-              ),
-              if (product.conversionQuantity != null &&
-                  product.conversionUnit != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '1 ${product.unit.label} = ${formatInventoryQuantity(product.conversionQuantity!)} ${product.conversionUnit!.label}',
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-              if ((product.description ?? '').isNotEmpty) ...[
-                const SizedBox(height: 5),
-                Text(
-                  product.description!,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 11,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ],
-          ),
+        InventoryProductSummary(
+          product: product,
+          onOpenManufacturer: onOpenManufacturer,
         ),
-        const SizedBox(height: 12),
-        InventorySurface(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ProductInfoRow(
-                label: 'Nhà cung cấp',
-                value: '${product.manufacturer['name'] ?? 'Chưa cập nhật'}',
-              ),
-              if (product.compliance?.registrationNumber != null)
-                _ProductInfoRow(
-                  label: 'Mã số tiếp nhận',
-                  value: product.compliance!.registrationNumber!,
-                ),
-              if (product.compliance?.withdrawalDays != null)
-                _ProductInfoRow(
-                  label: 'Thời gian ngừng',
-                  value:
-                      '${formatInventoryQuantity(product.compliance!.withdrawalDays!)} ngày',
-                ),
-            ],
-          ),
+        const SizedBox(height: 16),
+        InventoryComplianceDetails(
+          compliance: product.compliance,
+          productImages: photos,
         ),
-        if (!product.readOnly && product.canDelete) ...[
-          const SizedBox(height: 12),
-          InventoryDangerButton(label: 'Xóa vật tư', onPressed: onDelete),
-        ],
-        if (product.effectiveImageUrls.isNotEmpty) ...[
+        if (photos.isNotEmpty) ...[
           const SizedBox(height: 16),
           _ProductGallery(
             key: ValueKey(product.id),
-            urls: product.effectiveImageUrls,
+            urls: photos,
             category: product.category,
           ),
         ],
@@ -518,11 +388,9 @@ class _DetailContent extends StatelessWidget {
             children: [
               Expanded(
                 child: InventoryGradientButton(
+                  height: actionHeight,
                   radius: 12,
-                  gradientColors: const [
-                    AppColors.oceanLight,
-                    AppColors.tealLight,
-                  ],
+                  fitContent: true,
                   label: 'Nhập kho',
                   iconAsset: InventoryAssets.plusWhite,
                   onPressed: () => context.push(
@@ -533,7 +401,7 @@ class _DetailContent extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: SizedBox(
-                  height: 45,
+                  height: actionHeight,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -554,9 +422,9 @@ class _DetailContent extends StatelessWidget {
                         BlendMode.srcIn,
                       ),
                     ),
-                    label: const Text(
-                      'Xuất kho',
-                      style: TextStyle(fontSize: 14),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Xuất kho', style: TextStyle(fontSize: 14)),
                     ),
                   ),
                 ),
@@ -564,45 +432,50 @@ class _DetailContent extends StatelessWidget {
             ],
           ),
         const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Column(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Tồn kho theo lô',
-                    style: AppTypography.display(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Tồn kho theo lần nhập',
+                      style: AppTypography.display(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ).copyWith(fontFamilyFallback: const ['PlusJakartaSans']),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  const Text(
-                    'Ưu tiên hạn dùng sớm, nhập trước khi cùng hạn',
-                    style: TextStyle(color: AppColors.inkMuted, fontSize: 10),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: InventoryStatusBadge(
+                        label:
+                            '${formatInventoryQuantity(available.length)} lô còn hàng',
+                        foreground: AppColors.ocean,
+                        background: const Color(0xFFEAF4FF),
+                        showDot: false,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF4FF),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                '${available.length} lô còn hàng',
-                style: const TextStyle(
-                  color: Color(0xFF0F62B4),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+              if (!product.isArchived && lots.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                const Text(
+                  'Vận hành ưu tiên lô hợp lệ có hạn dùng sớm nhất.',
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
                 ),
-              ),
-            ),
-          ],
+              ],
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         if (lots.isEmpty)
@@ -614,10 +487,11 @@ class _DetailContent extends StatelessWidget {
           ...lots.map(
             (lot) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _LotCard(
+              child: InventoryReceiptCard(
                 lot: lot,
                 unit: product.unit,
-                firstOut: available.isNotEmpty && lot.id == available.first.id,
+                now: now,
+                hasPriority: lot.id == priorityLot?.id,
                 onSetExpiry: onSetExpiry == null
                     ? null
                     : () => onSetExpiry!(lot),
@@ -627,30 +501,39 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 18),
         if (product.isArchived)
           InventoryGradientButton(
+            height: actionHeight,
+            fitContent: true,
             label: 'Sử dụng lại vật tư',
             iconAsset: InventoryAssets.save,
             onPressed: onRestore,
           )
         else
           SizedBox(
-            height: 46,
+            height: actionHeight,
             child: OutlinedButton.icon(
               onPressed: onPause,
-              icon: const Icon(Icons.pause_circle_outline, size: 17),
-              label: const Text(
-                'Tạm ngưng vật tư',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              icon: const Icon(Icons.block_outlined, size: 18),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Tạm ngưng vật tư',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFEA580C),
-                backgroundColor: const Color(0xFFFFF7E8),
-                side: const BorderSide(color: Color(0xFFFCD34D)),
+                foregroundColor: AppColors.inkSoft,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.line),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
           ),
+        if (!product.readOnly && product.canDelete) ...[
+          const SizedBox(height: 12),
+          InventoryDangerButton(label: 'Xóa vật tư', onPressed: onDelete),
+        ],
       ],
     );
   }
@@ -659,6 +542,11 @@ class _DetailContent extends StatelessWidget {
     BuildContext context,
     List<InventoryLot> lots,
   ) async {
+    final byReceipt = [...lots]
+      ..sort((a, b) {
+        final date = a.receivedAt.compareTo(b.receivedAt);
+        return date == 0 ? a.id.compareTo(b.id) : date;
+      });
     final lot = lots.length == 1
         ? lots.first
         : await showModalBottomSheet<InventoryLot>(
@@ -675,7 +563,7 @@ class _DetailContent extends StatelessWidget {
             builder: (_) => InventoryStockOutLotPicker(
               productName: product.name,
               unit: product.unit,
-              lots: lots,
+              lots: byReceipt,
             ),
           );
     if (lot != null && context.mounted) {
@@ -684,57 +572,6 @@ class _DetailContent extends StatelessWidget {
       );
     }
   }
-}
-
-class _StatCell extends StatelessWidget {
-  const _StatCell({
-    required this.label,
-    required this.value,
-    required this.caption,
-    this.color = AppColors.ink,
-    this.valueSize = 20,
-  });
-  final String label;
-  final String value;
-  final String caption;
-  final Color color;
-  final double valueSize;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        maxLines: 1,
-        style: const TextStyle(
-          color: AppColors.inkMuted,
-          fontSize: 9,
-          letterSpacing: 0.15,
-        ),
-      ),
-      const SizedBox(height: 4),
-      SizedBox(
-        height: 27,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            style: AppTypography.display(
-              color: color,
-              fontSize: valueSize,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(height: 2),
-      Text(
-        caption,
-        style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
-      ),
-    ],
-  );
 }
 
 class _ProductGallery extends StatefulWidget {
@@ -796,216 +633,53 @@ class _ProductGalleryState extends State<_ProductGallery> {
           height: 176,
           fit: BoxFit.contain,
         ),
-        const SizedBox(height: 6),
-        Text(
-          inventoryPhotoLabel(selected),
-          style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 58,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: widget.urls.length,
-            separatorBuilder: (_, index) => const SizedBox(width: 8),
-            itemBuilder: (_, index) => Semantics(
-              button: true,
-              selected: selected == index,
-              label: 'Xem ảnh vật tư ${index + 1}',
-              child: InkWell(
-                onTap: () => setState(() => selected = index),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 58,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: selected == index
-                          ? const Color(0xFF3F97E8)
-                          : Colors.transparent,
+        if (widget.urls.length > 1) ...[
+          const SizedBox(height: 6),
+          Text(
+            inventoryPhotoLabel(selected),
+            style: const TextStyle(fontSize: 11, color: AppColors.inkSoft),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 58,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.urls.length,
+              separatorBuilder: (_, index) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => Semantics(
+                button: true,
+                selected: selected == index,
+                label: 'Xem ảnh vật tư ${index + 1}',
+                child: InkWell(
+                  onTap: () => setState(() => selected = index),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 58,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected == index
+                            ? const Color(0xFF3F97E8)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: InventoryProductImage(
+                      url: widget.urls[index],
+                      category: widget.category,
+                      size: 50,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  child: InventoryProductImage(
-                    url: widget.urls[index],
-                    category: widget.category,
-                    size: 50,
-                    fit: BoxFit.contain,
-                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     ),
   );
 }
-
-class _LotCard extends StatelessWidget {
-  const _LotCard({
-    required this.lot,
-    required this.unit,
-    required this.firstOut,
-    this.onSetExpiry,
-  });
-  final InventoryLot lot;
-  final InventoryProductUnit unit;
-  final bool firstOut;
-  final VoidCallback? onSetExpiry;
-  @override
-  Widget build(BuildContext context) => InventorySurface(
-    radius: 18,
-    padding: const EdgeInsets.all(14),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Lô ${lot.lotNumber}',
-                style: AppTypography.mono(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
-            if (firstOut)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2F6F3),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: const Text(
-                  '● Xuất trước',
-                  style: TextStyle(
-                    color: Color(0xFF0F9B8E),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          'Nhập ${formatInventoryDate(lot.receivedAt)}',
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
-        ),
-        Text(
-          lot.expiryDate == null
-              ? 'Chưa rõ hạn sử dụng — chưa dùng cho vận hành'
-              : 'Hạn sử dụng: ${formatInventoryDate(lot.expiryDate!)}',
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 10),
-        ),
-        if (lot.expiryDate == null)
-          TextButton(
-            style: TextButton.styleFrom(
-              textStyle: inventoryTextButtonTextStyle,
-            ),
-            onPressed: onSetExpiry,
-            child: const Text('Bổ sung hạn dùng'),
-          ),
-        const SizedBox(height: 4),
-        Text(
-          'Nhà cung cấp: ${lot.supplierName}',
-          style: const TextStyle(color: AppColors.inkSoft, fontSize: 10),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _lotMetric(
-              'Đã nhập',
-              lot.receivedQuantity == null
-                  ? '—'
-                  : '${formatInventoryQuantity(lot.receivedQuantity!)} ${unit.label}',
-            ),
-            const SizedBox(width: 6),
-            _lotMetric(
-              'Còn lại',
-              '${formatInventoryQuantity(lot.quantity)} ${unit.label}',
-              accent: true,
-            ),
-            const SizedBox(width: 6),
-            _lotMetric(
-              'Đơn giá',
-              '${formatInventoryMoney(lot.unitPrice)}/${unit.label}',
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ExcludeSemantics(
-          excluding: lot.usageRatio == null,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: lot.usageRatio ?? 0,
-              minHeight: 5,
-              color: const Color(0xFF1D7AD6),
-              backgroundColor: const Color(0xFFF1F5F9),
-              semanticsLabel: 'Tỷ lệ đã sử dụng (%)',
-              semanticsValue: lot.usageRatio == null
-                  ? null
-                  : '${(lot.usageRatio! * 100).round()}',
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                lot.usageRatio == null
-                    ? 'Chưa có dữ liệu nhập'
-                    : 'Đã sử dụng ${(lot.usageRatio! * 100).round()}%',
-                style: const TextStyle(fontSize: 9, color: AppColors.inkMuted),
-              ),
-            ),
-            Text(
-              'Giá trị còn ${formatInventoryMoney(lot.inventoryValue)}',
-              style: const TextStyle(fontSize: 9, color: Color(0xFF0F62B4)),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-  Widget _lotMetric(String label, String value, {bool accent = false}) =>
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 9, color: AppColors.inkMuted),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: accent ? const Color(0xFF0F9B8E) : AppColors.ink,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-}
-
-String _compactMoney(double value) => value >= 1000000
-    ? '${formatInventoryQuantity((value / 1000000 * 10).round() / 10)} tr ₫'
-    : formatInventoryMoney(value);
 
 String _errorMessage(Object? error) => error is AppException
     ? error.message

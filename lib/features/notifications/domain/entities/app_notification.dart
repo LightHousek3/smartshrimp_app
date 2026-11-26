@@ -90,6 +90,7 @@ abstract class AppNotification with _$AppNotification {
     DateTime? readAt,
     required DateTime createdAt,
     String? content,
+    @Default(false) bool isTreatmentOperation,
   }) = _AppNotification;
 
   factory AppNotification.fromJson(Map<String, dynamic> json) =>
