@@ -97,7 +97,7 @@ class HarvestDetailPage extends ConsumerWidget {
                   ('Người ghi nhận', event.recorderName ?? 'Không ghi nhận'),
                   ('Tạo lúc', _formatShortDateTime(event.createdAt)),
                   if (event.varianceReason != null)
-                    ('Lý do hiệu chỉnh', event.varianceReason!),
+                    ('Lý do ghi nhận', event.varianceReason!),
                 ],
               ),
               if (event.note != null && event.note!.trim().isNotEmpty) ...[

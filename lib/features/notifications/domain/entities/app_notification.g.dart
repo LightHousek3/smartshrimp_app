@@ -69,6 +69,7 @@ const _$NotificationTypeEnumMap = {
   NotificationType.inventoryLow: 'INVENTORY_LOW',
   NotificationType.inventoryInsufficient: 'INVENTORY_INSUFFICIENT',
   NotificationType.harvestDue: 'HARVEST_DUE',
+  NotificationType.harvestRecorded: 'HARVEST_RECORDED',
   NotificationType.seasonCompleted: 'SEASON_COMPLETED',
   NotificationType.unknown: 'unknown',
 };

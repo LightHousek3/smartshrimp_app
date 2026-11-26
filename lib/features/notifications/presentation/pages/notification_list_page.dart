@@ -438,7 +438,7 @@ class _NotificationCard extends StatelessWidget {
       onTap: onTap,
       label:
           '${unread ? 'Chưa đọc' : 'Đã đọc'}, '
-          '${NotificationVisuals.label(notification.type)}, '
+          '${NotificationVisuals.label(notification)}, '
           '${notification.title}, '
           '${NotificationVisuals.fullTime(notification.createdAt)}',
       child: ExcludeSemantics(
@@ -478,7 +478,7 @@ class _NotificationCard extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: NotificationVisuals.icon(
-                      notification.type,
+                      notification,
                       color: accent,
                       size: 17,
                     ),
@@ -502,7 +502,7 @@ class _NotificationCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(99),
                               ),
                               child: Text(
-                                NotificationVisuals.label(notification.type),
+                                NotificationVisuals.label(notification),
                                 style: TextStyle(
                                   color: NotificationVisuals.badgeTextColor(
                                     notification.type,
