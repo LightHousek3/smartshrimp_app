@@ -123,6 +123,7 @@ abstract class HarvestPage with _$HarvestPage {
     @Default(false) bool deferredPriceEnabled,
     HarvestWithdrawal? withdrawal,
     @Default(false) bool finalReasonRequired,
+    @Default(false) bool populationCorrectionEnabled,
   }) = _HarvestPage;
 }
 

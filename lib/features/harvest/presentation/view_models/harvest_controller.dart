@@ -161,6 +161,7 @@ final harvestPopulationProvider = FutureProvider.autoDispose
         String? availableQuantityCount,
         HarvestWithdrawal? withdrawal,
         bool finalReasonRequired,
+        bool populationCorrectionEnabled,
         bool speciesThresholdsEnabled,
         bool deferredPriceEnabled,
       }),
@@ -178,6 +179,7 @@ final harvestPopulationProvider = FutureProvider.autoDispose
           availableQuantityCount: page.availableQuantityCount,
           withdrawal: page.withdrawal,
           finalReasonRequired: page.finalReasonRequired,
+          populationCorrectionEnabled: page.populationCorrectionEnabled,
           speciesThresholdsEnabled: page.speciesThresholdsEnabled,
           deferredPriceEnabled: page.deferredPriceEnabled,
         );

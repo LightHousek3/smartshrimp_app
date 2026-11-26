@@ -1222,7 +1222,7 @@ as String?,
 /// @nodoc
 mixin _$HarvestPage {
 
- List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; int get unpricedHarvests; bool get speciesThresholdsEnabled; String? get availableQuantityCount; bool get deferredPriceEnabled; HarvestWithdrawal? get withdrawal; bool get finalReasonRequired;
+ List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; int get unpricedHarvests; bool get speciesThresholdsEnabled; String? get availableQuantityCount; bool get deferredPriceEnabled; HarvestWithdrawal? get withdrawal; bool get finalReasonRequired; bool get populationCorrectionEnabled;
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1233,16 +1233,16 @@ $HarvestPageCopyWith<HarvestPage> get copyWith => _$HarvestPageCopyWithImpl<Harv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired)&&(identical(other.populationCorrectionEnabled, populationCorrectionEnabled) || other.populationCorrectionEnabled == populationCorrectionEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired,populationCorrectionEnabled);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired, populationCorrectionEnabled: $populationCorrectionEnabled)';
 }
 
 
@@ -1253,7 +1253,7 @@ abstract mixin class $HarvestPageCopyWith<$Res>  {
   factory $HarvestPageCopyWith(HarvestPage value, $Res Function(HarvestPage) _then) = _$HarvestPageCopyWithImpl;
 @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired, bool populationCorrectionEnabled
 });
 
 
@@ -1270,7 +1270,7 @@ class _$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,Object? populationCorrectionEnabled = null,}) {
   return _then(_self.copyWith(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -1285,6 +1285,7 @@ as bool,availableQuantityCount: freezed == availableQuantityCount ? _self.availa
 as String?,deferredPriceEnabled: null == deferredPriceEnabled ? _self.deferredPriceEnabled : deferredPriceEnabled // ignore: cast_nullable_to_non_nullable
 as bool,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
 as HarvestWithdrawal?,finalReasonRequired: null == finalReasonRequired ? _self.finalReasonRequired : finalReasonRequired // ignore: cast_nullable_to_non_nullable
+as bool,populationCorrectionEnabled: null == populationCorrectionEnabled ? _self.populationCorrectionEnabled : populationCorrectionEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1382,10 +1383,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired,  bool populationCorrectionEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired,_that.populationCorrectionEnabled);case _:
   return orElse();
 
 }
@@ -1403,10 +1404,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired,  bool populationCorrectionEnabled)  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage():
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired,_that.populationCorrectionEnabled);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1423,10 +1424,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired,  bool populationCorrectionEnabled)?  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired,_that.populationCorrectionEnabled);case _:
   return null;
 
 }
@@ -1438,7 +1439,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 
 class _HarvestPage implements HarvestPage {
-  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.unpricedHarvests = 0, this.speciesThresholdsEnabled = false, this.availableQuantityCount, this.deferredPriceEnabled = false, this.withdrawal, this.finalReasonRequired = false}): _items = items;
+  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.unpricedHarvests = 0, this.speciesThresholdsEnabled = false, this.availableQuantityCount, this.deferredPriceEnabled = false, this.withdrawal, this.finalReasonRequired = false, this.populationCorrectionEnabled = false}): _items = items;
   
 
  final  List<HarvestEvent> _items;
@@ -1460,6 +1461,7 @@ class _HarvestPage implements HarvestPage {
 @override@JsonKey() final  bool deferredPriceEnabled;
 @override final  HarvestWithdrawal? withdrawal;
 @override@JsonKey() final  bool finalReasonRequired;
+@override@JsonKey() final  bool populationCorrectionEnabled;
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
@@ -1471,16 +1473,16 @@ _$HarvestPageCopyWith<_HarvestPage> get copyWith => __$HarvestPageCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired)&&(identical(other.populationCorrectionEnabled, populationCorrectionEnabled) || other.populationCorrectionEnabled == populationCorrectionEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired,populationCorrectionEnabled);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired, populationCorrectionEnabled: $populationCorrectionEnabled)';
 }
 
 
@@ -1491,7 +1493,7 @@ abstract mixin class _$HarvestPageCopyWith<$Res> implements $HarvestPageCopyWith
   factory _$HarvestPageCopyWith(_HarvestPage value, $Res Function(_HarvestPage) _then) = __$HarvestPageCopyWithImpl;
 @override @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired, bool populationCorrectionEnabled
 });
 
 
@@ -1508,7 +1510,7 @@ class __$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,Object? populationCorrectionEnabled = null,}) {
   return _then(_HarvestPage(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -1523,6 +1525,7 @@ as bool,availableQuantityCount: freezed == availableQuantityCount ? _self.availa
 as String?,deferredPriceEnabled: null == deferredPriceEnabled ? _self.deferredPriceEnabled : deferredPriceEnabled // ignore: cast_nullable_to_non_nullable
 as bool,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
 as HarvestWithdrawal?,finalReasonRequired: null == finalReasonRequired ? _self.finalReasonRequired : finalReasonRequired // ignore: cast_nullable_to_non_nullable
+as bool,populationCorrectionEnabled: null == populationCorrectionEnabled ? _self.populationCorrectionEnabled : populationCorrectionEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -37,6 +37,8 @@ final class HarvestApiService implements HarvestRepository {
         deferredPriceEnabled: meta['deferredPriceEnabled'] as bool? ?? false,
         availableQuantityCount: meta['availableQuantityCount'] as String?,
         finalReasonRequired: meta['finalReasonRequired'] as bool? ?? false,
+        populationCorrectionEnabled:
+            meta['populationCorrectionEnabled'] as bool? ?? false,
         withdrawal: meta['withdrawal'] == null
             ? null
             : HarvestWithdrawal.fromJson(

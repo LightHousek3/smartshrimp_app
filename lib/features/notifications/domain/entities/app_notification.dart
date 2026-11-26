@@ -69,6 +69,8 @@ enum NotificationType {
   inventoryInsufficient,
   @JsonValue('HARVEST_DUE')
   harvestDue,
+  @JsonValue('HARVEST_RECORDED')
+  harvestRecorded,
   @JsonValue('SEASON_COMPLETED')
   seasonCompleted,
   unknown,

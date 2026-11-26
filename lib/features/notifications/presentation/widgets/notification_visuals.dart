@@ -6,43 +6,51 @@ import 'package:smartshrimp_app/features/notifications/domain/entities/app_notif
 final class NotificationVisuals {
   const NotificationVisuals._();
 
-  static String label(NotificationType type) => switch (type) {
-    NotificationType.waterThresholdExceeded ||
-    NotificationType.scheduleGenerationFailed => 'Cảnh báo sớm',
-    NotificationType.operationDue ||
-    NotificationType.operationOverdue ||
-    NotificationType.operationCancelled => 'Vận hành',
-    NotificationType.diseaseCaseCreated ||
-    NotificationType.diseaseCaseResponse ||
-    NotificationType.diseaseCaseWaitingInfo ||
-    NotificationType.diseaseCaseMonitoring ||
-    NotificationType.diseaseCaseResolved ||
-    NotificationType.emergencyCaseUpdate => 'Ca bệnh',
-    NotificationType.taskAssigned ||
-    NotificationType.taskUpdated ||
-    NotificationType.taskDueSoon ||
-    NotificationType.taskOverdue ||
-    NotificationType.taskCompleted => 'Nhiệm vụ',
-    NotificationType.productionProtocolPending ||
-    NotificationType.productionProtocolReviewed ||
-    NotificationType.treatmentProtocolPending ||
-    NotificationType.treatmentProtocolReviewed ||
-    NotificationType.treatmentProtocolAborted ||
-    NotificationType.treatmentScheduleReady ||
-    NotificationType.treatmentScheduleCompleted => 'Phác đồ',
-    NotificationType.inventoryLow ||
-    NotificationType.inventoryInsufficient => 'Kho vật tư',
-    NotificationType.seasonAssignmentCreated ||
-    NotificationType.seasonAssignmentReplaced ||
-    NotificationType.seasonStatusChanged ||
-    NotificationType.harvestDue ||
-    NotificationType.seasonCompleted => 'Vụ nuôi',
-    NotificationType.managedAccountActivated ||
-    NotificationType.accountStatusChanged => 'Nhân sự',
-    NotificationType.system || NotificationType.unknown => 'Hệ thống',
-  };
+  static String label(AppNotification notification) =>
+      switch (notification.type) {
+        NotificationType.harvestRecorded => 'Thu hoạch',
+        NotificationType.waterThresholdExceeded ||
+        NotificationType.scheduleGenerationFailed => 'Cảnh báo sớm',
+        NotificationType.operationDue ||
+        NotificationType.operationOverdue ||
+        NotificationType.operationCancelled => 'Vận hành',
+        NotificationType.diseaseCaseCreated ||
+        NotificationType.diseaseCaseResponse ||
+        NotificationType.diseaseCaseWaitingInfo ||
+        NotificationType.diseaseCaseMonitoring ||
+        NotificationType.diseaseCaseResolved ||
+        NotificationType.emergencyCaseUpdate => 'Ca bệnh',
+        NotificationType.taskAssigned ||
+        NotificationType.taskUpdated ||
+        NotificationType.taskDueSoon ||
+        NotificationType.taskOverdue ||
+        NotificationType.taskCompleted => 'Nhiệm vụ',
+        NotificationType.productionProtocolPending ||
+        NotificationType.productionProtocolReviewed ||
+        NotificationType.treatmentProtocolPending ||
+        NotificationType.treatmentProtocolReviewed ||
+        NotificationType.treatmentProtocolAborted ||
+        NotificationType.treatmentScheduleReady ||
+        NotificationType.treatmentScheduleCompleted => 'Phác đồ',
+        NotificationType.inventoryLow ||
+        NotificationType.inventoryInsufficient => 'Kho vật tư',
+        NotificationType.seasonAssignmentCreated ||
+        NotificationType.seasonAssignmentReplaced ||
+        NotificationType.seasonStatusChanged ||
+        NotificationType.harvestDue ||
+        NotificationType.seasonCompleted => 'Vụ nuôi',
+        NotificationType.managedAccountActivated ||
+        NotificationType.accountStatusChanged => 'Nhân sự',
+        NotificationType.system || NotificationType.unknown => 'Hệ thống',
+      };
 
-  static Widget icon(NotificationType type, {double size = 20, Color? color}) {
+  static Widget icon(
+    AppNotification notification, {
+    double size = 20,
+    Color? color,
+  }) {
+    final type = notification.type;
+    final accent = color ?? NotificationVisuals.color(type);
     final iconData = switch (type) {
       NotificationType.waterThresholdExceeded ||
       NotificationType.scheduleGenerationFailed => Icons.warning_amber_rounded,
@@ -73,13 +81,13 @@ final class NotificationVisuals {
       NotificationType.seasonAssignmentReplaced ||
       NotificationType.seasonStatusChanged ||
       NotificationType.harvestDue ||
+      NotificationType.harvestRecorded ||
       NotificationType.seasonCompleted => null,
       NotificationType.managedAccountActivated ||
       NotificationType.accountStatusChanged => Icons.groups_rounded,
       NotificationType.system ||
       NotificationType.unknown => Icons.notifications_rounded,
     };
-    final accent = color ?? NotificationVisuals.color(type);
     return iconData == null
         ? AppSvgIcon(AppSvgIconName.shrimp, size: size, color: accent)
         : Icon(iconData, size: size, color: accent);
@@ -110,6 +118,7 @@ final class NotificationVisuals {
     NotificationType.seasonAssignmentReplaced ||
     NotificationType.seasonStatusChanged ||
     NotificationType.harvestDue ||
+    NotificationType.harvestRecorded ||
     NotificationType.seasonCompleted ||
     NotificationType.system ||
     NotificationType.unknown => const Color(0xFF64748B),
@@ -152,6 +161,7 @@ final class NotificationVisuals {
     NotificationType.seasonAssignmentReplaced ||
     NotificationType.seasonStatusChanged ||
     NotificationType.harvestDue ||
+    NotificationType.harvestRecorded ||
     NotificationType.seasonCompleted ||
     NotificationType.system ||
     NotificationType.unknown => const Color(0xFFEEF1F6),
@@ -197,7 +207,9 @@ final class NotificationVisuals {
     NotificationType.seasonStatusChanged ||
     NotificationType.harvestDue ||
     NotificationType.seasonCompleted => 'Xem vụ nuôi',
-    NotificationType.system || NotificationType.unknown => 'Xem chi tiết',
+    NotificationType.harvestRecorded ||
+    NotificationType.system ||
+    NotificationType.unknown => 'Xem chi tiết',
   };
 
   static String shortTime(DateTime value, DateTime now) {

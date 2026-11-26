@@ -220,6 +220,7 @@ class _SeasonDetailContent extends ConsumerWidget {
 
   Widget _metricGrid() {
     final activatedAt = season.activatedAt;
+    final initialDensity = season.initialDensityPerM2;
     final metrics = <({String label, String value, bool highlighted})>[
       (
         label: season.status == SeasonStatus.planning
@@ -255,10 +256,10 @@ class _SeasonDetailContent extends ConsumerWidget {
           value: '${seasonIntegerLabel(season.initialQuantity)} con',
           highlighted: false,
         ),
-      if (season.initialDensityPerM2 != null)
+      if (initialDensity != null)
         (
           label: 'MẬT ĐỘ THẢ',
-          value: '${seasonDecimalLabel(season.initialDensityPerM2)} con/m²',
+          value: '${seasonIntegerLabel(initialDensity.ceil())} con/m²',
           highlighted: false,
         ),
       if (season.status == SeasonStatus.active && season.dayOfCulture != null)

@@ -455,37 +455,40 @@ void main() {
     });
   }
   test('notification categories use the rounded icons from the UI sample', () {
+    Widget iconFor(NotificationType type) => NotificationVisuals.icon(
+      AppNotification(
+        id: 'notice',
+        title: 'Thông báo',
+        type: type,
+        createdAt: DateTime(2026, 10, 16),
+      ),
+    );
     expect(
-      (NotificationVisuals.icon(NotificationType.waterThresholdExceeded)
-              as Icon)
-          .icon,
+      (iconFor(NotificationType.waterThresholdExceeded) as Icon).icon,
       Icons.warning_amber_rounded,
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.operationDue) as Icon).icon,
+      (iconFor(NotificationType.operationDue) as Icon).icon,
       Icons.event_note_rounded,
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.diseaseCaseCreated) as Icon)
-          .icon,
+      (iconFor(NotificationType.diseaseCaseCreated) as Icon).icon,
       Icons.health_and_safety_rounded,
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.taskAssigned) as Icon).icon,
+      (iconFor(NotificationType.taskAssigned) as Icon).icon,
       Icons.checklist_rounded,
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.productionProtocolPending)
-              as Icon)
-          .icon,
+      (iconFor(NotificationType.productionProtocolPending) as Icon).icon,
       Icons.assignment_rounded,
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.inventoryLow) as Icon).icon,
+      (iconFor(NotificationType.inventoryLow) as Icon).icon,
       Icons.inventory_2_rounded,
     );
     expect(
-      NotificationVisuals.icon(NotificationType.seasonStatusChanged),
+      iconFor(NotificationType.seasonStatusChanged),
       isA<AppSvgIcon>().having(
         (icon) => icon.icon,
         'asset',
@@ -493,11 +496,61 @@ void main() {
       ),
     );
     expect(
-      (NotificationVisuals.icon(NotificationType.managedAccountActivated)
-              as Icon)
-          .icon,
+      (iconFor(NotificationType.managedAccountActivated) as Icon).icon,
       Icons.groups_rounded,
     );
+  });
+
+  test('harvest notification styling depends on its wire type', () {
+    final partialHarvest = AppNotification.parse({
+      'id': 'partial-harvest',
+      'title': 'Đã ghi nhận thu tỉa',
+      'type': 'HARVEST_RECORDED',
+      'referenceType': 'aquaculture_season',
+      'createdAt': '2026-10-16T00:00:00Z',
+      'readAt': null,
+    });
+    expect(partialHarvest.type, NotificationType.harvestRecorded);
+    expect(
+      (NotificationVisuals.icon(partialHarvest) as AppSvgIcon).icon,
+      AppSvgIconName.shrimp,
+    );
+    expect(NotificationVisuals.label(partialHarvest), 'Thu hoạch');
+    expect(
+      NotificationVisuals.color(partialHarvest.type),
+      NotificationVisuals.color(NotificationType.system),
+    );
+    expect(
+      NotificationVisuals.backgroundColor(partialHarvest.type),
+      NotificationVisuals.backgroundColor(NotificationType.system),
+    );
+    final oldPartialHarvest = partialHarvest.copyWith(
+      type: NotificationType.system,
+    );
+    expect(NotificationVisuals.label(oldPartialHarvest), 'Hệ thống');
+    expect(
+      (NotificationVisuals.icon(oldPartialHarvest) as Icon).icon,
+      Icons.notifications_rounded,
+    );
+    final reminder = partialHarvest.copyWith(
+      title: 'Phiếu thu hoạch chưa chốt giá',
+      referenceType: 'harvest_event',
+      type: NotificationType.system,
+    );
+    expect(
+      (NotificationVisuals.icon(reminder) as Icon).icon,
+      Icons.notifications_rounded,
+    );
+    expect(NotificationVisuals.label(reminder), 'Hệ thống');
+    final finalHarvest = partialHarvest.copyWith(
+      title: 'Vụ nuôi đã hoàn tất thu hoạch',
+      type: NotificationType.seasonCompleted,
+    );
+    expect(
+      (NotificationVisuals.icon(finalHarvest) as AppSvgIcon).icon,
+      AppSvgIconName.shrimp,
+    );
+    expect(NotificationVisuals.label(finalHarvest), 'Vụ nuôi');
   });
 
   test('notification task and season colors match the UI sample', () {
