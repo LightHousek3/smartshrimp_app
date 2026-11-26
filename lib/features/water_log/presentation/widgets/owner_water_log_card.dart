@@ -85,6 +85,11 @@ class WaterLogObservation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasName = recordedByName?.trim().isNotEmpty == true;
+    final status =
+        showStatusBadge &&
+            (measurements.hasMeasurements || measurements.isVoided)
+        ? measurements
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -106,37 +111,39 @@ class WaterLogObservation extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 4,
-                  children: [
-                    if (recordedAt case final at?)
+                child: WaterLogHeader(
+                  status: recordedAt == null ? null : status,
+                  details: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      if (recordedAt case final at?)
+                        Text(
+                          '${formatWaterTime(at)} · ${formatWaterDay(at)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       Text(
-                        '${formatWaterTime(at)} · ${formatWaterDay(at)}',
+                        hasName ? recordedByName! : 'Chưa cập nhật tên',
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          color: AppColors.inkMuted,
+                          fontSize: 11,
                         ),
                       ),
-                    Text(
-                      hasName ? recordedByName! : 'Chưa cập nhật tên',
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
         ],
-        if (showStatusBadge &&
-            (measurements.hasMeasurements || measurements.isVoided)) ...[
+        if (recordedAt == null && status != null) ...[
           Align(
             alignment: Alignment.centerRight,
-            child: WaterLogStatusBadge(log: measurements),
+            child: WaterLogStatusBadge(log: status),
           ),
           const SizedBox(height: 12),
         ],

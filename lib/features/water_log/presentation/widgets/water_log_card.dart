@@ -99,6 +99,33 @@ class WaterLogStatusBadge extends StatelessWidget {
   }
 }
 
+/// Center the trailing status next to the full block of recording details.
+class WaterLogHeader extends StatelessWidget {
+  const WaterLogHeader({required this.details, this.status, super.key});
+
+  final Widget details;
+  final WaterMeasurements? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final measurements = status;
+    if (measurements == null) return details;
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        children: [
+          Expanded(child: details),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
+            child: WaterLogStatusBadge(log: measurements),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Card nhật ký đo nước theo Figma (trang danh sách).
 class WaterLogCard extends StatelessWidget {
   const WaterLogCard({required this.log, this.metadata, this.onTap, super.key});
@@ -158,31 +185,32 @@ class WaterLogCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          formatWaterTime(log.recordedAt),
-                          style: const TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,
+                    child: WaterLogHeader(
+                      status: log,
+                      details: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            formatWaterTime(log.recordedAt),
+                            style: const TextStyle(
+                              color: AppColors.ink,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
-                        Text(
-                          formatWaterDay(log.recordedAt),
-                          style: AppTypography.mono(
-                            color: AppColors.inkMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w400,
-                          ).copyWith(height: 1.5),
-                        ),
-                      ],
+                          Text(
+                            formatWaterDay(log.recordedAt),
+                            style: AppTypography.mono(
+                              color: AppColors.inkMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                            ).copyWith(height: 1.5),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(child: WaterLogStatusBadge(log: log)),
                 ],
               ),
               const SizedBox(height: 12),
