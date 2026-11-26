@@ -25,6 +25,33 @@ const context = {
 
 void main() {
   test(
+    'harvest price reminder opens the Owner harvest detail with context',
+    () {
+      final reminder = notice('harvest_event', id: 'harvest-1');
+      expect(
+        notificationNeedsReferenceContext(reminder, AccountRole.farmOwner),
+        isTrue,
+      );
+      expect(notificationDestination(reminder, AccountRole.farmOwner), isNull);
+      expect(
+        notificationDestination(
+          reminder,
+          AccountRole.farmOwner,
+          referenceContext: context,
+        ),
+        '/farms/farm/ponds/pond/seasons/season/harvests/harvest-1',
+      );
+      expect(
+        notificationDestination(
+          reminder,
+          AccountRole.technician,
+          referenceContext: context,
+        ),
+        isNull,
+      );
+    },
+  );
+  test(
     'biomass sampling opens the existing health log for the Technician only',
     () {
       final reminder = notice('biomass_sampling', id: 'season');

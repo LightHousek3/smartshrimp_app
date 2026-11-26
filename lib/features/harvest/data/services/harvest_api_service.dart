@@ -31,6 +31,10 @@ final class HarvestApiService implements HarvestRepository {
         nextCursor: meta['nextCursor'] as String?,
         totalWeightKg: (meta['totalWeightKg'] as num).toDouble(),
         totalRevenue: (meta['totalRevenue'] as num).toDouble(),
+        unpricedHarvests: meta['unpricedHarvests'] as int? ?? 0,
+        speciesThresholdsEnabled:
+            meta['speciesThresholdsEnabled'] as bool? ?? false,
+        deferredPriceEnabled: meta['deferredPriceEnabled'] as bool? ?? false,
         availableQuantityCount: meta['availableQuantityCount'] as String?,
         finalReasonRequired: meta['finalReasonRequired'] as bool? ?? false,
         withdrawal: meta['withdrawal'] == null
@@ -46,6 +50,8 @@ final class HarvestApiService implements HarvestRepository {
           page.totalWeightKg < 0 ||
           !page.totalRevenue.isFinite ||
           page.totalRevenue < 0 ||
+          page.unpricedHarvests < 0 ||
+          page.unpricedHarvests > page.totalResults ||
           (page.availableQuantityCount != null &&
               !RegExp(r'^\d+$').hasMatch(page.availableQuantityCount!)) ||
           (page.hasNextPage &&
@@ -81,6 +87,20 @@ final class HarvestApiService implements HarvestRepository {
       _path(seasonId),
       data: body,
       headers: {'Idempotency-Key': key},
+      authenticated: true,
+    );
+    return HarvestEvent.fromJson(response.requireMapData());
+  }
+
+  @override
+  Future<HarvestEvent> confirmPrice(
+    String seasonId,
+    String harvestId,
+    double pricePerKg,
+  ) async {
+    final response = await _client.patch(
+      '${_path(seasonId)}/${Uri.encodeComponent(harvestId)}/price',
+      data: {'pricePerKg': pricePerKg},
       authenticated: true,
     );
     return HarvestEvent.fromJson(response.requireMapData());

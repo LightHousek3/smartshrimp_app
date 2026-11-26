@@ -308,7 +308,7 @@ $HarvestPlaceCopyWith<$Res>? get farm {
 /// @nodoc
 mixin _$HarvestSeason {
 
- String get id; String get name; String get status; HarvestPlace get pond;
+ String get id; String get name; String get status; HarvestPlace get pond; String? get shrimpType;
 /// Create a copy of HarvestSeason
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -321,16 +321,16 @@ $HarvestSeasonCopyWith<HarvestSeason> get copyWith => _$HarvestSeasonCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.pond, pond) || other.pond == pond));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,pond);
+int get hashCode => Object.hash(runtimeType,id,name,status,pond,shrimpType);
 
 @override
 String toString() {
-  return 'HarvestSeason(id: $id, name: $name, status: $status, pond: $pond)';
+  return 'HarvestSeason(id: $id, name: $name, status: $status, pond: $pond, shrimpType: $shrimpType)';
 }
 
 
@@ -341,7 +341,7 @@ abstract mixin class $HarvestSeasonCopyWith<$Res>  {
   factory $HarvestSeasonCopyWith(HarvestSeason value, $Res Function(HarvestSeason) _then) = _$HarvestSeasonCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String status, HarvestPlace pond
+ String id, String name, String status, HarvestPlace pond, String? shrimpType
 });
 
 
@@ -358,13 +358,14 @@ class _$HarvestSeasonCopyWithImpl<$Res>
 
 /// Create a copy of HarvestSeason
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? pond = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? pond = null,Object? shrimpType = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,pond: null == pond ? _self.pond : pond // ignore: cast_nullable_to_non_nullable
-as HarvestPlace,
+as HarvestPlace,shrimpType: freezed == shrimpType ? _self.shrimpType : shrimpType // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of HarvestSeason
@@ -458,10 +459,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String status,  HarvestPlace pond)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String status,  HarvestPlace pond,  String? shrimpType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HarvestSeason() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.pond);case _:
+return $default(_that.id,_that.name,_that.status,_that.pond,_that.shrimpType);case _:
   return orElse();
 
 }
@@ -479,10 +480,10 @@ return $default(_that.id,_that.name,_that.status,_that.pond);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String status,  HarvestPlace pond)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String status,  HarvestPlace pond,  String? shrimpType)  $default,) {final _that = this;
 switch (_that) {
 case _HarvestSeason():
-return $default(_that.id,_that.name,_that.status,_that.pond);case _:
+return $default(_that.id,_that.name,_that.status,_that.pond,_that.shrimpType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -499,10 +500,10 @@ return $default(_that.id,_that.name,_that.status,_that.pond);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String status,  HarvestPlace pond)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String status,  HarvestPlace pond,  String? shrimpType)?  $default,) {final _that = this;
 switch (_that) {
 case _HarvestSeason() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.pond);case _:
+return $default(_that.id,_that.name,_that.status,_that.pond,_that.shrimpType);case _:
   return null;
 
 }
@@ -514,13 +515,14 @@ return $default(_that.id,_that.name,_that.status,_that.pond);case _:
 @JsonSerializable()
 
 class _HarvestSeason implements HarvestSeason {
-  const _HarvestSeason({required this.id, required this.name, required this.status, required this.pond});
+  const _HarvestSeason({required this.id, required this.name, required this.status, required this.pond, this.shrimpType});
   factory _HarvestSeason.fromJson(Map<String, dynamic> json) => _$HarvestSeasonFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override final  String status;
 @override final  HarvestPlace pond;
+@override final  String? shrimpType;
 
 /// Create a copy of HarvestSeason
 /// with the given fields replaced by the non-null parameter values.
@@ -535,16 +537,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.pond, pond) || other.pond == pond));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestSeason&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.pond, pond) || other.pond == pond)&&(identical(other.shrimpType, shrimpType) || other.shrimpType == shrimpType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,pond);
+int get hashCode => Object.hash(runtimeType,id,name,status,pond,shrimpType);
 
 @override
 String toString() {
-  return 'HarvestSeason(id: $id, name: $name, status: $status, pond: $pond)';
+  return 'HarvestSeason(id: $id, name: $name, status: $status, pond: $pond, shrimpType: $shrimpType)';
 }
 
 
@@ -555,7 +557,7 @@ abstract mixin class _$HarvestSeasonCopyWith<$Res> implements $HarvestSeasonCopy
   factory _$HarvestSeasonCopyWith(_HarvestSeason value, $Res Function(_HarvestSeason) _then) = __$HarvestSeasonCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String status, HarvestPlace pond
+ String id, String name, String status, HarvestPlace pond, String? shrimpType
 });
 
 
@@ -572,13 +574,14 @@ class __$HarvestSeasonCopyWithImpl<$Res>
 
 /// Create a copy of HarvestSeason
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? pond = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? pond = null,Object? shrimpType = freezed,}) {
   return _then(_HarvestSeason(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,pond: null == pond ? _self.pond : pond // ignore: cast_nullable_to_non_nullable
-as HarvestPlace,
+as HarvestPlace,shrimpType: freezed == shrimpType ? _self.shrimpType : shrimpType // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -598,7 +601,7 @@ $HarvestPlaceCopyWith<$Res> get pond {
 /// @nodoc
 mixin _$HarvestEvent {
 
- String get id; String get seasonId;@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType get harvestType; DateTime get harvestedAt; double get totalWeightKg; String get recordedBy; DateTime get createdAt; HarvestSeason get season; String? get quantityCount; double? get avgSizePerKg; double? get pricePerKg; double? get totalRevenue; String? get estimatedRemainingCount; String? get buyerName; String? get buyerContact; String? get note; String? get recorderName; String? get varianceReason; List<String> get warnings;
+ String get id; String get seasonId;@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType get harvestType; DateTime get harvestedAt; double get totalWeightKg; String get recordedBy; DateTime get createdAt; HarvestSeason get season; String? get quantityCount; double? get avgSizePerKg; double? get pricePerKg; double? get totalRevenue; String? get estimatedRemainingCount; String? get buyerName; String? get buyerContact; String? get note; String? get recorderName; String? get varianceReason; List<String> get warnings; bool get canConfirmPrice; bool get speciesThresholdsEnabled;
 /// Create a copy of HarvestEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -611,16 +614,16 @@ $HarvestEventCopyWith<HarvestEvent> get copyWith => _$HarvestEventCopyWithImpl<H
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.harvestType, harvestType) || other.harvestType == harvestType)&&(identical(other.harvestedAt, harvestedAt) || other.harvestedAt == harvestedAt)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.season, season) || other.season == season)&&(identical(other.quantityCount, quantityCount) || other.quantityCount == quantityCount)&&(identical(other.avgSizePerKg, avgSizePerKg) || other.avgSizePerKg == avgSizePerKg)&&(identical(other.pricePerKg, pricePerKg) || other.pricePerKg == pricePerKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.estimatedRemainingCount, estimatedRemainingCount) || other.estimatedRemainingCount == estimatedRemainingCount)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerContact, buyerContact) || other.buyerContact == buyerContact)&&(identical(other.note, note) || other.note == note)&&(identical(other.recorderName, recorderName) || other.recorderName == recorderName)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&const DeepCollectionEquality().equals(other.warnings, warnings));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.harvestType, harvestType) || other.harvestType == harvestType)&&(identical(other.harvestedAt, harvestedAt) || other.harvestedAt == harvestedAt)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.season, season) || other.season == season)&&(identical(other.quantityCount, quantityCount) || other.quantityCount == quantityCount)&&(identical(other.avgSizePerKg, avgSizePerKg) || other.avgSizePerKg == avgSizePerKg)&&(identical(other.pricePerKg, pricePerKg) || other.pricePerKg == pricePerKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.estimatedRemainingCount, estimatedRemainingCount) || other.estimatedRemainingCount == estimatedRemainingCount)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerContact, buyerContact) || other.buyerContact == buyerContact)&&(identical(other.note, note) || other.note == note)&&(identical(other.recorderName, recorderName) || other.recorderName == recorderName)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&const DeepCollectionEquality().equals(other.warnings, warnings)&&(identical(other.canConfirmPrice, canConfirmPrice) || other.canConfirmPrice == canConfirmPrice)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,seasonId,harvestType,harvestedAt,totalWeightKg,recordedBy,createdAt,season,quantityCount,avgSizePerKg,pricePerKg,totalRevenue,estimatedRemainingCount,buyerName,buyerContact,note,recorderName,varianceReason,const DeepCollectionEquality().hash(warnings)]);
+int get hashCode => Object.hashAll([runtimeType,id,seasonId,harvestType,harvestedAt,totalWeightKg,recordedBy,createdAt,season,quantityCount,avgSizePerKg,pricePerKg,totalRevenue,estimatedRemainingCount,buyerName,buyerContact,note,recorderName,varianceReason,const DeepCollectionEquality().hash(warnings),canConfirmPrice,speciesThresholdsEnabled]);
 
 @override
 String toString() {
-  return 'HarvestEvent(id: $id, seasonId: $seasonId, harvestType: $harvestType, harvestedAt: $harvestedAt, totalWeightKg: $totalWeightKg, recordedBy: $recordedBy, createdAt: $createdAt, season: $season, quantityCount: $quantityCount, avgSizePerKg: $avgSizePerKg, pricePerKg: $pricePerKg, totalRevenue: $totalRevenue, estimatedRemainingCount: $estimatedRemainingCount, buyerName: $buyerName, buyerContact: $buyerContact, note: $note, recorderName: $recorderName, varianceReason: $varianceReason, warnings: $warnings)';
+  return 'HarvestEvent(id: $id, seasonId: $seasonId, harvestType: $harvestType, harvestedAt: $harvestedAt, totalWeightKg: $totalWeightKg, recordedBy: $recordedBy, createdAt: $createdAt, season: $season, quantityCount: $quantityCount, avgSizePerKg: $avgSizePerKg, pricePerKg: $pricePerKg, totalRevenue: $totalRevenue, estimatedRemainingCount: $estimatedRemainingCount, buyerName: $buyerName, buyerContact: $buyerContact, note: $note, recorderName: $recorderName, varianceReason: $varianceReason, warnings: $warnings, canConfirmPrice: $canConfirmPrice, speciesThresholdsEnabled: $speciesThresholdsEnabled)';
 }
 
 
@@ -631,7 +634,7 @@ abstract mixin class $HarvestEventCopyWith<$Res>  {
   factory $HarvestEventCopyWith(HarvestEvent value, $Res Function(HarvestEvent) _then) = _$HarvestEventCopyWithImpl;
 @useResult
 $Res call({
- String id, String seasonId,@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType harvestType, DateTime harvestedAt, double totalWeightKg, String recordedBy, DateTime createdAt, HarvestSeason season, String? quantityCount, double? avgSizePerKg, double? pricePerKg, double? totalRevenue, String? estimatedRemainingCount, String? buyerName, String? buyerContact, String? note, String? recorderName, String? varianceReason, List<String> warnings
+ String id, String seasonId,@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType harvestType, DateTime harvestedAt, double totalWeightKg, String recordedBy, DateTime createdAt, HarvestSeason season, String? quantityCount, double? avgSizePerKg, double? pricePerKg, double? totalRevenue, String? estimatedRemainingCount, String? buyerName, String? buyerContact, String? note, String? recorderName, String? varianceReason, List<String> warnings, bool canConfirmPrice, bool speciesThresholdsEnabled
 });
 
 
@@ -648,7 +651,7 @@ class _$HarvestEventCopyWithImpl<$Res>
 
 /// Create a copy of HarvestEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? harvestType = null,Object? harvestedAt = null,Object? totalWeightKg = null,Object? recordedBy = null,Object? createdAt = null,Object? season = null,Object? quantityCount = freezed,Object? avgSizePerKg = freezed,Object? pricePerKg = freezed,Object? totalRevenue = freezed,Object? estimatedRemainingCount = freezed,Object? buyerName = freezed,Object? buyerContact = freezed,Object? note = freezed,Object? recorderName = freezed,Object? varianceReason = freezed,Object? warnings = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? seasonId = null,Object? harvestType = null,Object? harvestedAt = null,Object? totalWeightKg = null,Object? recordedBy = null,Object? createdAt = null,Object? season = null,Object? quantityCount = freezed,Object? avgSizePerKg = freezed,Object? pricePerKg = freezed,Object? totalRevenue = freezed,Object? estimatedRemainingCount = freezed,Object? buyerName = freezed,Object? buyerContact = freezed,Object? note = freezed,Object? recorderName = freezed,Object? varianceReason = freezed,Object? warnings = null,Object? canConfirmPrice = null,Object? speciesThresholdsEnabled = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -669,7 +672,9 @@ as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to
 as String?,recorderName: freezed == recorderName ? _self.recorderName : recorderName // ignore: cast_nullable_to_non_nullable
 as String?,varianceReason: freezed == varianceReason ? _self.varianceReason : varianceReason // ignore: cast_nullable_to_non_nullable
 as String?,warnings: null == warnings ? _self.warnings : warnings // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,canConfirmPrice: null == canConfirmPrice ? _self.canConfirmPrice : canConfirmPrice // ignore: cast_nullable_to_non_nullable
+as bool,speciesThresholdsEnabled: null == speciesThresholdsEnabled ? _self.speciesThresholdsEnabled : speciesThresholdsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of HarvestEvent
@@ -763,10 +768,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings,  bool canConfirmPrice,  bool speciesThresholdsEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HarvestEvent() when $default != null:
-return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings);case _:
+return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings,_that.canConfirmPrice,_that.speciesThresholdsEnabled);case _:
   return orElse();
 
 }
@@ -784,10 +789,10 @@ return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings,  bool canConfirmPrice,  bool speciesThresholdsEnabled)  $default,) {final _that = this;
 switch (_that) {
 case _HarvestEvent():
-return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings);case _:
+return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings,_that.canConfirmPrice,_that.speciesThresholdsEnabled);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -804,10 +809,10 @@ return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown)  HarvestType harvestType,  DateTime harvestedAt,  double totalWeightKg,  String recordedBy,  DateTime createdAt,  HarvestSeason season,  String? quantityCount,  double? avgSizePerKg,  double? pricePerKg,  double? totalRevenue,  String? estimatedRemainingCount,  String? buyerName,  String? buyerContact,  String? note,  String? recorderName,  String? varianceReason,  List<String> warnings,  bool canConfirmPrice,  bool speciesThresholdsEnabled)?  $default,) {final _that = this;
 switch (_that) {
 case _HarvestEvent() when $default != null:
-return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings);case _:
+return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_that.totalWeightKg,_that.recordedBy,_that.createdAt,_that.season,_that.quantityCount,_that.avgSizePerKg,_that.pricePerKg,_that.totalRevenue,_that.estimatedRemainingCount,_that.buyerName,_that.buyerContact,_that.note,_that.recorderName,_that.varianceReason,_that.warnings,_that.canConfirmPrice,_that.speciesThresholdsEnabled);case _:
   return null;
 
 }
@@ -819,7 +824,7 @@ return $default(_that.id,_that.seasonId,_that.harvestType,_that.harvestedAt,_tha
 @JsonSerializable()
 
 class _HarvestEvent implements HarvestEvent {
-  const _HarvestEvent({required this.id, required this.seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown) required this.harvestType, required this.harvestedAt, required this.totalWeightKg, required this.recordedBy, required this.createdAt, required this.season, this.quantityCount, this.avgSizePerKg, this.pricePerKg, this.totalRevenue, this.estimatedRemainingCount, this.buyerName, this.buyerContact, this.note, this.recorderName, this.varianceReason, final  List<String> warnings = const <String>[]}): _warnings = warnings;
+  const _HarvestEvent({required this.id, required this.seasonId, @JsonKey(unknownEnumValue: HarvestType.unknown) required this.harvestType, required this.harvestedAt, required this.totalWeightKg, required this.recordedBy, required this.createdAt, required this.season, this.quantityCount, this.avgSizePerKg, this.pricePerKg, this.totalRevenue, this.estimatedRemainingCount, this.buyerName, this.buyerContact, this.note, this.recorderName, this.varianceReason, final  List<String> warnings = const <String>[], this.canConfirmPrice = false, this.speciesThresholdsEnabled = false}): _warnings = warnings;
   factory _HarvestEvent.fromJson(Map<String, dynamic> json) => _$HarvestEventFromJson(json);
 
 @override final  String id;
@@ -847,6 +852,8 @@ class _HarvestEvent implements HarvestEvent {
   return EqualUnmodifiableListView(_warnings);
 }
 
+@override@JsonKey() final  bool canConfirmPrice;
+@override@JsonKey() final  bool speciesThresholdsEnabled;
 
 /// Create a copy of HarvestEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -861,16 +868,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.harvestType, harvestType) || other.harvestType == harvestType)&&(identical(other.harvestedAt, harvestedAt) || other.harvestedAt == harvestedAt)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.season, season) || other.season == season)&&(identical(other.quantityCount, quantityCount) || other.quantityCount == quantityCount)&&(identical(other.avgSizePerKg, avgSizePerKg) || other.avgSizePerKg == avgSizePerKg)&&(identical(other.pricePerKg, pricePerKg) || other.pricePerKg == pricePerKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.estimatedRemainingCount, estimatedRemainingCount) || other.estimatedRemainingCount == estimatedRemainingCount)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerContact, buyerContact) || other.buyerContact == buyerContact)&&(identical(other.note, note) || other.note == note)&&(identical(other.recorderName, recorderName) || other.recorderName == recorderName)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&const DeepCollectionEquality().equals(other._warnings, _warnings));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.harvestType, harvestType) || other.harvestType == harvestType)&&(identical(other.harvestedAt, harvestedAt) || other.harvestedAt == harvestedAt)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.season, season) || other.season == season)&&(identical(other.quantityCount, quantityCount) || other.quantityCount == quantityCount)&&(identical(other.avgSizePerKg, avgSizePerKg) || other.avgSizePerKg == avgSizePerKg)&&(identical(other.pricePerKg, pricePerKg) || other.pricePerKg == pricePerKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.estimatedRemainingCount, estimatedRemainingCount) || other.estimatedRemainingCount == estimatedRemainingCount)&&(identical(other.buyerName, buyerName) || other.buyerName == buyerName)&&(identical(other.buyerContact, buyerContact) || other.buyerContact == buyerContact)&&(identical(other.note, note) || other.note == note)&&(identical(other.recorderName, recorderName) || other.recorderName == recorderName)&&(identical(other.varianceReason, varianceReason) || other.varianceReason == varianceReason)&&const DeepCollectionEquality().equals(other._warnings, _warnings)&&(identical(other.canConfirmPrice, canConfirmPrice) || other.canConfirmPrice == canConfirmPrice)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,seasonId,harvestType,harvestedAt,totalWeightKg,recordedBy,createdAt,season,quantityCount,avgSizePerKg,pricePerKg,totalRevenue,estimatedRemainingCount,buyerName,buyerContact,note,recorderName,varianceReason,const DeepCollectionEquality().hash(_warnings)]);
+int get hashCode => Object.hashAll([runtimeType,id,seasonId,harvestType,harvestedAt,totalWeightKg,recordedBy,createdAt,season,quantityCount,avgSizePerKg,pricePerKg,totalRevenue,estimatedRemainingCount,buyerName,buyerContact,note,recorderName,varianceReason,const DeepCollectionEquality().hash(_warnings),canConfirmPrice,speciesThresholdsEnabled]);
 
 @override
 String toString() {
-  return 'HarvestEvent(id: $id, seasonId: $seasonId, harvestType: $harvestType, harvestedAt: $harvestedAt, totalWeightKg: $totalWeightKg, recordedBy: $recordedBy, createdAt: $createdAt, season: $season, quantityCount: $quantityCount, avgSizePerKg: $avgSizePerKg, pricePerKg: $pricePerKg, totalRevenue: $totalRevenue, estimatedRemainingCount: $estimatedRemainingCount, buyerName: $buyerName, buyerContact: $buyerContact, note: $note, recorderName: $recorderName, varianceReason: $varianceReason, warnings: $warnings)';
+  return 'HarvestEvent(id: $id, seasonId: $seasonId, harvestType: $harvestType, harvestedAt: $harvestedAt, totalWeightKg: $totalWeightKg, recordedBy: $recordedBy, createdAt: $createdAt, season: $season, quantityCount: $quantityCount, avgSizePerKg: $avgSizePerKg, pricePerKg: $pricePerKg, totalRevenue: $totalRevenue, estimatedRemainingCount: $estimatedRemainingCount, buyerName: $buyerName, buyerContact: $buyerContact, note: $note, recorderName: $recorderName, varianceReason: $varianceReason, warnings: $warnings, canConfirmPrice: $canConfirmPrice, speciesThresholdsEnabled: $speciesThresholdsEnabled)';
 }
 
 
@@ -881,7 +888,7 @@ abstract mixin class _$HarvestEventCopyWith<$Res> implements $HarvestEventCopyWi
   factory _$HarvestEventCopyWith(_HarvestEvent value, $Res Function(_HarvestEvent) _then) = __$HarvestEventCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String seasonId,@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType harvestType, DateTime harvestedAt, double totalWeightKg, String recordedBy, DateTime createdAt, HarvestSeason season, String? quantityCount, double? avgSizePerKg, double? pricePerKg, double? totalRevenue, String? estimatedRemainingCount, String? buyerName, String? buyerContact, String? note, String? recorderName, String? varianceReason, List<String> warnings
+ String id, String seasonId,@JsonKey(unknownEnumValue: HarvestType.unknown) HarvestType harvestType, DateTime harvestedAt, double totalWeightKg, String recordedBy, DateTime createdAt, HarvestSeason season, String? quantityCount, double? avgSizePerKg, double? pricePerKg, double? totalRevenue, String? estimatedRemainingCount, String? buyerName, String? buyerContact, String? note, String? recorderName, String? varianceReason, List<String> warnings, bool canConfirmPrice, bool speciesThresholdsEnabled
 });
 
 
@@ -898,7 +905,7 @@ class __$HarvestEventCopyWithImpl<$Res>
 
 /// Create a copy of HarvestEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? harvestType = null,Object? harvestedAt = null,Object? totalWeightKg = null,Object? recordedBy = null,Object? createdAt = null,Object? season = null,Object? quantityCount = freezed,Object? avgSizePerKg = freezed,Object? pricePerKg = freezed,Object? totalRevenue = freezed,Object? estimatedRemainingCount = freezed,Object? buyerName = freezed,Object? buyerContact = freezed,Object? note = freezed,Object? recorderName = freezed,Object? varianceReason = freezed,Object? warnings = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? seasonId = null,Object? harvestType = null,Object? harvestedAt = null,Object? totalWeightKg = null,Object? recordedBy = null,Object? createdAt = null,Object? season = null,Object? quantityCount = freezed,Object? avgSizePerKg = freezed,Object? pricePerKg = freezed,Object? totalRevenue = freezed,Object? estimatedRemainingCount = freezed,Object? buyerName = freezed,Object? buyerContact = freezed,Object? note = freezed,Object? recorderName = freezed,Object? varianceReason = freezed,Object? warnings = null,Object? canConfirmPrice = null,Object? speciesThresholdsEnabled = null,}) {
   return _then(_HarvestEvent(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,seasonId: null == seasonId ? _self.seasonId : seasonId // ignore: cast_nullable_to_non_nullable
@@ -919,7 +926,9 @@ as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to
 as String?,recorderName: freezed == recorderName ? _self.recorderName : recorderName // ignore: cast_nullable_to_non_nullable
 as String?,varianceReason: freezed == varianceReason ? _self.varianceReason : varianceReason // ignore: cast_nullable_to_non_nullable
 as String?,warnings: null == warnings ? _self._warnings : warnings // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,canConfirmPrice: null == canConfirmPrice ? _self.canConfirmPrice : canConfirmPrice // ignore: cast_nullable_to_non_nullable
+as bool,speciesThresholdsEnabled: null == speciesThresholdsEnabled ? _self.speciesThresholdsEnabled : speciesThresholdsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1213,7 +1222,7 @@ as String?,
 /// @nodoc
 mixin _$HarvestPage {
 
- List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; String? get availableQuantityCount; HarvestWithdrawal? get withdrawal; bool get finalReasonRequired;
+ List<HarvestEvent> get items; int get limit; int get totalResults; bool get hasNextPage; String? get nextCursor; double get totalWeightKg; double get totalRevenue; int get unpricedHarvests; bool get speciesThresholdsEnabled; String? get availableQuantityCount; bool get deferredPriceEnabled; HarvestWithdrawal? get withdrawal; bool get finalReasonRequired;
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1224,16 +1233,16 @@ $HarvestPageCopyWith<HarvestPage> get copyWith => _$HarvestPageCopyWithImpl<Harv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HarvestPage&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount,withdrawal,finalReasonRequired);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
 }
 
 
@@ -1244,7 +1253,7 @@ abstract mixin class $HarvestPageCopyWith<$Res>  {
   factory $HarvestPageCopyWith(HarvestPage value, $Res Function(HarvestPage) _then) = _$HarvestPageCopyWithImpl;
 @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount, HarvestWithdrawal? withdrawal, bool finalReasonRequired
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired
 });
 
 
@@ -1261,7 +1270,7 @@ class _$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
   return _then(_self.copyWith(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -1270,8 +1279,11 @@ as int,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ign
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,totalWeightKg: null == totalWeightKg ? _self.totalWeightKg : totalWeightKg // ignore: cast_nullable_to_non_nullable
 as double,totalRevenue: null == totalRevenue ? _self.totalRevenue : totalRevenue // ignore: cast_nullable_to_non_nullable
-as double,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
-as String?,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
+as double,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,speciesThresholdsEnabled: null == speciesThresholdsEnabled ? _self.speciesThresholdsEnabled : speciesThresholdsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
+as String?,deferredPriceEnabled: null == deferredPriceEnabled ? _self.deferredPriceEnabled : deferredPriceEnabled // ignore: cast_nullable_to_non_nullable
+as bool,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
 as HarvestWithdrawal?,finalReasonRequired: null == finalReasonRequired ? _self.finalReasonRequired : finalReasonRequired // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -1370,10 +1382,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
   return orElse();
 
 }
@@ -1391,10 +1403,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage():
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1411,10 +1423,10 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  String? availableQuantityCount,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<HarvestEvent> items,  int limit,  int totalResults,  bool hasNextPage,  String? nextCursor,  double totalWeightKg,  double totalRevenue,  int unpricedHarvests,  bool speciesThresholdsEnabled,  String? availableQuantityCount,  bool deferredPriceEnabled,  HarvestWithdrawal? withdrawal,  bool finalReasonRequired)?  $default,) {final _that = this;
 switch (_that) {
 case _HarvestPage() when $default != null:
-return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.availableQuantityCount,_that.withdrawal,_that.finalReasonRequired);case _:
+return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_that.nextCursor,_that.totalWeightKg,_that.totalRevenue,_that.unpricedHarvests,_that.speciesThresholdsEnabled,_that.availableQuantityCount,_that.deferredPriceEnabled,_that.withdrawal,_that.finalReasonRequired);case _:
   return null;
 
 }
@@ -1426,7 +1438,7 @@ return $default(_that.items,_that.limit,_that.totalResults,_that.hasNextPage,_th
 
 
 class _HarvestPage implements HarvestPage {
-  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.availableQuantityCount, this.withdrawal, this.finalReasonRequired = false}): _items = items;
+  const _HarvestPage({required final  List<HarvestEvent> items, required this.limit, required this.totalResults, required this.hasNextPage, this.nextCursor, required this.totalWeightKg, required this.totalRevenue, this.unpricedHarvests = 0, this.speciesThresholdsEnabled = false, this.availableQuantityCount, this.deferredPriceEnabled = false, this.withdrawal, this.finalReasonRequired = false}): _items = items;
   
 
  final  List<HarvestEvent> _items;
@@ -1442,7 +1454,10 @@ class _HarvestPage implements HarvestPage {
 @override final  String? nextCursor;
 @override final  double totalWeightKg;
 @override final  double totalRevenue;
+@override@JsonKey() final  int unpricedHarvests;
+@override@JsonKey() final  bool speciesThresholdsEnabled;
 @override final  String? availableQuantityCount;
+@override@JsonKey() final  bool deferredPriceEnabled;
 @override final  HarvestWithdrawal? withdrawal;
 @override@JsonKey() final  bool finalReasonRequired;
 
@@ -1456,16 +1471,16 @@ _$HarvestPageCopyWith<_HarvestPage> get copyWith => __$HarvestPageCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HarvestPage&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.totalResults, totalResults) || other.totalResults == totalResults)&&(identical(other.hasNextPage, hasNextPage) || other.hasNextPage == hasNextPage)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.totalWeightKg, totalWeightKg) || other.totalWeightKg == totalWeightKg)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.unpricedHarvests, unpricedHarvests) || other.unpricedHarvests == unpricedHarvests)&&(identical(other.speciesThresholdsEnabled, speciesThresholdsEnabled) || other.speciesThresholdsEnabled == speciesThresholdsEnabled)&&(identical(other.availableQuantityCount, availableQuantityCount) || other.availableQuantityCount == availableQuantityCount)&&(identical(other.deferredPriceEnabled, deferredPriceEnabled) || other.deferredPriceEnabled == deferredPriceEnabled)&&(identical(other.withdrawal, withdrawal) || other.withdrawal == withdrawal)&&(identical(other.finalReasonRequired, finalReasonRequired) || other.finalReasonRequired == finalReasonRequired));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,availableQuantityCount,withdrawal,finalReasonRequired);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),limit,totalResults,hasNextPage,nextCursor,totalWeightKg,totalRevenue,unpricedHarvests,speciesThresholdsEnabled,availableQuantityCount,deferredPriceEnabled,withdrawal,finalReasonRequired);
 
 @override
 String toString() {
-  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, availableQuantityCount: $availableQuantityCount, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
+  return 'HarvestPage(items: $items, limit: $limit, totalResults: $totalResults, hasNextPage: $hasNextPage, nextCursor: $nextCursor, totalWeightKg: $totalWeightKg, totalRevenue: $totalRevenue, unpricedHarvests: $unpricedHarvests, speciesThresholdsEnabled: $speciesThresholdsEnabled, availableQuantityCount: $availableQuantityCount, deferredPriceEnabled: $deferredPriceEnabled, withdrawal: $withdrawal, finalReasonRequired: $finalReasonRequired)';
 }
 
 
@@ -1476,7 +1491,7 @@ abstract mixin class _$HarvestPageCopyWith<$Res> implements $HarvestPageCopyWith
   factory _$HarvestPageCopyWith(_HarvestPage value, $Res Function(_HarvestPage) _then) = __$HarvestPageCopyWithImpl;
 @override @useResult
 $Res call({
- List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, String? availableQuantityCount, HarvestWithdrawal? withdrawal, bool finalReasonRequired
+ List<HarvestEvent> items, int limit, int totalResults, bool hasNextPage, String? nextCursor, double totalWeightKg, double totalRevenue, int unpricedHarvests, bool speciesThresholdsEnabled, String? availableQuantityCount, bool deferredPriceEnabled, HarvestWithdrawal? withdrawal, bool finalReasonRequired
 });
 
 
@@ -1493,7 +1508,7 @@ class __$HarvestPageCopyWithImpl<$Res>
 
 /// Create a copy of HarvestPage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? availableQuantityCount = freezed,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? limit = null,Object? totalResults = null,Object? hasNextPage = null,Object? nextCursor = freezed,Object? totalWeightKg = null,Object? totalRevenue = null,Object? unpricedHarvests = null,Object? speciesThresholdsEnabled = null,Object? availableQuantityCount = freezed,Object? deferredPriceEnabled = null,Object? withdrawal = freezed,Object? finalReasonRequired = null,}) {
   return _then(_HarvestPage(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<HarvestEvent>,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
@@ -1502,8 +1517,11 @@ as int,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ign
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,totalWeightKg: null == totalWeightKg ? _self.totalWeightKg : totalWeightKg // ignore: cast_nullable_to_non_nullable
 as double,totalRevenue: null == totalRevenue ? _self.totalRevenue : totalRevenue // ignore: cast_nullable_to_non_nullable
-as double,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
-as String?,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
+as double,unpricedHarvests: null == unpricedHarvests ? _self.unpricedHarvests : unpricedHarvests // ignore: cast_nullable_to_non_nullable
+as int,speciesThresholdsEnabled: null == speciesThresholdsEnabled ? _self.speciesThresholdsEnabled : speciesThresholdsEnabled // ignore: cast_nullable_to_non_nullable
+as bool,availableQuantityCount: freezed == availableQuantityCount ? _self.availableQuantityCount : availableQuantityCount // ignore: cast_nullable_to_non_nullable
+as String?,deferredPriceEnabled: null == deferredPriceEnabled ? _self.deferredPriceEnabled : deferredPriceEnabled // ignore: cast_nullable_to_non_nullable
+as bool,withdrawal: freezed == withdrawal ? _self.withdrawal : withdrawal // ignore: cast_nullable_to_non_nullable
 as HarvestWithdrawal?,finalReasonRequired: null == finalReasonRequired ? _self.finalReasonRequired : finalReasonRequired // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

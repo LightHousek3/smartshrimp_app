@@ -28,6 +28,7 @@ _HarvestSeason _$HarvestSeasonFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       status: json['status'] as String,
       pond: HarvestPlace.fromJson(json['pond'] as Map<String, dynamic>),
+      shrimpType: json['shrimpType'] as String?,
     );
 
 Map<String, dynamic> _$HarvestSeasonToJson(_HarvestSeason instance) =>
@@ -36,38 +37,40 @@ Map<String, dynamic> _$HarvestSeasonToJson(_HarvestSeason instance) =>
       'name': instance.name,
       'status': instance.status,
       'pond': instance.pond,
+      'shrimpType': instance.shrimpType,
     };
 
-_HarvestEvent _$HarvestEventFromJson(Map<String, dynamic> json) =>
-    _HarvestEvent(
-      id: json['id'] as String,
-      seasonId: json['seasonId'] as String,
-      harvestType: $enumDecode(
-        _$HarvestTypeEnumMap,
-        json['harvestType'],
-        unknownValue: HarvestType.unknown,
-      ),
-      harvestedAt: DateTime.parse(json['harvestedAt'] as String),
-      totalWeightKg: (json['totalWeightKg'] as num).toDouble(),
-      recordedBy: json['recordedBy'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      season: HarvestSeason.fromJson(json['season'] as Map<String, dynamic>),
-      quantityCount: json['quantityCount'] as String?,
-      avgSizePerKg: (json['avgSizePerKg'] as num?)?.toDouble(),
-      pricePerKg: (json['pricePerKg'] as num?)?.toDouble(),
-      totalRevenue: (json['totalRevenue'] as num?)?.toDouble(),
-      estimatedRemainingCount: json['estimatedRemainingCount'] as String?,
-      buyerName: json['buyerName'] as String?,
-      buyerContact: json['buyerContact'] as String?,
-      note: json['note'] as String?,
-      recorderName: json['recorderName'] as String?,
-      varianceReason: json['varianceReason'] as String?,
-      warnings:
-          (json['warnings'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-    );
+_HarvestEvent _$HarvestEventFromJson(
+  Map<String, dynamic> json,
+) => _HarvestEvent(
+  id: json['id'] as String,
+  seasonId: json['seasonId'] as String,
+  harvestType: $enumDecode(
+    _$HarvestTypeEnumMap,
+    json['harvestType'],
+    unknownValue: HarvestType.unknown,
+  ),
+  harvestedAt: DateTime.parse(json['harvestedAt'] as String),
+  totalWeightKg: (json['totalWeightKg'] as num).toDouble(),
+  recordedBy: json['recordedBy'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  season: HarvestSeason.fromJson(json['season'] as Map<String, dynamic>),
+  quantityCount: json['quantityCount'] as String?,
+  avgSizePerKg: (json['avgSizePerKg'] as num?)?.toDouble(),
+  pricePerKg: (json['pricePerKg'] as num?)?.toDouble(),
+  totalRevenue: (json['totalRevenue'] as num?)?.toDouble(),
+  estimatedRemainingCount: json['estimatedRemainingCount'] as String?,
+  buyerName: json['buyerName'] as String?,
+  buyerContact: json['buyerContact'] as String?,
+  note: json['note'] as String?,
+  recorderName: json['recorderName'] as String?,
+  varianceReason: json['varianceReason'] as String?,
+  warnings:
+      (json['warnings'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const <String>[],
+  canConfirmPrice: json['canConfirmPrice'] as bool? ?? false,
+  speciesThresholdsEnabled: json['speciesThresholdsEnabled'] as bool? ?? false,
+);
 
 Map<String, dynamic> _$HarvestEventToJson(_HarvestEvent instance) =>
     <String, dynamic>{
@@ -90,6 +93,8 @@ Map<String, dynamic> _$HarvestEventToJson(_HarvestEvent instance) =>
       'recorderName': instance.recorderName,
       'varianceReason': instance.varianceReason,
       'warnings': instance.warnings,
+      'canConfirmPrice': instance.canConfirmPrice,
+      'speciesThresholdsEnabled': instance.speciesThresholdsEnabled,
     };
 
 const _$HarvestTypeEnumMap = {
