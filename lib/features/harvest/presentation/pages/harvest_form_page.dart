@@ -48,6 +48,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   bool _submitted = false;
   final _countFocus = FocusNode();
 
+  AutovalidateMode get _fieldAutovalidateMode =>
+      _submitted ? AutovalidateMode.always : AutovalidateMode.onUserInteraction;
+
   ({String seasonId, DateTime? at}) get _populationQuery =>
       (seasonId: widget.seasonId, at: _time?.toUtc());
 
@@ -77,8 +80,17 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     super.dispose();
   }
 
-  Widget _label(String text) => Text(
-    text,
+  Widget _label(String text, {bool required = false}) => Text.rich(
+    TextSpan(
+      text: text,
+      children: [
+        if (required)
+          const TextSpan(
+            text: ' *',
+            style: TextStyle(color: AppColors.error),
+          ),
+      ],
+    ),
     style: const TextStyle(
       fontSize: 13.5,
       fontWeight: FontWeight.w700,
@@ -165,7 +177,11 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     (match) => '${match[1]}.',
   );
 
-  _QuantityValidationError? _validateQuantity({required BigInt? available}) {
+  _QuantityValidationError? _validateQuantity(
+    ShrimpType species, {
+    required BigInt? available,
+    required bool speciesThresholdsEnabled,
+  }) {
     if (_partialExhaustsEstimate(available)) {
       return (
         message:
@@ -190,14 +206,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                     : key == 'price'
                     ? 2
                     : 0,
+                zero: key == 'price',
               ) !=
               null) {
         return null;
       }
     }
-    final weight = _value('weight');
-    final count = _value('count');
-
     final raw = _fields['count']!.text.trim();
     final harvestedCount = BigInt.tryParse(raw);
     if (!RegExp(r'^\d+$').hasMatch(raw) ||
@@ -219,21 +233,46 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       );
     }
 
-    // Mirror server limits after rounding size to two decimal places.
-    if (count != null && weight != null && weight > 0) {
-      final size = count.toDouble() / weight.toDouble();
-      final rounded = (size * 100).round() / 100;
-      if (rounded < 1 || rounded > 10000) {
-        final sizeLabel = size < 0.01 ? '< 0,01' : harvestNumber(rounded);
-        return (
-          message:
-              'Cỡ tôm (số lượng / sản lượng) vô lý: $sizeLabel con/kg. Kiểm tra lại sản lượng hoặc số lượng.',
-          fields: const {'weight', 'count'},
-        );
-      }
-    }
+    return _validateSize(
+      species,
+      speciesThresholdsEnabled: speciesThresholdsEnabled,
+    );
+  }
 
-    return null;
+  _QuantityValidationError? _validateSize(
+    ShrimpType species, {
+    required bool speciesThresholdsEnabled,
+  }) {
+    final weightError = _numeric(
+      _fields['weight']!.text,
+      required: true,
+      max: 99999999999.999,
+      decimals: 3,
+    );
+    final countError = _numeric(
+      _fields['count']!.text,
+      required: true,
+      max: 9007199254740991,
+    );
+    if (weightError != null || countError != null) return null;
+
+    // Mirror server limits after rounding size to two decimal places.
+    final count = _value('count')!;
+    final weight = _value('weight')!;
+    final size = count / weight;
+    final rounded = roundedHarvestSize(count, weight);
+    final (min, max) = harvestSizeLimits(
+      species,
+      enabled: speciesThresholdsEnabled,
+    );
+    if (rounded >= min && rounded <= max) return null;
+    final sizeLabel = size < 0.01 ? '< 0,01' : harvestNumber(rounded);
+    return (
+      message:
+          'Cỡ tôm (số lượng / sản lượng) vô lý: $sizeLabel con/kg. Kiểm tra lại sản lượng hoặc số lượng.'
+          '${speciesThresholdsEnabled ? ' Giới hạn: $min–$max con/kg.' : ''}',
+      fields: const {'weight', 'count'},
+    );
   }
 
   Future<void> _showQuantityAlert(String message) async {
@@ -307,6 +346,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   Future<void> _submit(
     AquacultureSeason season, {
     required BigInt? available,
+    required bool speciesThresholdsEnabled,
   }) async {
     if (_confirming ||
         ref.read(harvestMutationProvider(widget.seasonId)).isLoading) {
@@ -315,22 +355,43 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     setState(() {
       _submitted = true;
       _timeError = _validateTime(season);
-      _quantityError = _validateQuantity(available: available);
+      _quantityError = _validateQuantity(
+        season.shrimpType,
+        available: available,
+        speciesThresholdsEnabled: speciesThresholdsEnabled,
+      );
     });
     final valid = _form.currentState!.validate();
     if (_quantityError != null) {
       await _showQuantityAlert(_quantityError!.message);
       return;
     }
+    final price = _value('price');
     if (!valid || _timeError != null) return;
-    if (!await _confirmUnusualSize() || !mounted) return;
+    final sizeWarning = harvestSizeWarning(
+      _value('count')!,
+      _value('weight')!,
+      season.shrimpType,
+      enabled: speciesThresholdsEnabled,
+    );
+    final priceWarning = harvestPriceWarning(
+      price,
+      season.shrimpType,
+      enabled: speciesThresholdsEnabled,
+    );
+    final separateSizeWarning = _final && !speciesThresholdsEnabled;
+    if (separateSizeWarning &&
+        sizeWarning != null &&
+        (!await _confirmUnusualFinalSize() || !mounted)) {
+      return;
+    }
 
     final body = <String, dynamic>{
       'harvestType': _final ? 'FINAL' : 'PARTIAL',
       'harvestedAt': _time!.toUtc().toIso8601String(),
       'totalWeightKg': _value('weight')!.toDouble(),
       if (_value('count') != null) 'quantityCount': _value('count')!.toInt(),
-      'pricePerKg': _value('price')!.toDouble(),
+      'pricePerKg': ?price?.toDouble(),
       'buyerName': _fields['buyer']!.text.trim(),
       for (final entry in {
         'buyerContact': 'contact',
@@ -340,21 +401,27 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         if (_fields[entry.value]!.text.trim().isNotEmpty)
           entry.key: _fields[entry.value]!.text.trim(),
     };
-    if (!await _confirm(body)) return;
+    if (!await _confirm(
+      body,
+      speciesThresholdsEnabled: speciesThresholdsEnabled,
+      inputWarnings: [
+        if (!separateSizeWarning && sizeWarning != null) sizeWarning,
+        ?priceWarning,
+      ],
+    )) {
+      return;
+    }
     await _save(body);
   }
 
-  Future<bool> _confirmUnusualSize() async {
-    final size = _value('count')! / _value('weight')!;
-    if (size >= 10 && size <= 500) return true;
+  Future<bool> _confirmUnusualFinalSize() async {
     setState(() => _confirming = true);
     try {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AppConfirmDialog(
           title: 'Cỡ tôm ngoài khoảng thường gặp',
-          description:
-              'Cỡ tôm tính từ số lượng và sản lượng nằm ngoài khoảng 10–500 con/kg. Vui lòng kiểm tra lại trước khi lưu.',
+          description: harvestUnusualSizeWarning,
           cancelLabel: 'Kiểm tra lại',
           confirmLabel: 'Vẫn lưu',
           onCancel: () => Navigator.of(dialogContext).pop(false),
@@ -370,6 +437,8 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   Future<bool> _confirm(
     Map<String, dynamic> body, {
     bool recovery = false,
+    bool speciesThresholdsEnabled = false,
+    List<String> inputWarnings = const [],
   }) async {
     if (_confirming ||
         ref.read(harvestMutationProvider(widget.seasonId)).isLoading) {
@@ -384,6 +453,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         : earlyHarvestWarning(
             season,
             DateTime.parse(body['harvestedAt'] as String),
+            speciesThresholdsEnabled: speciesThresholdsEnabled,
           );
     try {
       setState(() => _confirming = true);
@@ -402,19 +472,23 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
               ? 'Thao tác này sẽ hoàn tất vụ nuôi. Bạn không thể ghi thêm lần thu hoạch cho vụ này.'
               : 'Kiểm tra thông tin trước khi ghi nhận thu tỉa. Vụ nuôi sẽ tiếp tục hoạt động.',
           confirmLabel: 'Xác nhận',
-          level: isFinal || recovery || warning != null
+          cancelLabel: inputWarnings.isNotEmpty ? 'Kiểm tra lại' : 'Quay lại',
+          level:
+              isFinal || recovery || warning != null || inputWarnings.isNotEmpty
               ? AppNoticeLevel.warning
               : AppNoticeLevel.info,
           content: Text(
             '${isFinal ? 'Thu hoạch cuối' : 'Thu tỉa'} · ${harvestNumber(body['totalWeightKg'] as num)} kg\n'
             '${harvestDate(DateTime.parse(body['harvestedAt'] as String))}'
             '${body['quantityCount'] == null ? '' : '\nSố lượng thu: ${body['quantityCount']} con'}'
+            '${body['pricePerKg'] == null ? '\nĐơn giá và doanh thu chưa xác định.' : ''}'
             '${isFinal
                 ? ''
                 : body['estimatedRemainingCount'] == null
                 ? '\nSố tôm còn lại được hệ thống tính khi ghi nhận.'
                 : '\nCòn lại ước tính: ${body['estimatedRemainingCount']} con'}'
             '${body['varianceReason'] == null ? '' : '\nLý do hiệu chỉnh: ${body['varianceReason']}'}'
+            '${inputWarnings.isEmpty ? '' : '\n\n${inputWarnings.join('\n\n')}'}'
             '${warning == null ? '' : '\n\nLưu ý: $warning'}',
           ),
           onConfirm: () => Navigator.of(dialogContext).pop(true),
@@ -603,8 +677,32 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           final withdrawalBlocked =
               withdrawal?.verified == true &&
               (withdrawal!.unknown || withdrawal.blocked);
-          final warning = earlyHarvestWarning(season, _time);
+          final speciesThresholdsEnabled =
+              populationState.value?.speciesThresholdsEnabled ?? false;
+          final deferredPriceEnabled =
+              populationState.value?.deferredPriceEnabled ?? false;
+          final warning = earlyHarvestWarning(
+            season,
+            _time,
+            speciesThresholdsEnabled: speciesThresholdsEnabled,
+          );
           final partialExhausted = _partialExhaustsEstimate(available);
+          _QuantityValidationError? validateQuantity() => _validateQuantity(
+            season.shrimpType,
+            available: available,
+            speciesThresholdsEnabled: speciesThresholdsEnabled,
+          );
+          void refreshQuantityError() {
+            if (_submitted) setState(() => _quantityError = validateQuantity());
+          }
+
+          final liveSizeError =
+              (_final && !speciesThresholdsEnabled) || partialExhausted
+              ? null
+              : _validateSize(
+                  season.shrimpType,
+                  speciesThresholdsEnabled: speciesThresholdsEnabled,
+                )?.message;
           final diseaseRestricted =
               populationState.value?.finalReasonRequired == true;
           final reasonRequired = _final && diseaseRestricted;
@@ -621,11 +719,10 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
               else
                 Form(
                   key: _form,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label('Loại thu hoạch *'),
+                      _label('Loại thu hoạch', required: true),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -718,7 +815,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                           ),
                         ),
                       const SizedBox(height: 16),
-                      _label('Thời điểm thu hoạch *'),
+                      _label('Thời điểm thu hoạch', required: true),
                       const SizedBox(height: 6),
                       InkWell(
                         onTap: busy ? null : () => _pickTime(season),
@@ -810,20 +907,15 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       if (withdrawalBlocked) _withdrawalStatus(withdrawal),
                       _field(
                         'weight',
-                        'Sản lượng (kg) *',
+                        'Sản lượng (kg)',
                         busy,
                         hint: 'VD: 480',
                         decimals: 3,
                         required: true,
                         max: 99999999999.999,
-                        fieldError: _quantityFieldError('weight'),
-                        onChangedExtra: _submitted
-                            ? () => setState(
-                                () => _quantityError = _validateQuantity(
-                                  available: available,
-                                ),
-                              )
-                            : null,
+                        fieldError:
+                            _quantityFieldError('weight') ?? liveSizeError,
+                        onChangedExtra: refreshQuantityError,
                       ),
                       if (!populationState.isLoading &&
                           !populationState.hasError)
@@ -838,24 +930,16 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         ),
                       _field(
                         'count',
-                        'Số lượng thu hoạch (con) *',
+                        'Số lượng thu hoạch (con)',
                         busy,
                         hint: 'Nhập số con thu hoạch',
                         required: true,
                         fieldError: partialExhausted
-                            ? _validateQuantity(available: available)?.message
-                            : _quantityFieldError('count'),
+                            ? validateQuantity()?.message
+                            : _quantityFieldError('count') ?? liveSizeError,
                         focusNode: _countFocus,
                         max: 9007199254740991,
-                        onChangedExtra: () {
-                          if (_submitted) {
-                            setState(
-                              () => _quantityError = _validateQuantity(
-                                available: available,
-                              ),
-                            );
-                          }
-                        },
+                        onChangedExtra: refreshQuantityError,
                       ),
                       if (!_final)
                         const Padding(
@@ -867,8 +951,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                       if (reasonRequired)
                         _text(
                           'variance',
-                          'Lý do thu hoạch cuối *',
+                          'Lý do thu hoạch cuối',
                           busy,
+                          required: true,
                           maxLength: 500,
                           lines: 2,
                           hint:
@@ -883,29 +968,29 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                               maxLength: 500,
                             );
                           },
-                          onChangedExtra: () {
-                            if (_submitted) {
-                              setState(
-                                () => _quantityError = _validateQuantity(
-                                  available: available,
-                                ),
-                              );
-                            }
-                          },
+                          onChangedExtra: refreshQuantityError,
                         ),
                       _field(
                         'price',
-                        'Giá bán (đ/kg) *',
+                        'Giá bán (đ/kg)',
                         busy,
-                        hint: 'VD: 180000',
+                        hint: deferredPriceEnabled
+                            ? 'Có thể bổ sung sau'
+                            : 'VD: 180000',
                         decimals: 2,
-                        required: true,
+                        required: !deferredPriceEnabled,
+                        zero: deferredPriceEnabled || speciesThresholdsEnabled,
                         max: 999999999999.99,
+                        validateValue: (price) => harvestPriceError(
+                          price,
+                          enabled: speciesThresholdsEnabled,
+                        ),
                       ),
                       _text(
                         'buyer',
-                        'Tên người mua *',
+                        'Tên người mua',
                         busy,
+                        required: true,
                         maxLength: 255,
                         hint: 'Nhập tên người mua',
                         validator: (value) {
@@ -973,7 +1058,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                                 withdrawalBlocked ||
                                 (!_final && diseaseRestricted)
                             ? null
-                            : () => _submit(season, available: available),
+                            : () => _submit(
+                                season,
+                                available: available,
+                                speciesThresholdsEnabled:
+                                    speciesThresholdsEnabled,
+                              ),
                       ),
                     ],
                   ),
@@ -996,6 +1086,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     bool zero = false,
     bool readOnly = false,
     String? fieldError,
+    String? Function(num?)? validateValue,
     FocusNode? focusNode,
     VoidCallback? onChangedExtra,
   }) => Padding(
@@ -1003,11 +1094,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(label),
+        _label(label, required: required),
         const SizedBox(height: 6),
         TextFormField(
           key: ValueKey('harvest-field-$key'),
           controller: _fields[key],
+          autovalidateMode: _fieldAutovalidateMode,
           focusNode: focusNode,
           readOnly: readOnly,
           forceErrorText: fieldError,
@@ -1037,13 +1129,15 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           },
           validator: readOnly
               ? null
-              : (v) => _numeric(
-                  v,
-                  required: required,
-                  max: max,
-                  decimals: decimals,
-                  zero: zero,
-                ),
+              : (v) =>
+                    _numeric(
+                      v,
+                      required: required,
+                      max: max,
+                      decimals: decimals,
+                      zero: zero,
+                    ) ??
+                    validateValue?.call(_value(key)),
         ),
       ],
     ),
@@ -1054,6 +1148,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     String label,
     bool busy, {
     required int maxLength,
+    bool required = false,
     FormFieldValidator<String>? validator,
     int lines = 1,
     String? hint = 'Tùy chọn',
@@ -1063,11 +1158,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(label),
+        _label(label, required: required),
         const SizedBox(height: 6),
         TextFormField(
           key: ValueKey('harvest-field-$key'),
           controller: _fields[key],
+          autovalidateMode: _fieldAutovalidateMode,
           enabled: !busy,
           maxLines: lines,
           maxLength: maxLength,

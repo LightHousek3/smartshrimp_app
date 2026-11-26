@@ -104,8 +104,16 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: _SummaryCard(
-                  value: '${harvestNumber(data.totalRevenue / 1000000)} tr',
-                  label: 'DOANH THU',
+                  value:
+                      data.unpricedHarvests > 0 &&
+                          data.unpricedHarvests == data.totalResults
+                      ? 'Chưa xác định'
+                      : '${harvestNumber(data.totalRevenue / 1000000)} tr',
+                  label:
+                      data.unpricedHarvests > 0 &&
+                          data.unpricedHarvests < data.totalResults
+                      ? 'DOANH THU CHƯA ĐỦ'
+                      : 'DOANH THU',
                 ),
               ),
             ],
@@ -416,7 +424,7 @@ class _HarvestItemCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               event.totalRevenue == null
-                                  ? '—'
+                                  ? 'Chưa xác định'
                                   : '${harvestNumber(event.totalRevenue)} đ',
                               style: const TextStyle(
                                 fontSize: 14.5,

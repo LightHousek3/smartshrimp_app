@@ -1178,8 +1178,19 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(submit);
           await tester.pumpAndSettle();
+          final standaloneWarning = find.text('Cỡ tôm ngoài khoảng thường gặp');
+          final sizeWarning = find.textContaining(
+            'nằm ngoài khoảng 10–500 con/kg',
+          );
           if (count < 1000 || count > 50000) {
-            expect(find.text('Cỡ tôm ngoài khoảng thường gặp'), findsOneWidget);
+            expect(sizeWarning, findsOneWidget);
+            expect(
+              standaloneWarning,
+              finalHarvest ? findsOneWidget : findsNothing,
+            );
+            if (!finalHarvest) {
+              expect(find.text('Xác nhận thu tỉa'), findsOneWidget);
+            }
             expect(repo.bodies, isEmpty);
             await tester.tap(find.text('Kiểm tra lại'));
             await tester.pumpAndSettle();
@@ -1197,10 +1208,15 @@ void main() {
             await tester.pumpAndSettle();
             await tester.tap(submit);
             await tester.pumpAndSettle();
-            await tester.tap(find.text('Vẫn lưu'));
-            await tester.pumpAndSettle();
+            if (finalHarvest) {
+              await tester.tap(find.text('Vẫn lưu'));
+              await tester.pumpAndSettle();
+            } else {
+              expect(sizeWarning, findsOneWidget);
+            }
           } else {
-            expect(find.text('Cỡ tôm ngoài khoảng thường gặp'), findsNothing);
+            expect(sizeWarning, findsNothing);
+            expect(standaloneWarning, findsNothing);
           }
           expect(
             find.text(
@@ -1341,6 +1357,118 @@ void main() {
     expect(find.text('Sản lượng và giá bán'), findsOneWidget);
     await capture(tester, 'detail');
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'final harvest groups species, price and DOC warnings in one dialog',
+    (tester) async {
+      final repo = _HarvestRepo()
+        ..result = page().copyWith(speciesThresholdsEnabled: true);
+      await mount(
+        tester,
+        repo,
+        route: '/harvests/create',
+        seasonOverride: season(SeasonStatus.active).copyWith(
+          stockingDate: DateTime.now().subtract(const Duration(days: 20)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thu hoạch cuối'));
+      await tester.pumpAndSettle();
+      await _fillHarvestFacts(tester, weight: '10', count: '1600');
+      await tester.enterText(
+        find.byKey(const ValueKey('harvest-field-price')),
+        '30000',
+      );
+      await _pickHarvestTime(tester);
+      await _pressHarvest(tester, finalHarvest: true);
+      expect(find.text('Xác nhận thu hoạch cuối'), findsOneWidget);
+      expect(
+        find.textContaining('Cỡ tôm nằm ngoài khoảng thường gặp 20–150'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Đơn giá nằm ngoài khoảng thường gặp'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Vụ nuôi mới').hitTestable(), findsWidgets);
+      expect(find.text('Vẫn lưu'), findsNothing);
+      expect(repo.bodies, isEmpty);
+    },
+  );
+
+  for (final finalHarvest in [false, true]) {
+    testWidgets(
+      'can record harvest without price when enabled, final=$finalHarvest',
+      (tester) async {
+        final repo = _HarvestRepo()
+          ..result = page().copyWith(deferredPriceEnabled: true);
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        if (finalHarvest) {
+          await tester.tap(find.text('Thu hoạch cuối'));
+          await tester.pumpAndSettle();
+        }
+        await _fillHarvestFacts(tester);
+        await tester.enterText(
+          find.byKey(const ValueKey('harvest-field-price')),
+          '',
+        );
+        await _pickHarvestTime(tester);
+        await _pressHarvest(tester, finalHarvest: finalHarvest);
+        expect(
+          find.textContaining('Đơn giá và doanh thu chưa xác định'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Xác nhận'));
+        await tester.pumpAndSettle();
+        expect(repo.bodies.single.containsKey('pricePerKg'), isFalse);
+        expect(repo.bodies.single['quantityCount'], 100);
+      },
+    );
+  }
+
+  testWidgets('confirms price on the completed season harvest detail', (
+    tester,
+  ) async {
+    final repo = _HarvestRepo()
+      ..detailResult = HarvestEvent.fromJson(eventJson()).copyWith(
+        harvestType: HarvestType.finalHarvest,
+        pricePerKg: null,
+        totalRevenue: null,
+        canConfirmPrice: true,
+      );
+    await mount(
+      tester,
+      repo,
+      route: '/harvests/harvest-1',
+      status: SeasonStatus.completed,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Chưa xác định'), findsWidgets);
+    await tester.ensureVisible(find.text('Bổ sung giá'));
+    await tester.tap(find.text('Bổ sung giá'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chốt giá thu hoạch'), findsOneWidget);
+    expect(
+      find.text('Sau khi chốt, đơn giá sẽ không thể sửa.'),
+      findsOneWidget,
+    );
+    final zeroNotice = find.text(
+      'Doanh thu của phiếu sẽ được ghi nhận là 0 đ.',
+    );
+    expect(zeroNotice, findsNothing);
+    await tester.enterText(find.byType(TextFormField), '0');
+    await tester.pumpAndSettle();
+    expect(zeroNotice, findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), '125000');
+    await tester.pumpAndSettle();
+    expect(zeroNotice, findsNothing);
+    await tester.tap(find.text('Chốt giá'));
+    await tester.pumpAndSettle();
+    expect(repo.confirmedPrices, [125000]);
+    expect(repo.detailResult?.totalRevenue, 77500000);
+    expect(find.text('Bổ sung giá'), findsNothing);
   });
   testWidgets(
     'partial form has no remainder input and final form keeps completion warning',
@@ -1546,10 +1674,7 @@ void main() {
         if (warning != null) {
           expect(find.text(warning), findsNothing);
         }
-        expect(
-          find.text('Đã ghi nhận thu hoạch thành công.'),
-          findsOneWidget,
-        );
+        expect(find.text('Đã ghi nhận thu hoạch thành công.'), findsOneWidget);
       },
     );
   }
@@ -1731,9 +1856,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'required labels are marked and untouched fields wait for submit',
+    (tester) async {
+      final repo = _HarvestRepo();
+      await mount(tester, repo, route: '/harvests/create');
+      await tester.pumpAndSettle();
+
+      for (final label in [
+        'Loại thu hoạch',
+        'Thời điểm thu hoạch',
+        'Sản lượng (kg)',
+        'Số lượng thu hoạch (con)',
+        'Giá bán (đ/kg)',
+        'Tên người mua',
+      ]) {
+        final text = tester.widget<Text>(find.text('$label *'));
+        final span = text.textSpan! as TextSpan;
+        expect(text.style?.color, AppColors.ink);
+        expect(span.children?.single.style?.color, AppColors.error);
+      }
+      expect(find.text('Liên hệ người mua *'), findsNothing);
+
+      Finder field(String name) => find.byKey(ValueKey('harvest-field-$name'));
+      String? error(String name) =>
+          tester.state<FormFieldState<String>>(field(name)).errorText;
+
+      await tester.enterText(field('weight'), '100');
+      await tester.enterText(field('count'), '1');
+      await tester.pumpAndSettle();
+      expect(error('weight'), contains('Cỡ tôm'));
+      expect(error('count'), contains('Cỡ tôm'));
+      expect(error('price'), isNull);
+      expect(error('buyer'), isNull);
+
+      await tester.enterText(field('count'), '1000');
+      await tester.pumpAndSettle();
+      expect(error('weight'), isNull);
+      expect(error('count'), isNull);
+      expect(error('price'), isNull);
+      expect(error('buyer'), isNull);
+
+      await _pressHarvest(tester);
+      expect(error('price'), 'Vui lòng nhập giá trị.');
+      expect(error('buyer'), 'Vui lòng nhập tên người mua.');
+      expect(repo.bodies, isEmpty);
+    },
+  );
+
   for (final (weight, expectedSize) in [('100', '0,01'), ('1000', '< 0,01')]) {
     testWidgets(
-      'invalid small shrimp size displays $expectedSize instead of zero',
+      'partial harvest shows small size $expectedSize as soon as both fields are entered',
       (tester) async {
         final repo = _HarvestRepo();
         await mount(tester, repo, route: '/harvests/create');
@@ -1742,15 +1915,12 @@ void main() {
           find.byKey(const ValueKey('harvest-field-weight')),
           weight,
         );
+        await tester.pump();
+        expect(find.textContaining('Cỡ tôm (số lượng'), findsNothing);
         await tester.enterText(
           find.byKey(const ValueKey('harvest-field-count')),
           '1',
         );
-        FocusManager.instance.primaryFocus?.unfocus();
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(find.text('Ghi nhận thu tỉa'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Ghi nhận thu tỉa'));
         await tester.pumpAndSettle();
         for (final field in ['weight', 'count']) {
           final error = tester
@@ -1762,6 +1932,12 @@ void main() {
           expect(error, contains('$expectedSize con/kg'));
           expect(error, isNot(contains(': 0 con/kg')));
         }
+        await tester.enterText(
+          find.byKey(const ValueKey('harvest-field-weight')),
+          '1.005',
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Cỡ tôm (số lượng'), findsNothing);
         expect(repo.bodies, isEmpty);
         expect(tester.takeException(), isNull);
       },
@@ -1775,8 +1951,6 @@ void main() {
     await mount(tester, repo, route: '/harvests/create');
     await tester.pumpAndSettle();
     await _fillHarvestFacts(tester, weight: '1', count: '50000');
-    await _pressHarvest(tester);
-    expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsOneWidget);
     for (final field in ['weight', 'count']) {
       expect(
         tester
@@ -1785,12 +1959,15 @@ void main() {
         contains('vô lý'),
       );
     }
+    expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsNothing);
+    await _pressHarvest(tester);
+    expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsOneWidget);
     expect(repo.bodies, isEmpty);
     await tester.tap(find.text('Kiểm tra lại'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const ValueKey('harvest-field-weight')),
-      '1000',
+      '5',
     );
     await tester.pumpAndSettle();
     for (final field in ['weight', 'count']) {
@@ -2524,6 +2701,8 @@ class _HarvestRepo implements HarvestRepository {
   Future<HarvestPage> Function(Map<String, dynamic>)? populationLoad;
   Completer<HarvestEvent>? recordWait;
   HarvestEvent? recordResult;
+  HarvestEvent? detailResult;
+  final confirmedPrices = <double>[];
   @override
   Future<HarvestPage> list(String seasonId, Map<String, dynamic> query) {
     queries.add(Map.of(query));
@@ -2535,7 +2714,23 @@ class _HarvestRepo implements HarvestRepository {
 
   @override
   Future<HarvestEvent> detail(String seasonId, String harvestId) async =>
-      HarvestEvent.fromJson(eventJson());
+      detailResult ?? HarvestEvent.fromJson(eventJson());
+
+  @override
+  Future<HarvestEvent> confirmPrice(
+    String seasonId,
+    String harvestId,
+    double pricePerKg,
+  ) async {
+    final event = await detail(seasonId, harvestId);
+    confirmedPrices.add(pricePerKg);
+    return detailResult = event.copyWith(
+      pricePerKg: pricePerKg,
+      totalRevenue: event.totalWeightKg * pricePerKg,
+      canConfirmPrice: false,
+    );
+  }
+
   @override
   Future<HarvestEvent> record(
     String seasonId,

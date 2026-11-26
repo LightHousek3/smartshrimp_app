@@ -49,6 +49,7 @@ bool notificationNeedsReferenceContext(
   if (notification.referenceId?.trim().isNotEmpty != true) return false;
   return switch (notificationReferenceType(notification)) {
     'product' => role == AccountRole.farmOwner,
+    'harvest_event' => role == AccountRole.farmOwner,
     'season' || 'aquaculture_season' => role == AccountRole.farmOwner,
     'disease_case' => role != null && role != AccountRole.farmOwner,
     'pond' ||
@@ -97,6 +98,9 @@ String? notificationDestination(
   if (id != null && id.isNotEmpty) {
     final encodedId = Uri.encodeComponent(id);
     switch (reference) {
+      case 'harvest_event':
+        final season = owner ? seasonDestination() : null;
+        return season == null ? null : '$season/harvests/$encodedId';
       case 'product':
         return owner && farmId != null && segment('productId') != null
             ? '${AppRoutes.farms}/$farmId/inventory/${segment('productId')}'
@@ -170,6 +174,7 @@ String notificationActionLabel(
   AppNotification notification,
   AccountRole? role,
 ) => switch (notificationReferenceType(notification)) {
+  'harvest_event' => 'Mở phiếu thu hoạch',
   'biomass_sampling' => 'Cập nhật mẫu sinh khối',
   'pond' => role == AccountRole.farmOwner ? 'Xem ao' : 'Xem vụ nuôi',
   'farm'

@@ -27,6 +27,52 @@ AquacultureSeason seasonFor(ShrimpType species) => AquacultureSeason(
 
 void main() {
   test(
+    'species ranges include their boundaries and classify advisory gaps',
+    () {
+      expect(harvestSizeLimits(ShrimpType.whiteleg, enabled: true), (10, 500));
+      expect(harvestSizeLimits(ShrimpType.blackTiger, enabled: true), (4, 200));
+      expect(roundedHarvestSize(19995, 1000), 20);
+      expect(
+        harvestSizeWarning(19995, 1000, ShrimpType.whiteleg, enabled: true),
+        isNull,
+      );
+      expect(
+        harvestSizeWarning(400, 1, ShrimpType.whiteleg, enabled: true),
+        isNotNull,
+      );
+      expect(harvestPriceError(0, enabled: true), isNull);
+      expect(harvestPriceError(null, enabled: true), isNull);
+      expect(harvestPriceError(9999, enabled: true), isNotNull);
+      expect(harvestPriceError(10000, enabled: true), isNull);
+      expect(harvestPriceError(1000000, enabled: true), isNull);
+      expect(harvestPriceError(1000000.01, enabled: true), isNotNull);
+      expect(
+        harvestPriceWarning(25000, ShrimpType.whiteleg, enabled: true),
+        isNotNull,
+      );
+      expect(
+        harvestPriceWarning(120000, ShrimpType.blackTiger, enabled: true),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'species DOC warnings use the Vietnam calendar and a single message format',
+    () {
+      final whiteleg = seasonFor(ShrimpType.whiteleg);
+      String? warning(int doc) => earlyHarvestWarning(
+        whiteleg,
+        DateTime.utc(2026, 1, 1, 17).add(Duration(days: doc - 1)),
+        speciesThresholdsEnabled: true,
+      );
+      expect(warning(24), startsWith('Vụ nuôi mới 24 ngày.'));
+      expect(warning(25), startsWith('Vụ nuôi mới 25 ngày.'));
+      expect(warning(35), isNotNull);
+      expect(warning(36), isNull);
+    },
+  );
+  test(
     'only the exact terminal time code with HTTP 400 confirms rejection',
     () {
       for (final status in [null, 400, 401, 403, 404, 409, 422, 429, 500]) {

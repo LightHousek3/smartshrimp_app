@@ -71,6 +71,7 @@ class HarvestListState {
     required this.hasNextPage,
     required this.totalWeightKg,
     required this.totalRevenue,
+    this.unpricedHarvests = 0,
     this.nextCursor,
     this.loadingMore = false,
     this.paginationError,
@@ -82,6 +83,7 @@ class HarvestListState {
   final bool hasNextPage;
   final double totalWeightKg;
   final double totalRevenue;
+  final int unpricedHarvests;
   final String? nextCursor;
   final bool loadingMore;
   final Object? paginationError;
@@ -93,6 +95,7 @@ class HarvestListState {
     bool? hasNextPage,
     double? totalWeightKg,
     double? totalRevenue,
+    int? unpricedHarvests,
     String? nextCursor,
     bool? loadingMore,
     Object? paginationError,
@@ -104,6 +107,7 @@ class HarvestListState {
     hasNextPage: hasNextPage ?? this.hasNextPage,
     totalWeightKg: totalWeightKg ?? this.totalWeightKg,
     totalRevenue: totalRevenue ?? this.totalRevenue,
+    unpricedHarvests: unpricedHarvests ?? this.unpricedHarvests,
     availableQuantityCount:
         availableQuantityCount ?? this.availableQuantityCount,
     nextCursor: nextCursor ?? this.nextCursor,
@@ -119,6 +123,7 @@ class HarvestListState {
     hasNextPage: page.hasNextPage,
     totalWeightKg: page.totalWeightKg,
     totalRevenue: page.totalRevenue,
+    unpricedHarvests: page.unpricedHarvests,
     availableQuantityCount: page.availableQuantityCount,
     nextCursor: page.nextCursor,
   );
@@ -135,6 +140,7 @@ class HarvestListState {
       hasNextPage: next.hasNextPage,
       totalWeightKg: next.totalWeightKg,
       totalRevenue: next.totalRevenue,
+      unpricedHarvests: next.unpricedHarvests,
       availableQuantityCount: next.availableQuantityCount,
       nextCursor: next.nextCursor,
       loadingMore: false,
@@ -155,6 +161,8 @@ final harvestPopulationProvider = FutureProvider.autoDispose
         String? availableQuantityCount,
         HarvestWithdrawal? withdrawal,
         bool finalReasonRequired,
+        bool speciesThresholdsEnabled,
+        bool deferredPriceEnabled,
       }),
       ({String seasonId, DateTime? at})
     >((ref, query) {
@@ -170,6 +178,8 @@ final harvestPopulationProvider = FutureProvider.autoDispose
           availableQuantityCount: page.availableQuantityCount,
           withdrawal: page.withdrawal,
           finalReasonRequired: page.finalReasonRequired,
+          speciesThresholdsEnabled: page.speciesThresholdsEnabled,
+          deferredPriceEnabled: page.deferredPriceEnabled,
         );
       });
     }, retry: (retryCount, error) => null);
@@ -304,6 +314,36 @@ class HarvestMutationController extends AsyncNotifier<void> {
   bool _submitting = false;
   @override
   void build() {}
+
+  Future<void> confirmPrice(String harvestId, double pricePerKg) async {
+    if (_submitting || state.isLoading) {
+      throw const ApiException('Đang ghi nhận thu hoạch.');
+    }
+    final keepAlive = ref.keepAlive();
+    state = const AsyncLoading();
+    try {
+      await _authenticated(
+        ref,
+        () => ref
+            .read(harvestRepositoryProvider)
+            .confirmPrice(seasonId, harvestId, pricePerKg),
+        watchAccount: false,
+      );
+      if (!ref.mounted) return;
+      ref.invalidate(
+        harvestDetailProvider((seasonId: seasonId, harvestId: harvestId)),
+      );
+      ref.invalidate(harvestListProvider(seasonId));
+      ref.invalidate(ownerDashboardProvider);
+      ref.invalidate(ownerFinanceProvider);
+      state = const AsyncData(null);
+    } on Object catch (error, stack) {
+      if (ref.mounted) state = AsyncError(error, stack);
+      rethrow;
+    } finally {
+      keepAlive.close();
+    }
+  }
 
   Future<HarvestEvent> submit(Map<String, dynamic> body) async {
     if (_submitting || state.isLoading) {

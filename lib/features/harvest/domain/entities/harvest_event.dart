@@ -30,6 +30,7 @@ abstract class HarvestSeason with _$HarvestSeason {
     required String name,
     required String status,
     required HarvestPlace pond,
+    String? shrimpType,
   }) = _HarvestSeason;
   factory HarvestSeason.fromJson(Map<String, dynamic> json) =>
       _$HarvestSeasonFromJson(json);
@@ -58,6 +59,8 @@ abstract class HarvestEvent with _$HarvestEvent {
     String? recorderName,
     String? varianceReason,
     @Default(<String>[]) List<String> warnings,
+    @Default(false) bool canConfirmPrice,
+    @Default(false) bool speciesThresholdsEnabled,
   }) = _HarvestEvent;
 
   factory HarvestEvent.fromJson(Map<String, dynamic> json) {
@@ -114,7 +117,10 @@ abstract class HarvestPage with _$HarvestPage {
     String? nextCursor,
     required double totalWeightKg,
     required double totalRevenue,
+    @Default(0) int unpricedHarvests,
+    @Default(false) bool speciesThresholdsEnabled,
     String? availableQuantityCount,
+    @Default(false) bool deferredPriceEnabled,
     HarvestWithdrawal? withdrawal,
     @Default(false) bool finalReasonRequired,
   }) = _HarvestPage;

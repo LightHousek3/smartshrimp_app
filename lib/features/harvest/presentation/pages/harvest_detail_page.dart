@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
+import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/harvest/domain/entities/harvest_event.dart';
+import 'package:smartshrimp_app/features/harvest/domain/harvest_policy.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/view_models/harvest_controller.dart';
 import 'package:smartshrimp_app/features/harvest/presentation/widgets/harvest_ui.dart';
+import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
 String _formatShortDateTime(DateTime date) {
   final local = date.toLocal();
@@ -54,6 +58,20 @@ class HarvestDetailPage extends ConsumerWidget {
               _HeroCard(event: event),
               const SizedBox(height: 16),
               _ProductionAndPriceCard(event: event),
+              if (event.canConfirmPrice && event.pricePerKg == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: FilledButton(
+                    onPressed:
+                        ref.watch(harvestMutationProvider(seasonId)).isLoading
+                        ? null
+                        : () => showDialog<void>(
+                            context: context,
+                            builder: (_) => _ConfirmHarvestPrice(event: event),
+                          ),
+                    child: const Text('Bổ sung giá'),
+                  ),
+                ),
               const SizedBox(height: 16),
               _InfoSectionCard(
                 title: 'Thông tin vụ nuôi',
@@ -89,6 +107,132 @@ class HarvestDetailPage extends ConsumerWidget {
             ],
           ),
         );
+  }
+}
+
+class _ConfirmHarvestPrice extends ConsumerStatefulWidget {
+  const _ConfirmHarvestPrice({required this.event});
+  final HarvestEvent event;
+
+  @override
+  ConsumerState<_ConfirmHarvestPrice> createState() =>
+      _ConfirmHarvestPriceState();
+}
+
+class _ConfirmHarvestPriceState extends ConsumerState<_ConfirmHarvestPrice> {
+  final _form = GlobalKey<FormState>();
+  String _price = '';
+  String? _saveError;
+  bool _saving = false;
+
+  double? get _value => double.tryParse(_price.trim().replaceAll(',', '.'));
+
+  String? _validate(String? text) {
+    final raw = text?.trim() ?? '';
+    if (raw.isEmpty) return 'Vui lòng nhập đơn giá.';
+    if (!RegExp(r'^\d+(?:[.,]\d{1,2})?$').hasMatch(raw)) {
+      return 'Nhập đơn giá với tối đa hai chữ số thập phân.';
+    }
+    final price = _value;
+    if (price == null || !price.isFinite || price > 999999999999.99) {
+      return 'Đơn giá không hợp lệ.';
+    }
+    return harvestPriceError(
+      price,
+      enabled: widget.event.speciesThresholdsEnabled,
+    );
+  }
+
+  Future<void> _save() async {
+    if (_saving || !_form.currentState!.validate()) return;
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
+    try {
+      final event = widget.event;
+      await ref
+          .read(harvestMutationProvider(event.seasonId).notifier)
+          .confirmPrice(event.id, _value!);
+      if (!mounted) return;
+      AppNoticeService.success(context, 'Đã bổ sung đơn giá thu hoạch.');
+      Navigator.of(context).pop();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saveError = harvestError(
+          error,
+          fallback: 'Không thể bổ sung đơn giá. Vui lòng thử lại.',
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final event = widget.event;
+    final validPrice = _validate(_price) == null ? _value : null;
+    final warning = validPrice != null
+        ? harvestPriceWarning(
+            validPrice,
+            shrimpTypeFromJson(event.season.shrimpType),
+            enabled: event.speciesThresholdsEnabled,
+          )
+        : null;
+    return PopScope(
+      canPop: !_saving,
+      child: AppConfirmDialog(
+        title: 'Chốt giá thu hoạch',
+        description: 'Nhập đơn giá đã thống nhất.',
+        confirmLabel: _saving ? 'Đang lưu…' : 'Chốt giá',
+        level: warning == null ? AppNoticeLevel.info : AppNoticeLevel.warning,
+        onCancel: () {
+          if (!_saving) Navigator.of(context).pop();
+        },
+        onConfirm: _save,
+        content: Form(
+          key: _form,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                enabled: !_saving,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Đơn giá (đ/kg)',
+                  errorMaxLines: 3,
+                ),
+                validator: _validate,
+                onChanged: (value) => setState(() => _price = value),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Sau khi chốt, đơn giá sẽ không thể sửa.',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const Text(
+                'Nếu chưa chắc chắn, bạn có thể quay lại và bổ sung sau.',
+              ),
+              if (validPrice == 0) ...[
+                const SizedBox(height: 8),
+                const Text('Doanh thu của phiếu sẽ được ghi nhận là 0 đ.'),
+              ],
+              if (warning != null) Text(warning),
+              if (_saveError != null)
+                Text(
+                  _saveError!,
+                  style: const TextStyle(color: AppColors.error),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -242,7 +386,7 @@ class _HeroCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       event.totalRevenue == null
-                          ? '—'
+                          ? 'Chưa xác định'
                           : '${harvestNumber(event.totalRevenue)} đ',
                       style: const TextStyle(
                         fontSize: 24,
@@ -303,7 +447,7 @@ class _ProductionAndPriceCard extends StatelessWidget {
                     _GridCell(
                       label: 'TỔNG DOANH THU',
                       value: event.totalRevenue == null
-                          ? 'Không ghi nhận'
+                          ? 'Chưa xác định'
                           : '${harvestNumber(event.totalRevenue)} đ',
                     ),
                   ],
@@ -322,7 +466,7 @@ class _ProductionAndPriceCard extends StatelessWidget {
                     _GridCell(
                       label: 'GIÁ BÁN',
                       value: event.pricePerKg == null
-                          ? 'Không ghi nhận'
+                          ? 'Chưa xác định'
                           : '${harvestNumber(event.pricePerKg)} đ/kg',
                     ),
                     const SizedBox(height: 16),
