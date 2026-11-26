@@ -103,67 +103,189 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     String? sub,
     Color? valueColor,
     Color? subColor,
-  }) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.inkMuted,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: valueColor ?? AppColors.ink,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (sub != null) ...<Widget>[
-            const SizedBox(height: 2),
-            Text(
-              sub,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: subColor != null
-                    ? FontWeight.w700
-                    : FontWeight.w500,
-                color: subColor ?? AppColors.inkMuted,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
-      ),
+  }) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
     ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.inkMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w800,
+            color: valueColor ?? AppColors.ink,
+          ),
+        ),
+        if (sub != null) ...<Widget>[
+          const SizedBox(height: 2),
+          Text(
+            sub,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: subColor != null ? FontWeight.w700 : FontWeight.w500,
+              color: subColor ?? AppColors.inkMuted,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _buildParamPair(Widget first, Widget second) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < MediaQuery.textScalerOf(context).scale(192)) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [first, const SizedBox(height: 8), second],
+        );
+      }
+
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 8),
+            Expanded(child: second),
+          ],
+        ),
+      );
+    },
+  );
+
+  Widget _buildMaterialHeading(
+    OperationSchedule item,
+    String quantity,
+    bool isExpanded,
+  ) => LayoutBuilder(
+    builder: (context, constraints) {
+      final textScaler = MediaQuery.textScalerOf(context);
+      final showThumbnail = constraints.maxWidth >= textScaler.scale(132);
+      final showQuantityBadge = constraints.maxWidth >= textScaler.scale(220);
+      final visuals = OperationTypeVisuals.of(item.operationType);
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (showThumbnail) ...[
+                OperationProductThumbnail(
+                  imageUrl: item.productImageUrl,
+                  fallbackIcon: visuals.icon,
+                  fallbackBg: visuals.bg,
+                  fallbackFg: visuals.fg,
+                  size: 38,
+                  borderRadius: 10,
+                  iconSize: 18,
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    OperationTypeBadge(type: item.operationType, compact: true),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.productName,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                      maxLines: showQuantityBadge ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (showQuantityBadge) ...[
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: constraints.maxWidth / 3,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.5,
+                      vertical: 3.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: visuals.bg,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      quantity,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: visuals.fg,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 6),
+              AnimatedRotation(
+                turns: isExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.inkMuted,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.only(left: showThumbnail ? 48 : 0),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 12.5,
+                  color: AppColors.inkMuted,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '${item.timeRangeText}  ·  $quantity',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.inkMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
   );
 
   /// Box nhỏ cho từng thành phần bên trong Box Lớn (Thức ăn, Thuốc,...)
   Widget _buildSubComponentBox(OperationSchedule item, {bool isLast = false}) {
     final isExpanded = _expandedScheduleIds.contains(item.id);
-    final visuals = OperationTypeVisuals.of(item.operationType);
 
     final isMedicine = item.operationType == OperationType.medicine;
-
-    final pillBg = visuals.bg;
-    final pillFg = visuals.fg;
 
     final itemTimeStr = item.timeRangeText;
     final unit = protocolUnit(item.unit);
@@ -253,100 +375,7 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                   horizontal: 14,
                   vertical: 12,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        OperationProductThumbnail(
-                          imageUrl: item.productImageUrl,
-                          fallbackIcon: visuals.icon,
-                          fallbackBg: visuals.bg,
-                          fallbackFg: visuals.fg,
-                          size: 38,
-                          borderRadius: 10,
-                          iconSize: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              OperationTypeBadge(
-                                type: item.operationType,
-                                compact: true,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                item.productName,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.ink,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Pill số lượng
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8.5,
-                            vertical: 3.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: pillBg,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            quantityStr,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: pillFg,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        // Icon mũi tên sổ xuống / đóng lên
-                        AnimatedRotation(
-                          turns: isExpanded ? 0.5 : 0.0,
-                          duration: const Duration(milliseconds: 200),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: AppColors.inkMuted,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 48),
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(
-                            Icons.access_time_rounded,
-                            size: 12.5,
-                            color: AppColors.inkMuted,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$itemTimeStr  ·  $quantityStr',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              color: AppColors.inkMuted,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildMaterialHeading(item, quantityStr, isExpanded),
               ),
             ),
 
@@ -363,42 +392,23 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Lưới thông số 2x2 chuẩn theo DB
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          _buildParamBox(
-                            label: 'Giờ dự kiến',
-                            value: itemTimeStr,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildParamBox(
-                            label: quantityLabel,
-                            value: quantityStr,
-                            valueColor: _blueFg,
-                            sub: actualQuantitySub,
-                            subColor: const Color(0xFF0D9488),
-                          ),
-                        ],
+                    _buildParamPair(
+                      _buildParamBox(label: 'Giờ dự kiến', value: itemTimeStr),
+                      _buildParamBox(
+                        label: quantityLabel,
+                        value: quantityStr,
+                        valueColor: _blueFg,
+                        sub: actualQuantitySub,
+                        subColor: const Color(0xFF0D9488),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          _buildParamBox(
-                            label: 'Cách tính liều',
-                            value: item.doseBasisDescription,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildParamBox(
-                            label: fourthLabel,
-                            value: fourthValue,
-                          ),
-                        ],
+                    _buildParamPair(
+                      _buildParamBox(
+                        label: 'Cách tính liều',
+                        value: item.doseBasisDescription,
                       ),
+                      _buildParamBox(label: fourthLabel, value: fourthValue),
                     ),
 
                     // Hướng dẫn chi tiết từ phác đồ
@@ -542,8 +552,131 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     return '$hh:$mm · $dd/$mo/${local.year}';
   }
 
-  /// Card tóm tắt "✓ Đã ghi nhận thực hiện" (thiết kế cao cấp, đồng bộ, hiện đại)
-  /// Card tóm tắt "✓ Đã ghi nhận thực hiện" (thiết kế tinh tế, gọn gàng, không lặp lại component)
+  Widget _buildCompletedSummaryHeader(
+    DateTime executedAt, {
+    required bool hasDeadline,
+    required bool isLate,
+  }) {
+    final heading = Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE6FFFA),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.check_circle_rounded,
+              size: 18,
+              color: Color(0xFF0D9488),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Đã ghi nhận thực hiện',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F766E),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 11.5,
+                    color: AppColors.inkMuted,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'Thực hiện lúc ${_formatExecutedAt(executedAt)}',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (!hasDeadline) return heading;
+
+    final timingBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.5, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: isLate ? OperationOverdueBadge.bg : const Color(0xFFE6FFFA),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: isLate
+              ? OperationOverdueBadge.cardBorder
+              : const Color(0xFFA7F3D0),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5.5,
+            height: 5.5,
+            decoration: BoxDecoration(
+              color: isLate
+                  ? OperationOverdueBadge.fg
+                  : const Color(0xFF059669),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4.5),
+          Flexible(
+            child: Text(
+              isLate ? 'Trễ hạn' : 'Đúng giờ',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: isLate
+                    ? OperationOverdueBadge.fg
+                    : const Color(0xFF047857),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <
+            MediaQuery.textScalerOf(context).scale(280)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [heading, const SizedBox(height: 8), timingBadge],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: heading),
+            const SizedBox(width: 8),
+            timingBadge,
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildCompletedSummaryCard(List<OperationSchedule> completedItems) {
     final itemsWithExec = completedItems
         .where((s) => s.execution != null)
@@ -594,106 +727,10 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Header: Icon tròn tick xanh + Tiêu đề + Thời gian + Badge đúng giờ/trễ hạn
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6FFFA),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    size: 18,
-                    color: Color(0xFF0D9488),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text(
-                      'Đã ghi nhận thực hiện',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F766E),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.access_time_rounded,
-                          size: 11.5,
-                          color: AppColors.inkMuted,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Thực hiện lúc ${_formatExecutedAt(latestExecutedAt)}',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (hasDeadline)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.5,
-                    vertical: 3.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isLate
-                        ? OperationOverdueBadge.bg
-                        : const Color(0xFFE6FFFA),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: isLate
-                          ? OperationOverdueBadge.cardBorder
-                          : const Color(0xFFA7F3D0),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Container(
-                        width: 5.5,
-                        height: 5.5,
-                        decoration: BoxDecoration(
-                          color: isLate
-                              ? OperationOverdueBadge.fg
-                              : const Color(0xFF059669),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4.5),
-                      Text(
-                        isLate ? 'Trễ hạn' : 'Đúng giờ',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: isLate
-                              ? OperationOverdueBadge.fg
-                              : const Color(0xFF047857),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+          _buildCompletedSummaryHeader(
+            latestExecutedAt,
+            hasDeadline: hasDeadline,
+            isLate: isLate,
           ),
 
           const SizedBox(height: 10),
@@ -713,8 +750,8 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 for (var i = 0; i < itemsWithExec.length; i++) ...<Widget>[
-                  Builder(
-                    builder: (_) {
+                  LayoutBuilder(
+                    builder: (_, constraints) {
                       final item = itemsWithExec[i];
                       final unit = protocolUnit(item.unit);
                       final actual = formatInventoryExactQuantity(
@@ -750,12 +787,18 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              '$actual $unit',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0D9488),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: constraints.maxWidth * .5,
+                              ),
+                              child: Text(
+                                '$actual $unit',
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0D9488),
+                                ),
                               ),
                             ),
                           ],
@@ -1206,12 +1249,16 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                             ),
                           ),
                           const SizedBox(width: 5),
-                          Text(
-                            displayStatus.displayName,
-                            style: TextStyle(
-                              color: statusText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          Flexible(
+                            child: Text(
+                              displayStatus.displayName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: statusText,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],

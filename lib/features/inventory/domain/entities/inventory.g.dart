@@ -264,6 +264,9 @@ _InventoryTransaction _$InventoryTransactionFromJson(
   reason: json['reason'] as String?,
   performedBy: json['performedBy'] as String,
   createdAt: DateTime.parse(json['createdAt'] as String),
+  historicalFeedingExecutedAt: json['historicalFeedingExecutedAt'] == null
+      ? null
+      : DateTime.parse(json['historicalFeedingExecutedAt'] as String),
   product: InventoryTransactionProduct.fromJson(
     json['product'] as Map<String, dynamic>,
   ),
@@ -299,6 +302,8 @@ Map<String, dynamic> _$InventoryTransactionToJson(
   'reason': instance.reason,
   'performedBy': instance.performedBy,
   'createdAt': instance.createdAt.toIso8601String(),
+  'historicalFeedingExecutedAt': ?instance.historicalFeedingExecutedAt
+      ?.toIso8601String(),
   'product': instance.product,
   'inventoryBalance': instance.inventoryBalance,
   'season': instance.season,

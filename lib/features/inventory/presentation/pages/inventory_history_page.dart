@@ -490,6 +490,8 @@ class _TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = transaction.transactionType;
     final signedQuantity = type.isInbound ? '+' : '−';
+    final feedingAt = transaction.historicalFeedingExecutedAt;
+    final lotNumber = transaction.inventoryBalance.lotNumber;
     final quantity = formatInventoryExactQuantity(
       transaction.quantity.abs(),
       exact: transaction.quantityExact,
@@ -502,18 +504,26 @@ class _TransactionCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: type.backgroundColor,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Text(
-                  type.label,
-                  style: TextStyle(
-                    color: type.color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: type.backgroundColor,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      feedingAt != null ? 'Xuất kho vận hành' : type.label,
+                      style: TextStyle(
+                        color: type.color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -541,10 +551,22 @@ class _TransactionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            'Lô ${transaction.inventoryBalance.lotNumber} · ${formatInventoryDate(transaction.createdAt, includeTime: true)}',
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
-          ),
+          if (feedingAt == null)
+            Text(
+              'Lô $lotNumber · ${formatInventoryDate(transaction.createdAt, includeTime: true)}',
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+            )
+          else ...[
+            _Metadata(label: 'Lô', value: lotNumber),
+            _Metadata(
+              label: 'Giờ ghi xuất',
+              value: _formatHistoryTimestamp(transaction.createdAt),
+            ),
+            _Metadata(
+              label: 'Thời điểm sử dụng',
+              value: _formatHistoryTimestamp(feedingAt),
+            ),
+          ],
           const SizedBox(height: 8),
           _Metadata(
             label: 'Người thực hiện',
@@ -573,6 +595,14 @@ class _TransactionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatHistoryTimestamp(DateTime value) {
+  final local = value.toLocal();
+  final hour = local.hour.toString().padLeft(2, '0');
+  final minute = local.minute.toString().padLeft(2, '0');
+  final date = formatInventoryDate(local).replaceAll('-', '/');
+  return '$hour:$minute · $date';
 }
 
 class _Metadata extends StatelessWidget {

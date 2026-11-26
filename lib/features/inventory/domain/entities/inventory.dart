@@ -388,6 +388,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
     String? reason,
     required String performedBy,
     required DateTime createdAt,
+    @JsonKey(includeIfNull: false) DateTime? historicalFeedingExecutedAt,
     required InventoryTransactionProduct product,
     required InventoryLot inventoryBalance,
     InventoryTransactionSeason? season,

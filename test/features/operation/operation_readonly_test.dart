@@ -11,6 +11,57 @@ import 'package:smartshrimp_app/features/operation/presentation/pages/operation_
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 
 void main() {
+  for (final (width, textScale) in [(320.0, 1.0), (168.0, 1.0), (320.0, 1.5)]) {
+    testWidgets(
+      'completed operation detail fits at $width px with text scale $textScale',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 1000);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetPhysicalSize);
+
+        final scheduledAt = DateTime(2026, 11, 7, 7, 30);
+        final repository = _Operations(
+          scheduledAt: scheduledAt,
+          execution: OperationExecution(
+            id: 'execution',
+            actualQuantity: 2.5,
+            executedAt: scheduledAt,
+            note: 'Ghi bổ sung do vụ nuôi kích hoạt muộn',
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              assignedSeasonCanWriteProvider('season').overrideWithValue(true),
+              operationRepositoryProvider.overrideWithValue(repository),
+            ],
+            child: MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
+              home: const OperationDetailPage(
+                seasonId: 'season',
+                scheduleId: 'schedule',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final executionTime = find.text('Thực hiện lúc 07:30 · 07/11/2026');
+        await tester.scrollUntilVisible(executionTime, 150);
+        expect(find.text('Đúng giờ'), findsOneWidget);
+        expect(executionTime, findsOneWidget);
+        expect(tester.getRect(executionTime).right, lessThanOrEqualTo(width));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   for (final (quantity, label) in [(.1, '0,1 ml'), (.000001, '0,000001 ml')]) {
     testWidgets('completed execution preserves the recorded amount $label', (
       tester,
@@ -22,7 +73,14 @@ void main() {
               'season',
             ).overrideWith((ref) => true),
             operationRepositoryProvider.overrideWithValue(
-              _Operations(actualQuantity: quantity),
+              _Operations(
+                unit: 'ML',
+                execution: OperationExecution(
+                  id: 'execution',
+                  actualQuantity: quantity,
+                  executedAt: DateTime.now(),
+                ),
+              ),
             ),
           ],
           child: const MaterialApp(
@@ -168,10 +226,16 @@ void main() {
 }
 
 class _Operations implements OperationRepository {
-  _Operations({this.scheduledAt, this.stock = 100, this.actualQuantity});
+  _Operations({
+    this.scheduledAt,
+    this.stock = 100,
+    this.unit = 'KG',
+    this.execution,
+  });
   final DateTime? scheduledAt;
   final double stock;
-  final double? actualQuantity;
+  final String unit;
+  final OperationExecution? execution;
 
   @override
   Future<OperationListResult> getSchedules(
@@ -193,21 +257,15 @@ class _Operations implements OperationRepository {
         scheduledAt:
             scheduledAt ?? DateTime.now().subtract(const Duration(hours: 1)),
         plannedQuantity: 10,
-        unit: actualQuantity == null ? 'KG' : 'ML',
+        unit: unit,
         doseBasisSnapshot: 'FIXED_QUANTITY',
         doseValueSnapshot: 10,
         calculationVersion: 'v1',
-        status: actualQuantity == null
+        status: execution == null
             ? OperationStatus.planned
             : OperationStatus.completed,
         availableStock: stock,
-        execution: actualQuantity == null
-            ? null
-            : OperationExecution(
-                id: 'execution',
-                actualQuantity: actualQuantity!,
-                executedAt: DateTime.now(),
-              ),
+        execution: execution,
         protocolItem: const OperationProtocolItem(id: 'item', dueAtMinutes: 30),
       );
   @override

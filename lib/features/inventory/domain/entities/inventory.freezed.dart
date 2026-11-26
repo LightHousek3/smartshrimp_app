@@ -2367,7 +2367,7 @@ as String,
 /// @nodoc
 mixin _$InventoryTransaction {
 
- String get id; String get transactionGroupId; String get productId; String get inventoryBalanceId; String? get seasonId;@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType get transactionType; double get quantity; String? get quantityExact;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unitSnapshot; double get totalAmount; String? get referenceType; String? get referenceId; String? get reason; String get performedBy; DateTime get createdAt; InventoryTransactionProduct get product; InventoryLot get inventoryBalance; InventoryTransactionSeason? get season; InventoryTransactionPerformer get performer;
+ String get id; String get transactionGroupId; String get productId; String get inventoryBalanceId; String? get seasonId;@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType get transactionType; double get quantity; String? get quantityExact;@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit get unitSnapshot; double get totalAmount; String? get referenceType; String? get referenceId; String? get reason; String get performedBy; DateTime get createdAt;@JsonKey(includeIfNull: false) DateTime? get historicalFeedingExecutedAt; InventoryTransactionProduct get product; InventoryLot get inventoryBalance; InventoryTransactionSeason? get season; InventoryTransactionPerformer get performer;
 /// Create a copy of InventoryTransaction
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2380,16 +2380,16 @@ $InventoryTransactionCopyWith<InventoryTransaction> get copyWith => _$InventoryT
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.transactionGroupId, transactionGroupId) || other.transactionGroupId == transactionGroupId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.inventoryBalanceId, inventoryBalanceId) || other.inventoryBalanceId == inventoryBalanceId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.unitSnapshot, unitSnapshot) || other.unitSnapshot == unitSnapshot)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.performedBy, performedBy) || other.performedBy == performedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.inventoryBalance, inventoryBalance) || other.inventoryBalance == inventoryBalance)&&(identical(other.season, season) || other.season == season)&&(identical(other.performer, performer) || other.performer == performer));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InventoryTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.transactionGroupId, transactionGroupId) || other.transactionGroupId == transactionGroupId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.inventoryBalanceId, inventoryBalanceId) || other.inventoryBalanceId == inventoryBalanceId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.unitSnapshot, unitSnapshot) || other.unitSnapshot == unitSnapshot)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.performedBy, performedBy) || other.performedBy == performedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.historicalFeedingExecutedAt, historicalFeedingExecutedAt) || other.historicalFeedingExecutedAt == historicalFeedingExecutedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.inventoryBalance, inventoryBalance) || other.inventoryBalance == inventoryBalance)&&(identical(other.season, season) || other.season == season)&&(identical(other.performer, performer) || other.performer == performer));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,transactionGroupId,productId,inventoryBalanceId,seasonId,transactionType,quantity,quantityExact,unitSnapshot,totalAmount,referenceType,referenceId,reason,performedBy,createdAt,product,inventoryBalance,season,performer]);
+int get hashCode => Object.hashAll([runtimeType,id,transactionGroupId,productId,inventoryBalanceId,seasonId,transactionType,quantity,quantityExact,unitSnapshot,totalAmount,referenceType,referenceId,reason,performedBy,createdAt,historicalFeedingExecutedAt,product,inventoryBalance,season,performer]);
 
 @override
 String toString() {
-  return 'InventoryTransaction(id: $id, transactionGroupId: $transactionGroupId, productId: $productId, inventoryBalanceId: $inventoryBalanceId, seasonId: $seasonId, transactionType: $transactionType, quantity: $quantity, quantityExact: $quantityExact, unitSnapshot: $unitSnapshot, totalAmount: $totalAmount, referenceType: $referenceType, referenceId: $referenceId, reason: $reason, performedBy: $performedBy, createdAt: $createdAt, product: $product, inventoryBalance: $inventoryBalance, season: $season, performer: $performer)';
+  return 'InventoryTransaction(id: $id, transactionGroupId: $transactionGroupId, productId: $productId, inventoryBalanceId: $inventoryBalanceId, seasonId: $seasonId, transactionType: $transactionType, quantity: $quantity, quantityExact: $quantityExact, unitSnapshot: $unitSnapshot, totalAmount: $totalAmount, referenceType: $referenceType, referenceId: $referenceId, reason: $reason, performedBy: $performedBy, createdAt: $createdAt, historicalFeedingExecutedAt: $historicalFeedingExecutedAt, product: $product, inventoryBalance: $inventoryBalance, season: $season, performer: $performer)';
 }
 
 
@@ -2400,7 +2400,7 @@ abstract mixin class $InventoryTransactionCopyWith<$Res>  {
   factory $InventoryTransactionCopyWith(InventoryTransaction value, $Res Function(InventoryTransaction) _then) = _$InventoryTransactionCopyWithImpl;
 @useResult
 $Res call({
- String id, String transactionGroupId, String productId, String inventoryBalanceId, String? seasonId,@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType transactionType, double quantity, String? quantityExact,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unitSnapshot, double totalAmount, String? referenceType, String? referenceId, String? reason, String performedBy, DateTime createdAt, InventoryTransactionProduct product, InventoryLot inventoryBalance, InventoryTransactionSeason? season, InventoryTransactionPerformer performer
+ String id, String transactionGroupId, String productId, String inventoryBalanceId, String? seasonId,@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType transactionType, double quantity, String? quantityExact,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unitSnapshot, double totalAmount, String? referenceType, String? referenceId, String? reason, String performedBy, DateTime createdAt,@JsonKey(includeIfNull: false) DateTime? historicalFeedingExecutedAt, InventoryTransactionProduct product, InventoryLot inventoryBalance, InventoryTransactionSeason? season, InventoryTransactionPerformer performer
 });
 
 
@@ -2417,7 +2417,7 @@ class _$InventoryTransactionCopyWithImpl<$Res>
 
 /// Create a copy of InventoryTransaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? transactionGroupId = null,Object? productId = null,Object? inventoryBalanceId = null,Object? seasonId = freezed,Object? transactionType = null,Object? quantity = null,Object? quantityExact = freezed,Object? unitSnapshot = null,Object? totalAmount = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? reason = freezed,Object? performedBy = null,Object? createdAt = null,Object? product = null,Object? inventoryBalance = null,Object? season = freezed,Object? performer = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? transactionGroupId = null,Object? productId = null,Object? inventoryBalanceId = null,Object? seasonId = freezed,Object? transactionType = null,Object? quantity = null,Object? quantityExact = freezed,Object? unitSnapshot = null,Object? totalAmount = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? reason = freezed,Object? performedBy = null,Object? createdAt = null,Object? historicalFeedingExecutedAt = freezed,Object? product = null,Object? inventoryBalance = null,Object? season = freezed,Object? performer = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,transactionGroupId: null == transactionGroupId ? _self.transactionGroupId : transactionGroupId // ignore: cast_nullable_to_non_nullable
@@ -2434,7 +2434,8 @@ as String?,referenceId: freezed == referenceId ? _self.referenceId : referenceId
 as String?,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String?,performedBy: null == performedBy ? _self.performedBy : performedBy // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
+as DateTime,historicalFeedingExecutedAt: freezed == historicalFeedingExecutedAt ? _self.historicalFeedingExecutedAt : historicalFeedingExecutedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionProduct,inventoryBalance: null == inventoryBalance ? _self.inventoryBalance : inventoryBalance // ignore: cast_nullable_to_non_nullable
 as InventoryLot,season: freezed == season ? _self.season : season // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionSeason?,performer: null == performer ? _self.performer : performer // ignore: cast_nullable_to_non_nullable
@@ -2562,10 +2563,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt, @JsonKey(includeIfNull: false)  DateTime? historicalFeedingExecutedAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InventoryTransaction() when $default != null:
-return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
+return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.historicalFeedingExecutedAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
   return orElse();
 
 }
@@ -2583,10 +2584,10 @@ return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventor
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt, @JsonKey(includeIfNull: false)  DateTime? historicalFeedingExecutedAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)  $default,) {final _that = this;
 switch (_that) {
 case _InventoryTransaction():
-return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
+return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.historicalFeedingExecutedAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2603,10 +2604,10 @@ return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventor
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String transactionGroupId,  String productId,  String inventoryBalanceId,  String? seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown)  InventoryTransactionType transactionType,  double quantity,  String? quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown)  InventoryProductUnit unitSnapshot,  double totalAmount,  String? referenceType,  String? referenceId,  String? reason,  String performedBy,  DateTime createdAt, @JsonKey(includeIfNull: false)  DateTime? historicalFeedingExecutedAt,  InventoryTransactionProduct product,  InventoryLot inventoryBalance,  InventoryTransactionSeason? season,  InventoryTransactionPerformer performer)?  $default,) {final _that = this;
 switch (_that) {
 case _InventoryTransaction() when $default != null:
-return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
+return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventoryBalanceId,_that.seasonId,_that.transactionType,_that.quantity,_that.quantityExact,_that.unitSnapshot,_that.totalAmount,_that.referenceType,_that.referenceId,_that.reason,_that.performedBy,_that.createdAt,_that.historicalFeedingExecutedAt,_that.product,_that.inventoryBalance,_that.season,_that.performer);case _:
   return null;
 
 }
@@ -2618,7 +2619,7 @@ return $default(_that.id,_that.transactionGroupId,_that.productId,_that.inventor
 @JsonSerializable()
 
 class _InventoryTransaction implements InventoryTransaction {
-  const _InventoryTransaction({required this.id, required this.transactionGroupId, required this.productId, required this.inventoryBalanceId, this.seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown) required this.transactionType, required this.quantity, this.quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unitSnapshot, required this.totalAmount, this.referenceType, this.referenceId, this.reason, required this.performedBy, required this.createdAt, required this.product, required this.inventoryBalance, this.season, required this.performer});
+  const _InventoryTransaction({required this.id, required this.transactionGroupId, required this.productId, required this.inventoryBalanceId, this.seasonId, @JsonKey(unknownEnumValue: InventoryTransactionType.unknown) required this.transactionType, required this.quantity, this.quantityExact, @JsonKey(unknownEnumValue: InventoryProductUnit.unknown) required this.unitSnapshot, required this.totalAmount, this.referenceType, this.referenceId, this.reason, required this.performedBy, required this.createdAt, @JsonKey(includeIfNull: false) this.historicalFeedingExecutedAt, required this.product, required this.inventoryBalance, this.season, required this.performer});
   factory _InventoryTransaction.fromJson(Map<String, dynamic> json) => _$InventoryTransactionFromJson(json);
 
 @override final  String id;
@@ -2636,6 +2637,7 @@ class _InventoryTransaction implements InventoryTransaction {
 @override final  String? reason;
 @override final  String performedBy;
 @override final  DateTime createdAt;
+@override@JsonKey(includeIfNull: false) final  DateTime? historicalFeedingExecutedAt;
 @override final  InventoryTransactionProduct product;
 @override final  InventoryLot inventoryBalance;
 @override final  InventoryTransactionSeason? season;
@@ -2654,16 +2656,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.transactionGroupId, transactionGroupId) || other.transactionGroupId == transactionGroupId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.inventoryBalanceId, inventoryBalanceId) || other.inventoryBalanceId == inventoryBalanceId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.unitSnapshot, unitSnapshot) || other.unitSnapshot == unitSnapshot)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.performedBy, performedBy) || other.performedBy == performedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.inventoryBalance, inventoryBalance) || other.inventoryBalance == inventoryBalance)&&(identical(other.season, season) || other.season == season)&&(identical(other.performer, performer) || other.performer == performer));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InventoryTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.transactionGroupId, transactionGroupId) || other.transactionGroupId == transactionGroupId)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.inventoryBalanceId, inventoryBalanceId) || other.inventoryBalanceId == inventoryBalanceId)&&(identical(other.seasonId, seasonId) || other.seasonId == seasonId)&&(identical(other.transactionType, transactionType) || other.transactionType == transactionType)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.quantityExact, quantityExact) || other.quantityExact == quantityExact)&&(identical(other.unitSnapshot, unitSnapshot) || other.unitSnapshot == unitSnapshot)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.referenceType, referenceType) || other.referenceType == referenceType)&&(identical(other.referenceId, referenceId) || other.referenceId == referenceId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.performedBy, performedBy) || other.performedBy == performedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.historicalFeedingExecutedAt, historicalFeedingExecutedAt) || other.historicalFeedingExecutedAt == historicalFeedingExecutedAt)&&(identical(other.product, product) || other.product == product)&&(identical(other.inventoryBalance, inventoryBalance) || other.inventoryBalance == inventoryBalance)&&(identical(other.season, season) || other.season == season)&&(identical(other.performer, performer) || other.performer == performer));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,transactionGroupId,productId,inventoryBalanceId,seasonId,transactionType,quantity,quantityExact,unitSnapshot,totalAmount,referenceType,referenceId,reason,performedBy,createdAt,product,inventoryBalance,season,performer]);
+int get hashCode => Object.hashAll([runtimeType,id,transactionGroupId,productId,inventoryBalanceId,seasonId,transactionType,quantity,quantityExact,unitSnapshot,totalAmount,referenceType,referenceId,reason,performedBy,createdAt,historicalFeedingExecutedAt,product,inventoryBalance,season,performer]);
 
 @override
 String toString() {
-  return 'InventoryTransaction(id: $id, transactionGroupId: $transactionGroupId, productId: $productId, inventoryBalanceId: $inventoryBalanceId, seasonId: $seasonId, transactionType: $transactionType, quantity: $quantity, quantityExact: $quantityExact, unitSnapshot: $unitSnapshot, totalAmount: $totalAmount, referenceType: $referenceType, referenceId: $referenceId, reason: $reason, performedBy: $performedBy, createdAt: $createdAt, product: $product, inventoryBalance: $inventoryBalance, season: $season, performer: $performer)';
+  return 'InventoryTransaction(id: $id, transactionGroupId: $transactionGroupId, productId: $productId, inventoryBalanceId: $inventoryBalanceId, seasonId: $seasonId, transactionType: $transactionType, quantity: $quantity, quantityExact: $quantityExact, unitSnapshot: $unitSnapshot, totalAmount: $totalAmount, referenceType: $referenceType, referenceId: $referenceId, reason: $reason, performedBy: $performedBy, createdAt: $createdAt, historicalFeedingExecutedAt: $historicalFeedingExecutedAt, product: $product, inventoryBalance: $inventoryBalance, season: $season, performer: $performer)';
 }
 
 
@@ -2674,7 +2676,7 @@ abstract mixin class _$InventoryTransactionCopyWith<$Res> implements $InventoryT
   factory _$InventoryTransactionCopyWith(_InventoryTransaction value, $Res Function(_InventoryTransaction) _then) = __$InventoryTransactionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String transactionGroupId, String productId, String inventoryBalanceId, String? seasonId,@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType transactionType, double quantity, String? quantityExact,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unitSnapshot, double totalAmount, String? referenceType, String? referenceId, String? reason, String performedBy, DateTime createdAt, InventoryTransactionProduct product, InventoryLot inventoryBalance, InventoryTransactionSeason? season, InventoryTransactionPerformer performer
+ String id, String transactionGroupId, String productId, String inventoryBalanceId, String? seasonId,@JsonKey(unknownEnumValue: InventoryTransactionType.unknown) InventoryTransactionType transactionType, double quantity, String? quantityExact,@JsonKey(unknownEnumValue: InventoryProductUnit.unknown) InventoryProductUnit unitSnapshot, double totalAmount, String? referenceType, String? referenceId, String? reason, String performedBy, DateTime createdAt,@JsonKey(includeIfNull: false) DateTime? historicalFeedingExecutedAt, InventoryTransactionProduct product, InventoryLot inventoryBalance, InventoryTransactionSeason? season, InventoryTransactionPerformer performer
 });
 
 
@@ -2691,7 +2693,7 @@ class __$InventoryTransactionCopyWithImpl<$Res>
 
 /// Create a copy of InventoryTransaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? transactionGroupId = null,Object? productId = null,Object? inventoryBalanceId = null,Object? seasonId = freezed,Object? transactionType = null,Object? quantity = null,Object? quantityExact = freezed,Object? unitSnapshot = null,Object? totalAmount = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? reason = freezed,Object? performedBy = null,Object? createdAt = null,Object? product = null,Object? inventoryBalance = null,Object? season = freezed,Object? performer = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? transactionGroupId = null,Object? productId = null,Object? inventoryBalanceId = null,Object? seasonId = freezed,Object? transactionType = null,Object? quantity = null,Object? quantityExact = freezed,Object? unitSnapshot = null,Object? totalAmount = null,Object? referenceType = freezed,Object? referenceId = freezed,Object? reason = freezed,Object? performedBy = null,Object? createdAt = null,Object? historicalFeedingExecutedAt = freezed,Object? product = null,Object? inventoryBalance = null,Object? season = freezed,Object? performer = null,}) {
   return _then(_InventoryTransaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,transactionGroupId: null == transactionGroupId ? _self.transactionGroupId : transactionGroupId // ignore: cast_nullable_to_non_nullable
@@ -2708,7 +2710,8 @@ as String?,referenceId: freezed == referenceId ? _self.referenceId : referenceId
 as String?,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String?,performedBy: null == performedBy ? _self.performedBy : performedBy // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
+as DateTime,historicalFeedingExecutedAt: freezed == historicalFeedingExecutedAt ? _self.historicalFeedingExecutedAt : historicalFeedingExecutedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,product: null == product ? _self.product : product // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionProduct,inventoryBalance: null == inventoryBalance ? _self.inventoryBalance : inventoryBalance // ignore: cast_nullable_to_non_nullable
 as InventoryLot,season: freezed == season ? _self.season : season // ignore: cast_nullable_to_non_nullable
 as InventoryTransactionSeason?,performer: null == performer ? _self.performer : performer // ignore: cast_nullable_to_non_nullable

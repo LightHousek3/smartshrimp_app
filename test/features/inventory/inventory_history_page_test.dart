@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,6 +55,48 @@ void main() {
       await tester.pumpAndSettle();
     }
   }
+
+  testWidgets(
+    'aligns both timestamps only for a historical feeding stock-out',
+    (tester) async {
+      final stockOut = _transactions()[1].copyWith(
+        quantity: 2.5,
+        referenceType: 'operation_execution',
+        createdAt: DateTime(2026, 11, 26, 14, 9),
+      );
+      final json = jsonDecode(jsonEncode(stockOut)) as Map<String, dynamic>;
+      remote.itemsOverride = [
+        domain.InventoryTransaction.parse({
+          ...json,
+          'historicalFeedingExecutedAt': DateTime(
+            2026,
+            11,
+            7,
+            7,
+            30,
+          ).toUtc().toIso8601String(),
+        }),
+        domain.InventoryTransaction.parse({...json, 'id': 'regular-stock-out'}),
+      ];
+
+      await openPage(tester, width: 320, expandFilters: false);
+
+      expect(find.text('Xuất kho vận hành'), findsOneWidget);
+      expect(find.text('Giờ ghi xuất'), findsOneWidget);
+      expect(find.text('Thời điểm sử dụng'), findsOneWidget);
+      final recordedTime = find.text('14:09 · 26/11/2026');
+      final feedingTime = find.text('07:30 · 07/11/2026');
+      expect(recordedTime, findsOneWidget);
+      expect(feedingTime, findsOneWidget);
+      expect(
+        tester.getTopLeft(recordedTime).dx,
+        tester.getTopLeft(feedingTime).dx,
+      );
+      expect(find.text('Xuất kho'), findsOneWidget);
+      expect(find.textContaining('14:09 26-11-2026'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'fractional stock-out shows each lot quantity and distinguishes amounts below one đồng',
