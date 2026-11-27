@@ -33,7 +33,7 @@ class DashboardSummaryRow extends StatelessWidget {
         child: _StatCard(
           summary.activeSeasons,
           'VỤ NUÔI',
-          'Đang hoạt động',
+          'Đang nuôi',
           const Color(0xFFEB7800),
         ),
       ),

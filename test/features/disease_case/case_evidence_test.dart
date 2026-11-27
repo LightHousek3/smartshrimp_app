@@ -5,6 +5,8 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_image_viewer.dart';
 import 'package:smartshrimp_app/features/disease_case/domain/entities/owner_disease_case.dart';
 import 'package:smartshrimp_app/features/disease_case/presentation/widgets/case_evidence.dart';
+import 'package:smartshrimp_app/features/disease_case/presentation/widgets/disease_case_detail_sections.dart'
+    show CaseTimeline;
 import '../../support/load_app_fonts.dart';
 
 DiseaseCaseAttachment attachment(String url, {String? type, String? caption}) =>
@@ -78,6 +80,93 @@ Future<void> openEvidence(
 
 void main() {
   setUpAll(loadAppFonts);
+
+  testWidgets('owner timeline opens technician photos from their response', (
+    tester,
+  ) async {
+    const first = 'https://images.test/response-1.jpg';
+    const second = 'https://images.test/upload/response-2';
+    await cachePhoto(tester, first, Colors.teal);
+    await cachePhoto(tester, second, Colors.amber);
+    addTearDown(imageCache.clear);
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final at = DateTime.utc(2026, 11, 27, 8, 58);
+    final technicianReply =
+        DiseaseCaseEvent.fromJson({
+              'kind': 'response',
+              'at': at.toIso8601String(),
+              'authorName': 'Liễu Tấn Đạt',
+              'authorRole': 'TECHNICIAN',
+              'responseType': 'NORMAL',
+              'message': 'Tôm có dấu hiệu bất thường.',
+              'attachments': [first, second],
+            })
+            as DiseaseCaseResponse;
+    final olderExpertReply =
+        DiseaseCaseEvent.fromJson({
+              'kind': 'response',
+              'at': at.add(const Duration(minutes: 1)).toIso8601String(),
+              'authorName': 'TS. Kim Soàn',
+              'authorRole': 'EXPERT',
+              'responseType': 'NORMAL',
+              'message': 'Đã nhận thông tin.',
+            })
+            as DiseaseCaseResponse;
+    expect(technicianReply.attachments, [first, second]);
+    expect(olderExpertReply.attachments, isEmpty);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              CaseTimeline(
+                events: [
+                  DiseaseCaseEvent.status(
+                    at: at.subtract(const Duration(minutes: 1)),
+                    authorName: 'Hệ thống',
+                    toStatus: DiseaseCaseStatus.open,
+                  ),
+                  technicianReply,
+                  olderExpertReply,
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final strip = find.byType(CaseAttachmentStrip);
+    expect(strip, findsOneWidget);
+    expect(tester.widget<CaseAttachmentStrip>(strip).urls, [first, second]);
+    final previews = find.descendant(
+      of: strip,
+      matching: find.byType(RawImage),
+    );
+    expect(previews, findsNWidgets(2));
+    for (final element in previews.evaluate()) {
+      expect((element.widget as RawImage).image, isNotNull);
+    }
+    expect(
+      tester.getTopLeft(strip).dy,
+      greaterThan(tester.getTopLeft(find.text(technicianReply.message)).dy),
+    );
+
+    await tester.tap(find.bySemanticsLabel(RegExp('^Xem ảnh minh chứng 2')));
+    await tester.pumpAndSettle();
+    expect(find.text('Ảnh 2/2'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Xem ảnh 1 trong thư viện'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ảnh 1/2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'N: legacy URLs without MIME show real thumbnails and use the shared zoom gallery',

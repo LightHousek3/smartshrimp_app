@@ -2295,11 +2295,11 @@ return response(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)?  response,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message,  List<String> attachments)?  response,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange() when status != null:
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse() when response != null:
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);case _:
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message,_that.attachments);case _:
   return orElse();
 
 }
@@ -2317,11 +2317,11 @@ return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)  status,required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)  response,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)  status,required TResult Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message,  List<String> attachments)  response,}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange():
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse():
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);}
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message,_that.attachments);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2335,11 +2335,11 @@ return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message)?  response,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus toStatus, @JsonKey(unknownEnumValue: DiseaseCaseStatus.unknown)  DiseaseCaseStatus? fromStatus,  String? message)?  status,TResult? Function( DateTime at, @JsonKey(fromJson: _requiredText)  String authorName, @JsonKey(unknownEnumValue: AccountRole.unknown)  AccountRole authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown)  DiseaseCaseResponseType responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown)  CaseCareAction? careAction, @JsonKey(fromJson: _requiredText)  String message,  List<String> attachments)?  response,}) {final _that = this;
 switch (_that) {
 case DiseaseCaseStatusChange() when status != null:
 return status(_that.at,_that.authorName,_that.toStatus,_that.fromStatus,_that.message);case DiseaseCaseResponse() when response != null:
-return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message);case _:
+return response(_that.at,_that.authorName,_that.authorRole,_that.responseType,_that.careAction,_that.message,_that.attachments);case _:
   return null;
 
 }
@@ -2432,7 +2432,7 @@ as String?,
 
 @JsonSerializable(checked: true)
 class DiseaseCaseResponse implements DiseaseCaseEvent {
-  const DiseaseCaseResponse({required this.at, @JsonKey(fromJson: _requiredText) required this.authorName, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) required this.responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown) this.careAction, @JsonKey(fromJson: _requiredText) required this.message, final  String? $type}): $type = $type ?? 'response';
+  const DiseaseCaseResponse({required this.at, @JsonKey(fromJson: _requiredText) required this.authorName, @JsonKey(unknownEnumValue: AccountRole.unknown) required this.authorRole, @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) required this.responseType, @JsonKey(unknownEnumValue: CaseCareAction.unknown) this.careAction, @JsonKey(fromJson: _requiredText) required this.message, final  List<String> attachments = const [], final  String? $type}): _attachments = attachments,$type = $type ?? 'response';
   factory DiseaseCaseResponse.fromJson(Map<String, dynamic> json) => _$DiseaseCaseResponseFromJson(json);
 
 @override final  DateTime at;
@@ -2441,6 +2441,13 @@ class DiseaseCaseResponse implements DiseaseCaseEvent {
 @JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) final  DiseaseCaseResponseType responseType;
 @JsonKey(unknownEnumValue: CaseCareAction.unknown) final  CaseCareAction? careAction;
 @override@JsonKey(fromJson: _requiredText) final  String message;
+ final  List<String> _attachments;
+@JsonKey() List<String> get attachments {
+  if (_attachments is EqualUnmodifiableListView) return _attachments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_attachments);
+}
+
 
 @JsonKey(name: 'kind')
 final String $type;
@@ -2459,16 +2466,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseResponse&&(identical(other.at, at) || other.at == at)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.authorRole, authorRole) || other.authorRole == authorRole)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.careAction, careAction) || other.careAction == careAction)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiseaseCaseResponse&&(identical(other.at, at) || other.at == at)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.authorRole, authorRole) || other.authorRole == authorRole)&&(identical(other.responseType, responseType) || other.responseType == responseType)&&(identical(other.careAction, careAction) || other.careAction == careAction)&&(identical(other.message, message) || other.message == message)&&const DeepCollectionEquality().equals(other._attachments, _attachments));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,at,authorName,authorRole,responseType,careAction,message);
+int get hashCode => Object.hash(runtimeType,at,authorName,authorRole,responseType,careAction,message,const DeepCollectionEquality().hash(_attachments));
 
 @override
 String toString() {
-  return 'DiseaseCaseEvent.response(at: $at, authorName: $authorName, authorRole: $authorRole, responseType: $responseType, careAction: $careAction, message: $message)';
+  return 'DiseaseCaseEvent.response(at: $at, authorName: $authorName, authorRole: $authorRole, responseType: $responseType, careAction: $careAction, message: $message, attachments: $attachments)';
 }
 
 
@@ -2479,7 +2486,7 @@ abstract mixin class $DiseaseCaseResponseCopyWith<$Res> implements $DiseaseCaseE
   factory $DiseaseCaseResponseCopyWith(DiseaseCaseResponse value, $Res Function(DiseaseCaseResponse) _then) = _$DiseaseCaseResponseCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime at,@JsonKey(fromJson: _requiredText) String authorName,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole authorRole,@JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) DiseaseCaseResponseType responseType,@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? careAction,@JsonKey(fromJson: _requiredText) String message
+ DateTime at,@JsonKey(fromJson: _requiredText) String authorName,@JsonKey(unknownEnumValue: AccountRole.unknown) AccountRole authorRole,@JsonKey(unknownEnumValue: DiseaseCaseResponseType.unknown) DiseaseCaseResponseType responseType,@JsonKey(unknownEnumValue: CaseCareAction.unknown) CaseCareAction? careAction,@JsonKey(fromJson: _requiredText) String message, List<String> attachments
 });
 
 
@@ -2496,7 +2503,7 @@ class _$DiseaseCaseResponseCopyWithImpl<$Res>
 
 /// Create a copy of DiseaseCaseEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? at = null,Object? authorName = null,Object? authorRole = null,Object? responseType = null,Object? careAction = freezed,Object? message = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? at = null,Object? authorName = null,Object? authorRole = null,Object? responseType = null,Object? careAction = freezed,Object? message = null,Object? attachments = null,}) {
   return _then(DiseaseCaseResponse(
 at: null == at ? _self.at : at // ignore: cast_nullable_to_non_nullable
 as DateTime,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
@@ -2504,7 +2511,8 @@ as String,authorRole: null == authorRole ? _self.authorRole : authorRole // igno
 as AccountRole,responseType: null == responseType ? _self.responseType : responseType // ignore: cast_nullable_to_non_nullable
 as DiseaseCaseResponseType,careAction: freezed == careAction ? _self.careAction : careAction // ignore: cast_nullable_to_non_nullable
 as CaseCareAction?,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
+as String,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
