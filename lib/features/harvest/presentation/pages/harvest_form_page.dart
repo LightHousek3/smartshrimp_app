@@ -32,7 +32,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     for (final key in [
       'weight',
       'count',
-      'remaining',
       'price',
       'buyer',
       'contact',
@@ -48,7 +47,29 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
   String? _timeError;
   _QuantityValidationError? _quantityError;
   bool _submitted = false;
+  final _weightFocus = FocusNode();
   final _countFocus = FocusNode();
+  bool _weightBlurred = false;
+  bool _countBlurred = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightFocus.addListener(_onWeightFocusChanged);
+    _countFocus.addListener(_onCountFocusChanged);
+  }
+
+  void _onWeightFocusChanged() {
+    setState(() {
+      if (!_weightFocus.hasFocus) _weightBlurred = true;
+    });
+  }
+
+  void _onCountFocusChanged() {
+    setState(() {
+      if (!_countFocus.hasFocus) _countBlurred = true;
+    });
+  }
 
   AutovalidateMode get _fieldAutovalidateMode =>
       _submitted ? AutovalidateMode.always : AutovalidateMode.onUserInteraction;
@@ -67,6 +88,8 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       _final = isFinal;
       _time = null;
       _submitted = false;
+      _weightBlurred = false;
+      _countBlurred = false;
       _timeError = null;
       _quantityError = null;
       _error = null;
@@ -75,6 +98,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
 
   @override
   void dispose() {
+    _weightFocus.dispose();
     _countFocus.dispose();
     for (final controller in _fields.values) {
       controller.dispose();
@@ -166,15 +190,17 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       ? _quantityError!.message
       : null;
 
-  bool _reachesCorrectionThreshold(BigInt? available) {
+  int? _compareHarvestCount(BigInt? available) {
     final count = BigInt.tryParse(
       normalizeVietnameseNumber(_fields['count']!.text) ?? '',
     );
-    return available != null &&
-        count != null &&
-        count > BigInt.zero &&
-        count <= BigInt.from(9007199254740991) &&
-        (_final ? count > available : count >= available);
+    if (available == null ||
+        count == null ||
+        count <= BigInt.zero ||
+        count > BigInt.from(9007199254740991)) {
+      return null;
+    }
+    return count.compareTo(available);
   }
 
   String _countLabel(String value) => groupVietnameseDigits(value);
@@ -183,11 +209,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     ShrimpType species, {
     required BigInt? available,
     required bool speciesThresholdsEnabled,
-    required bool populationCorrectionEnabled,
   }) {
-    if (!_final &&
-        !populationCorrectionEnabled &&
-        _reachesCorrectionThreshold(available)) {
+    final countDifference = _compareHarvestCount(available);
+    if (!_final && countDifference != null && countDifference >= 0) {
       return (
         message:
             'Số lượng thu tỉa phải nhỏ hơn số tôm hiện có ước tính. Nếu thu hết hoặc vượt ước tính, vui lòng chọn thu hoạch cuối.',
@@ -352,7 +376,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     AquacultureSeason season, {
     required BigInt? available,
     required bool speciesThresholdsEnabled,
-    required bool populationCorrectionEnabled,
     required bool reasonRequired,
   }) async {
     if (_confirming ||
@@ -366,7 +389,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         season.shrimpType,
         available: available,
         speciesThresholdsEnabled: speciesThresholdsEnabled,
-        populationCorrectionEnabled: populationCorrectionEnabled,
       );
     });
     final valid = _form.currentState!.validate();
@@ -399,29 +421,13 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
       'harvestedAt': _time!.toUtc().toIso8601String(),
       'totalWeightKg': _value('weight')!.toDouble(),
       if (_value('count') != null) 'quantityCount': _value('count')!.toInt(),
-      if (populationCorrectionEnabled && !_final && reasonRequired)
-        'estimatedRemainingCount': _value('remaining')!.toInt(),
-      if ((reasonRequired || !populationCorrectionEnabled) &&
-          _fields['variance']!.text.trim().isNotEmpty)
-        'varianceReason': _fields['variance']!.text.trim(),
+      if (reasonRequired) 'varianceReason': _fields['variance']!.text.trim(),
       'pricePerKg': ?price?.toDouble(),
       'buyerName': _fields['buyer']!.text.trim(),
       for (final entry in {'buyerContact': 'contact', 'note': 'note'}.entries)
         if (_fields[entry.value]!.text.trim().isNotEmpty)
           entry.key: _fields[entry.value]!.text.trim(),
     };
-    final correctedRemainder = body['estimatedRemainingCount'] as int?;
-    if (correctedRemainder != null &&
-        available != null &&
-        BigInt.from(correctedRemainder) > available &&
-        (!await _confirmCorrectedRemainder(
-              count: body['quantityCount'] as int,
-              available: available,
-              remaining: correctedRemainder,
-            ) ||
-            !mounted)) {
-      return;
-    }
     if (!await _confirm(
       body,
       speciesThresholdsEnabled: speciesThresholdsEnabled,
@@ -443,36 +449,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         builder: (dialogContext) => AppConfirmDialog(
           title: 'Cỡ tôm ngoài khoảng thường gặp',
           description: harvestUnusualSizeWarning,
-          cancelLabel: 'Kiểm tra lại',
-          confirmLabel: 'Vẫn lưu',
-          onCancel: () => Navigator.of(dialogContext).pop(false),
-          onConfirm: () => Navigator.of(dialogContext).pop(true),
-        ),
-      );
-      return mounted && confirmed == true;
-    } finally {
-      if (mounted) setState(() => _confirming = false);
-    }
-  }
-
-  Future<bool> _confirmCorrectedRemainder({
-    required int count,
-    required BigInt available,
-    required int remaining,
-  }) async {
-    setState(() => _confirming = true);
-    try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AppConfirmDialog(
-          title: 'Số tôm còn lại cao hơn ước tính',
-          description:
-              'Số lượng thu: ${_countLabel(count.toString())} con.\n'
-              'Ước tính hiện có: ${_countLabel(available.toString())} con.\n'
-              'Số tôm sống còn lại đã nhập: ${_countLabel(remaining.toString())} con.\n\n'
-              'Số còn lại cao hơn ước tính hiện có. Vui lòng kiểm tra lại. '
-              'Nếu số này đúng, chọn “Vẫn lưu”.',
-          level: AppNoticeLevel.warning,
           cancelLabel: 'Kiểm tra lại',
           confirmLabel: 'Vẫn lưu',
           onCancel: () => Navigator.of(dialogContext).pop(false),
@@ -556,7 +532,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     for (final entry in {
       'totalWeightKg': 'weight',
       'quantityCount': 'count',
-      'estimatedRemainingCount': 'remaining',
       'pricePerKg': 'price',
       'buyerName': 'buyer',
       'buyerContact': 'contact',
@@ -649,6 +624,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     // The estimate must use the selected instant, before later mortality occurred.
     final populationProvider = harvestPopulationProvider(_populationQuery);
     final populationState = ref.watch(populationProvider);
+    // Policy flags apply to the whole form. Keep the initial response available
+    // while the selected time loads its own population and withdrawal checks.
+    final initialPolicy = ref
+        .watch(harvestPopulationProvider((seasonId: widget.seasonId, at: null)))
+        .value;
+    final policy = populationState.value ?? initialPolicy;
     final pendingState = ref.watch(pendingHarvestProvider(widget.seasonId));
     final busy = mutation.isLoading || _confirming;
     if (pendingState.isLoading) {
@@ -723,7 +704,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
           final raw = populationState.isLoading || populationState.hasError
               ? null
               : populationState.value?.availableQuantityCount;
-          final available = raw == null ? null : BigInt.parse(raw);
+          final available = raw == null ? null : BigInt.tryParse(raw);
           final withdrawal =
               populationState.isLoading || populationState.hasError
               ? null
@@ -732,40 +713,57 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
               withdrawal?.verified == true &&
               (withdrawal!.unknown || withdrawal.blocked);
           final speciesThresholdsEnabled =
-              populationState.value?.speciesThresholdsEnabled ?? false;
-          final deferredPriceEnabled =
-              populationState.value?.deferredPriceEnabled ?? false;
+              policy?.speciesThresholdsEnabled ?? false;
+          final deferredPriceEnabled = policy?.deferredPriceEnabled ?? false;
           final populationCorrectionEnabled =
-              populationState.value?.populationCorrectionEnabled ?? false;
-          final warning = earlyHarvestWarning(
-            season,
-            _time,
-            speciesThresholdsEnabled: speciesThresholdsEnabled,
-          );
+              policy?.populationCorrectionEnabled ?? false;
+          final warning = policy == null
+              ? null
+              : earlyHarvestWarning(
+                  season,
+                  _time,
+                  speciesThresholdsEnabled: speciesThresholdsEnabled,
+                );
+          final countDifference = _compareHarvestCount(available);
           final correctionNeeded =
-              populationCorrectionEnabled &&
-              _reachesCorrectionThreshold(available);
+              _final && countDifference != null && countDifference > 0;
           final partialExhausted =
-              !_final &&
-              !populationCorrectionEnabled &&
-              _reachesCorrectionThreshold(available);
+              !_final && countDifference != null && countDifference >= 0;
           _QuantityValidationError? validateQuantity() => _validateQuantity(
             season.shrimpType,
             available: available,
             speciesThresholdsEnabled: speciesThresholdsEnabled,
-            populationCorrectionEnabled: populationCorrectionEnabled,
           );
           void refreshQuantityError() {
             if (_submitted) setState(() => _quantityError = validateQuantity());
           }
 
+          final showCountError =
+              !_countFocus.hasFocus && (_countBlurred || _submitted);
+          // Size depends on both inputs and should wait while either is edited.
+          final showSizeError =
+              !_weightFocus.hasFocus &&
+              !_countFocus.hasFocus &&
+              (_weightBlurred || _countBlurred || _submitted) &&
+              !partialExhausted;
           final liveSizeError =
-              (_final && !speciesThresholdsEnabled) || partialExhausted
+              !showSizeError || (_final && !speciesThresholdsEnabled)
               ? null
               : _validateSize(
                   season.shrimpType,
                   speciesThresholdsEnabled: speciesThresholdsEnabled,
                 )?.message;
+          final submittedSizeError = _quantityFieldError('weight');
+          final sizeError = showSizeError
+              ? submittedSizeError ?? liveSizeError
+              : null;
+          final countError = !showCountError
+              ? null
+              : partialExhausted
+              ? validateQuantity()?.message
+              : submittedSizeError == null
+              ? _quantityFieldError('count')
+              : null;
           final diseaseRestricted =
               !populationCorrectionEnabled &&
               populationState.value?.finalReasonRequired == true;
@@ -991,8 +989,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         decimals: 3,
                         required: true,
                         max: 99999999999.999,
-                        fieldError:
-                            _quantityFieldError('weight') ?? liveSizeError,
+                        fieldError: sizeError,
+                        focusNode: _weightFocus,
+                        validateOnBlur: true,
                         onChangedExtra: refreshQuantityError,
                       ),
                       if (!populationState.isLoading &&
@@ -1012,28 +1011,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         busy,
                         hint: 'Nhập số con thu hoạch',
                         required: true,
-                        fieldError: partialExhausted
-                            ? validateQuantity()?.message
-                            : _quantityFieldError('count') ?? liveSizeError,
+                        fieldError: countError ?? sizeError,
                         focusNode: _countFocus,
+                        validateOnBlur: true,
                         max: 9007199254740991,
                         onChangedExtra: refreshQuantityError,
                       ),
-                      if (!_final && correctionNeeded)
-                        _field(
-                          'remaining',
-                          'Số tôm sống còn lại (con)',
-                          busy,
-                          required: true,
-                          hint: 'Nhập số tôm sống còn lại sau thu tỉa',
-                        ),
-                      if (!_final && !correctionNeeded)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Số tôm còn lại sau thu tỉa được hệ thống tự tính khi ghi nhận.',
-                          ),
-                        ),
                       if (reasonRequired)
                         _text(
                           'variance',
@@ -1061,13 +1044,12 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                         'price',
                         'Giá bán (đ/kg)',
                         busy,
-                        hint: deferredPriceEnabled
-                            ? 'Có thể bổ sung sau'
-                            : 'VD: 180000',
+                        hint: 'Nhập giá bán',
                         decimals: 2,
                         required: !deferredPriceEnabled,
                         zero: deferredPriceEnabled || speciesThresholdsEnabled,
                         max: 999999999999.99,
+                        validateOnBlur: true,
                         validateValue: (price) => harvestPriceError(
                           price,
                           enabled: speciesThresholdsEnabled,
@@ -1150,8 +1132,6 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
                                 available: available,
                                 speciesThresholdsEnabled:
                                     speciesThresholdsEnabled,
-                                populationCorrectionEnabled:
-                                    populationCorrectionEnabled,
                                 reasonRequired: reasonRequired,
                               ),
                       ),
@@ -1178,6 +1158,7 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
     String? fieldError,
     String? Function(num?)? validateValue,
     FocusNode? focusNode,
+    bool validateOnBlur = false,
     VoidCallback? onChangedExtra,
   }) => Padding(
     key: ValueKey(key),
@@ -1190,7 +1171,9 @@ class _HarvestFormPageState extends ConsumerState<HarvestFormPage> {
         TextFormField(
           key: ValueKey('harvest-field-$key'),
           controller: _fields[key],
-          autovalidateMode: _fieldAutovalidateMode,
+          autovalidateMode: validateOnBlur
+              ? AutovalidateMode.onUnfocus
+              : _fieldAutovalidateMode,
           focusNode: focusNode,
           readOnly: readOnly,
           forceErrorText: fieldError,

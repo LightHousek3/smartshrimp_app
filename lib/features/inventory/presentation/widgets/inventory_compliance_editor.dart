@@ -121,7 +121,7 @@ class InventoryComplianceEditor extends StatelessWidget {
                       'dual_purpose',
                       'medicine',
                     }.contains(type)
-                ? 'Vui lòng chọn loại sản phẩm'
+                ? 'Chọn phân loại pháp lý theo hồ sơ vật tư.'
                 : null,
             items: const [
               DropdownMenuItem(value: 'feed', child: Text('Thức ăn thủy sản')),
@@ -148,24 +148,16 @@ class InventoryComplianceEditor extends StatelessWidget {
           (text) =>
               onChanged(value.copyWith(registrationNumber: _nullable(text))),
           hint: InventoryRules.registrationPlaceholder(value.regulatoryType),
-          helperText: InventoryRules.registrationHint(value.regulatoryType),
+          helperText: value.regulatoryType == null
+              ? null
+              : InventoryRules.registrationHint(value.regulatoryType),
+          fieldEnabled: value.regulatoryType != null,
           validator: (text) => InventoryRules.registrationNumberError(
             value.regulatoryType,
             text,
           ),
           maxLength: 100,
         ),
-        if (value.regulatoryType == null) ...[
-          const SizedBox(height: 6),
-          const Text(
-            'Chưa đủ căn cứ xác định loại sản phẩm.',
-            style: TextStyle(
-              fontSize: 11,
-              height: 1.5,
-              color: AppColors.inkMuted,
-            ),
-          ),
-        ],
         if (farmId != null)
           InventoryIngredientEditor(
             farmId: farmId!,
@@ -278,6 +270,7 @@ class InventoryComplianceEditor extends StatelessWidget {
     String? Function(String?)? validator,
     int maxLength = 50000,
     bool multiline = false,
+    bool fieldEnabled = true,
   }) => Padding(
     padding: const EdgeInsets.only(top: 16),
     child: InventoryField(
@@ -286,7 +279,7 @@ class InventoryComplianceEditor extends StatelessWidget {
       spacing: 6,
       child: TextFormField(
         initialValue: text,
-        enabled: enabled,
+        enabled: enabled && fieldEnabled,
         maxLength: maxLength,
         minLines: multiline ? 4 : 1,
         maxLines: multiline ? 8 : 1,
@@ -300,7 +293,7 @@ class InventoryComplianceEditor extends StatelessWidget {
         onChanged: changed,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (text) {
-          if (!enabled) return null;
+          if (!enabled || !fieldEnabled) return null;
           if (validator != null) return validator(text);
           return text == null || text.trim().isEmpty
               ? 'Vui lòng nhập ${label.replaceAll(' *', '').toLowerCase()}'

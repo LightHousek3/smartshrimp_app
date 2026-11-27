@@ -14,7 +14,6 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/app_exception.dart';
 import 'package:smartshrimp_app/core/network/api_client.dart';
-import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
@@ -1260,7 +1259,7 @@ void main() {
         find.text(
           'Số tôm còn lại sau thu tỉa được hệ thống tự tính khi ghi nhận.',
         ),
-        findsOneWidget,
+        findsNothing,
       );
       expect(tester.takeException(), isNull);
     },
@@ -1354,12 +1353,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ghi nhận thu hoạch'), findsNothing);
     expect(find.text('620 kg'), findsWidgets);
+    expect(find.text('117,8 tr đ'), findsNWidgets(2));
+    expect(
+      find.text(harvestDate(DateTime.parse(eventJson()['harvestedAt']))),
+      findsOneWidget,
+    );
     await capture(tester, 'list');
     await tester.tap(find.byKey(const ValueKey('harvest-harvest-1')));
     await tester.pumpAndSettle();
     expect(find.text('Chi tiết thu hoạch'), findsOneWidget);
     expect(find.text('Sản lượng và giá bán'), findsOneWidget);
+    expect(find.text('117,8 tr đ'), findsNWidgets(2));
     await capture(tester, 'detail');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('large harvest values and complete timestamps fit narrow cards', (
+    tester,
+  ) async {
+    final event = HarvestEvent.fromJson(eventJson()).copyWith(
+      harvestType: HarvestType.finalHarvest,
+      totalWeightKg: 99999999999.5,
+      quantityCount: '9007199254740991',
+      pricePerKg: 999999999999.99,
+      totalRevenue: 12000000000,
+      estimatedRemainingCount: '0',
+    );
+    final repo = _HarvestRepo()
+      ..detailResult = event
+      ..result = page(items: [event]).copyWith(
+        totalWeightKg: event.totalWeightKg,
+        totalRevenue: event.totalRevenue!,
+      );
+    await mount(tester, repo, status: SeasonStatus.completed);
+    tester.view.physicalSize = const Size(320, 900);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpAndSettle();
+    expect(find.text('12 tỷ đ'), findsNWidgets(2));
+    expect(find.text(harvestDate(event.harvestedAt)), findsOneWidget);
+    expect(find.byTooltip('12.000.000.000 đ'), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('harvest-harvest-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('12 tỷ đ'), findsNWidgets(2));
+    expect(find.text(harvestDate(event.harvestedAt)), findsWidgets);
+    await tester.scrollUntilVisible(find.text('Tạo lúc'), 150);
+    expect(find.text(harvestDate(event.createdAt)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1413,6 +1454,7 @@ void main() {
           await tester.tap(find.text('Thu hoạch cuối'));
           await tester.pumpAndSettle();
         }
+        expect(find.text('Nhập giá bán'), findsOneWidget);
         final banner = find.byType(AppFormMessageBanner);
         expect(banner, findsOneWidget);
         final notice = tester.widget<AppFormMessageBanner>(banner);
@@ -1816,6 +1858,48 @@ void main() {
     },
   );
 
+  for (final isFinal in [false, true]) {
+    for (final days in [10, 59]) {
+      testWidgets('DOC warning stays consistent while population loads '
+          '(final: $isFinal, elapsed days: $days)', (tester) async {
+        final historical = Completer<HarvestPage>();
+        final policyPage = page().copyWith(speciesThresholdsEnabled: true);
+        final repo = _HarvestRepo()
+          ..result = policyPage
+          ..populationLoad = (_) => historical.future;
+        await mount(
+          tester,
+          repo,
+          route: '/harvests/create',
+          seasonOverride: season(SeasonStatus.active).copyWith(
+            stockingDate: vietnamHarvestDay(
+              DateTime.now(),
+            ).subtract(Duration(days: days)),
+          ),
+        );
+        await tester.pumpAndSettle();
+        if (isFinal) {
+          await tester.tap(find.text('Thu hoạch cuối'));
+          await tester.pumpAndSettle();
+        }
+        await _pickHarvestTime(tester, waitForPopulation: false);
+        final warning = find.byKey(const ValueKey('harvest-early-warning'));
+        final expected = days == 10 ? findsOneWidget : findsNothing;
+        expect(repo.queries.last, contains('populationAt'));
+        expect(warning, expected);
+        expect(find.textContaining('chu kỳ tham khảo'), findsNothing);
+        if (days == 10) {
+          expect(find.textContaining('Vụ nuôi mới'), findsOneWidget);
+        }
+
+        historical.complete(policyPage);
+        await tester.pumpAndSettle();
+        expect(warning, expected);
+        expect(find.textContaining('chu kỳ tham khảo'), findsNothing);
+      });
+    }
+  }
+
   testWidgets('early warning allows saving at the mortality-adjusted limit', (
     tester,
   ) async {
@@ -1906,6 +1990,10 @@ void main() {
       await tester.enterText(field('weight'), '100');
       await tester.enterText(field('count'), '1');
       await tester.pumpAndSettle();
+      expect(error('weight'), isNull);
+      expect(error('count'), isNull);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       expect(error('weight'), contains('Cỡ tôm'));
       expect(error('count'), contains('Cỡ tôm'));
       expect(error('price'), isNull);
@@ -1927,7 +2015,7 @@ void main() {
 
   for (final (weight, expectedSize) in [('100', '0,01'), ('1000', '< 0,01')]) {
     testWidgets(
-      'partial harvest shows small size $expectedSize as soon as both fields are entered',
+      'partial harvest shows small size $expectedSize after leaving the count field',
       (tester) async {
         final repo = _HarvestRepo();
         await mount(tester, repo, route: '/harvests/create');
@@ -1942,6 +2030,9 @@ void main() {
           find.byKey(const ValueKey('harvest-field-count')),
           '1',
         );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Cỡ tôm (số lượng'), findsNothing);
+        FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
         for (final field in ['weight', 'count']) {
           final error = tester
@@ -1961,6 +2052,75 @@ void main() {
         expect(find.textContaining('Cỡ tôm (số lượng'), findsNothing);
         expect(repo.bodies, isEmpty);
         expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('count and price show validation after leaving the field', (
+    tester,
+  ) async {
+    final repo = _HarvestRepo()
+      ..result = page().copyWith(speciesThresholdsEnabled: true);
+    await mount(tester, repo, route: '/harvests/create');
+    await tester.pumpAndSettle();
+    final count = find.byKey(const ValueKey('harvest-field-count'));
+    final price = find.byKey(const ValueKey('harvest-field-price'));
+    await tester.enterText(
+      find.byKey(const ValueKey('harvest-field-weight')),
+      '10',
+    );
+    await tester.enterText(count, '1');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(count).forceErrorText, isNull);
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextFormField>(count).forceErrorText,
+      contains('vô lý'),
+    );
+
+    await tester.ensureVisible(price);
+    await tester.enterText(price, '100');
+    await tester.pumpAndSettle();
+    final priceError = find.textContaining('Đơn giá phải từ');
+    expect(priceError, findsNothing);
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(priceError, findsOneWidget);
+  });
+
+  for (final isFinal in [false, true]) {
+    testWidgets(
+      'size validation waits for the weight field when count is entered first (final: $isFinal)',
+      (tester) async {
+        final repo = _HarvestRepo()
+          ..result = page().copyWith(speciesThresholdsEnabled: true);
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        if (isFinal) {
+          await tester.tap(find.text('Thu hoạch cuối'));
+          await tester.pumpAndSettle();
+        }
+        final count = find.byKey(const ValueKey('harvest-field-count'));
+        final weight = find.byKey(const ValueKey('harvest-field-weight'));
+        final sizeError = find.textContaining('Cỡ tôm (số lượng');
+        await tester.enterText(count, '20000');
+        await tester.pumpAndSettle();
+        await tester.enterText(weight, '1');
+        await tester.pumpAndSettle();
+        expect(sizeError, findsNothing);
+
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        expect(sizeError, findsNWidgets(2));
+
+        await tester.enterText(weight, '400');
+        await tester.pumpAndSettle();
+        expect(sizeError, findsNothing);
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        expect(sizeError, findsNothing);
+        expect(repo.bodies, isEmpty);
       },
     );
   }
@@ -2122,7 +2282,7 @@ void main() {
   });
 
   testWidgets(
-    'estimate is grouped above count and excess final count does not require a reason',
+    'estimate is grouped above count and only an excess final count needs a reason',
     (tester) async {
       await mount(tester, _HarvestRepo(), route: '/harvests/create');
       await tester.pumpAndSettle();
@@ -2147,7 +2307,7 @@ void main() {
       expect(reason, findsNothing);
       await tester.enterText(count, '100001');
       await tester.pumpAndSettle();
-      expect(reason, findsNothing);
+      expect(reason, findsOneWidget);
       await tester.enterText(count, '100000');
       await tester.pumpAndSettle();
       expect(reason, findsNothing);
@@ -2438,7 +2598,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  const remainderWarningTitle = 'Số tôm còn lại cao hơn ước tính';
   for (final capacity in ['500000', '600000', null]) {
     testWidgets(
       'partial rejects exhaustion or unknown population; estimate=$capacity',
@@ -2452,7 +2611,6 @@ void main() {
         await tester.pumpAndSettle();
         await _fillHarvestFacts(tester, weight: '10000', count: '600000');
         await _pressHarvest(tester);
-        expect(find.text(remainderWarningTitle), findsNothing);
         expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsOneWidget);
         expect(
           find.textContaining(
@@ -2471,255 +2629,126 @@ void main() {
     );
   }
 
-  for (final (isFinal, quantity) in [
-    (false, '100000'),
-    (false, '100001'),
-    (true, '100000'),
-    (true, '100001'),
+  for (final (isFinal, count, useLegacyPolicy) in [
+    (false, 99999, false),
+    (false, 100000, false),
+    (false, 100001, false),
+    (true, 99999, false),
+    (true, 100000, false),
+    (true, 100001, false),
+    (true, 100001, true),
   ]) {
-    testWidgets('population correction form, final=$isFinal, count=$quantity', (
+    testWidgets(
+      'population boundary: final=$isFinal, count=$count, legacy=$useLegacyPolicy',
+      (tester) async {
+        final repo = _HarvestRepo()
+          ..result = page().copyWith(
+            populationCorrectionEnabled: !useLegacyPolicy,
+          );
+        await mount(tester, repo, route: '/harvests/create');
+        await tester.pumpAndSettle();
+        if (isFinal) {
+          await tester.tap(find.text('Thu hoạch cuối'));
+          await tester.pumpAndSettle();
+        }
+        await _fillHarvestFacts(tester, weight: '1000', count: '$count');
+        await _pickHarvestTime(tester);
+        final reason = find.byKey(const ValueKey('harvest-field-variance'));
+        final needsReason = isFinal && count > 100000;
+        expect(reason, needsReason ? findsOneWidget : findsNothing);
+        expect(
+          find.byKey(const ValueKey('harvest-field-remaining')),
+          findsNothing,
+        );
+        await _pressHarvest(tester, finalHarvest: isFinal);
+        if (!isFinal && count >= 100000) {
+          expect(find.text('Số lượng thu hoạch chưa hợp lệ'), findsOneWidget);
+          expect(
+            find.textContaining('vui lòng chọn thu hoạch cuối'),
+            findsWidgets,
+          );
+          expect(repo.bodies, isEmpty);
+          return;
+        }
+        if (needsReason) {
+          expect(repo.bodies, isEmpty);
+          expect(find.text('Vui lòng nhập lý do hiệu chỉnh.'), findsOneWidget);
+          await tester.ensureVisible(reason);
+          await tester.enterText(reason, 'Đã đếm lại số tôm');
+          await _pressHarvest(tester, finalHarvest: isFinal);
+        }
+        expect(
+          find.text(isFinal ? 'Xác nhận thu hoạch cuối' : 'Xác nhận thu tỉa'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Xác nhận'));
+        await tester.pumpAndSettle();
+        expect(repo.bodies.single['quantityCount'], count);
+        expect(
+          repo.bodies.single['varianceReason'],
+          needsReason ? 'Đã đếm lại số tôm' : isNull,
+        );
+        expect(
+          repo.bodies.single.containsKey('estimatedRemainingCount'),
+          isFalse,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final isFinal in [false, true]) {
+    testWidgets('refreshes a changed estimate after save, final=$isFinal', (
       tester,
     ) async {
       final repo = _HarvestRepo()
-        ..result = page().copyWith(
-          populationCorrectionEnabled: true,
-          finalReasonRequired: true,
-        );
+        ..result = page().copyWith(availableQuantityCount: '1100')
+        ..nextResultOnError = page().copyWith(availableQuantityCount: '900')
+        ..recordError = isFinal
+            ? const ApiException(
+                'Vui lòng nhập lý do hiệu chỉnh.',
+                statusCode: 400,
+                details: {'code': 'HARVEST_VARIANCE_REASON_REQUIRED'},
+              )
+            : const ApiException(
+                'Nếu thu hết hoặc vượt ước tính, vui lòng chọn thu hoạch cuối.',
+                statusCode: 400,
+                details: {'code': 'HARVEST_POPULATION_MISMATCH'},
+              );
       await mount(tester, repo, route: '/harvests/create');
       await tester.pumpAndSettle();
       if (isFinal) {
         await tester.tap(find.text('Thu hoạch cuối'));
         await tester.pumpAndSettle();
       }
-      await _fillHarvestFacts(tester, weight: '1000');
-      await tester.pumpAndSettle();
-      final count = find.byKey(const ValueKey('harvest-field-count'));
-      await tester.enterText(count, quantity);
-      await tester.pumpAndSettle();
-      await _pickHarvestTime(tester);
-
-      final reason = find.byKey(const ValueKey('harvest-field-variance'));
-      final remainder = find.byKey(const ValueKey('harvest-field-remaining'));
-      final needsReason = !isFinal || quantity == '100001';
-      expect(reason, needsReason ? findsOneWidget : findsNothing);
-      expect(remainder, isFinal ? findsNothing : findsOneWidget);
-      if (needsReason) {
-        await _pressHarvest(tester, finalHarvest: isFinal);
-        expect(repo.bodies, isEmpty);
-        expect(find.text('Vui lòng nhập lý do hiệu chỉnh.'), findsOneWidget);
-        await tester.ensureVisible(reason);
-        await tester.enterText(reason, 'Đã đếm lại số tôm');
-      }
-      if (!isFinal) {
-        await tester.ensureVisible(remainder);
-        await tester.enterText(remainder, '0');
-        await _pressHarvest(tester);
-        expect(repo.bodies, isEmpty);
-        await tester.ensureVisible(remainder);
-        await tester.enterText(remainder, '50');
-      }
-
-      await _pressHarvest(tester, finalHarvest: isFinal);
-      expect(find.text(remainderWarningTitle), findsNothing);
-      expect(
-        find.text(isFinal ? 'Xác nhận thu hoạch cuối' : 'Xác nhận thu tỉa'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Xác nhận'));
-      await tester.pumpAndSettle();
-      expect(repo.bodies.single['quantityCount'], int.parse(quantity));
-      expect(
-        repo.bodies.single['varianceReason'],
-        needsReason ? 'Đã đếm lại số tôm' : isNull,
-      );
-      expect(
-        repo.bodies.single['estimatedRemainingCount'],
-        isFinal ? isNull : 50,
-      );
-      expect(tester.takeException(), isNull);
-    });
-  }
-
-  for (final remaining in [500, 900, 5000]) {
-    testWidgets('corrected remainder warning at 900, remaining=$remaining', (
-      tester,
-    ) async {
-      final repo = _HarvestRepo()
-        ..result = page().copyWith(
-          availableQuantityCount: '900',
-          populationCorrectionEnabled: true,
-        );
-      await mount(tester, repo, route: '/harvests/create');
-      await tester.pumpAndSettle();
-      await _fillHarvestFacts(tester);
-      await tester.pumpAndSettle();
-      final count = find.byKey(const ValueKey('harvest-field-count'));
-      final remainder = find.byKey(const ValueKey('harvest-field-remaining'));
-      final reason = find.byKey(const ValueKey('harvest-field-variance'));
-      const correctionReason = 'Đã đếm lại số tôm trong ao';
-      await tester.enterText(count, '1000');
-      await tester.pumpAndSettle();
-      await _pickHarvestTime(tester);
-      await tester.ensureVisible(remainder);
-      await tester.enterText(remainder, '$remaining');
-      await tester.ensureVisible(reason);
-      await tester.enterText(reason, correctionReason);
-      await _pressHarvest(tester);
-
-      final warning = find.text(remainderWarningTitle);
-      final confirmation = find.text('Xác nhận thu tỉa');
-      if (remaining > 900) {
-        expect(warning, findsOneWidget);
-        expect(confirmation, findsNothing);
-        final dialog = tester.widget<AppConfirmDialog>(
-          find.byType(AppConfirmDialog),
-        );
-        expect(dialog.level, AppNoticeLevel.warning);
-        expect(dialog.description, contains('Số lượng thu: 1.000 con.'));
-        expect(dialog.description, contains('Ước tính hiện có: 900 con.'));
-        expect(
-          dialog.description,
-          contains('Số tôm sống còn lại đã nhập: 5.000 con.'),
-        );
-        await tester.tap(find.text('Kiểm tra lại'));
-        await tester.pumpAndSettle();
-        expect(warning, findsNothing);
-        expect(confirmation, findsNothing);
-        expect(repo.bodies, isEmpty);
-        expect(tester.widget<TextFormField>(count).controller!.text, '1.000');
-        expect(
-          tester.widget<TextFormField>(remainder).controller!.text,
-          '5.000',
-        );
-        expect(
-          tester.widget<TextFormField>(reason).controller!.text,
-          correctionReason,
-        );
-
-        await _pressHarvest(tester);
-        expect(warning, findsOneWidget);
-        await tester.tap(find.text('Vẫn lưu'));
-        await tester.pumpAndSettle();
-      }
-      expect(warning, findsNothing);
-      expect(confirmation, findsOneWidget);
-      expect(repo.bodies, isEmpty);
-      await tester.tap(find.text('Xác nhận'));
-      await tester.pumpAndSettle();
-      expect(repo.bodies.single, containsPair('quantityCount', 1000));
-      expect(
-        repo.bodies.single,
-        containsPair('estimatedRemainingCount', remaining),
-      );
-      expect(
-        repo.bodies.single,
-        containsPair('varianceReason', correctionReason),
-      );
-    });
-  }
-
-  testWidgets(
-    'estimate change before save keeps harvest fields and lets the user correct',
-    (tester) async {
-      final repo = _HarvestRepo()
-        ..result = page().copyWith(
-          populationCorrectionEnabled: true,
-          availableQuantityCount: '1100',
-        )
-        ..nextResultOnError = page().copyWith(
-          populationCorrectionEnabled: true,
-          availableQuantityCount: '900',
-        )
-        ..recordError = const ApiException(
-          'Vui lòng nhập lý do hiệu chỉnh.',
-          statusCode: 400,
-          details: {'code': 'HARVEST_VARIANCE_REASON_REQUIRED'},
-        );
-      await mount(tester, repo, route: '/harvests/create');
-      await tester.pumpAndSettle();
       await _fillHarvestFacts(tester, weight: '10', count: '1000');
       await _pickHarvestTime(tester);
-      await _pressHarvest(tester);
+      await _pressHarvest(tester, finalHarvest: isFinal);
       await tester.tap(find.text('Xác nhận'));
       await tester.pumpAndSettle();
       expect(repo.bodies, hasLength(1));
       expect(find.textContaining('trong ao: 900 con'), findsOneWidget);
       final count = find.byKey(const ValueKey('harvest-field-count'));
-      final reason = find.byKey(const ValueKey('harvest-field-variance'));
-      final remainder = find.byKey(const ValueKey('harvest-field-remaining'));
       expect(tester.widget<TextFormField>(count).controller!.text, '1.000');
-      await tester.ensureVisible(remainder);
-      await tester.enterText(remainder, '30');
+      final reason = find.byKey(const ValueKey('harvest-field-variance'));
+      if (!isFinal) {
+        expect(
+          find.textContaining('vui lòng chọn thu hoạch cuối'),
+          findsWidgets,
+        );
+        expect(reason, findsNothing);
+        return;
+      }
       await tester.ensureVisible(reason);
       await tester.enterText(reason, 'Đã đếm lại số tôm');
       repo.recordError = null;
-      await _pressHarvest(tester);
-      expect(repo.bodies, hasLength(1));
+      await _pressHarvest(tester, finalHarvest: true);
       await tester.tap(find.text('Xác nhận'));
       await tester.pumpAndSettle();
-      expect(repo.bodies.last['quantityCount'], 1000);
-      expect(repo.bodies.last['estimatedRemainingCount'], 30);
       expect(repo.bodies.last['varianceReason'], 'Đã đếm lại số tôm');
       expect(repo.keys.last, isNot(repo.keys.first));
-    },
-  );
-
-  testWidgets(
-    'legacy backend accepts final excess without a reason or client remainder',
-    (tester) async {
-      final repo = _HarvestRepo();
-      await mount(tester, repo, route: '/harvests/create');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Thu hoạch cuối'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('harvest-field-weight')),
-        '1000',
-      );
-      for (final entry in {'price': '120000', 'buyer': 'Người mua'}.entries) {
-        await tester.enterText(
-          find.byKey(ValueKey('harvest-field-${entry.key}')),
-          entry.value,
-        );
-      }
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('harvest-field-count')),
-        '100001',
-      );
-      await tester.ensureVisible(find.text('Chọn ngày và giờ...'));
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Chọn ngày và giờ...'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Chọn ngày và giờ...'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Ghi nhận thu hoạch cuối'));
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Ghi nhận thu hoạch cuối'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Ghi nhận thu hoạch cuối'));
-      await tester.pumpAndSettle();
-      expect(find.text('Xác nhận thu hoạch cuối'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('harvest-field-variance')),
-        findsNothing,
-      );
-      await tester.tap(find.text('Xác nhận'));
-      await tester.pumpAndSettle();
-      expect(repo.bodies.single['quantityCount'], 100001);
-      expect(repo.bodies.single.containsKey('varianceReason'), isFalse);
-      expect(
-        repo.bodies.single.containsKey('estimatedRemainingCount'),
-        isFalse,
-      );
-    },
-  );
+    });
+  }
 
   testWidgets(
     'confirmed pending time rejection restores facts and permits a corrected submission',
@@ -2811,10 +2840,11 @@ void main() {
         'buyerName',
         'buyerContact',
         'note',
-        'varianceReason',
       ]) {
         expect(repo.bodies.last[field], body[field]);
       }
+      expect(repo.bodies.first['varianceReason'], 'Original correction');
+      expect(repo.bodies.last.containsKey('varianceReason'), isFalse);
     },
   );
 

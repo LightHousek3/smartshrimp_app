@@ -25,11 +25,13 @@ abstract interface class PondRepository {
     required PondStatus status,
   });
 
-  /// Dimensions are immutable; omitted volume preserves its stored value.
+  /// Update dimensions when the pond has no open season.
   Future<Pond> updatePond({
     required String farmId,
     required String pondId,
     required String name,
+    double? areaM2,
+    double? depthM,
     double? volumeM3,
     required PondType type,
     required PondStatus status,

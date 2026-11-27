@@ -10,15 +10,6 @@ import 'package:smartshrimp_app/features/harvest/presentation/view_models/harves
 import 'package:smartshrimp_app/features/harvest/presentation/widgets/harvest_ui.dart';
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 
-String _formatShortDateTime(DateTime date) {
-  final local = date.toLocal();
-  final h = local.hour.toString().padLeft(2, '0');
-  final m = local.minute.toString().padLeft(2, '0');
-  final d = local.day.toString().padLeft(2, '0');
-  final mo = local.month.toString().padLeft(2, '0');
-  return '$h:$m $d-$mo';
-}
-
 class HarvestDetailPage extends ConsumerWidget {
   const HarvestDetailPage({
     required this.seasonId,
@@ -79,7 +70,7 @@ class HarvestDetailPage extends ConsumerWidget {
                   ('Vụ nuôi', event.season.name),
                   ('Ao nuôi', event.season.pond.name),
                   ('Trang trại', event.season.pond.farm?.name ?? '—'),
-                  ('Thời điểm thu', _formatShortDateTime(event.harvestedAt)),
+                  ('Thời điểm thu', harvestDate(event.harvestedAt)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -95,7 +86,7 @@ class HarvestDetailPage extends ConsumerWidget {
                 title: 'Ghi nhận',
                 items: [
                   ('Người ghi nhận', event.recorderName ?? 'Không ghi nhận'),
-                  ('Tạo lúc', _formatShortDateTime(event.createdAt)),
+                  ('Tạo lúc', harvestDate(event.createdAt)),
                   if (event.varianceReason != null)
                     ('Lý do ghi nhận', event.varianceReason!),
                 ],
@@ -297,9 +288,11 @@ class _HeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -334,7 +327,7 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
               Text(
-                _formatShortDateTime(event.harvestedAt),
+                harvestDate(event.harvestedAt),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.inkMuted,
@@ -360,8 +353,9 @@ class _HeroCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${harvestNumber(event.totalWeightKg)} kg',
+                    HarvestValue(
+                      event.totalWeightKg,
+                      unit: 'kg',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -384,10 +378,11 @@ class _HeroCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      event.totalRevenue == null
-                          ? 'Chưa xác định'
-                          : '${harvestNumber(event.totalRevenue)} đ',
+                    HarvestValue(
+                      event.totalRevenue,
+                      unit: 'đ',
+                      empty: 'Chưa xác định',
+                      compactMillions: true,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -434,21 +429,22 @@ class _ProductionAndPriceCard extends StatelessWidget {
                   children: [
                     _GridCell(
                       label: 'KHỐI LƯỢNG',
-                      value: '${harvestNumber(event.totalWeightKg)} kg',
+                      value: event.totalWeightKg,
+                      unit: 'kg',
                     ),
                     const SizedBox(height: 16),
                     _GridCell(
                       label: 'CỠ TÔM',
-                      value: event.avgSizePerKg == null
-                          ? 'Không ghi nhận'
-                          : '${harvestNumber(event.avgSizePerKg)} con/kg',
+                      value: event.avgSizePerKg,
+                      unit: 'con/kg',
                     ),
                     const SizedBox(height: 16),
                     _GridCell(
                       label: 'TỔNG DOANH THU',
-                      value: event.totalRevenue == null
-                          ? 'Chưa xác định'
-                          : '${harvestNumber(event.totalRevenue)} đ',
+                      value: event.totalRevenue,
+                      unit: 'đ',
+                      empty: 'Chưa xác định',
+                      compactMillions: true,
                     ),
                   ],
                 ),
@@ -460,19 +456,21 @@ class _ProductionAndPriceCard extends StatelessWidget {
                   children: [
                     _GridCell(
                       label: 'SỐ LƯỢNG THU',
-                      value: event.quantityCount ?? 'Không ghi nhận',
+                      value: int.tryParse(event.quantityCount ?? ''),
+                      unit: 'con',
                     ),
                     const SizedBox(height: 16),
                     _GridCell(
                       label: 'GIÁ BÁN',
-                      value: event.pricePerKg == null
-                          ? 'Chưa xác định'
-                          : '${harvestNumber(event.pricePerKg)} đ/kg',
+                      value: event.pricePerKg,
+                      unit: 'đ/kg',
+                      empty: 'Chưa xác định',
                     ),
                     const SizedBox(height: 16),
                     _GridCell(
                       label: 'CÒN LẠI ƯỚC TÍNH',
-                      value: event.estimatedRemainingCount ?? 'Không ghi nhận',
+                      value: int.tryParse(event.estimatedRemainingCount ?? ''),
+                      unit: 'con',
                     ),
                   ],
                 ),
@@ -486,9 +484,18 @@ class _ProductionAndPriceCard extends StatelessWidget {
 }
 
 class _GridCell extends StatelessWidget {
-  const _GridCell({required this.label, required this.value});
+  const _GridCell({
+    required this.label,
+    required this.value,
+    this.unit,
+    this.empty = 'Không ghi nhận',
+    this.compactMillions = false,
+  });
   final String label;
-  final String value;
+  final num? value;
+  final String? unit;
+  final String empty;
+  final bool compactMillions;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -504,8 +511,11 @@ class _GridCell extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 4),
-      Text(
+      HarvestValue(
         value,
+        unit: unit,
+        empty: empty,
+        compactMillions: compactMillions,
         style: const TextStyle(
           fontSize: 14.5,
           fontWeight: FontWeight.w700,

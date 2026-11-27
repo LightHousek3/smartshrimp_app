@@ -69,34 +69,20 @@ abstract final class PondRules {
       return null;
     }
     final volume = (areaM2 * depthM * 100).round() / 100;
-    return volume > maxVolumeM3 ? null : volume;
+    return volume <= 0 || volume > maxVolumeM3 ? null : volume;
   }
 
   /// Run after individual dimension validation, before submitting the form.
   static String? validateCalculatedVolume(double areaM2, double depthM) {
     if (calculateVolume(areaM2, depthM) == null) {
-      return 'Thể tích tính từ diện tích và độ sâu vượt quá '
-          '${_formatLimit(maxVolumeM3)} m³.';
+      return 'Thể tích ước tính nằm ngoài giới hạn lưu trữ. '
+          'Vui lòng nhập thể tích nước thực tế.';
     }
     return null;
   }
 
   static String? validateVolume(String? value) =>
       validatePositiveNumber(value, 'Thể tích', max: maxVolumeM3);
-
-  /// A manually entered usable volume may be lower than the rounded capacity.
-  static String? validateVolumeCapacity(
-    double? volumeM3,
-    double areaM2,
-    double depthM,
-  ) {
-    final capacity = calculateVolume(areaM2, depthM);
-    if (volumeM3 != null && capacity != null && volumeM3 > capacity) {
-      return 'Thể tích không được vượt quá diện tích × độ sâu '
-          '(${_formatLimit(capacity)} m³).';
-    }
-    return null;
-  }
 
   static String _formatLimit(double value) =>
       formatVietnameseNumber(value, decimalPlaces: 2);

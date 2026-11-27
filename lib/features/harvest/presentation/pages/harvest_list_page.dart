@@ -14,13 +14,6 @@ import 'package:smartshrimp_app/features/harvest/presentation/widgets/harvest_ui
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 
-String _formatDateOnly(DateTime date) {
-  final local = date.toLocal();
-  final d = local.day.toString().padLeft(2, '0');
-  final m = local.month.toString().padLeft(2, '0');
-  return '$d/$m/${local.year}';
-}
-
 class HarvestListPage extends ConsumerStatefulWidget {
   const HarvestListPage({required this.seasonId, super.key});
   final String seasonId;
@@ -90,14 +83,15 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
             children: [
               Expanded(
                 child: _SummaryCard(
-                  value: data.totalResults.toString(),
+                  value: data.totalResults,
                   label: 'SỐ LẦN THU',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _SummaryCard(
-                  value: '${harvestNumber(data.totalWeightKg)} kg',
+                  value: data.totalWeightKg,
+                  unit: 'kg',
                   label: 'TỔNG SẢN LƯỢNG',
                 ),
               ),
@@ -107,8 +101,11 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
                   value:
                       data.unpricedHarvests > 0 &&
                           data.unpricedHarvests == data.totalResults
-                      ? 'Chưa xác định'
-                      : '${harvestNumber(data.totalRevenue / 1000000)} tr',
+                      ? null
+                      : data.totalRevenue,
+                  unit: 'đ',
+                  compactMillions: true,
+                  empty: 'Chưa xác định',
                   label:
                       data.unpricedHarvests > 0 &&
                           data.unpricedHarvests < data.totalResults
@@ -121,15 +118,15 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
           orElse: () => const Row(
             children: [
               Expanded(
-                child: _SummaryCard(value: '—', label: 'SỐ LẦN THU'),
+                child: _SummaryCard(value: null, label: 'SỐ LẦN THU'),
               ),
               SizedBox(width: 10),
               Expanded(
-                child: _SummaryCard(value: '—', label: 'TỔNG SẢN LƯỢNG'),
+                child: _SummaryCard(value: null, label: 'TỔNG SẢN LƯỢNG'),
               ),
               SizedBox(width: 10),
               Expanded(
-                child: _SummaryCard(value: '—', label: 'DOANH THU'),
+                child: _SummaryCard(value: null, label: 'DOANH THU'),
               ),
             ],
           ),
@@ -216,10 +213,19 @@ class _HarvestListPageState extends ConsumerState<HarvestListPage> {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.value, required this.label});
+  const _SummaryCard({
+    required this.value,
+    required this.label,
+    this.unit,
+    this.empty = '—',
+    this.compactMillions = false,
+  });
 
-  final String value;
+  final num? value;
   final String label;
+  final String? unit;
+  final String empty;
+  final bool compactMillions;
 
   @override
   Widget build(BuildContext context) {
@@ -246,16 +252,17 @@ class _SummaryCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
+          HarvestValue(
             value,
+            unit: unit,
+            empty: empty,
+            compactMillions: compactMillions,
+            alignment: Alignment.center,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: AppColors.ink,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
           Text(
@@ -317,26 +324,28 @@ class _HarvestItemCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          harvestTypeLabel(event.harvestType),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            harvestTypeLabel(event.harvestType),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _formatDateOnly(event.harvestedAt),
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.inkMuted,
+                          const SizedBox(height: 3),
+                          Text(
+                            harvestDate(event.harvestedAt),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.inkMuted,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const Icon(
                       Icons.chevron_right_rounded,
@@ -370,14 +379,15 @@ class _HarvestItemCard extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${harvestNumber(event.totalWeightKg)} kg',
+                            HarvestValue(
+                              event.totalWeightKg,
+                              unit: 'kg',
+                              alignment: Alignment.center,
                               style: const TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.ink,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -395,16 +405,15 @@ class _HarvestItemCard extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              event.pricePerKg == null
-                                  ? '—'
-                                  : '${harvestNumber(event.pricePerKg)} đ',
+                            HarvestValue(
+                              event.pricePerKg,
+                              unit: 'đ',
+                              alignment: Alignment.center,
                               style: const TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.ink,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -422,16 +431,17 @@ class _HarvestItemCard extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              event.totalRevenue == null
-                                  ? 'Chưa xác định'
-                                  : '${harvestNumber(event.totalRevenue)} đ',
+                            HarvestValue(
+                              event.totalRevenue,
+                              unit: 'đ',
+                              empty: 'Chưa xác định',
+                              compactMillions: true,
+                              alignment: Alignment.center,
                               style: const TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF0F9B8E),
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),

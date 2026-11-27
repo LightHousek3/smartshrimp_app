@@ -6,13 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/core/errors/error_mapper.dart';
 import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
+import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
+import 'package:smartshrimp_app/features/farm/presentation/view_models/farm_controller.dart';
 import 'package:smartshrimp_app/features/pond/domain/entities/pond.dart';
 import 'package:smartshrimp_app/features/pond/domain/pond_rules.dart';
-import 'package:smartshrimp_app/features/pond/presentation/widgets/pond_ui.dart';
 import 'package:smartshrimp_app/features/pond/presentation/view_models/pond_controller.dart';
 
 /// Use navigation data when available; direct edit links first load the pond.
@@ -83,7 +84,6 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
   String? _volumeError;
 
   bool get _editing => widget.initialPond != null;
-  bool get _canEditVolume => !_editing || _calculatedVolume != null;
 
   // This is a UI snapshot: the backend rechecks occupancy if it changes meanwhile.
   bool get _hasOpenSeason => widget.initialPond?.hasOpenSeason == true;
@@ -92,6 +92,18 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     PondRules.parseNumber(_area.text),
     PondRules.parseNumber(_depth.text),
   );
+
+  bool _isVolumeOutsideEstimate(double estimate) {
+    final entered = PondRules.parseNumber(_volume.text);
+    if (entered == null || PondRules.validateVolume(_volume.text) != null) {
+      return false;
+    }
+    // Compare at storage precision so exactly 10% does not warn.
+    final estimateHundredths = (estimate * 100).round();
+    final enteredHundredths = (entered * 100).round();
+    return (enteredHundredths - estimateHundredths).abs() * 10 >
+        estimateHundredths;
+  }
 
   // Compare normalized values so formatting changes cannot trigger an empty update.
   bool get _hasChanges {
@@ -103,6 +115,9 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     return PondRules.normalizeName(_name.text) !=
             PondRules.normalizeName(pond.name) ||
         volume != pond.volumeM3 ||
+        (!_hasOpenSeason &&
+            (PondRules.parseNumber(_area.text) != pond.areaM2 ||
+                PondRules.parseNumber(_depth.text) != pond.depthM)) ||
         _type != pond.type ||
         _status != pond.status;
   }
@@ -183,6 +198,10 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
         .watch(pondMutationControllerProvider(widget.farmId))
         .isLoading;
     final editing = widget.initialPond != null;
+    final farmName = ref
+        .watch(farmDetailControllerProvider(widget.farmId))
+        .value
+        ?.name;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppGradientBackground(
@@ -193,7 +212,8 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: <Widget>[
                 StickyPageHeader(
-                  title: editing ? 'Cập nhật ao' : 'Tạo ao mới',
+                  title: editing ? 'Chỉnh sửa ao' : 'Thêm ao mới',
+                  subtitle: farmName,
                   onBack: loading ? null : context.pop,
                 ),
                 SliverPadding(
@@ -209,55 +229,12 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         validator: PondRules.validateName,
                         onChanged: (_) => setState(() {}),
-                        decoration: const InputDecoration(
-                          hintText: 'VD: Ao A1, Ao Lắng...',
-                          counterText: '',
-                        ),
+                        style: AppFormMetrics.inputStyle,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: AppFormMetrics.compactDecoration(
+                          hintText: 'VD: Ao A3',
+                        ).copyWith(counterText: ''),
                       ),
-                      const SizedBox(height: 15),
-                      _numberField(
-                        _area,
-                        'Diện tích (m²)',
-                        '1200',
-                        PondRules.validateArea,
-                        readOnly: editing,
-                      ),
-                      const SizedBox(height: 15),
-                      _numberField(
-                        _depth,
-                        'Độ sâu (m)',
-                        '1.5',
-                        PondRules.validateDepth,
-                        readOnly: editing,
-                      ),
-                      if (_volumeError != null) ...<Widget>[
-                        const SizedBox(height: 7),
-                        Text(
-                          _volumeError!,
-                          style: const TextStyle(
-                            color: AppColors.error,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 15),
-                      _numberField(
-                        _volume,
-                        'Thể tích (m³) - tùy chọn',
-                        editing
-                            ? 'Để trống để giữ thể tích hiện tại'
-                            : 'Để trống để hệ thống tự tính',
-                        PondRules.validateVolume,
-                        required: false,
-                        readOnly: !_canEditVolume,
-                      ),
-                      if (editing && !_canEditVolume) ...<Widget>[
-                        const SizedBox(height: 7),
-                        const Text(
-                          'Chưa đủ thông tin diện tích và độ sâu để cập nhật thể tích.',
-                        ),
-                      ],
                       const SizedBox(height: 15),
                       _label('Loại ao'),
                       const SizedBox(height: 8),
@@ -291,31 +268,108 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                       const SizedBox(height: 15),
                       _label('Trạng thái'),
                       const SizedBox(height: 7),
-                      DropdownButtonFormField<PondStatus>(
-                        initialValue: _status,
-                        decoration: const InputDecoration(),
-                        items:
-                            const <PondStatus>[
-                              PondStatus.available,
-                              PondStatus.maintenance,
-                            ].map((value) {
-                              return DropdownMenuItem(
-                                value: value,
-                                enabled:
-                                    value != PondStatus.maintenance ||
-                                    _canEnterMaintenance,
-                                child: Text(pondStatusLabel(value)),
-                              );
-                            }).toList(),
-                        onChanged: loading
-                            ? null
-                            : (value) => setState(() => _status = value!),
+                      Row(
+                        children: [
+                          for (final status in [
+                            PondStatus.available,
+                            PondStatus.maintenance,
+                          ])
+                            Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  right: status == PondStatus.available
+                                      ? 12
+                                      : 0,
+                                ),
+                                child: _ChoiceButton(
+                                  label: status == PondStatus.available
+                                      ? 'Sẵn sàng'
+                                      : 'Đang bảo trì',
+                                  selected: _status == status,
+                                  onTap:
+                                      loading ||
+                                          (status == PondStatus.maintenance &&
+                                              !_canEnterMaintenance)
+                                      ? null
+                                      : () => setState(() => _status = status),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xB3FFFFFF),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.line),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _label('Thông số ao'),
+                            const SizedBox(height: 14),
+                            _numberField(
+                              _area,
+                              'Diện tích mặt nước (m²)',
+                              'VD: 3.200',
+                              (value) =>
+                                  editing &&
+                                      widget.initialPond?.areaM2 == null &&
+                                      (value?.trim().isEmpty ?? true)
+                                  ? null
+                                  : PondRules.validateArea(value),
+                              readOnly: _hasOpenSeason,
+                            ),
+                            const SizedBox(height: 15),
+                            _numberField(
+                              _depth,
+                              'Độ sâu trung bình (m)',
+                              'VD: 1,4',
+                              (value) =>
+                                  editing &&
+                                      widget.initialPond?.depthM == null &&
+                                      (value?.trim().isEmpty ?? true)
+                                  ? null
+                                  : PondRules.validateDepth(value),
+                              readOnly: _hasOpenSeason,
+                            ),
+                            if (_volumeError != null) ...<Widget>[
+                              const SizedBox(height: 7),
+                              Text(
+                                _volumeError!,
+                                style: const TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 15),
+                            _numberField(
+                              _volume,
+                              'Thể tích nước (m³)',
+                              'VD: 4.480',
+                              PondRules.validateVolume,
+                              required: false,
+                            ),
+                            if (_calculatedVolume case final estimate?) ...[
+                              const SizedBox(height: 12),
+                              _VolumeEstimate(
+                                volume: estimate,
+                                showWarning: _isVolumeOutsideEstimate(estimate),
+                                onApply: loading ? null : _useAutoVolume,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                       if (widget.initialPond?.hasOpenSeason ==
                           true) ...<Widget>[
                         const SizedBox(height: 13),
                         const Text(
-                          'Ao có vụ nuôi mở: không thể đổi loại ao hoặc chuyển sang bảo trì.',
+                          'Ao có vụ đang chuẩn bị hoặc đang nuôi. Diện tích, độ sâu và loại ao được khóa.',
                           style: TextStyle(
                             color: Color(0xFF9A5B00),
                             fontSize: 12,
@@ -367,7 +421,14 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.check, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(editing ? 'Lưu thay đổi' : 'Tạo ao'),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -399,11 +460,20 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
         readOnly: readOnly,
         focusNode: identical(controller, _volume) ? _volumeFocus : null,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        autocorrect: false,
+        enableSuggestions: false,
         inputFormatters: const [VietnameseNumberInputFormatter()],
         autovalidateMode: AutovalidateMode.onUserInteraction,
         onChanged: (_) => _onNumberChanged(controller),
         validator: readOnly ? null : validator,
-        decoration: InputDecoration(hintText: hint),
+        style: AppFormMetrics.inputStyle.copyWith(fontFamily: 'JetBrainsMono'),
+        decoration: AppFormMetrics.compactDecoration(hintText: hint).copyWith(
+          hintStyle: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 14,
+            color: AppColors.inkMuted,
+          ),
+        ),
       ),
     ],
   );
@@ -434,22 +504,11 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
     if (!_formKey.currentState!.validate()) return;
     final areaM2 = PondRules.parseNumber(_area.text);
     final depthM = PondRules.parseNumber(_depth.text);
-    final volumeM3 = _canEditVolume
-        ? PondRules.parseNumber(_volume.text)
-        : null;
-    if ((!_editing || volumeM3 != null) && areaM2 != null && depthM != null) {
-      final volumeError = PondRules.validateCalculatedVolume(areaM2, depthM);
-      if (volumeError != null) {
-        setState(() => _volumeError = volumeError);
-        return;
-      }
-      final capacityError = PondRules.validateVolumeCapacity(
-        volumeM3,
-        areaM2,
-        depthM,
-      );
-      if (capacityError != null) {
-        setState(() => _volumeError = capacityError);
+    final volumeM3 = PondRules.parseNumber(_volume.text);
+    if (!_editing && volumeM3 == null && areaM2 != null && depthM != null) {
+      final error = PondRules.validateCalculatedVolume(areaM2, depthM);
+      if (error != null) {
+        setState(() => _volumeError = error);
         return;
       }
     }
@@ -472,7 +531,13 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
           : await controller.updatePond(
               pondId: initialPond.id,
               name: _name.text,
-              volumeM3: volumeM3,
+              areaM2: !_hasOpenSeason && areaM2 != initialPond.areaM2
+                  ? areaM2
+                  : null,
+              depthM: !_hasOpenSeason && depthM != initialPond.depthM
+                  ? depthM
+                  : null,
+              volumeM3: volumeM3 == initialPond.volumeM3 ? null : volumeM3,
               type: _type,
               status: _status,
             );
@@ -491,6 +556,108 @@ class _PondFormPageState extends ConsumerState<PondFormPage> {
         AppNoticeService.danger(context, ErrorMapper.displayMessage(error));
       }
     }
+  }
+}
+
+class _VolumeEstimate extends StatelessWidget {
+  const _VolumeEstimate({
+    required this.volume,
+    required this.showWarning,
+    required this.onApply,
+  });
+
+  final double volume;
+  final bool showWarning;
+  final VoidCallback? onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = showWarning ? const Color(0xFF9C4E12) : const Color(0xFF007970);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: showWarning ? const Color(0xFFFBF2DE) : const Color(0xFFE0F4F1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: showWarning
+              ? const Color(0xFFF2D681)
+              : const Color(0xFF8CF4E4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'THỂ TÍCH ƯỚC TÍNH',
+                      style: TextStyle(
+                        color: ink,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${formatVietnameseNumber(volume, decimalPlaces: 2)} m³',
+                      style: TextStyle(
+                        color: ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.ocean,
+                      surfaceTintColor: Colors.transparent,
+                      shadowColor: ink.withValues(alpha: 0.2),
+                      elevation: 2,
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    onPressed: onApply,
+                    child: const Text(
+                      'Dùng số này',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            showWarning
+                ? 'Diện tích × độ sâu. Số đang nhập lệch trên 10%; hãy kiểm tra vì '
+                      'thể tích ảnh hưởng trực tiếp đến liều xử lý nước.'
+                : 'Diện tích × độ sâu. Dùng làm cơ sở kiểm tra liều theo m³ nước.',
+            style: TextStyle(color: ink, fontSize: 11, height: 1.45),
+          ),
+        ],
+      ),
+    );
   }
 }
 

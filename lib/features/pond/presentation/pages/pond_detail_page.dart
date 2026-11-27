@@ -77,6 +77,12 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
   // The season API rechecks eligibility when the form is submitted.
   bool get _canCreateSeason => SeasonRules.canCreateForPond(pond);
 
+  bool _canDelete(AsyncValue<List<AquacultureSeason>> history) =>
+      !pond.hasOpenSeason &&
+      !history.isLoading &&
+      !history.hasError &&
+      history.value?.isEmpty == true;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -148,8 +154,14 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
                     onRetry: _refreshSeasons,
                   ),
                 ),
-                const SizedBox(height: 16),
-                _deleteButton(mutation.isLoading || seasons.isLoading),
+                if (_canDelete(seasons)) ...[
+                  const SizedBox(height: 16),
+                  DestructiveActionButton(
+                    label: 'Xóa ao',
+                    loading: mutation.isLoading,
+                    onPressed: _delete,
+                  ),
+                ],
               ],
             ),
           ),
@@ -367,12 +379,6 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     );
   }
 
-  Widget _deleteButton(bool loading) => DestructiveActionButton(
-    label: 'Xóa ao',
-    loading: loading,
-    onPressed: _delete,
-  );
-
   String get _filterLabel => switch (_filter) {
     _SeasonFilter.all => 'Trạng thái',
     _SeasonFilter.active => 'Đang nuôi',
@@ -413,28 +419,26 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
     await ref.read(pondSeasonHistoryProvider(_scope).future);
   }
 
-  /// Block open seasons and history locally before offering permanent deletion.
+  /// Recheck history after confirmation; the server checks references at deletion.
   Future<void> _delete() async {
-    final seasons = ref.read(pondSeasonHistoryProvider(_scope));
-    if (seasons.isLoading) return;
-    final blockers = <String>[
-      if (pond.hasOpenSeason)
-        'Ao đang có vụ nuôi mở. Không thể xóa ao khi còn vụ nuôi hoặc dữ liệu liên quan.',
-      if (seasons.hasError || !seasons.hasValue)
-        'Không thể tải danh sách vụ nuôi.',
-      if (seasons.value?.isNotEmpty ?? false)
-        'Ao đã có lịch sử vụ nuôi. Không thể xóa ao khi còn lịch sử vụ nuôi.',
-    ];
+    final history = pondSeasonHistoryProvider(_scope);
+    if (!_canDelete(ref.read(history))) return;
     final confirmed = await showAppConfirmDialog(
       context,
       entityLabel: 'ao',
       entityName: pond.name,
-      retentionMessage:
-          'Ao sẽ bị xóa vĩnh viễn. Chỉ có thể xóa khi không còn dữ liệu liên quan hoặc lịch sử vụ nuôi.',
+      retentionMessage: 'Ao sẽ bị xóa vĩnh viễn.',
       confirmLabel: 'Xóa ao',
-      blockers: blockers,
     );
     if (!confirmed || !mounted) return;
+    if (!_canDelete(ref.read(history))) {
+      AppNoticeService.danger(
+        context,
+        'Dữ liệu của ao đã thay đổi. Vui lòng kiểm tra lại.',
+        title: 'Không thể xóa ao',
+      );
+      return;
+    }
     try {
       await ref
           .read(pondMutationControllerProvider(pond.farmId).notifier)
@@ -449,6 +453,10 @@ class _PondDetailContentState extends ConsumerState<_PondDetailContent> {
           ErrorMapper.displayMessage(error),
           title: 'Không thể xóa ao',
         );
+        if (error is AppException && error.statusCode == 409) {
+          ref.invalidate(history);
+          ref.invalidate(pondDetailControllerProvider(_scope));
+        }
       }
     }
   }
@@ -477,37 +485,63 @@ class _PondSummaryCard extends StatelessWidget {
     child: Column(
       children: <Widget>[
         Row(
-          children: <Widget>[
-            _PondBadge(
-              label: pondStatusLabel(pond.status),
-              background: _pondStatusBackground(pond.status),
-              foreground: _pondStatusForeground(pond.status),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _PondInfoRow(
+                icon: Icons.layers_rounded,
+                iconColor: const Color(0xFF3B82F6),
+                label: 'Diện tích mặt nước',
+                value: '${formatCompactNumber(pond.areaM2)} m²',
+              ),
             ),
-            const SizedBox(width: 8),
-            _PondBadge(
-              label: pondTypeLabel(pond.type),
-              background: const Color(0xFFEEF1F6),
-              foreground: const Color(0xFF64748B),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: <Widget>[
+                    _PondBadge(
+                      dot: true,
+                      label: pondStatusLabel(pond.status),
+                      background: _pondStatusBackground(pond.status),
+                      foreground: _pondStatusForeground(pond.status),
+                    ),
+
+                    _PondBadge(
+                      label: pondTypeLabel(pond.type),
+                      background: const Color(0xFFEEF1F6),
+                      foreground: const Color(0xFF64748B),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
-        _PondInfoRow(
-          icon: Icons.layers_rounded,
-          iconColor: const Color(0xFF3B82F6),
-          label: 'Diện tích mặt nước',
-          value: '${formatCompactNumber(pond.areaM2)} m²',
-        ),
-        _PondInfoRow(
-          icon: Icons.water_drop_outlined,
-          iconColor: const Color(0xFF3B82F6),
-          label: 'Độ sâu trung bình',
-          value: '${formatCompactNumber(pond.depthM)} m',
-        ),
-        _PondInfoRow(
-          icon: Icons.water_drop_outlined,
-          iconColor: const Color(0xFF0F9B8E),
-          label: 'Thể tích nước',
-          value: '${formatCompactNumber(pond.volumeM3)} m³',
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _PondInfoRow(
+                icon: Icons.water_drop_outlined,
+                iconColor: const Color(0xFF3B82F6),
+                label: 'Độ sâu trung bình',
+                value: '${formatCompactNumber(pond.depthM)} m',
+              ),
+            ),
+            Expanded(
+              child: _PondInfoRow(
+                icon: Icons.water_drop_outlined,
+                iconColor: const Color(0xFF0F9B8E),
+                label: 'Thể tích nước',
+                value: '${formatCompactNumber(pond.volumeM3)} m³',
+              ),
+            ),
+          ],
         ),
       ],
     ),
@@ -519,11 +553,13 @@ class _PondBadge extends StatelessWidget {
     required this.label,
     required this.background,
     required this.foreground,
+    this.dot = false,
   });
 
   final String label;
   final Color background;
   final Color foreground;
+  final bool dot;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -532,14 +568,25 @@ class _PondBadge extends StatelessWidget {
       color: background,
       borderRadius: BorderRadius.circular(99),
     ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: foreground,
-        fontSize: 11,
-        height: 1,
-        fontWeight: FontWeight.w600,
-      ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (dot) ...[
+          Icon(Icons.circle, size: 6, color: foreground),
+          const SizedBox(width: 5),
+        ],
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 11,
+              height: 1,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -558,8 +605,8 @@ class _PondInfoRow extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 49,
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 49),
     child: Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Row(

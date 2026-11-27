@@ -49,36 +49,76 @@ Future<GoRouter> mountFlow(
   );
   addTearDown(container.dispose);
   await container.read(authControllerProvider.future);
+  final rootNavigator = GlobalKey<NavigatorState>();
   final router = GoRouter(
+    navigatorKey: rootNavigator,
     initialLocation: location,
     routes: [
-      GoRoute(
-        path: '/seasons/:seasonId/ai-diagnoses',
-        builder: (_, state) => AiDiagnosisPage(
-          seasonId: 'season',
-          selectForCase: state.uri.queryParameters['selectForCase'] == '1',
-        ),
-        routes: [
-          GoRoute(
-            path: ':diagnosisId',
-            builder: (_, state) => AiDiagnosisDetailPage(
-              seasonId: 'season',
-              diagnosisId: state.pathParameters['diagnosisId']!,
-              selectForCase: state.uri.queryParameters['selectForCase'] == '1',
-            ),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => Scaffold(body: shell),
+        branches: [
+          StatefulShellBranch(
+            initialLocation: '/seasons/season',
+            routes: [
+              GoRoute(
+                path: '/seasons/:seasonId',
+                builder: (_, _) => const Scaffold(body: Text('Vụ nuôi')),
+                routes: [
+                  GoRoute(
+                    path: 'ai-diagnoses',
+                    parentNavigatorKey: rootNavigator,
+                    builder: (_, state) => AiDiagnosisPage(
+                      seasonId: 'season',
+                      selectForCase:
+                          state.uri.queryParameters['selectForCase'] == '1',
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: ':diagnosisId',
+                        parentNavigatorKey: rootNavigator,
+                        builder: (_, state) => AiDiagnosisDetailPage(
+                          seasonId: 'season',
+                          diagnosisId: state.pathParameters['diagnosisId']!,
+                          selectForCase:
+                              state.uri.queryParameters['selectForCase'] == '1',
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'disease-cases',
+                    builder: (_, _) =>
+                        const Scaffold(body: Text('Danh sách ca bệnh')),
+                    routes: [
+                      GoRoute(
+                        path: 'create',
+                        builder: (_, state) => DiseaseCaseFormPage(
+                          seasonId: 'season',
+                          initialAiDiagnosisId:
+                              state.uri.queryParameters['aiDiagnosisId'],
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'create-from-ai',
+                        parentNavigatorKey: rootNavigator,
+                        builder: (_, state) => DiseaseCaseFormPage(
+                          seasonId: 'season',
+                          initialAiDiagnosisId:
+                              state.uri.queryParameters['aiDiagnosisId'],
+                        ),
+                      ),
+                      GoRoute(
+                        path: ':id',
+                        builder: (_, _) =>
+                            const Scaffold(body: Text('Ca đã tạo')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/seasons/:seasonId/disease-cases/create',
-        builder: (_, state) => DiseaseCaseFormPage(
-          seasonId: 'season',
-          initialAiDiagnosisId: state.uri.queryParameters['aiDiagnosisId'],
-        ),
-      ),
-      GoRoute(
-        path: '/seasons/:seasonId/disease-cases/:id',
-        builder: (_, _) => const Scaffold(body: Text('Ca đã tạo')),
       ),
     ],
   );
@@ -103,6 +143,40 @@ Future<void> press(WidgetTester tester, String label) async {
 void main() {
   setUpAll(loadAppFonts);
   tearDown(AppNoticeService.hide);
+
+  testWidgets(
+    'opens the case form from pushed AI overlays above the season tab',
+    (tester) async {
+      final cases = CaseFixtureRepository()..empty = true;
+      final router = await mountFlow(
+        tester,
+        cases,
+        location: '/seasons/season',
+      );
+      router.push('/seasons/season/ai-diagnoses');
+      await tester.pumpAndSettle();
+      await press(tester, 'Đốm trắng');
+      await press(tester, 'Tạo ca bệnh từ kết quả này');
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DiseaseCaseFormPage), findsOneWidget);
+      expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+      await tester.tap(find.byTooltip('Quay lại'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AiDiagnosisDetailPage), findsOneWidget);
+
+      await press(tester, 'Tạo ca bệnh từ kết quả này');
+      await tester.enterText(find.byType(TextFormField).first, 'Tôm giảm ăn');
+      await tester.enterText(find.byType(TextFormField).last, 'Quan sát nhá');
+      await press(tester, 'Gửi cho chuyên gia');
+      expect(tester.takeException(), isNull);
+      expect(cases.selectedAi, 'diagnosis');
+      expect(cases.mutations, 1);
+      expect(find.text('Ca đã tạo'), findsOneWidget);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Danh sách ca bệnh'), findsOneWidget);
+    },
+  );
 
   for (final recognized in [true, false]) {
     testWidgets(

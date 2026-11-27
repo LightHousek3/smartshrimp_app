@@ -84,11 +84,11 @@ void main() {
       expect(canSave(), isFalse);
       expect(
         tester.widget<TextField>(find.byType(TextField).at(1)).readOnly,
-        isTrue,
+        isFalse,
       );
       expect(
         tester.widget<TextField>(find.byType(TextField).at(2)).readOnly,
-        isTrue,
+        isFalse,
       );
       await tester.enterText(fields.at(3), '1300');
       await tester.pump();
@@ -113,7 +113,7 @@ void main() {
   for (final status in pond_domain.PondSeasonStatus.values.where(
     (s) => s != pond_domain.PondSeasonStatus.unknown,
   )) {
-    for (final volume in ['1300', '1500']) {
+    for (final volume in ['1300', '1600']) {
       testWidgets('edit submits volume $volume during $status', (tester) async {
         final repo = await _pumpPondForm(
           tester,
@@ -131,7 +131,7 @@ void main() {
         );
         expect(
           find.text(
-            'Ao có vụ nuôi mở: không thể đổi loại ao hoặc chuyển sang bảo trì.',
+            'Ao có vụ đang chuẩn bị hoặc đang nuôi. Diện tích, độ sâu và loại ao được khóa.',
           ),
           findsOneWidget,
         );
@@ -177,7 +177,7 @@ void main() {
     },
   );
 
-  for (final invalid in ['0', '1500.01']) {
+  for (final invalid in ['0', '-1']) {
     testWidgets('edit rejects volume $invalid without update request', (
       tester,
     ) async {
@@ -194,7 +194,7 @@ void main() {
     });
   }
 
-  testWidgets('legacy missing dimensions permits rename and locks volume', (
+  testWidgets('legacy missing dimensions permit rename and volume updates', (
     tester,
   ) async {
     final repo = await _pumpPondForm(
@@ -203,7 +203,7 @@ void main() {
     );
     expect(
       tester.widget<TextField>(find.byType(TextField).at(3)).readOnly,
-      isTrue,
+      isFalse,
     );
     await tester.enterText(find.byType(TextFormField).at(0), 'Legacy renamed');
     await tester.pump();
@@ -273,27 +273,78 @@ void main() {
     });
   }
 
-  testWidgets(
-    'manual volume above capacity is rejected without a create request',
-    (tester) async {
-      final repository = await _pumpPondForm(tester);
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(0), 'Pond');
-      await tester.enterText(fields.at(1), '1000');
-      await tester.enterText(fields.at(2), '1.5');
-      await tester.enterText(fields.at(3), '1600');
+  testWidgets('manual volume above the estimate is sent to the server', (
+    tester,
+  ) async {
+    final repository = await _pumpPondForm(tester);
+    final fields = find.byType(TextFormField);
+    expect(find.widgetWithText(OutlinedButton, 'Hủy'), findsNothing);
+    await tester.enterText(fields.at(0), 'Pond');
+    await tester.enterText(fields.at(1), '1000');
+    await tester.enterText(fields.at(2), '1.5');
+    await tester.enterText(fields.at(3), '1600');
+    await tester.pump();
+    final submit = find.widgetWithText(FilledButton, 'Tạo ao');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+    expect(repository.createCalls, 1);
+    expect(repository.lastVolumeM3, 1600);
+  });
+
+  testWidgets('volume estimate can replace a manual value on a narrow screen', (
+    tester,
+  ) async {
+    await _pumpPondForm(tester, pond: _editablePond);
+    tester.view.physicalSize = const Size(320, 720);
+    await tester.pumpAndSettle();
+
+    final volume = tester
+        .widget<TextFormField>(find.byType(TextFormField).at(3))
+        .controller!;
+    expect(volume.text, '1.400');
+    expect(find.text('1.500 m³'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Hủy'), findsNothing);
+
+    final applyEstimate = find.widgetWithText(ElevatedButton, 'Dùng số này');
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -180));
+    await tester.pumpAndSettle();
+    await tester.tap(applyEstimate);
+    await tester.pumpAndSettle();
+
+    expect(volume.text, '1.500');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('volume warning uses the estimate and excludes exactly 10%', (
+    tester,
+  ) async {
+    await _pumpPondForm(tester);
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(1), '3200');
+    await tester.enterText(fields.at(2), '1,5');
+    await tester.pump();
+    expect(find.text('4.800 m³'), findsOneWidget);
+
+    final warning = find.textContaining('Số đang nhập lệch trên 10%');
+    for (final (value, warns) in [
+      ('', false),
+      ('0', false),
+      ('4.800', false),
+      ('4.320', false),
+      ('4.319,99', true),
+      ('5.280', false),
+      ('5.280,01', true),
+    ]) {
+      await tester.enterText(fields.at(3), value);
       await tester.pump();
-      final submit = find.widgetWithText(FilledButton, 'Tạo ao');
-      await tester.ensureVisible(submit);
-      await tester.tap(submit);
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('Thể tích không được vượt quá'),
-        findsOneWidget,
-      );
-      expect(repository.createCalls, 0);
-    },
-  );
+      expect(warning, warns ? findsOneWidget : findsNothing, reason: value);
+    }
+
+    await tester.tap(find.text('Dùng số này'));
+    await tester.pump();
+    expect(warning, findsNothing);
+  });
 
   for (final hasOpenSeason in <bool>[false, true]) {
     testWidgets(
@@ -327,25 +378,15 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final finder = find.byType(
-          DropdownButtonFormField<pond_domain.PondStatus>,
+        expect(find.widgetWithText(OutlinedButton, 'Sẵn sàng'), findsOneWidget);
+        expect(find.text('Không hoạt động'), findsNothing);
+        final maintenance = tester.widget<OutlinedButton>(
+          find.widgetWithText(OutlinedButton, 'Đang bảo trì'),
         );
-        await tester.ensureVisible(finder);
-        final dropdown = tester
-            .widget<DropdownButtonFormField<pond_domain.PondStatus>>(finder);
-        // Read the public DropdownButton configuration built by the form field.
-        final button = tester.widget<DropdownButton<pond_domain.PondStatus>>(
-          find.descendant(
-            of: finder,
-            matching: find.byType(DropdownButton<pond_domain.PondStatus>),
-          ),
-        );
-        expect(dropdown, isNotNull);
-        expect(button.items!.map((item) => item.value), [
-          pond_domain.PondStatus.available,
-          pond_domain.PondStatus.maintenance,
-        ]);
-        expect(button.items!.last.enabled, !hasOpenSeason);
+        expect(maintenance.onPressed != null, !hasOpenSeason);
+        final fields = find.byType(TextField);
+        expect(tester.widget<TextField>(fields.at(1)).readOnly, hasOpenSeason);
+        expect(tester.widget<TextField>(fields.at(2)).readOnly, hasOpenSeason);
         expect(tester.takeException(), isNull);
       },
     );
@@ -398,7 +439,11 @@ void main() {
       await tester.enterText(find.byType(TextFormField).at(2), '1.5');
       await tester.pump();
       final submit = find.widgetWithText(FilledButton, 'Tạo ao');
-      await tester.ensureVisible(submit);
+      await tester.scrollUntilVisible(
+        submit,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(submit);
       await tester.pumpAndSettle();
@@ -873,6 +918,8 @@ final class _FakePondRepository implements PondRepository {
     required String farmId,
     required String pondId,
     required String name,
+    double? areaM2,
+    double? depthM,
     double? volumeM3,
     required pond_domain.PondType type,
     required pond_domain.PondStatus status,

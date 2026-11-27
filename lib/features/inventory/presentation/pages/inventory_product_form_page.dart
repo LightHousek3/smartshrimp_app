@@ -160,6 +160,8 @@ class _InventoryProductFormPageState
   bool get _requiresNewManufacturer =>
       widget.proposal != null && widget.proposal!.manufacturerId == null;
 
+  bool get _locksProposalFields => widget.proposal != null;
+
   Future<void> _addManufacturer() async {
     final proposed = _requiresNewManufacturer
         ? widget.proposal?.material.manufacturer
@@ -677,6 +679,7 @@ class _InventoryProductFormPageState
                       label: 'Tên vật tư *',
                       child: TextFormField(
                         controller: _nameController,
+                        readOnly: _locksProposalFields,
                         style: inventoryInputTextStyle,
                         maxLength: InventoryRules.maxNameLength,
                         textCapitalization: TextCapitalization.sentences,
@@ -698,10 +701,12 @@ class _InventoryProductFormPageState
                       label: 'Danh mục *',
                       child: _CategorySelector(
                         selected: _category,
-                        onChanged: (value) => setState(() {
-                          _category = value;
-                          _updateCompliance(_compliance);
-                        }),
+                        onChanged: _locksProposalFields
+                            ? null
+                            : (value) => setState(() {
+                                _category = value;
+                                _updateCompliance(_compliance);
+                              }),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -711,17 +716,19 @@ class _InventoryProductFormPageState
                       label: 'Đơn vị *',
                       child: _UnitSelector(
                         selected: _unit,
-                        onChanged: (value) => setState(() {
-                          _unit = value;
-                          if (!InventoryRules.isPackaged(value)) {
-                            _conversionQuantityController.clear();
-                            _conversionUnit = null;
-                          } else if (!InventoryRules.conversionUnits(
-                            value,
-                          ).contains(_conversionUnit)) {
-                            _conversionUnit = null;
-                          }
-                        }),
+                        onChanged: _locksProposalFields
+                            ? null
+                            : (value) => setState(() {
+                                _unit = value;
+                                if (!InventoryRules.isPackaged(value)) {
+                                  _conversionQuantityController.clear();
+                                  _conversionUnit = null;
+                                } else if (!InventoryRules.conversionUnits(
+                                  value,
+                                ).contains(_conversionUnit)) {
+                                  _conversionUnit = null;
+                                }
+                              }),
                       ),
                     ),
                     if (_unit != null &&
@@ -737,6 +744,7 @@ class _InventoryProductFormPageState
                             Expanded(
                               child: TextFormField(
                                 controller: _conversionQuantityController,
+                                readOnly: _locksProposalFields,
                                 style: AppTypography.mono(
                                   fontSize: 14,
                                   color: AppColors.ink,
@@ -759,8 +767,11 @@ class _InventoryProductFormPageState
                               child: _ConversionUnitDropdown(
                                 unit: _unit!,
                                 value: _conversionUnit,
-                                onChanged: (value) =>
-                                    setState(() => _conversionUnit = value),
+                                onChanged: _locksProposalFields
+                                    ? null
+                                    : (value) => setState(
+                                        () => _conversionUnit = value,
+                                      ),
                               ),
                             ),
                           ],
@@ -773,7 +784,9 @@ class _InventoryProductFormPageState
                       spacing: 6,
                       label: 'Nhà sản xuất *',
                       action:
-                          !_requiresNewManufacturer || _manufacturerId == null
+                          !_locksProposalFields ||
+                              (_requiresNewManufacturer &&
+                                  _manufacturerId == null)
                           ? InventoryFieldAction(
                               label: _requiresNewManufacturer
                                   ? 'Tạo nhà sản xuất được đề xuất'
@@ -790,6 +803,7 @@ class _InventoryProductFormPageState
                         'inventory-compliance-$_complianceRevision',
                       ),
                       value: _compliance,
+                      enabled: !_locksProposalFields,
                       showAntibioticField: _allowsAntibioticDeclaration,
                       imageSection: _buildPhotoSection(),
                       onChanged: (value) => setState(() {
@@ -809,6 +823,7 @@ class _InventoryProductFormPageState
                             'Mô tả (tùy chọn · ${value.text.characters.length}/${InventoryRules.maxDescriptionLength})',
                         child: TextFormField(
                           controller: _descriptionController,
+                          readOnly: _locksProposalFields,
                           style: inventoryInputTextStyle,
                           maxLength: InventoryRules.maxDescriptionLength,
                           maxLines: 4,
@@ -900,37 +915,38 @@ class _InventoryProductFormPageState
         _buildPhotoPreview(),
         const SizedBox(height: 16),
       ],
-      Row(
-        children: [
-          Expanded(
-            child: InventoryGradientButton(
-              label: _picking
-                  ? 'Đang mở tệp…'
-                  : _remainingPhotos <= 0
-                  ? 'Đã đủ ${InventoryRules.maxProductImages} ảnh'
-                  : _imageCount == 0
-                  ? 'Thêm ảnh'
-                  : 'Thêm ảnh khác',
-              iconAsset: InventoryAssets.formImage,
-              radius: 12,
-              fitContent: true,
-              onPressed: _photosBusy || _remainingPhotos <= 0
-                  ? null
-                  : _pickImages,
+      if (!_locksProposalFields)
+        Row(
+          children: [
+            Expanded(
+              child: InventoryGradientButton(
+                label: _picking
+                    ? 'Đang mở tệp…'
+                    : _remainingPhotos <= 0
+                    ? 'Đã đủ ${InventoryRules.maxProductImages} ảnh'
+                    : _imageCount == 0
+                    ? 'Thêm ảnh'
+                    : 'Thêm ảnh khác',
+                iconAsset: InventoryAssets.formImage,
+                radius: 12,
+                fitContent: true,
+                onPressed: _photosBusy || _remainingPhotos <= 0
+                    ? null
+                    : _pickImages,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: InventoryGradientButton(
-              label: _readingLabel ? 'Đang đọc nhãn…' : 'Đọc nhãn OCR',
-              iconAsset: InventoryAssets.formOcr,
-              radius: 12,
-              fitContent: true,
-              onPressed: _photosBusy || _imageCount == 0 ? null : _readLabel,
+            const SizedBox(width: 8),
+            Expanded(
+              child: InventoryGradientButton(
+                label: _readingLabel ? 'Đang đọc nhãn…' : 'Đọc nhãn OCR',
+                iconAsset: InventoryAssets.formOcr,
+                radius: 12,
+                fitContent: true,
+                onPressed: _photosBusy || _imageCount == 0 ? null : _readLabel,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       const SizedBox(height: 8),
       Text(
         '$_imageCount/${InventoryRules.maxProductImages} ảnh · Tối đa ${InventoryRules.maxImageBytes ~/ (1024 * 1024)} MB/ảnh',
@@ -1008,7 +1024,9 @@ class _InventoryProductFormPageState
                       ),
                       onPressed: _hasPhoto(_images[index])
                           ? () => setState(() => _selectedPhotoIndex = index)
-                          : _photosBusy || _remainingPhotos <= 0
+                          : _locksProposalFields ||
+                                _photosBusy ||
+                                _remainingPhotos <= 0
                           ? null
                           : () => _pickImages(slot: index),
                       child: Text('Ảnh ${index + 1}'),
@@ -1017,33 +1035,35 @@ class _InventoryProductFormPageState
                 ),
               ),
             ],
-            const SizedBox(width: 8),
-            SizedBox.square(
-              dimension: 36,
-              child: IconButton(
-                tooltip: 'Gỡ ảnh ${selected + 1}',
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFFBE6EA),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            if (!_locksProposalFields) ...[
+              const SizedBox(width: 8),
+              SizedBox.square(
+                dimension: 36,
+                child: IconButton(
+                  tooltip: 'Gỡ ảnh ${selected + 1}',
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFFBE6EA),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
+                  icon: const InventorySvgIcon(
+                    InventoryAssets.formDelete,
+                    size: 17,
+                  ),
+                  onPressed: _photosBusy
+                      ? null
+                      : () => setState(() {
+                          if (selected < InventoryRules.maxProductImages) {
+                            _images[selected] = _emptyPhoto;
+                          } else {
+                            _images.removeAt(selected);
+                          }
+                          _selectedPhotoIndex = null;
+                        }),
                 ),
-                icon: const InventorySvgIcon(
-                  InventoryAssets.formDelete,
-                  size: 17,
-                ),
-                onPressed: _photosBusy
-                    ? null
-                    : () => setState(() {
-                        if (selected < InventoryRules.maxProductImages) {
-                          _images[selected] = _emptyPhoto;
-                        } else {
-                          _images.removeAt(selected);
-                        }
-                        _selectedPhotoIndex = null;
-                      }),
               ),
-            ),
+            ],
           ],
         ),
       ],
@@ -1217,8 +1237,8 @@ class _RequiredSelectionField<T> extends FormField<T> {
   _RequiredSelectionField({
     required T? selected,
     required String errorText,
-    required ValueChanged<T> onChanged,
-    required Widget Function(T?, bool, ValueChanged<T>) selectionBuilder,
+    required ValueChanged<T>? onChanged,
+    required Widget Function(T?, bool, ValueChanged<T>?) selectionBuilder,
   }) : super(
          initialValue: selected,
          autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -1226,10 +1246,16 @@ class _RequiredSelectionField<T> extends FormField<T> {
          builder: (field) => Column(
            crossAxisAlignment: CrossAxisAlignment.start,
            children: [
-             selectionBuilder(field.value, field.hasError, (value) {
-               field.didChange(value);
-               onChanged(value);
-             }),
+             selectionBuilder(
+               field.value,
+               field.hasError,
+               onChanged == null
+                   ? null
+                   : (value) {
+                       field.didChange(value);
+                       onChanged(value);
+                     },
+             ),
              if (field.errorText != null)
                Padding(
                  padding: const EdgeInsets.only(left: 14, top: 6),
@@ -1247,7 +1273,7 @@ class _CategorySelector extends StatelessWidget {
   const _CategorySelector({required this.selected, required this.onChanged});
 
   final InventoryProductCategory? selected;
-  final ValueChanged<InventoryProductCategory> onChanged;
+  final ValueChanged<InventoryProductCategory>? onChanged;
 
   @override
   Widget build(BuildContext context) =>
@@ -1268,7 +1294,9 @@ class _CategorySelector extends StatelessWidget {
                       label: category.label,
                       selected: value == category,
                       hasError: hasError,
-                      onTap: () => onSelected(category),
+                      onTap: onSelected == null
+                          ? null
+                          : () => onSelected(category),
                     ),
                   ),
                 )
@@ -1282,7 +1310,7 @@ class _UnitSelector extends StatelessWidget {
   const _UnitSelector({required this.selected, required this.onChanged});
 
   final InventoryProductUnit? selected;
-  final ValueChanged<InventoryProductUnit> onChanged;
+  final ValueChanged<InventoryProductUnit>? onChanged;
 
   @override
   Widget build(BuildContext context) =>
@@ -1300,7 +1328,7 @@ class _UnitSelector extends StatelessWidget {
                   label: unit.label,
                   selected: value == unit,
                   hasError: hasError,
-                  onTap: () => onSelected(unit),
+                  onTap: onSelected == null ? null : () => onSelected(unit),
                 ),
               )
               .toList(growable: false),
@@ -1317,7 +1345,7 @@ class _ConversionUnitDropdown extends StatelessWidget {
 
   final InventoryProductUnit unit;
   final InventoryConversionUnit? value;
-  final ValueChanged<InventoryConversionUnit?> onChanged;
+  final ValueChanged<InventoryConversionUnit?>? onChanged;
 
   @override
   Widget build(BuildContext context) => DropdownButtonFormField(
@@ -1343,7 +1371,7 @@ class _SelectionChip extends StatelessWidget {
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool hasError;
   static const selectedColor = Color(0xFFEAF4FF);
   static const selectedTextColor = Color(0xFF1D7AD6);
@@ -1383,8 +1411,8 @@ class _SelectionChip extends StatelessWidget {
 }
 
 String? _nullableText(String value) {
-  final normalized = InventoryRules.normalizeText(value);
-  return normalized.isEmpty ? null : normalized;
+  final text = value.trim();
+  return text.isEmpty ? null : text;
 }
 
 String _errorMessage(Object? error) {

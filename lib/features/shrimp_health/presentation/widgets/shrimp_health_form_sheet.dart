@@ -17,7 +17,6 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     this.initialQuantity,
     this.previousPopulation,
     this.previousAvgWeight,
-    this.previousAvgLength,
     this.onCreated,
     super.key,
   });
@@ -26,7 +25,6 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
   final int? initialQuantity;
   final int? previousPopulation;
   final double? previousAvgWeight;
-  final double? previousAvgLength;
   final VoidCallback? onCreated;
 
   static Future<bool?> show(
@@ -35,7 +33,6 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
     int? initialQuantity,
     int? previousPopulation,
     double? previousAvgWeight,
-    double? previousAvgLength,
     VoidCallback? onCreated,
   }) => showModalBottomSheet<bool>(
     context: context,
@@ -46,7 +43,6 @@ class ShrimpHealthFormSheet extends ConsumerStatefulWidget {
       initialQuantity: initialQuantity,
       previousPopulation: previousPopulation,
       previousAvgWeight: previousAvgWeight,
-      previousAvgLength: previousAvgLength,
       onCreated: onCreated,
     ),
   );
@@ -180,7 +176,8 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       }
     }
 
-    final effectiveWeight = _calculatedAvgWeight ?? widget.previousAvgWeight;
+    final measuredWeight = _calculatedAvgWeight;
+    final effectiveWeight = measuredWeight ?? widget.previousAvgWeight;
     if (effectiveWeight != null) {
       final formattedWeight = _formatWeight(effectiveWeight);
       if (_avgWeightController.text != formattedWeight) {
@@ -192,11 +189,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       }
     }
 
-    if (effectiveWeight != null &&
-        effectiveWeight > 0 &&
+    if (measuredWeight != null &&
+        measuredWeight > 0 &&
         population != null &&
         population > 0) {
-      final calculatedBiomass = (population * effectiveWeight) / 1000;
+      final calculatedBiomass = (population * measuredWeight) / 1000;
       final formattedBiomass = formatVietnameseNumber(
         calculatedBiomass,
         decimalPlaces: 1,
@@ -274,25 +271,12 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
       return;
     }
 
-    if (_formKey.currentState?.validate() == false) {
-      return;
-    }
-
     final sampleSize = parseVietnameseInteger(_sampleSizeController.text);
-    final avgWeightG = _calculatedAvgWeight ?? widget.previousAvgWeight;
-    final avgLengthCm =
-        _parseDouble(_avgLengthController.text) ?? widget.previousAvgLength;
+    final avgWeightG = _calculatedAvgWeight;
+    final avgLengthCm = _parseDouble(_avgLengthController.text);
     final mortalityCount =
         parseVietnameseInteger(_mortalityController.text) ?? 0;
     final estimatedPopulation = _calculatedPopulation;
-    final estimatedBiomassKg =
-        _parseDouble(_biomassController.text) ??
-        (avgWeightG != null &&
-                avgWeightG > 0 &&
-                estimatedPopulation != null &&
-                estimatedPopulation > 0
-            ? (estimatedPopulation * avgWeightG) / 1000
-            : null);
     final note = _noteController.text.trim();
 
     final hasAnyMetric =
@@ -301,7 +285,6 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
         avgLengthCm != null ||
         mortalityCount > 0 ||
         estimatedPopulation != null ||
-        estimatedBiomassKg != null ||
         note.isNotEmpty;
 
     if (!hasAnyMetric) {
@@ -328,7 +311,6 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
             avgLengthCm: avgLengthCm,
             mortalityCount: mortalityCount,
             estimatedPopulation: estimatedPopulation,
-            estimatedBiomassKg: estimatedBiomassKg,
             healthStatus: _healthStatus,
             note: note.isNotEmpty ? note : null,
             idempotencyKey: idempotencyKey,
@@ -655,7 +637,15 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                           VietnameseNumberInputFormatter(),
                         ],
                         onChanged: (_) => _recalculateAll(),
-                        validator: (value) => _integerError(value, minimum: 1),
+                        validator: (value) {
+                          final error = _integerError(value, minimum: 1);
+                          if (error != null) return error;
+                          if (value?.trim().isNotEmpty == true &&
+                              _sampleWeightController.text.trim().isEmpty) {
+                            return 'Vui lòng nhập khối lượng mẫu';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -796,7 +786,11 @@ class _ShrimpHealthFormSheetState extends ConsumerState<ShrimpHealthFormSheet> {
                       child: _buildField(
                         controller: _avgWeightController,
                         readOnly: true,
-                        label: 'Trọng lượng TB',
+                        label:
+                            _calculatedAvgWeight == null &&
+                                widget.previousAvgWeight != null
+                            ? 'Trọng lượng tham khảo'
+                            : 'Trọng lượng TB',
                         unit: 'g',
                       ),
                     ),

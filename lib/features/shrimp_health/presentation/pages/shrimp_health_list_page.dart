@@ -48,20 +48,17 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
     setState(() => _selectedTab = tab);
   }
 
-  Widget _buildTopStatCards(List<ShrimpHealthLog> allLogs) {
+  Widget _buildTopStatCards(
+    List<ShrimpHealthLog> allLogs,
+    double? currentBiomass,
+  ) {
     final validLogs = allLogs.where((l) => !l.isVoided).toList();
 
-    // Lấy chỉ số sinh khối hợp lệ mới nhất còn hiệu lực
-    final latestBiomassLog = validLogs
-        .where((l) => l.estimatedBiomassKg != null && l.estimatedBiomassKg! > 0)
-        .firstOrNull;
-    final String biomassStr = latestBiomassLog?.estimatedBiomassKg != null
-        ? _formatNumber(latestBiomassLog!.estimatedBiomassKg, fractionDigits: 0)
-        : '-';
+    final biomassStr = _formatNumber(currentBiomass, fractionDigits: 0);
 
     // Lấy các chỉ số trọng lượng hợp lệ để hiển thị Cỡ TB và tính Tăng trưởng
     final logsWithWeight = validLogs
-        .where((l) => l.avgWeightG != null && l.avgWeightG! > 0)
+        .where((l) => (l.sampleSize ?? 0) > 0 && (l.avgWeightG ?? 0) > 0)
         .toList();
     final latestWeightLog = logsWithWeight.isNotEmpty
         ? logsWithWeight.first
@@ -73,32 +70,10 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
 
     String growthStr = '-';
     final latestWeight = latestWeightLog?.avgWeightG;
-    if (latestWeight != null) {
-      // Ưu tiên so sánh giữa 2 kỳ chài mẫu thực tế (sampleSize > 0) hoặc kỳ đo có trọng lượng trước đó
-      final actualSampleLogs = logsWithWeight
-          .where((l) => l.sampleSize != null && l.sampleSize! > 0)
-          .toList();
-
-      ShrimpHealthLog? previousWeightLog;
-      if (actualSampleLogs.length > 1) {
-        previousWeightLog = actualSampleLogs[1];
-      } else {
-        previousWeightLog = logsWithWeight.firstWhere(
-          (l) => l.avgWeightG != latestWeight,
-          orElse: () => logsWithWeight.length > 1
-              ? logsWithWeight[1]
-              : logsWithWeight.first,
-        );
-      }
-
-      final previousWeight = previousWeightLog.avgWeightG;
-      if (previousWeight != null && previousWeightLog != latestWeightLog) {
-        final diff = latestWeight - previousWeight;
-        final prefix = diff >= 0 ? '+' : '';
-        growthStr = '$prefix${formatVietnameseNumber(diff, decimalPlaces: 1)}';
-      } else {
-        growthStr = '+0.0';
-      }
+    if (latestWeight != null && logsWithWeight.length > 1) {
+      final diff = latestWeight - logsWithWeight[1].avgWeightG!;
+      final prefix = diff >= 0 ? '+' : '';
+      growthStr = '$prefix${formatVietnameseNumber(diff, decimalPlaces: 1)}';
     }
 
     return Padding(
@@ -329,6 +304,16 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
         widget.isSeasonActive &&
         ref.watch(shrimpHealthCanWriteProvider(widget.seasonId));
     final listAsync = ref.watch(shrimpHealthListProvider(widget.seasonId));
+    final statsProvider = shrimpHealthStatsProvider((
+      seasonId: widget.seasonId,
+      days: 90,
+    ));
+    final currentBiomass = ref
+        .watch(statsProvider)
+        .asData
+        ?.value
+        .summary
+        .currentBiomassKg;
     final subtitle = [
       if (widget.pondName?.trim().isNotEmpty == true) widget.pondName!.trim(),
       if (widget.seasonName?.trim().isNotEmpty == true)
@@ -389,29 +374,20 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
                           ?.where(
                             (l) =>
                                 !l.isVoided &&
+                                (l.sampleSize ?? 0) > 0 &&
                                 l.avgWeightG != null &&
                                 l.avgWeightG! > 0,
                           )
                           .firstOrNull
                           ?.avgWeightG;
-                      final previousAvgLength = logs
-                          ?.where(
-                            (l) =>
-                                !l.isVoided &&
-                                l.avgLengthCm != null &&
-                                l.avgLengthCm! > 0,
-                          )
-                          .firstOrNull
-                          ?.avgLengthCm;
-
                       ShrimpHealthFormSheet.show(
                         context,
                         seasonId: widget.seasonId,
                         initialQuantity: initialQuantity,
                         previousPopulation: previousPopulation,
                         previousAvgWeight: previousAvgWeight,
-                        previousAvgLength: previousAvgLength,
                         onCreated: () {
+                          ref.invalidate(statsProvider);
                           ref
                               .read(
                                 shrimpHealthListProvider(
@@ -472,6 +448,7 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
 
                     return RefreshIndicator(
                       onRefresh: () async {
+                        ref.invalidate(statsProvider);
                         await ref
                             .read(
                               shrimpHealthListProvider(
@@ -502,7 +479,10 @@ class _ShrimpHealthListPageState extends ConsumerState<ShrimpHealthListPage> {
 
                             // 3 Top Stat Cards: SINH KHỐI, CỠ TB, TĂNG TRƯỞNG
                             SliverToBoxAdapter(
-                              child: _buildTopStatCards(result.logs),
+                              child: _buildTopStatCards(
+                                result.logs,
+                                currentBiomass,
+                              ),
                             ),
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 12),

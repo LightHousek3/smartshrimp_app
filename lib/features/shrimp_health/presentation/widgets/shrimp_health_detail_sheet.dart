@@ -215,6 +215,7 @@ class _ShrimpHealthDetailSheetState
 
       ref.invalidate(technicianDashboardProvider);
       ref.invalidate(shrimpHealthDetailProvider);
+      ref.invalidate(shrimpHealthStatsProvider);
       widget.onVoided?.call();
       Navigator.of(context).pop(true);
     } catch (e) {

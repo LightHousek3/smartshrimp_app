@@ -38,6 +38,8 @@ abstract final class InventoryRules {
   /// Validate required registration input without treating a medicine number as a feed receipt.
   static String? registrationNumberError(String? type, String? value) {
     final registration = value?.trim() ?? '';
+    final prefix = _receiptPrefix(type);
+    if (prefix == null && type != 'medicine') return null;
     if (registration.isEmpty) {
       return type == 'medicine'
           ? 'Vui lòng nhập số đăng ký lưu hành thuốc thú y'
@@ -46,11 +48,10 @@ abstract final class InventoryRules {
     if (registration.length > 100) {
       return 'Mã tiếp nhận/số ĐKLH tối đa 100 ký tự';
     }
-    final prefix = _receiptPrefix(type);
     if (prefix != null &&
         (!RegExp('^$prefix[0-9]{6}\$').hasMatch(registration) ||
             registration.endsWith('-000000'))) {
-      return registrationHint(type);
+      return 'Mã số tiếp nhận phải có dạng ${prefix}XXXXXX (6 chữ số từ 000001 đến 999999), ví dụ ${prefix}123456. Nhập đúng mã trên nhãn/hồ sơ sản phẩm.';
     }
     if (type == 'medicine' && RegExp(r'^(01|02|03)-').hasMatch(registration)) {
       return registrationHint(type);

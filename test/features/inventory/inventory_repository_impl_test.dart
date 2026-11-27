@@ -97,6 +97,20 @@ void main() {
     expect((remote.lastData!['compliance'] as Map)['evidenceUrls'], evidence);
   });
 
+  test('preserves description paragraphs when creating a proposed material', () async {
+    const description = 'First paragraph.\n\nSecond paragraph.';
+    await repository.createProduct(
+      farmId: 'farm-1',
+      name: 'Feed',
+      manufacturerId: 'maker',
+      category: InventoryProductCategory.feed,
+      unit: InventoryProductUnit.kg,
+      minAlertQuantity: 100,
+      description: description,
+    );
+    expect(remote.lastData!['description'], description);
+  });
+
   test('saving without photos does not invent evidence or approval', () async {
     await repository.createProduct(
       farmId: 'farm-1',

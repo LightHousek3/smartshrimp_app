@@ -866,7 +866,10 @@ void main() {
               'season-1',
             ).overrideWith((ref) => true),
             shrimpHealthRepositoryProvider.overrideWithValue(
-              _FakeShrimpHealthRepository(listResult: listResult),
+              _FakeShrimpHealthRepository(
+                listResult: listResult,
+                currentBiomassKg: 161.2,
+              ),
             ),
           ],
           child: const MaterialApp(
@@ -980,7 +983,7 @@ void main() {
   );
 
   testWidgets(
-    'ShrimpHealthListPage KPI cards show latest valid biomass and weight when newest log is mortality-only',
+    'a mortality-only record does not show historic biomass as current',
     (tester) async {
       final listResult = ShrimpHealthListResult(
         logs: [
@@ -1054,12 +1057,8 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      // Kiểm tra 3 thẻ KPI vẫn hiển thị giá trị hợp lệ từ log trước đó chứ không bị '-'
       expect(find.text('SINH KHỐI'), findsOneWidget);
-      expect(
-        find.text('202'),
-        findsNWidgets(2),
-      ); // KPI card and ShrimpHealthCard tile
+      expect(find.text('202'), findsOneWidget); // Historical log only.
       expect(find.text('CỠ TB'), findsOneWidget);
       expect(
         find.text('15,5'),
@@ -1070,10 +1069,15 @@ void main() {
 }
 
 class _FakeShrimpHealthRepository implements ShrimpHealthRepository {
-  _FakeShrimpHealthRepository({required this.listResult, this.createError});
+  _FakeShrimpHealthRepository({
+    required this.listResult,
+    this.createError,
+    this.currentBiomassKg,
+  });
 
   final ShrimpHealthListResult listResult;
   final Object? createError;
+  final double? currentBiomassKg;
 
   @override
   Future<int?> getAvailablePopulation(String seasonId, DateTime at) async =>
@@ -1126,5 +1130,9 @@ class _FakeShrimpHealthRepository implements ShrimpHealthRepository {
     required DateTime from,
     required DateTime to,
     String granularity = 'day',
-  }) async => throw UnimplementedError();
+  }) async => ShrimpHealthStatsResult.fromJson({
+    'seasonId': seasonId,
+    'shrimpType': 'WHITELEG',
+    'summary': {'currentBiomassKg': currentBiomassKg},
+  });
 }

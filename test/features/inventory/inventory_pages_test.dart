@@ -415,6 +415,18 @@ void main() {
         chooseManufacturer: false,
       );
       expect(find.text('Thức ăn đề xuất'), findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(
+                of: find.widgetWithText(TextFormField, 'Thức ăn đề xuất'),
+                matching: find.byType(EditableText),
+              ),
+            )
+            .readOnly,
+        isTrue,
+      );
+      expect(find.text('Đọc nhãn OCR'), findsNothing);
       await tester.ensureVisible(find.text('Tạo nhà sản xuất được đề xuất'));
       await tester.pumpAndSettle();
       expect(
@@ -425,13 +437,20 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Nhà sản xuất đề xuất'), findsOneWidget);
       expect(find.text('expert@example.com'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.widgetWithText(TextFormField, 'Cà Mau'))
+            .enabled,
+        isFalse,
+      );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Cà Mau'),
-        'Cà  Mau',
+        find.widgetWithText(TextFormField, 'expert@example.com'),
+        'contact@example.com',
       );
       await submitForm(tester, 'Lưu nhà cung cấp');
       expect(suppliers.saved?.name, 'Nhà sản xuất đề xuất');
-      expect(suppliers.saved?.address, 'Cà  Mau');
+      expect(suppliers.saved?.address, 'Cà Mau');
+      expect(suppliers.saved?.email, 'contact@example.com');
       expect(suppliers.saved?.phone, '0901234567');
       expect(find.text('Đã tạo nhà sản xuất'), findsOneWidget);
       await tester.pump(const Duration(seconds: 5));
@@ -630,8 +649,11 @@ void main() {
       await enterField(tester, 'Ngưỡng cảnh báo', '0');
       await submitForm(tester, 'Thêm vào kho');
       expect(repository.createdProduct, isNull);
-      expect(find.text('Vui lòng chọn loại sản phẩm'), findsOneWidget);
-      expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsOneWidget);
+      expect(
+        find.text('Chọn phân loại pháp lý theo hồ sơ vật tư.'),
+        findsOneWidget,
+      );
+      expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsNothing);
       expect(find.text('Vui lòng nhập thành phần / hoạt chất'), findsOneWidget);
       expect(find.text('Vui lòng nhập hướng dẫn sử dụng'), findsOneWidget);
       expect(find.text('Vui lòng xác nhận có chứa kháng sinh'), findsNothing);
@@ -639,6 +661,21 @@ void main() {
         tester.getTopLeft(find.text('Mã số tiếp nhận *')).dy,
         greaterThan(tester.getTopLeft(find.text('Loại sản phẩm *')).dy),
       );
+      final typeField = find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) =>
+              widget is InventoryField && widget.label == 'Loại sản phẩm *',
+        ),
+        matching: find.byType(DropdownButtonFormField<String>),
+      );
+      await tester.ensureVisible(typeField);
+      await tester.pumpAndSettle();
+      await tester.tap(typeField);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Thức ăn thủy sản').last);
+      await tester.pumpAndSettle();
+      await submitForm(tester, 'Thêm vào kho');
+      expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsOneWidget);
     },
   );
 
@@ -2658,7 +2695,10 @@ void main() {
 
       await fillRequiredLabelFacts(tester);
       await enterField(tester, 'Ngưỡng cảnh báo', '0');
-      expect(find.text('Vui lòng chọn loại sản phẩm'), findsNothing);
+      expect(
+        find.text('Chọn phân loại pháp lý theo hồ sơ vật tư.'),
+        findsNothing,
+      );
       expect(find.text('Vui lòng nhập mã số tiếp nhận'), findsNothing);
       expect(find.text('Vui lòng nhập thành phần / hoạt chất'), findsNothing);
       expect(find.text('Vui lòng nhập hướng dẫn sử dụng'), findsNothing);
