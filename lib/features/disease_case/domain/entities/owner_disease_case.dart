@@ -319,6 +319,7 @@ sealed class DiseaseCaseEvent with _$DiseaseCaseEvent {
     @JsonKey(unknownEnumValue: CaseCareAction.unknown)
     CaseCareAction? careAction,
     @JsonKey(fromJson: _requiredText) required String message,
+    @Default([]) List<String> attachments,
   }) = DiseaseCaseResponse;
 
   factory DiseaseCaseEvent.fromJson(Map<String, dynamic> json) =>

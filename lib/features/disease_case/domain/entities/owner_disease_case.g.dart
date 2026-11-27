@@ -436,6 +436,12 @@ DiseaseCaseResponse _$DiseaseCaseResponseFromJson(Map<String, dynamic> json) =>
           ),
         ),
         message: $checkedConvert('message', (v) => _requiredText(v)),
+        attachments: $checkedConvert(
+          'attachments',
+          (v) =>
+              (v as List<dynamic>?)?.map((e) => e as String).toList() ??
+              const [],
+        ),
         $type: $checkedConvert('kind', (v) => v as String?),
       );
       return val;
@@ -450,6 +456,7 @@ Map<String, dynamic> _$DiseaseCaseResponseToJson(
   'responseType': _$DiseaseCaseResponseTypeEnumMap[instance.responseType]!,
   'careAction': _$CaseCareActionEnumMap[instance.careAction],
   'message': instance.message,
+  'attachments': instance.attachments,
   'kind': instance.$type,
 };
 

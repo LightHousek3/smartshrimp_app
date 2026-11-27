@@ -10,6 +10,7 @@ import 'package:smartshrimp_app/features/water_log/presentation/widgets/owner_wa
 import 'package:smartshrimp_app/features/water_log/presentation/widgets/water_log_card.dart';
 
 import '../../domain/entities/owner_disease_case.dart';
+import 'case_evidence.dart' show CaseAttachmentStrip;
 import 'disease_case_ui.dart';
 
 export 'case_evidence.dart' show CaseEvidence;
@@ -458,6 +459,10 @@ class _TimelineEntry extends StatelessWidget {
                               : caseBodyStyle.copyWith(fontSize: 11),
                         ),
                       ],
+                      if (event case DiseaseCaseResponse(
+                        :final attachments,
+                      ) when attachments.isNotEmpty)
+                        CaseAttachmentStrip(urls: attachments),
                       const SizedBox(height: 10),
                       Text(
                         '${event.authorName} · ${protocolDate(event.at, year: true, time: true)}',
