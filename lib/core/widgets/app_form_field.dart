@@ -45,6 +45,47 @@ abstract final class AppFormMetrics {
     borderSide: BorderSide(color: color, width: borderWidth),
   );
 
+  static InputDecoration compactDecoration({
+    String? hintText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
+      horizontal: 14,
+      vertical: 12,
+    ),
+  }) {
+    OutlineInputBorder outline(Color color, {double width = 1}) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide(color: color, width: width),
+        );
+
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(
+        color: AppColors.inkMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      isDense: true,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: contentPadding,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      enabledBorder: outline(AppColors.line),
+      disabledBorder: outline(AppColors.line),
+      focusedBorder: outline(AppColors.oceanLight, width: 1.5),
+      errorBorder: outline(AppColors.error),
+      focusedErrorBorder: outline(AppColors.error, width: 1.5),
+      errorStyle: const TextStyle(
+        color: AppColors.error,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
   static InputDecoration decoration(
     InputDecoration source, {
     bool hasError = false,

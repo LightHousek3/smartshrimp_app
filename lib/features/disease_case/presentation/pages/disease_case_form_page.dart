@@ -77,9 +77,8 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
         relatedCaseId: _relatedCaseId,
       );
       if (mounted) {
-        context.pushReplacement(
-          '/seasons/${widget.seasonId}/disease-cases/${item.id}',
-        );
+        // Rebuild the case stack once the saved case replaces the draft.
+        _openCase(item.id);
       }
     } catch (error) {
       if (mounted) {
@@ -88,6 +87,10 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _openCase(String caseId) {
+    context.go('/seasons/${widget.seasonId}/disease-cases/$caseId');
   }
 
   Future<void> _openAi({String? diagnosisId}) async {
@@ -140,9 +143,7 @@ class _DiseaseCaseFormPageState extends ConsumerState<DiseaseCaseFormPage> {
                   ),
                   if (page?.existingCaseId != null)
                     TextButton(
-                      onPressed: () => context.pushReplacement(
-                        '/seasons/${widget.seasonId}/disease-cases/${page!.existingCaseId}',
-                      ),
+                      onPressed: () => _openCase(page!.existingCaseId!),
                       child: const Text('Mở ca hiện tại'),
                     ),
                 ],

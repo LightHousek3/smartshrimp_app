@@ -297,6 +297,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
     required List<String>? imageUrls,
   }) {
     final photos = imageUrls ?? (imageUrl == null ? <String>[] : [imageUrl]);
+    final descriptionText = description?.trim();
     return <String, dynamic>{
       'name': InventoryRules.normalizeText(name),
       'category': _categoryValue(category),
@@ -314,7 +315,7 @@ final class InventoryRepositoryImpl implements InventoryRepository {
           ? null
           : _conversionUnitValue(conversionUnit),
       'minAlertQuantity': minAlertQuantity,
-      'description': _nullableText(description),
+      'description': descriptionText?.isNotEmpty == true ? descriptionText : null,
       if (imageUrls != null) 'imageUrls': imageUrls else 'imageUrl': imageUrl,
     };
   }

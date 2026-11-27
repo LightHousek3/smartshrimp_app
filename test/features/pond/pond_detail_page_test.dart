@@ -17,10 +17,7 @@ import 'package:smartshrimp_app/features/pond/presentation/pages/pond_detail_pag
 import 'package:smartshrimp_app/features/season/domain/entities/aquaculture_season.dart';
 import 'package:smartshrimp_app/features/season/presentation/view_models/season_controller.dart';
 
-const _historyBlocker =
-    'Ao đã có lịch sử vụ nuôi. Không thể xóa ao khi còn lịch sử vụ nuôi.';
-const _openBlocker =
-    'Ao đang có vụ nuôi mở. Không thể xóa ao khi còn vụ nuôi hoặc dữ liệu liên quan.';
+final _deleteButton = find.widgetWithText(OutlinedButton, 'Xóa ao');
 
 void main() {
   tearDown(AppNoticeService.hide);
@@ -95,29 +92,26 @@ void main() {
       // A local search hiding every season must not bypass the history blocker.
       await tester.enterText(find.byType(TextField), 'no matching season');
       await tester.pumpAndSettle();
-      await _openDelete(tester);
-      await _expectBlocked(tester, _historyBlocker);
+      expect(_deleteButton, findsNothing);
       expect(_deletes(requests), isEmpty);
     });
   }
 
   for (final status in [SeasonStatus.planning, SeasonStatus.active]) {
-    testWidgets('$status open season keeps the existing blocker', (
+    testWidgets('$status open season hides deletion even with empty history', (
       tester,
     ) async {
       final requests = await _mount(
         tester,
         openStatus: seasonStatusApiValue(status),
-        history: () async => [_season(status)],
+        history: () async => [],
       );
-      await _openDelete(tester);
-      expect(find.text(_historyBlocker), findsOneWidget);
-      await _expectBlocked(tester, _openBlocker);
+      expect(_deleteButton, findsNothing);
       expect(_deletes(requests), isEmpty);
     });
   }
 
-  testWidgets('loading history disables deletion until it finishes', (
+  testWidgets('deletion is hidden until empty history is confirmed', (
     tester,
   ) async {
     final history = Completer<List<AquacultureSeason>>();
@@ -126,19 +120,12 @@ void main() {
       history: () => history.future,
       loading: true,
     );
-    final button = find.widgetWithText(OutlinedButton, 'Xóa ao');
-    await tester.ensureVisible(button);
-    await tester.pump();
-    expect(tester.widget<OutlinedButton>(button).onPressed, isNull);
-    await tester.tap(button);
-    await tester.pump();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(_deleteButton, findsNothing);
     expect(_deletes(requests), isEmpty);
 
-    history.complete([_season(SeasonStatus.completed)]);
+    history.complete([]);
     await tester.pumpAndSettle();
-    await _openDelete(tester);
-    await _expectBlocked(tester, _historyBlocker);
+    expect(_deleteButton, findsOneWidget);
     expect(_deletes(requests), isEmpty);
   });
 
@@ -147,8 +134,7 @@ void main() {
       tester,
       history: () async => throw const ApiException('History unavailable'),
     );
-    await _openDelete(tester);
-    await _expectBlocked(tester, 'Không thể tải danh sách vụ nuôi.');
+    expect(_deleteButton, findsNothing);
     expect(_deletes(requests), isEmpty);
   });
 
@@ -159,13 +145,7 @@ void main() {
     await _openDelete(tester);
     expect(find.text('Xóa “Ao 1”?'), findsOneWidget);
     expect(_deletes(requests), isEmpty);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.text('Xóa ao'),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await _confirmDelete(tester);
     expect(_deletes(requests), hasLength(1));
     final request = _deletes(requests).single;
     expect(request.path, '/owner/farms/farm-1/ponds/pond-1');
@@ -173,36 +153,44 @@ void main() {
     expect(find.text('Đã xóa ao.'), findsOneWidget);
     expect(find.text('Farm Detail'), findsOneWidget);
   });
+
+  testWidgets('a server conflict reloads history and hides deletion', (
+    tester,
+  ) async {
+    final seasons = <AquacultureSeason>[];
+    final requests = await _mount(
+      tester,
+      history: () async => List.of(seasons),
+      rejectDelete: true,
+    );
+    await _openDelete(tester);
+    seasons.add(_season(SeasonStatus.completed));
+    await _confirmDelete(tester);
+
+    expect(_deletes(requests), hasLength(1));
+    expect(find.byType(PondDetailPage), findsOneWidget);
+    expect(find.text('Vụ 1'), findsOneWidget);
+    expect(_deleteButton, findsNothing);
+  });
 }
 
 Iterable<RequestOptions> _deletes(List<RequestOptions> requests) =>
     requests.where((request) => request.method == 'DELETE');
 
 Future<void> _openDelete(WidgetTester tester) async {
-  final button = find.widgetWithText(OutlinedButton, 'Xóa ao');
-  await tester.ensureVisible(button);
+  await tester.ensureVisible(_deleteButton);
   await tester.pumpAndSettle();
-  await tester.tap(button);
+  await tester.tap(_deleteButton);
   await tester.pumpAndSettle();
 }
 
-Future<void> _expectBlocked(WidgetTester tester, String message) async {
-  expect(find.text('Chưa thể xóa ao'), findsOneWidget);
-  expect(find.text(message), findsOneWidget);
-  expect(find.text('Đã hiểu'), findsOneWidget);
-  final dialog = find.byType(AlertDialog);
-  expect(
+Future<void> _confirmDelete(WidgetTester tester) async {
+  await tester.tap(
     find.descendant(
-      of: dialog,
-      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+      of: find.byType(AlertDialog),
+      matching: find.text('Xóa ao'),
     ),
-    findsOneWidget,
   );
-  expect(
-    find.descendant(of: dialog, matching: find.text('Xóa ao')),
-    findsNothing,
-  );
-  await tester.tap(find.text('Đã hiểu'));
   await tester.pumpAndSettle();
 }
 
@@ -214,6 +202,7 @@ Future<List<RequestOptions>> _mount(
   String pondStatus = 'AVAILABLE',
   String pondType = 'AQUACULTURE',
   bool loading = false,
+  bool rejectDelete = false,
 }) async {
   tester.view.physicalSize = const Size(430, 1000);
   tester.view.devicePixelRatio = 1;
@@ -227,6 +216,23 @@ Future<List<RequestOptions>> _mount(
     InterceptorsWrapper(
       onRequest: (request, handler) {
         requests.add(request);
+        if (rejectDelete && request.method == 'DELETE') {
+          handler.reject(
+            DioException.badResponse(
+              statusCode: 409,
+              requestOptions: request,
+              response: Response<Map<String, dynamic>>(
+                requestOptions: request,
+                statusCode: 409,
+                data: {
+                  'success': false,
+                  'message': 'Không thể xóa ao còn dữ liệu liên quan',
+                },
+              ),
+            ),
+          );
+          return;
+        }
         handler.resolve(
           Response<Map<String, dynamic>>(
             requestOptions: request,

@@ -56,7 +56,7 @@ class _AiDiagnosisDetailPageState extends ConsumerState<AiDiagnosisDetailPage>
       } else {
         await context.push(
           Uri(
-            path: '/seasons/${widget.seasonId}/disease-cases/create',
+            path: '/seasons/${widget.seasonId}/disease-cases/create-from-ai',
             queryParameters: {'aiDiagnosisId': detail.id},
           ).toString(),
         );

@@ -180,6 +180,8 @@ final class PondMutationController extends _OwnerPondController<void> {
   Future<Pond> updatePond({
     required String pondId,
     required String name,
+    double? areaM2,
+    double? depthM,
     double? volumeM3,
     required PondType type,
     required PondStatus status,
@@ -190,6 +192,8 @@ final class PondMutationController extends _OwnerPondController<void> {
           farmId: farmId,
           pondId: pondId,
           name: name,
+          areaM2: areaM2,
+          depthM: depthM,
           volumeM3: volumeM3,
           type: type,
           status: status,

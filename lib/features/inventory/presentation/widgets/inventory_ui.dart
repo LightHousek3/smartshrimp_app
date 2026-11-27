@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
+import 'package:smartshrimp_app/core/widgets/app_form_field.dart';
 import 'package:smartshrimp_app/core/widgets/app_gradient_background.dart';
 import 'package:smartshrimp_app/core/widgets/destructive_action_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
 
-const inventoryInputTextStyle = TextStyle(
-  color: AppColors.ink,
-  fontSize: 14,
-  height: 1.5,
-);
+const inventoryInputTextStyle = AppFormMetrics.inputStyle;
 
 const inventoryTextButtonTextStyle = TextStyle(
   fontFamily: 'PlusJakartaSans',
@@ -419,44 +416,11 @@ InputDecoration inventoryInputDecoration({
     horizontal: 14,
     vertical: 12,
   ),
-}) => InputDecoration(
+}) => AppFormMetrics.compactDecoration(
   hintText: hintText,
-  hintStyle: const TextStyle(
-    color: AppColors.inkMuted,
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-  ),
-  isDense: true,
-  filled: true,
-  fillColor: Colors.white,
   contentPadding: contentPadding,
   prefixIcon: prefixIcon,
   suffixIcon: suffixIcon,
-  enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.line, width: 1),
-  ),
-  disabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.line),
-  ),
-  focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.oceanLight, width: 1.5),
-  ),
-  errorBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.error),
-  ),
-  focusedErrorBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-  ),
-  errorStyle: const TextStyle(
-    color: AppColors.error,
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
-  ),
 );
 
 class InventoryGradientButton extends StatelessWidget {

@@ -246,6 +246,28 @@ void main() {
               .path,
           AppRoutes.seasons,
         );
+        if (status == AssignedSeasonStatus.active) {
+          final router = container.read(appRouterProvider);
+          router.go('/seasons/season');
+          await tester.pumpAndSettle();
+          router.push('/seasons/season/ai-diagnoses');
+          await tester.pumpAndSettle();
+          final result = find.byKey(const ValueKey('ai-diagnosis-diagnosis'));
+          await tester.ensureVisible(result);
+          await tester.pumpAndSettle();
+          await tester.tap(result);
+          await tester.pumpAndSettle();
+          final create = find.text('Tạo ca bệnh từ kết quả này');
+          await tester.ensureVisible(create);
+          await tester.pumpAndSettle();
+          await tester.tap(create);
+          await tester.pumpAndSettle();
+          expect(find.byType(DiseaseCaseFormPage), findsOneWidget);
+          expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+          await tester.tap(find.byTooltip('Quay lại'));
+          await tester.pumpAndSettle();
+          expect(find.byType(AiDiagnosisDetailPage), findsOneWidget);
+        }
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       },

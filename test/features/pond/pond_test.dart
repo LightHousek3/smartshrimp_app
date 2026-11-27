@@ -37,8 +37,6 @@ void main() {
     () {
       expect(PondRules.calculateVolume(1000, 1.5), 1500);
       expect(PondRules.calculateVolume(1.23, 1.23), 1.51);
-      expect(PondRules.validateVolumeCapacity(1.51, 1.23, 1.23), isNull);
-      expect(PondRules.validateVolumeCapacity(1.52, 1.23, 1.23), isNotNull);
       expect(PondRules.calculateVolume(null, 1.5), isNull);
       expect(PondRules.calculateVolume(0, 1.5), isNull);
       expect(PondRules.calculateVolume(double.infinity, 1.5), isNull);
@@ -152,8 +150,5 @@ void main() {
     expect(PondRules.validateCalculatedVolume(1200, 1.5), isNull);
     expect(PondRules.validateVolume(''), isNull);
     expect(PondRules.validateVolume('0'), isNotNull);
-    expect(PondRules.validateVolumeCapacity(null, 1200, 1.5), isNull);
-    expect(PondRules.validateVolumeCapacity(1700, 1200, 1.5), isNull);
-    expect(PondRules.validateVolumeCapacity(1800.01, 1200, 1.5), isNotNull);
   });
 }

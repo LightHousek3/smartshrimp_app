@@ -14,6 +14,77 @@ String harvestTypeLabel(HarvestType type) => switch (type) {
 String harvestNumber(num? value) =>
     value == null ? '—' : formatVietnameseNumber(value, decimalPlaces: 3);
 
+String _compactHarvestNumber(num value) {
+  final (divisor, suffix) = switch (value.abs()) {
+    >= 999950000000 => (1000000000000, 'nghìn tỷ'),
+    >= 999950000 => (1000000000, 'tỷ'),
+    >= 999950 => (1000000, 'tr'),
+    >= 1000 => (1000, 'nghìn'),
+    _ => (1, ''),
+  };
+  return suffix.isEmpty
+      ? harvestNumber(value)
+      : '${formatVietnameseNumber(value / divisor, decimalPlaces: 1)} $suffix';
+}
+
+class HarvestValue extends StatelessWidget {
+  const HarvestValue(
+    this.value, {
+    required this.style,
+    this.unit,
+    this.empty = '—',
+    this.alignment = Alignment.centerLeft,
+    this.compactMillions = false,
+    super.key,
+  });
+
+  final num? value;
+  final TextStyle style;
+  final String? unit;
+  final String empty;
+  final Alignment alignment;
+  final bool compactMillions;
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = value;
+    if (amount == null || !amount.isFinite) {
+      return Text(empty, style: style, textAlign: TextAlign.center);
+    }
+    final suffix = unit == null ? '' : ' $unit';
+    final full = '${harvestNumber(amount)}$suffix';
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(
+            text: full,
+            style: DefaultTextStyle.of(context).style.merge(style),
+          ),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: 1,
+        )..layout();
+        final needsCompact =
+            (compactMillions && amount.abs() >= 999950) ||
+            painter.width > constraints.maxWidth;
+        painter.dispose();
+
+        final label = needsCompact
+            ? '${_compactHarvestNumber(amount)}$suffix'
+            : full;
+        final text = FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignment,
+          child: Text(label, style: style, maxLines: 1, semanticsLabel: full),
+        );
+        return label == full
+            ? text
+            : Tooltip(message: full, excludeFromSemantics: true, child: text);
+      },
+    );
+  }
+}
+
 String harvestDate(DateTime value) {
   final d = value.toLocal();
   String two(int n) => n.toString().padLeft(2, '0');

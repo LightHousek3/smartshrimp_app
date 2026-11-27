@@ -7,10 +7,16 @@ import 'package:smartshrimp_app/core/widgets/app_error_state.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Flutter still reports the exception while the affected widget shows safe copy.
+  // A failed widget may have no Material ancestors or inherited text style.
   ErrorWidget.builder = (_) => const Directionality(
     textDirection: TextDirection.ltr,
-    child: AppErrorState(message: 'Không thể hiển thị nội dung này.'),
+    child: ColoredBox(
+      color: Colors.white,
+      child: DefaultTextStyle(
+        style: TextStyle(fontSize: 14, decoration: TextDecoration.none),
+        child: AppErrorState(message: 'Không thể hiển thị nội dung này.'),
+      ),
+    ),
   );
   try {
     AppConfig.validate(

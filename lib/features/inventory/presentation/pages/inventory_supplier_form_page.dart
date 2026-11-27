@@ -49,6 +49,9 @@ class _InventorySupplierFormPageState
   bool _isActive = true;
   String _supplierType = 'MANUFACTURER';
 
+  bool get _fromProposal =>
+      widget.supplierId == null && widget.initialSupplier != null;
+
   @override
   void initState() {
     super.initState();
@@ -179,10 +182,7 @@ class _InventorySupplierFormPageState
                   'name',
                   'Tên nhà cung cấp *',
                   255,
-                  enabled:
-                      _existing?.metadataLocked != true &&
-                      !(widget.supplierId == null &&
-                          widget.initialSupplier != null),
+                  enabled: _existing?.metadataLocked != true && !_fromProposal,
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Vui lòng nhập tên nhà cung cấp'
                       : null,
@@ -214,9 +214,7 @@ class _InventorySupplierFormPageState
                       ),
                     ],
                     onChanged:
-                        _existing?.metadataLocked == true ||
-                            (widget.supplierId == null &&
-                                widget.initialSupplier != null)
+                        _existing?.metadataLocked == true || _fromProposal
                         ? null
                         : (type) => setState(() => _supplierType = type!),
                   ),
@@ -255,12 +253,19 @@ class _InventorySupplierFormPageState
                   'address',
                   'Địa chỉ *',
                   1000,
+                  enabled: !_fromProposal,
                   lines: 2,
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Vui lòng nhập địa chỉ'
                       : null,
                 ),
-                _field('note', 'Ghi chú', 2000, lines: 3),
+                _field(
+                  'note',
+                  'Ghi chú',
+                  2000,
+                  lines: 3,
+                  enabled: !_fromProposal,
+                ),
                 if (widget.supplierId != null)
                   InventoryField(
                     label: 'Trạng thái',

@@ -272,6 +272,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             ),
                           ),
                           GoRoute(
+                            path: 'create-from-ai',
+                            // AI detail opens above the tab navigator. Keep the form
+                            // on the same stack so pushing it cannot duplicate the shell.
+                            parentNavigatorKey: rootNavigatorKey,
+                            builder: (_, state) => DiseaseCaseFormPage(
+                              seasonId: state.pathParameters['seasonId']!,
+                              initialAiDiagnosisId:
+                                  state.uri.queryParameters['aiDiagnosisId'],
+                            ),
+                          ),
+                          GoRoute(
                             path: ':caseId',
                             builder: (_, state) => DiseaseCaseDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
