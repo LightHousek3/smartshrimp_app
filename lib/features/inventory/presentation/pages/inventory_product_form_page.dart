@@ -70,6 +70,7 @@ class _InventoryProductFormPageState
   InventoryProduct? _product;
   String? _manufacturerId;
   String _manufacturerName = '';
+  String? _ocrManufacturerName;
   InventoryCompliance _compliance = const InventoryCompliance();
   bool _complianceChanged = false;
   bool _initialized = false;
@@ -162,15 +163,52 @@ class _InventoryProductFormPageState
 
   bool get _locksProposalFields => widget.proposal != null;
 
+  Iterable<InventorySupplier> _suppliersNamed(
+    List<InventorySupplier> suppliers,
+    String name,
+  ) {
+    final key = InventoryRules.normalizeText(name).toLowerCase();
+    return suppliers.where(
+      (supplier) =>
+          InventoryRules.normalizeText(supplier.name).toLowerCase() == key,
+    );
+  }
+
+  InventorySupplier? _findOcrManufacturer(List<InventorySupplier> suppliers) {
+    final name = _ocrManufacturerName;
+    if (name == null) return null;
+    final eligible = _suppliersNamed(suppliers, name)
+        .where((supplier) => supplier.isActive && supplier.isManufacturer)
+        .toList();
+    return eligible.length == 1 ? eligible.single : null;
+  }
+
+  void _selectManufacturer(InventorySupplier supplier) {
+    _manufacturerId = supplier.id;
+    _manufacturerName = supplier.name;
+    _ocrManufacturerName = null;
+  }
+
   Future<void> _addManufacturer() async {
     final proposed = _requiresNewManufacturer
         ? widget.proposal?.material.manufacturer
+        : null;
+    final ocrName = _ocrManufacturerName;
+    final suppliers = ref
+        .read(supplierListControllerProvider(widget.farmId))
+        .asData
+        ?.value;
+    final suggestedName =
+        ocrName != null &&
+            suppliers != null &&
+            _suppliersNamed(suppliers, ocrName).isEmpty
+        ? ocrName
         : null;
     final now = DateTime.now();
     final supplier = await context.push<InventorySupplier>(
       '/farms/${widget.farmId}/inventory/suppliers/new',
       extra: proposed == null
-          ? null
+          ? suggestedName
           : InventorySupplier(
               id: '',
               ownerId: '',
@@ -192,10 +230,7 @@ class _InventoryProductFormPageState
         !supplier.isManufacturer) {
       return;
     }
-    setState(() {
-      _manufacturerId = supplier.id;
-      _manufacturerName = supplier.name;
-    });
+    setState(() => _selectManufacturer(supplier));
   }
 
   @override
@@ -323,18 +358,40 @@ class _InventoryProductFormPageState
       if (!mounted) return;
       final selected = await showDialog<Set<String>>(
         context: context,
-        builder: (_) => InventoryLabelReview(result: result, images: photos),
+        builder: (_) => InventoryLabelReview(
+          result: result,
+          images: photos,
+          currentRegulatoryType: _compliance.regulatoryType,
+          allowManufacturerSelection: widget.proposal == null,
+        ),
       );
       if (!mounted || selected == null || selected.isEmpty) return;
+      final regulatoryType = selected.contains('regulatoryType')
+          ? result.regulatoryType
+          : _compliance.regulatoryType;
       setState(() {
         if (selected.contains('name')) _nameController.text = result.name!;
+        if (selected.contains('manufacturerName')) {
+          _ocrManufacturerName = result.manufacturerName!.trim();
+          _manufacturerId = null;
+          _manufacturerName = '';
+          final suppliers = ref
+              .read(supplierListControllerProvider(widget.farmId))
+              .asData
+              ?.value;
+          final manufacturer = suppliers == null
+              ? null
+              : _findOcrManufacturer(suppliers);
+          if (manufacturer != null) _selectManufacturer(manufacturer);
+        }
         _updateCompliance(
           _compliance.copyWith(
-            regulatoryType: selected.contains('regulatoryType')
-                ? result.regulatoryType!
-                : _compliance.regulatoryType,
+            regulatoryType: regulatoryType,
             registrationNumber: selected.contains('registrationNumber')
-                ? result.registrationNumber
+                ? InventoryRules.formatReceiptNumber(
+                    regulatoryType,
+                    result.registrationNumber,
+                  )
                 : _compliance.registrationNumber,
             ingredientsText: selected.contains('ingredientsText')
                 ? result.ingredientsText
@@ -350,17 +407,22 @@ class _InventoryProductFormPageState
                 : _compliance.withdrawalDays,
           ),
         );
-        if (selected.any((field) => field != 'name')) {
+        if (selected.any(
+          (field) => field != 'name' && field != 'manufacturerName',
+        )) {
           _complianceChanged = true;
           // Recreate initialValue-based fields only after the user accepts OCR changes.
           _complianceRevision++;
         }
       });
-      AppNoticeService.show(
-        context,
-        message: 'Đã điền thông tin đã chọn. Kiểm tra lại trước khi lưu.',
-        level: AppNoticeLevel.success,
-      );
+      if (!selected.contains('manufacturerName') ||
+          _ocrManufacturerName == null) {
+        AppNoticeService.show(
+          context,
+          message: 'Đã điền thông tin đã chọn. Kiểm tra lại trước khi lưu.',
+          level: AppNoticeLevel.success,
+        );
+      }
     } on AppException catch (error) {
       if (mounted) AppNoticeService.danger(context, error.message);
     } catch (_) {
@@ -1125,7 +1187,16 @@ class _InventoryProductFormPageState
         ),
       );
     }
-    final suppliers = ref.watch(supplierListControllerProvider(widget.farmId));
+    final directory = supplierListControllerProvider(widget.farmId);
+    ref.listen(directory, (_, current) {
+      if (current.asData?.value case final suppliers?) {
+        final manufacturer = _findOcrManufacturer(suppliers);
+        if (manufacturer != null) {
+          setState(() => _selectManufacturer(manufacturer));
+        }
+      }
+    });
+    final suppliers = ref.watch(directory);
     return suppliers.when(
       loading: () => InputDecorator(
         decoration: inventoryInputDecoration(),
@@ -1150,6 +1221,12 @@ class _InventoryProductFormPageState
         final items = all
             .where((item) => item.isActive && item.isManufacturer)
             .toList();
+        final ocrName = _ocrManufacturerName;
+        final ocrError = ocrName == null
+            ? null
+            : _suppliersNamed(all, ocrName).isEmpty
+            ? 'Chưa có “$ocrName” trong danh mục. Thêm nhà sản xuất để bổ sung.'
+            : 'Chưa chọn được “$ocrName”. Vui lòng kiểm tra danh mục nhà sản xuất.';
         final listed = items.any((item) => item.id == _manufacturerId);
         // Keep the saved manufacturer when editing an existing material, even
         // if that manufacturer is no longer offered for new selections.
@@ -1159,6 +1236,7 @@ class _InventoryProductFormPageState
         return DropdownButtonFormField<String>(
           key: ValueKey(_manufacturerId),
           initialValue: selected,
+          forceErrorText: ocrError,
           isExpanded: true,
           menuMaxHeight: 300,
           style: AppTypography.mono(fontSize: 14, color: AppColors.ink),
@@ -1172,16 +1250,17 @@ class _InventoryProductFormPageState
             ),
           ),
           hint: Text(
-            items.isEmpty
-                ? 'Chưa có nhà sản xuất đang hoạt động'
-                : 'Chọn nhà sản xuất',
+            ocrName ??
+                (items.isEmpty
+                    ? 'Chưa có nhà sản xuất đang hoạt động'
+                    : 'Chọn nhà sản xuất'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
           decoration: inventoryInputDecoration(
             prefixIcon: inventorySupplierInputIcon,
-          ),
+          ).copyWith(errorMaxLines: 4),
           items: [
             if (retainCurrent)
               DropdownMenuItem(
@@ -1209,10 +1288,7 @@ class _InventoryProductFormPageState
               : (id) {
                   if (id == null) return;
                   final item = items.firstWhere((item) => item.id == id);
-                  setState(() {
-                    _manufacturerId = item.id;
-                    _manufacturerName = item.name;
-                  });
+                  setState(() => _selectManufacturer(item));
                 },
           validator: (id) => id == null ? 'Vui lòng chọn nhà sản xuất' : null,
         );

@@ -4,11 +4,13 @@ import 'package:smartshrimp_app/core/widgets/app_dialog.dart';
 import 'package:smartshrimp_app/core/widgets/app_notice.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_label.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory.dart';
+import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_product_image.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/widgets/inventory_ui.dart';
 
 const inventoryLabelFieldNames = {
   'name': 'Tên vật tư',
+  'manufacturerName': 'Nhà sản xuất',
   'regulatoryType': 'Loại sản phẩm',
   'registrationNumber': 'Số đăng ký / tiếp nhận',
   'ingredientsText': 'Thành phần / hoạt chất',
@@ -20,6 +22,7 @@ const inventoryLabelFieldNames = {
 /// Expose only label fields that the review form can apply to the product draft.
 Map<String, Object?> inventoryLabelValues(InventoryLabelResult result) => {
   'name': result.name,
+  'manufacturerName': result.manufacturerName,
   'regulatoryType': result.regulatoryType,
   'registrationNumber': result.registrationNumber,
   'ingredientsText': result.ingredientsText,
@@ -33,10 +36,14 @@ class InventoryLabelReview extends StatefulWidget {
   const InventoryLabelReview({
     required this.result,
     this.images = const [],
+    this.currentRegulatoryType,
+    this.allowManufacturerSelection = true,
     super.key,
   });
   final InventoryLabelResult result;
   final List<InventoryLabelImage> images;
+  final String? currentRegulatoryType;
+  final bool allowManufacturerSelection;
 
   @override
   State<InventoryLabelReview> createState() => _InventoryLabelReviewState();
@@ -58,9 +65,21 @@ class _InventoryLabelReviewState extends State<InventoryLabelReview> {
   @override
   Widget build(BuildContext context) {
     final result = widget.result;
-    final fields = inventoryLabelValues(
-      result,
-    ).entries.where((entry) => entry.value != null).toList();
+    final regulatoryType = _selected.contains('regulatoryType')
+        ? result.regulatoryType
+        : widget.currentRegulatoryType;
+    final formattedReceipt = InventoryRules.formatReceiptNumber(
+      regulatoryType,
+      result.registrationNumber,
+    );
+    final fields = inventoryLabelValues(result).entries
+        .where(
+          (entry) =>
+              entry.value != null &&
+              (widget.allowManufacturerSelection ||
+                  entry.key != 'manufacturerName'),
+        )
+        .toList();
     final canApply = _selected.isNotEmpty;
     return Center(
       child: ConstrainedBox(
@@ -175,15 +194,12 @@ class _InventoryLabelReviewState extends State<InventoryLabelReview> {
                         ),
                     ],
                   ),
-                if (result.manufacturerName != null)
+                if (!widget.allowManufacturerSelection &&
+                    result.manufacturerName != null)
                   _ReviewNotice(
                     title: 'Nhà sản xuất đọc được: ${result.manufacturerName}',
                     level: AppNoticeLevel.info,
-                    children: [
-                      const Text(
-                        'Hãy chọn bản ghi tương ứng trong danh mục nhà sản xuất.',
-                      ),
-                    ],
+                    children: const [Text('Dùng nhà sản xuất của đề xuất.')],
                   ),
                 if (fields.isNotEmpty) ...[
                   _sectionTitle(
@@ -235,6 +251,11 @@ class _InventoryLabelReviewState extends State<InventoryLabelReview> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       value: _selected.contains(entry.key),
+                      subtitle:
+                          entry.key == 'registrationNumber' &&
+                              formattedReceipt != result.registrationNumber
+                          ? Text('Sẽ điền vào form $formattedReceipt')
+                          : null,
                       title: Text.rich(
                         TextSpan(
                           children: [

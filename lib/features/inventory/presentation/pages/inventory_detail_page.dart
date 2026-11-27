@@ -499,6 +499,10 @@ class _DetailContent extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 18),
+        if (!product.readOnly && product.canDelete) ...[
+          InventoryDangerButton(label: 'Xóa vật tư', onPressed: onDelete),
+          const SizedBox(height: 10),
+        ],
         if (product.isArchived)
           InventoryGradientButton(
             height: actionHeight,
@@ -530,10 +534,6 @@ class _DetailContent extends StatelessWidget {
               ),
             ),
           ),
-        if (!product.readOnly && product.canDelete) ...[
-          const SizedBox(height: 12),
-          InventoryDangerButton(label: 'Xóa vật tư', onPressed: onDelete),
-        ],
       ],
     );
   }

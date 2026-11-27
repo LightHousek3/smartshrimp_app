@@ -626,6 +626,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                           state.extra is InventorySupplier
                                           ? state.extra as InventorySupplier
                                           : null,
+                                      initialManufacturerName:
+                                          state.extra is String
+                                          ? state.extra as String
+                                          : null,
                                     ),
                               ),
                               GoRoute(

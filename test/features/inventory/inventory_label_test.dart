@@ -334,35 +334,38 @@ void main() {
       expect(tester.widget<CheckboxListTile>(name).value, isTrue);
       expect(tester.widget<CheckboxListTile>(selectAll).value, isTrue);
 
-      await tester.tap(find.text('Xác nhận & điền 3 trường'));
+      await tester.tap(find.text('Xác nhận & điền 4 trường'));
       await tester.pumpAndSettle();
 
-      expect(accepted, {'name', 'containsAntibiotic', 'withdrawalDays'});
+      expect(accepted, {
+        'name',
+        'manufacturerName',
+        'containsAntibiotic',
+        'withdrawalDays',
+      });
       expect(find.text('Kiểm tra kết quả đọc nhãn'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
-  testWidgets(
-    'closing review discards suggestions and manufacturer stays informational',
-    (tester) async {
-      Set<String>? accepted = {'unexpected'};
-      final result = InventoryLabelResult.parse(
-        labelJson(),
-      ).copyWith(manufacturerName: 'Maker');
-      await openReview(tester, result, (value) => accepted = value);
-      expect(
-        find.textContaining('Nhà sản xuất đọc được: Maker'),
-        findsOneWidget,
-      );
-      await tester.tap(
-        find.byKey(const ValueKey('inventory-label-field-name')),
-      );
-      await tester.tap(find.text('Đóng'));
-      await tester.pumpAndSettle();
-      expect(accepted, isNull);
-    },
-  );
+  testWidgets('closing review discards the selected manufacturer suggestion', (
+    tester,
+  ) async {
+    Set<String>? accepted = {'unexpected'};
+    final result = InventoryLabelResult.parse(
+      labelJson(),
+    ).copyWith(manufacturerName: 'Maker');
+    await openReview(tester, result, (value) => accepted = value);
+    expect(find.text('Nhà sản xuất: Maker'), findsOneWidget);
+    final manufacturer = find.byKey(
+      const ValueKey('inventory-label-field-manufacturerName'),
+    );
+    await tester.ensureVisible(manufacturer);
+    await tester.tap(manufacturer);
+    await tester.tap(find.text('Đóng'));
+    await tester.pumpAndSettle();
+    expect(accepted, isNull);
+  });
 
   testWidgets('empty OCR result displays fallback and cannot be applied', (
     tester,

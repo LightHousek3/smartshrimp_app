@@ -11,6 +11,10 @@ void main() {
         'environment': '02',
         'dual_purpose': '03',
       }.entries) {
+        expect(
+          InventoryRules.formatReceiptNumber(entry.key, '${entry.value}001234'),
+          '${entry.value}-001234',
+        );
         for (final serial in ['000001', '123456', '999999']) {
           expect(
             InventoryRules.registrationNumberError(
@@ -50,6 +54,14 @@ void main() {
         isNull,
       );
       expect(InventoryRules.registrationNumberError('feed', ''), isNotNull);
+      expect(
+        InventoryRules.formatReceiptNumber('feed', '02001234'),
+        '02001234',
+      );
+      expect(
+        InventoryRules.formatReceiptNumber('medicine', '01001234'),
+        '01001234',
+      );
       expect(
         InventoryRules.registrationHint(null),
         contains('Chọn loại sản phẩm'),
