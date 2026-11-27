@@ -17,11 +17,13 @@ class InventorySupplierFormPage extends ConsumerStatefulWidget {
     required this.farmId,
     this.supplierId,
     this.initialSupplier,
+    this.initialManufacturerName,
     super.key,
   });
   final String farmId;
   final String? supplierId;
   final InventorySupplier? initialSupplier;
+  final String? initialManufacturerName;
 
   @override
   ConsumerState<InventorySupplierFormPage> createState() =>
@@ -55,6 +57,9 @@ class _InventorySupplierFormPageState
   @override
   void initState() {
     super.initState();
+    if (widget.supplierId == null && widget.initialManufacturerName != null) {
+      _fields['name']!.text = widget.initialManufacturerName!;
+    }
     final draft = widget.supplierId == null ? widget.initialSupplier : null;
     if (draft != null) {
       _supplierType = draft.supplierType;

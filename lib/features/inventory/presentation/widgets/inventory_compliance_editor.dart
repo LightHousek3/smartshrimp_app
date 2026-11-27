@@ -1,6 +1,7 @@
 import 'package:smartshrimp_app/core/utils/vietnamese_number.dart';
 import 'package:smartshrimp_app/core/utils/vietnamese_number_input_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/features/inventory/domain/entities/inventory_compliance.dart';
 import 'package:smartshrimp_app/features/inventory/domain/inventory_rules.dart';
@@ -136,7 +137,15 @@ class InventoryComplianceEditor extends StatelessWidget {
               DropdownMenuItem(value: 'medicine', child: Text('Thuốc thú y')),
             ],
             onChanged: enabled
-                ? (type) => onChanged(value.copyWith(regulatoryType: type))
+                ? (type) => onChanged(
+                    value.copyWith(
+                      regulatoryType: type,
+                      registrationNumber: InventoryRules.formatReceiptNumber(
+                        type,
+                        value.registrationNumber,
+                      ),
+                    ),
+                  )
                 : null,
           ),
         ),
@@ -147,11 +156,18 @@ class InventoryComplianceEditor extends StatelessWidget {
           value.registrationNumber,
           (text) =>
               onChanged(value.copyWith(registrationNumber: _nullable(text))),
+          fieldKey: ValueKey(value.regulatoryType),
           hint: InventoryRules.registrationPlaceholder(value.regulatoryType),
           helperText: value.regulatoryType == null
               ? null
               : InventoryRules.registrationHint(value.regulatoryType),
           fieldEnabled: value.regulatoryType != null,
+          inputFormatters: [
+            TextInputFormatter.withFunction(
+              (oldValue, newValue) =>
+                  _formatReceiptInput(value.regulatoryType, oldValue, newValue),
+            ),
+          ],
           validator: (text) => InventoryRules.registrationNumberError(
             value.regulatoryType,
             text,
@@ -265,8 +281,10 @@ class InventoryComplianceEditor extends StatelessWidget {
     String label,
     String? text,
     ValueChanged<String> changed, {
+    Key? fieldKey,
     String? hint,
     String? helperText,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     int maxLength = 50000,
     bool multiline = false,
@@ -278,9 +296,11 @@ class InventoryComplianceEditor extends StatelessWidget {
       labelSize: 12,
       spacing: 6,
       child: TextFormField(
+        key: fieldKey,
         initialValue: text,
         enabled: enabled && fieldEnabled,
         maxLength: maxLength,
+        inputFormatters: inputFormatters,
         minLines: multiline ? 4 : 1,
         maxLines: multiline ? 8 : 1,
         style: inventoryInputTextStyle,
@@ -302,6 +322,39 @@ class InventoryComplianceEditor extends StatelessWidget {
       ),
     ),
   );
+
+  static TextEditingValue _formatReceiptInput(
+    String? type,
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (!newValue.composing.isCollapsed) return newValue;
+    final formatted = InventoryRules.formatReceiptNumber(
+      type,
+      newValue.text,
+      allowPartial: true,
+    );
+    if (formatted == null || formatted == newValue.text) return newValue;
+
+    const separatorIndex = 2;
+    final selection = newValue.selection;
+    final deletedSeparator =
+        oldValue.text == formatted &&
+        oldValue.selection == const TextSelection.collapsed(offset: 3) &&
+        selection == const TextSelection.collapsed(offset: separatorIndex);
+    if (deletedSeparator) return newValue;
+
+    int shiftOffset(int offset) =>
+        offset < separatorIndex ? offset : offset + 1;
+    return newValue.copyWith(
+      text: formatted,
+      selection: selection.copyWith(
+        baseOffset: shiftOffset(selection.baseOffset),
+        extentOffset: shiftOffset(selection.extentOffset),
+      ),
+      composing: TextRange.empty,
+    );
+  }
 
   static String? _nullable(String text) =>
       text.trim().isEmpty ? null : text.trim();

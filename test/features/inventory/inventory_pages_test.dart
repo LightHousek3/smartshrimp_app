@@ -129,7 +129,12 @@ void main() {
           path: '/farms/:farmId/inventory/suppliers/new',
           builder: (_, state) => InventorySupplierFormPage(
             farmId: state.pathParameters['farmId']!,
-            initialSupplier: state.extra as InventorySupplier?,
+            initialSupplier: state.extra is InventorySupplier
+                ? state.extra as InventorySupplier
+                : null,
+            initialManufacturerName: state.extra is String
+                ? state.extra as String
+                : null,
           ),
         ),
         GoRoute(
@@ -539,6 +544,49 @@ void main() {
     },
   );
 
+  testWidgets('reception code inserts a separator while typing and pasting', (
+    tester,
+  ) async {
+    await openForm(
+      tester,
+      const InventoryProductFormPage.edit(
+        farmId: 'farm-1',
+        productId: 'product-1',
+      ),
+      _InventoryRepository(product: _product(), history: _history()),
+    );
+    final field = find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is InventoryField && w.label == 'Mã số tiếp nhận *',
+      ),
+      matching: find.byType(EditableText),
+    );
+    TextEditingController controller() =>
+        tester.widget<EditableText>(field).controller;
+
+    await enterField(tester, 'Mã số tiếp nhận', '0');
+    expect(controller().text, '0');
+    await enterField(tester, 'Mã số tiếp nhận', '01');
+    expect(controller().text, '01-');
+    expect(controller().selection.extentOffset, 3);
+
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: '01',
+        selection: TextSelection.collapsed(offset: 2),
+      ),
+    );
+    await tester.pump();
+    expect(controller().text, '01');
+
+    await enterField(tester, 'Mã số tiếp nhận', '01001234');
+    expect(controller().text, '01-001234');
+    await enterField(tester, 'Mã số tiếp nhận', '01001234');
+    expect(controller().text, '01-001234');
+    await enterField(tester, 'Mã số tiếp nhận', '02001234');
+    expect(controller().text, '02001234');
+  });
+
   testWidgets(
     'OCR waits for confirmation, fills only selected fields and never saves automatically',
     (tester) async {
@@ -568,10 +616,12 @@ void main() {
       label.result.complete(
         const InventoryLabelResult(
           name: 'Tên OCR',
+          registrationNumber: '01001234',
           ingredientsText: 'Đạm 40%',
           containsAntibiotic: true,
           evidence: {
             'name': 'Tên OCR',
+            'registrationNumber': 'Mã số tiếp nhận: 01001234',
             'ingredientsText': 'Đạm 40%',
             'containsAntibiotic': 'Có kháng sinh',
           },
@@ -579,12 +629,20 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Kiểm tra kết quả đọc nhãn'), findsOneWidget);
+      expect(find.text('Số đăng ký / tiếp nhận: 01001234'), findsOneWidget);
+      expect(find.text('Sẽ điền vào form 01-001234'), findsOneWidget);
       expect(
         tester
             .widgetList<CheckboxListTile>(find.byType(CheckboxListTile))
             .every((tile) => tile.value == false),
         isTrue,
       );
+      final registrationChoice = find.byKey(
+        const ValueKey('inventory-label-field-registrationNumber'),
+      );
+      await tester.ensureVisible(registrationChoice);
+      await tester.tap(registrationChoice);
+      await tester.pump();
       final ingredientsChoice = find.byKey(
         const ValueKey('inventory-label-field-ingredientsText'),
       );
@@ -597,7 +655,7 @@ void main() {
       await tester.ensureVisible(antibioticChoice);
       await tester.tap(antibioticChoice);
       await tester.pump();
-      await tester.tap(find.text('Xác nhận & điền 2 trường'));
+      await tester.tap(find.text('Xác nhận & điền 3 trường'));
       await tester.pumpAndSettle();
       expect(find.text('Kiểm tra kết quả đọc nhãn'), findsNothing);
       final ingredients = find.descendant(
@@ -625,9 +683,123 @@ void main() {
         repository.updatedCompliance,
         containsPair('containsAntibiotic', false),
       );
+      expect(
+        repository.updatedCompliance,
+        containsPair('registrationNumber', '01-001234'),
+      );
       expect(tester.takeException(), isNull);
     },
   );
+
+  for (final hasMatch in [true, false]) {
+    testWidgets(
+      hasMatch
+          ? 'OCR selects the matching manufacturer from the owner directory'
+          : 'missing OCR manufacturer prefills creation and is selected after save',
+      (tester) async {
+        final name = hasMatch ? 'NHÀ  CUNG CẤP B' : 'Công ty OCR';
+        final suppliers = _SupplierRepository();
+        final repository = _InventoryRepository(
+          product: _product(),
+          history: _history(),
+        );
+        final label = _LabelRepository();
+        await openForm(
+          tester,
+          const InventoryProductFormPage.create(farmId: 'farm-1'),
+          repository,
+          suppliers: suppliers,
+          labelRepository: label,
+          chooseManufacturer: false,
+          picker: _FileImagePicker(fileCount: 1),
+          storage: _ImageStorage(),
+        );
+        await enterField(tester, 'Tên vật tư', 'Thức ăn kiểm thử OCR');
+        await tester.ensureVisible(find.text('Thức ăn'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Thức ăn'));
+        await tester.ensureVisible(find.text('kg'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('kg'));
+        await enterField(tester, 'Ngưỡng cảnh báo', '0');
+        await fillRequiredLabelFacts(tester);
+        await addLabelPhoto(tester);
+        final dropdown = find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is InventoryField && w.label == 'Nhà sản xuất *',
+          ),
+          matching: find.byType(DropdownButtonFormField<String>),
+        );
+        await tester.ensureVisible(find.text('Đọc nhãn OCR'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Đọc nhãn OCR'));
+        await tester.pump();
+        label.result.complete(
+          InventoryLabelResult(
+            manufacturerName: name,
+            evidence: {'manufacturerName': 'Sản xuất bởi $name'},
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Nhà sản xuất: $name'), findsOneWidget);
+        final choice = find.byKey(
+          const ValueKey('inventory-label-field-manufacturerName'),
+        );
+        await tester.ensureVisible(choice);
+        await tester.pumpAndSettle();
+        await tester.tap(choice);
+        await tester.pump();
+        await tester.tap(find.text('Xác nhận & điền 1 trường'));
+        await tester.pumpAndSettle();
+
+        expect(suppliers.saved, isNull);
+        expect(repository.createdManufacturerId, isNull);
+        if (!hasMatch) {
+          expect(
+            find.textContaining('Chưa có “$name” trong danh mục'),
+            findsOneWidget,
+          );
+          expect(
+            tester
+                .widget<DropdownButtonFormField<String>>(dropdown)
+                .initialValue,
+            isNull,
+          );
+          await submitForm(tester, 'Thêm vào kho');
+          expect(repository.createdManufacturerId, isNull);
+          final add = find.text('Thêm nhà sản xuất');
+          await tester.ensureVisible(add);
+          await tester.pumpAndSettle();
+          await tester.tap(add);
+          await tester.pumpAndSettle();
+          expect(find.text(name), findsOneWidget);
+          await submitForm(tester, 'Lưu nhà cung cấp');
+          expect(find.text('Vui lòng nhập số điện thoại'), findsOneWidget);
+          expect(find.text('Vui lòng nhập địa chỉ'), findsOneWidget);
+          expect(suppliers.saved, isNull);
+          await enterField(tester, 'Số điện thoại', '0901234567');
+          await enterField(tester, 'Địa chỉ', 'Cà Mau');
+          await submitForm(tester, 'Lưu nhà cung cấp');
+          expect(suppliers.saved?.name, name);
+          expect(suppliers.saved?.supplierType, 'MANUFACTURER');
+          expect(
+            find.textContaining('Chưa có “$name” trong danh mục'),
+            findsNothing,
+          );
+        }
+        final expectedId = hasMatch ? 'supplier-1' : 'created-supplier';
+        expect(
+          tester.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
+          expectedId,
+        );
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        await submitForm(tester, 'Thêm vào kho');
+        expect(repository.createdManufacturerId, expectedId);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'product creation blocks missing label facts and places reception code below type',
@@ -1649,15 +1821,16 @@ void main() {
         repository,
       );
       final remove = find.text('Xóa vật tư');
+      final pause = find.text('Tạm ngưng vật tư');
       await tester.scrollUntilVisible(
-        remove,
+        pause,
         250,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pumpAndSettle();
       expect(
-        tester.getCenter(remove).dy,
-        greaterThan(tester.getCenter(find.text('Tạm ngưng vật tư')).dy),
+        tester.getBottomLeft(remove).dy,
+        lessThan(tester.getTopLeft(pause).dy),
       );
       await tester.tap(remove);
       await tester.pumpAndSettle();

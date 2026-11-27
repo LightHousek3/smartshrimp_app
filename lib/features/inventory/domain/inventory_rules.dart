@@ -35,6 +35,20 @@ abstract final class InventoryRules {
     return prefix != null ? '${prefix}123456' : 'Nhập số trên nhãn/hồ sơ';
   }
 
+  /// Insert the separator without changing any digits or the selected type.
+  static String? formatReceiptNumber(
+    String? type,
+    String? value, {
+    bool allowPartial = false,
+  }) {
+    final prefix = _receiptPrefix(type);
+    if (prefix == null || value == null) return value;
+    final typeDigits = prefix.substring(0, 2);
+    final serial = allowPartial ? r'[0-9]{0,6}$' : r'[0-9]{6}$';
+    if (!RegExp('^$typeDigits$serial').hasMatch(value)) return value;
+    return '$prefix${value.substring(2)}';
+  }
+
   /// Validate required registration input without treating a medicine number as a feed receipt.
   static String? registrationNumberError(String? type, String? value) {
     final registration = value?.trim() ?? '';
