@@ -5,18 +5,21 @@ import 'package:smartshrimp_app/features/operation/domain/entities/operation_mod
 import 'package:smartshrimp_app/features/operation/domain/repositories/operation_repository.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_sheet.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_item_card.dart';
 
 final _past = DateTime.utc(2026, 6, 1, 0, 30);
 
 OperationSchedule _feeding({
+  String id = 'item-1',
+  OperationType type = OperationType.feeding,
   bool historical = false,
   DateTime? scheduledAt,
   DateTime? activatedAt,
 }) => OperationSchedule(
-  id: 'item-1',
+  id: id,
   seasonId: 'season-1',
-  protocolItemId: 'item-1',
-  operationType: OperationType.feeding,
+  protocolItemId: id,
+  operationType: type,
   scheduledAt: scheduledAt ?? _past,
   plannedQuantity: 2,
   unit: 'KG',
@@ -26,14 +29,17 @@ OperationSchedule _feeding({
   status: OperationStatus.planned,
   activatedAt:
       activatedAt ?? (historical ? _past.add(const Duration(days: 1)) : null),
-  protocolItem: const OperationProtocolItem(id: 'item-1', dueAtMinutes: 30),
+  protocolItem: OperationProtocolItem(id: id, dueAtMinutes: 30),
 );
+
+final _explanation = find.byKey(const Key('operation-execution-reason'));
 
 Future<void> _open(
   WidgetTester tester,
   OperationSchedule schedule,
-  _Repository repo,
-) async {
+  _Repository repo, {
+  OperationSchedule? second,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [operationRepositoryProvider.overrideWithValue(repo)],
@@ -45,8 +51,10 @@ Future<void> _open(
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
-              onPressed: () =>
-                  OperationExecuteSheet.show(context, schedules: [schedule]),
+              onPressed: () => OperationExecuteSheet.show(
+                context,
+                schedules: [schedule, ?second],
+              ),
               child: const Text('Mở form'),
             ),
           ),
@@ -141,10 +149,8 @@ void main() {
       expect(find.text('Vui lòng nhập lý do.'), findsOneWidget);
       expect(repo.executedAt, isNull);
 
-      await tester.enterText(
-        find.byType(TextFormField).first,
-        'Thực hiện muộn.',
-      );
+      await tester.ensureVisible(_explanation);
+      await tester.enterText(_explanation, 'Thực hiện muộn.');
       await tester.tap(find.text('Xác nhận ghi nhận'));
       await tester.pumpAndSettle();
       expect(repo.executedAt, DateTime.utc(2026, 6, 1, 8, 15));
@@ -163,11 +169,9 @@ void main() {
       await tester.tap(find.text('Xác nhận ghi nhận'));
       await tester.pumpAndSettle();
       expect(find.text('Vui lòng nhập lý do.'), findsOneWidget);
-      await tester.enterText(
-        find.byType(TextFormField).first,
-        'Điều chỉnh theo sức ăn.',
-      );
-      final quantity = find.byType(TextFormField).last;
+      await tester.ensureVisible(_explanation);
+      await tester.enterText(_explanation, 'Điều chỉnh theo sức ăn.');
+      final quantity = find.byType(TextFormField).first;
       await tester.ensureVisible(quantity);
       await tester.enterText(quantity, '2.1');
       await tester.pumpAndSettle();
@@ -179,6 +183,44 @@ void main() {
       expect(repo.reason, isNull);
     },
   );
+
+  testWidgets('a late meal uses one explanation for both materials', (
+    tester,
+  ) async {
+    final repo = _Repository();
+    await _open(
+      tester,
+      _feeding(),
+      repo,
+      second: _feeding(id: 'item-2', type: OperationType.medicine),
+    );
+    await _pick(tester, hour: 8, minute: 15);
+    final quantity = find.descendant(
+      of: find.byType(OperationExecuteItemCard).first,
+      matching: find.byType(TextFormField),
+    );
+    await tester.enterText(quantity, '3');
+    await tester.pumpAndSettle();
+    expect(_explanation, findsOneWidget);
+    expect(find.text('Lý do ghi nhận *'), findsOneWidget);
+    await tester.ensureVisible(_explanation);
+    await tester.enterText(
+      _explanation,
+      'Mưa kéo dài, điều chỉnh lượng thức ăn.',
+    );
+    await tester.tap(find.text('Xác nhận ghi nhận'));
+    await tester.pumpAndSettle();
+
+    expect(repo.batch.map((item) => item.scheduleId), ['item-1', 'item-2']);
+    expect(repo.batch.map((item) => item.note).toSet(), {
+      'Mưa kéo dài, điều chỉnh lượng thức ăn.',
+    });
+    expect(repo.batch.first.varianceReason, repo.batch.first.note);
+    expect(repo.batch.last.varianceReason, isNull);
+    expect(repo.batch.map((item) => item.executedAt).toSet(), {
+      _past.add(const Duration(minutes: 45)),
+    });
+  });
 }
 
 class _Repository implements OperationRepository {
@@ -186,6 +228,15 @@ class _Repository implements OperationRepository {
   String? note;
   String? reason;
   HistoricalFeedingOccurrence? historical;
+  List<OperationExecuteBatchItem> batch = [];
+
+  @override
+  Future<List<OperationExecution>> executeSchedulesBatch(
+    List<OperationExecuteBatchItem> items,
+  ) async {
+    batch = items;
+    return [];
+  }
 
   @override
   Future<OperationExecution> executeSchedule(

@@ -810,14 +810,12 @@ class _TodayOperations extends ConsumerWidget {
               );
             }
 
-            final mealGroups = FeedingMedicineMealGroup.group(schedules);
-            final otherSchedules = schedules
-                .where(
-                  (s) =>
-                      !s.isTreatment &&
-                      s.operationType != OperationType.feeding &&
-                      s.operationType != OperationType.medicine,
-                )
+            final groups = FeedingMedicineMealGroup.group(
+              schedules,
+              includeEnvironmental: true,
+            );
+            final mealGroups = groups
+                .where((group) => group.belongsToMeal)
                 .toList(growable: false);
             final nearestMealGroupKey = FeedingMedicineMealGroup.pickNearestKey(
               mealGroups,
@@ -837,13 +835,26 @@ class _TodayOperations extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                 ],
-                for (final s in otherSchedules) ...<Widget>[
-                  OperationScheduleCard(
-                    schedule: s,
-                    decoration: _seasonCardDecoration,
-                    onTap: () =>
-                        openOperations('/seasons/$seasonId/operations/${s.id}'),
-                  ),
+                for (final group in groups.where(
+                  (group) => !group.belongsToMeal,
+                )) ...<Widget>[
+                  if (group.allSchedules.length == 1)
+                    OperationScheduleCard(
+                      schedule: group.allSchedules.single,
+                      decoration: _seasonCardDecoration,
+                      onTap: () => openOperations(
+                        '/seasons/$seasonId/operations/${group.allSchedules.single.id}',
+                      ),
+                    )
+                  else
+                    OperationMealGroupCard(
+                      key: ValueKey('today_${group.key}'),
+                      group: group,
+                      onTapDetail: (s) => openOperations(
+                        '/seasons/$seasonId/operations/${s.id}',
+                        extra: group,
+                      ),
+                    ),
                   const SizedBox(height: 10),
                 ],
               ],

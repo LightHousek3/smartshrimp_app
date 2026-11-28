@@ -864,7 +864,7 @@ as List<String>,
 /// @nodoc
 mixin _$TechnicianOperation {
 
- String get id; String get operationType; DateTime get scheduledAt; DateTime get dueAt; double get plannedQuantity; String get unit; String? get productName;
+ String get id; String get operationType; DateTime get scheduledAt; DateTime get dueAt; double get plannedQuantity; String get unit; String? get productName; String? get occurrenceKey; int? get mealNumber; String? get productionMealId; bool get isTreatment;
 /// Create a copy of TechnicianOperation
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -877,16 +877,16 @@ $TechnicianOperationCopyWith<TechnicianOperation> get copyWith => _$TechnicianOp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TechnicianOperation&&(identical(other.id, id) || other.id == id)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.productName, productName) || other.productName == productName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TechnicianOperation&&(identical(other.id, id) || other.id == id)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.occurrenceKey, occurrenceKey) || other.occurrenceKey == occurrenceKey)&&(identical(other.mealNumber, mealNumber) || other.mealNumber == mealNumber)&&(identical(other.productionMealId, productionMealId) || other.productionMealId == productionMealId)&&(identical(other.isTreatment, isTreatment) || other.isTreatment == isTreatment));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,operationType,scheduledAt,dueAt,plannedQuantity,unit,productName);
+int get hashCode => Object.hash(runtimeType,id,operationType,scheduledAt,dueAt,plannedQuantity,unit,productName,occurrenceKey,mealNumber,productionMealId,isTreatment);
 
 @override
 String toString() {
-  return 'TechnicianOperation(id: $id, operationType: $operationType, scheduledAt: $scheduledAt, dueAt: $dueAt, plannedQuantity: $plannedQuantity, unit: $unit, productName: $productName)';
+  return 'TechnicianOperation(id: $id, operationType: $operationType, scheduledAt: $scheduledAt, dueAt: $dueAt, plannedQuantity: $plannedQuantity, unit: $unit, productName: $productName, occurrenceKey: $occurrenceKey, mealNumber: $mealNumber, productionMealId: $productionMealId, isTreatment: $isTreatment)';
 }
 
 
@@ -897,7 +897,7 @@ abstract mixin class $TechnicianOperationCopyWith<$Res>  {
   factory $TechnicianOperationCopyWith(TechnicianOperation value, $Res Function(TechnicianOperation) _then) = _$TechnicianOperationCopyWithImpl;
 @useResult
 $Res call({
- String id, String operationType, DateTime scheduledAt, DateTime dueAt, double plannedQuantity, String unit, String? productName
+ String id, String operationType, DateTime scheduledAt, DateTime dueAt, double plannedQuantity, String unit, String? productName, String? occurrenceKey, int? mealNumber, String? productionMealId, bool isTreatment
 });
 
 
@@ -914,7 +914,7 @@ class _$TechnicianOperationCopyWithImpl<$Res>
 
 /// Create a copy of TechnicianOperation
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? operationType = null,Object? scheduledAt = null,Object? dueAt = null,Object? plannedQuantity = null,Object? unit = null,Object? productName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? operationType = null,Object? scheduledAt = null,Object? dueAt = null,Object? plannedQuantity = null,Object? unit = null,Object? productName = freezed,Object? occurrenceKey = freezed,Object? mealNumber = freezed,Object? productionMealId = freezed,Object? isTreatment = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,operationType: null == operationType ? _self.operationType : operationType // ignore: cast_nullable_to_non_nullable
@@ -923,7 +923,11 @@ as DateTime,dueAt: null == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_
 as DateTime,plannedQuantity: null == plannedQuantity ? _self.plannedQuantity : plannedQuantity // ignore: cast_nullable_to_non_nullable
 as double,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,productName: freezed == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,occurrenceKey: freezed == occurrenceKey ? _self.occurrenceKey : occurrenceKey // ignore: cast_nullable_to_non_nullable
+as String?,mealNumber: freezed == mealNumber ? _self.mealNumber : mealNumber // ignore: cast_nullable_to_non_nullable
+as int?,productionMealId: freezed == productionMealId ? _self.productionMealId : productionMealId // ignore: cast_nullable_to_non_nullable
+as String?,isTreatment: null == isTreatment ? _self.isTreatment : isTreatment // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1008,10 +1012,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName,  String? occurrenceKey,  int? mealNumber,  String? productionMealId,  bool isTreatment)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TechnicianOperation() when $default != null:
-return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName);case _:
+return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName,_that.occurrenceKey,_that.mealNumber,_that.productionMealId,_that.isTreatment);case _:
   return orElse();
 
 }
@@ -1029,10 +1033,10 @@ return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName,  String? occurrenceKey,  int? mealNumber,  String? productionMealId,  bool isTreatment)  $default,) {final _that = this;
 switch (_that) {
 case _TechnicianOperation():
-return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName);case _:
+return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName,_that.occurrenceKey,_that.mealNumber,_that.productionMealId,_that.isTreatment);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1049,10 +1053,10 @@ return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String operationType,  DateTime scheduledAt,  DateTime dueAt,  double plannedQuantity,  String unit,  String? productName,  String? occurrenceKey,  int? mealNumber,  String? productionMealId,  bool isTreatment)?  $default,) {final _that = this;
 switch (_that) {
 case _TechnicianOperation() when $default != null:
-return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName);case _:
+return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that.plannedQuantity,_that.unit,_that.productName,_that.occurrenceKey,_that.mealNumber,_that.productionMealId,_that.isTreatment);case _:
   return null;
 
 }
@@ -1064,7 +1068,7 @@ return $default(_that.id,_that.operationType,_that.scheduledAt,_that.dueAt,_that
 
 @JsonSerializable(checked: true)
 class _TechnicianOperation implements TechnicianOperation {
-  const _TechnicianOperation({required this.id, required this.operationType, required this.scheduledAt, required this.dueAt, required this.plannedQuantity, required this.unit, this.productName});
+  const _TechnicianOperation({required this.id, required this.operationType, required this.scheduledAt, required this.dueAt, required this.plannedQuantity, required this.unit, this.productName, this.occurrenceKey, this.mealNumber, this.productionMealId, this.isTreatment = false});
   factory _TechnicianOperation.fromJson(Map<String, dynamic> json) => _$TechnicianOperationFromJson(json);
 
 @override final  String id;
@@ -1074,6 +1078,10 @@ class _TechnicianOperation implements TechnicianOperation {
 @override final  double plannedQuantity;
 @override final  String unit;
 @override final  String? productName;
+@override final  String? occurrenceKey;
+@override final  int? mealNumber;
+@override final  String? productionMealId;
+@override@JsonKey() final  bool isTreatment;
 
 /// Create a copy of TechnicianOperation
 /// with the given fields replaced by the non-null parameter values.
@@ -1088,16 +1096,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TechnicianOperation&&(identical(other.id, id) || other.id == id)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.productName, productName) || other.productName == productName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TechnicianOperation&&(identical(other.id, id) || other.id == id)&&(identical(other.operationType, operationType) || other.operationType == operationType)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.plannedQuantity, plannedQuantity) || other.plannedQuantity == plannedQuantity)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.occurrenceKey, occurrenceKey) || other.occurrenceKey == occurrenceKey)&&(identical(other.mealNumber, mealNumber) || other.mealNumber == mealNumber)&&(identical(other.productionMealId, productionMealId) || other.productionMealId == productionMealId)&&(identical(other.isTreatment, isTreatment) || other.isTreatment == isTreatment));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,operationType,scheduledAt,dueAt,plannedQuantity,unit,productName);
+int get hashCode => Object.hash(runtimeType,id,operationType,scheduledAt,dueAt,plannedQuantity,unit,productName,occurrenceKey,mealNumber,productionMealId,isTreatment);
 
 @override
 String toString() {
-  return 'TechnicianOperation(id: $id, operationType: $operationType, scheduledAt: $scheduledAt, dueAt: $dueAt, plannedQuantity: $plannedQuantity, unit: $unit, productName: $productName)';
+  return 'TechnicianOperation(id: $id, operationType: $operationType, scheduledAt: $scheduledAt, dueAt: $dueAt, plannedQuantity: $plannedQuantity, unit: $unit, productName: $productName, occurrenceKey: $occurrenceKey, mealNumber: $mealNumber, productionMealId: $productionMealId, isTreatment: $isTreatment)';
 }
 
 
@@ -1108,7 +1116,7 @@ abstract mixin class _$TechnicianOperationCopyWith<$Res> implements $TechnicianO
   factory _$TechnicianOperationCopyWith(_TechnicianOperation value, $Res Function(_TechnicianOperation) _then) = __$TechnicianOperationCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String operationType, DateTime scheduledAt, DateTime dueAt, double plannedQuantity, String unit, String? productName
+ String id, String operationType, DateTime scheduledAt, DateTime dueAt, double plannedQuantity, String unit, String? productName, String? occurrenceKey, int? mealNumber, String? productionMealId, bool isTreatment
 });
 
 
@@ -1125,7 +1133,7 @@ class __$TechnicianOperationCopyWithImpl<$Res>
 
 /// Create a copy of TechnicianOperation
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? operationType = null,Object? scheduledAt = null,Object? dueAt = null,Object? plannedQuantity = null,Object? unit = null,Object? productName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? operationType = null,Object? scheduledAt = null,Object? dueAt = null,Object? plannedQuantity = null,Object? unit = null,Object? productName = freezed,Object? occurrenceKey = freezed,Object? mealNumber = freezed,Object? productionMealId = freezed,Object? isTreatment = null,}) {
   return _then(_TechnicianOperation(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,operationType: null == operationType ? _self.operationType : operationType // ignore: cast_nullable_to_non_nullable
@@ -1134,7 +1142,11 @@ as DateTime,dueAt: null == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_
 as DateTime,plannedQuantity: null == plannedQuantity ? _self.plannedQuantity : plannedQuantity // ignore: cast_nullable_to_non_nullable
 as double,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,productName: freezed == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,occurrenceKey: freezed == occurrenceKey ? _self.occurrenceKey : occurrenceKey // ignore: cast_nullable_to_non_nullable
+as String?,mealNumber: freezed == mealNumber ? _self.mealNumber : mealNumber // ignore: cast_nullable_to_non_nullable
+as int?,productionMealId: freezed == productionMealId ? _self.productionMealId : productionMealId // ignore: cast_nullable_to_non_nullable
+as String?,isTreatment: null == isTreatment ? _self.isTreatment : isTreatment // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

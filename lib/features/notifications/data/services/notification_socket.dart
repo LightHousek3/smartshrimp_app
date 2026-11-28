@@ -10,6 +10,7 @@ final class NotificationSocket {
     required ApiClient apiClient,
     required void Function() onChanged,
     required void Function() onSessionExpired,
+    void Function(String id, DateTime readAt)? onRead,
     io.Socket? socket,
   }) : _apiClient = apiClient,
        _onChanged = onChanged,
@@ -58,7 +59,18 @@ final class NotificationSocket {
           _caseChanges.add(id is String && id.isNotEmpty ? id : null);
         }
       })
-      ..on('notification:read', (_) => _onChanged())
+      ..on('notification:read', (payload) {
+        if (onRead != null && payload is Map) {
+          final id = payload['id'];
+          final value = payload['readAt'];
+          final readAt = value is String ? DateTime.tryParse(value) : null;
+          if (id is String && id.isNotEmpty && readAt != null) {
+            onRead(id, readAt);
+            return;
+          }
+        }
+        _onChanged();
+      })
       ..on('notification:read-all', (_) => _onChanged())
       ..onConnectError((error) {
         if (_disposed || !error.toString().contains('Unauthorized')) return;

@@ -100,7 +100,7 @@ class OperationVarianceEvaluation {
         '${formatOperationCompact(actual!, maxDecimals: _quantityDecimals)}$unitSuffix';
     final plannedText =
         '${formatOperationCompact(planned, maxDecimals: _quantityDecimals)}$unitSuffix';
-    return 'Lượng nhập $actualText, kế hoạch $plannedText. Cần nhập lý do khi lệch quá ±${formatOperationCompact(allowedPct)}%.';
+    return 'Lượng nhập $actualText, kế hoạch $plannedText. Ngưỡng cho phép ±${formatOperationCompact(allowedPct)}%.';
   }
 }
 
@@ -110,7 +110,6 @@ class OperationExecuteItemCard extends StatelessWidget {
   const OperationExecuteItemCard({
     required this.schedule,
     required this.quantityController,
-    required this.varianceReasonController,
     this.showDivider = false,
     this.checkCurrentStock = true,
     super.key,
@@ -118,7 +117,6 @@ class OperationExecuteItemCard extends StatelessWidget {
 
   final OperationSchedule schedule;
   final TextEditingController quantityController;
-  final TextEditingController varianceReasonController;
   final bool showDivider;
   final bool checkCurrentStock;
 
@@ -321,58 +319,6 @@ class OperationExecuteItemCard extends StatelessWidget {
                 level: AppNoticeLevel.danger,
                 title: eval.varianceLabel,
                 message: eval.warningMessage(unit),
-              ),
-            ],
-
-            if (eval.exceedsAllowed && !isStockInsufficient) ...<Widget>[
-              const SizedBox(height: 10),
-              const Text(
-                'Lý do chênh lệch *',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: varianceReasonController,
-                maxLength: 500,
-                maxLines: 2,
-                minLines: 2,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.ink,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Nhập lý do chênh lệch để tiếp tục ghi nhận...',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
-                  ),
-                  border: _inputBorder(_borderColor),
-                  enabledBorder: _inputBorder(_borderColor),
-                  focusedBorder: _inputBorder(_focusColor, width: 1.5),
-                  errorBorder: _inputBorder(dangerVisual.foreground),
-                  focusedErrorBorder: _inputBorder(
-                    dangerVisual.foreground,
-                    width: 1.5,
-                  ),
-                ),
-                validator: (raw) {
-                  if (raw == null || raw.trim().isEmpty) {
-                    return 'Bắt buộc nhập lý do chênh lệch';
-                  }
-                  return null;
-                },
               ),
             ],
 

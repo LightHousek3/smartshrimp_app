@@ -232,6 +232,61 @@ void main() {
   });
 
   group('OperationListPage Widget', () {
+    testWidgets(
+      'a dashboard detail link loads the occurrence day rather than the selected date',
+      (tester) async {
+        final repo = _MockOperationRepository();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              operationRepositoryProvider.overrideWithValue(repo),
+              assignedSeasonCanWriteProvider(
+                'season-1',
+              ).overrideWithValue(true),
+            ],
+            child: const MaterialApp(
+              home: OperationDetailPage(
+                seasonId: 'season-1',
+                scheduleId: 'sched-feed-1',
+                occurrenceDate: '2026-06-08',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(repo.requestedDates, contains('2026-06-08'));
+        expect(find.text('Cữ 1'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'a standalone mineral in a treatment protocol uses the environmental section',
+      (tester) async {
+        final repo = _MockOperationRepository(treatmentMineral: true);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [operationRepositoryProvider.overrideWithValue(repo)],
+            child: const MaterialApp(
+              home: OperationListPage(seasonId: 'season-1'),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.text('Xử lý khoáng / hóa chất'),
+          200,
+        );
+        expect(find.text('Cữ 1'), findsOneWidget);
+        expect(find.text('Điều trị'), findsNothing);
+        expect(
+          find.widgetWithText(OperationScheduleCard, 'Zeolite'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     for (final historical in [false, true]) {
       testWidgets(
         'opens detail for saved and historical occurrences: $historical',
@@ -683,8 +738,13 @@ String _dayMonth(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
 
 final class _MockOperationRepository implements OperationRepository {
-  _MockOperationRepository({this.historical = false});
+  _MockOperationRepository({
+    this.historical = false,
+    this.treatmentMineral = false,
+  });
   final bool historical;
+  final bool treatmentMineral;
+  final requestedDates = <String>[];
   String? lastStatus;
   String? lastScheduleId;
 
@@ -698,6 +758,7 @@ final class _MockOperationRepository implements OperationRepository {
     int? limit,
   }) async {
     lastStatus = status;
+    if (date != null) requestedDates.add(date);
 
     final feeding = OperationSchedule(
       id: historical ? 'item-1' : 'sched-feed-1',
@@ -758,6 +819,31 @@ final class _MockOperationRepository implements OperationRepository {
       pondName: 'Ao A1',
       schedules: <OperationSchedule>[
         if (!historical) feeding,
+        if (treatmentMineral)
+          OperationSchedule(
+            id: 'treatment-mineral',
+            seasonId: seasonId,
+            protocolItemId: 'mineral-item',
+            operationType: OperationType.mineral,
+            scheduledAt: feeding.scheduledAt.add(const Duration(hours: 7)),
+            plannedQuantity: 2,
+            unit: 'kg',
+            doseBasisSnapshot: 'FIXED_QUANTITY',
+            doseValueSnapshot: 2,
+            calculationVersion: 'v1',
+            status: OperationStatus.planned,
+            product: const OperationProduct(id: 'mineral', name: 'Zeolite'),
+            protocolItem: const OperationProtocolItem(
+              id: 'mineral-item',
+              productionMealId: 'standalone-slot',
+              dueAtMinutes: 30,
+              protocol: OperationProtocol(
+                id: 'therapy',
+                title: 'Phác đồ',
+                protocolType: 'TREATMENT',
+              ),
+            ),
+          ),
         OperationSchedule(
           id: 'sched-chem-1',
           seasonId: seasonId,

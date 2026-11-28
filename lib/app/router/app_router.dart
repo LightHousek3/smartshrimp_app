@@ -398,6 +398,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             builder: (_, state) => OperationDetailPage(
                               seasonId: state.pathParameters['seasonId']!,
                               scheduleId: state.pathParameters['scheduleId']!,
+                              occurrenceDate: state.uri.queryParameters['date'],
                               mealGroup: state.extra is FeedingMedicineMealGroup
                                   ? state.extra as FeedingMedicineMealGroup
                                   : null,

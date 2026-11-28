@@ -49,6 +49,11 @@ final operationDetailProvider = AsyncNotifierProvider.autoDispose
       OperationDetailController.new,
     );
 
+final operationSchedulesOnDateProvider = FutureProvider.autoDispose
+    .family<OperationListResult, ({String seasonId, String date})>(
+      (ref, request) => _readOperationDay(ref, request.seasonId, request.date),
+    );
+
 final operationStatsProvider = FutureProvider.autoDispose
     .family<OperationStats, String>((ref, seasonId) async {
       try {
@@ -60,6 +65,54 @@ final operationStatsProvider = FutureProvider.autoDispose
         rethrow;
       }
     });
+
+Future<OperationListResult> _readOperationDay(
+  Ref ref,
+  String seasonId,
+  String dateStr,
+) async {
+  try {
+    final repository = ref.read(operationRepositoryProvider);
+    const limit = AssignedSeasonRules.operationPageSize;
+    final first = await repository.getSchedules(
+      seasonId,
+      date: dateStr,
+      limit: limit,
+    );
+    if (first.nextPage == null) return first;
+
+    // Load the whole day before grouping materials into occurrences.
+    final schedules = {for (final row in first.schedules) row.id: row};
+    var nextPage = first.nextPage;
+    while (nextPage != null) {
+      final result = await repository.getSchedules(
+        seasonId,
+        date: dateStr,
+        page: nextPage,
+        limit: limit,
+      );
+      for (final row in result.schedules) {
+        schedules[row.id] = row;
+      }
+      nextPage = result.nextPage;
+    }
+    return OperationListResult(
+      summary: first.summary,
+      banner: first.banner,
+      schedules: schedules.values.toList(growable: false),
+      seasonName: first.seasonName,
+      pondName: first.pondName,
+      seasonStartDate: first.seasonStartDate,
+      historicalFeedingAvailable: first.historicalFeedingAvailable,
+      historicalSchedules: first.historicalSchedules,
+    );
+  } on SessionExpiredException {
+    if (ref.mounted) {
+      await ref.read(authControllerProvider.notifier).expireSession();
+    }
+    rethrow;
+  }
+}
 
 final class OperationListController extends AsyncNotifier<OperationListResult> {
   OperationListController(this.seasonId);
@@ -83,49 +136,8 @@ final class OperationListController extends AsyncNotifier<OperationListResult> {
     return result;
   }
 
-  Future<OperationListResult> _fetch(String dateStr) async {
-    try {
-      final repository = ref.read(operationRepositoryProvider);
-      const limit = AssignedSeasonRules.operationPageSize;
-      final first = await repository.getSchedules(
-        seasonId,
-        date: dateStr,
-        limit: limit,
-      );
-      if (first.nextPage == null) return first;
-
-      // Load the whole day before grouping materials into occurrences.
-      final schedules = {for (final row in first.schedules) row.id: row};
-      var nextPage = first.nextPage;
-      while (nextPage != null) {
-        final result = await repository.getSchedules(
-          seasonId,
-          date: dateStr,
-          page: nextPage,
-          limit: limit,
-        );
-        for (final row in result.schedules) {
-          schedules[row.id] = row;
-        }
-        nextPage = result.nextPage;
-      }
-      return OperationListResult(
-        summary: first.summary,
-        banner: first.banner,
-        schedules: schedules.values.toList(growable: false),
-        seasonName: first.seasonName,
-        pondName: first.pondName,
-        seasonStartDate: first.seasonStartDate,
-        historicalFeedingAvailable: first.historicalFeedingAvailable,
-        historicalSchedules: first.historicalSchedules,
-      );
-    } on SessionExpiredException {
-      if (ref.mounted) {
-        await ref.read(authControllerProvider.notifier).expireSession();
-      }
-      rethrow;
-    }
-  }
+  Future<OperationListResult> _fetch(String dateStr) =>
+      _readOperationDay(ref, seasonId, dateStr);
 
   Future<void> _prefetchUpcomingDays() async {
     final generation = _cacheGeneration;

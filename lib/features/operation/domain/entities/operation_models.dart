@@ -20,6 +20,37 @@ enum OperationType {
     'MEDICINE' => OperationType.medicine,
     _ => OperationType.other,
   };
+
+  /// Unnumbered structured slots represent environmental operations.
+  bool belongsToMeal({int? mealNumber, String? productionMealId}) =>
+      mealNumber != null ||
+      this == OperationType.feeding ||
+      (productionMealId == null && this == OperationType.medicine);
+}
+
+String operationMealTitle({
+  required int? mealNumber,
+  required bool isTreatment,
+}) => mealNumber != null
+    ? 'Cữ $mealNumber'
+    : (isTreatment ? 'Điều trị' : 'Cữ ăn');
+
+DateTime _operationLocalTime(DateTime value) =>
+    value.toUtc().add(const Duration(hours: 7));
+
+String _operationClock(DateTime value) =>
+    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+String operationTimeRange(DateTime scheduledAt, DateTime? dueAt) {
+  final start = _operationLocalTime(scheduledAt);
+  if (dueAt == null) return _operationClock(start);
+  final end = _operationLocalTime(dueAt);
+  final days = DateTime.utc(
+    end.year,
+    end.month,
+    end.day,
+  ).difference(DateTime.utc(start.year, start.month, start.day)).inDays;
+  return '${_operationClock(start)} - ${_operationClock(end)}${days > 0 ? ' (+$days ngày)' : ''}';
 }
 
 enum OperationStatus {
@@ -197,6 +228,8 @@ class OperationExecution {
     required this.id,
     required this.actualQuantity,
     required this.executedAt,
+    this.createdAt,
+    this.executedBy,
     this.actualProductId,
     this.note,
     this.varianceReason,
@@ -206,6 +239,8 @@ class OperationExecution {
   final String id;
   final double actualQuantity;
   final DateTime executedAt;
+  final DateTime? createdAt;
+  final String? executedBy;
   final String? actualProductId;
   final String? note;
   final String? varianceReason;
@@ -216,6 +251,8 @@ class OperationExecution {
         id: json['id'] as String,
         actualQuantity: _asDouble(json['actualQuantity']),
         executedAt: DateTime.parse(json['executedAt'] as String),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+        executedBy: json['executedBy'] as String?,
         actualProductId: json['actualProductId'] as String?,
         note: json['note'] as String?,
         varianceReason: json['varianceReason'] as String?,
@@ -339,6 +376,11 @@ class OperationSchedule {
 
   String? get productImageUrl => product?.primaryImageUrl;
 
+  bool get belongsToMeal => operationType.belongsToMeal(
+    mealNumber: protocolItem?.mealNumber,
+    productionMealId: protocolItem?.productionMealId,
+  );
+
   DateTime? get deadlineAt {
     final mins = protocolItem?.dueAtMinutes;
     if (mins == null || mins < 0) return null;
@@ -394,18 +436,13 @@ class OperationSchedule {
     return false;
   }
 
-  String _fmtHm(DateTime dt) {
-    final local = dt.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  }
-
   /// Khoảng giờ dự kiến - deadline (vd: "07:30 - 08:00" nếu có dueAtMinutes > 0, hoặc "07:30").
   String get timeRangeText {
-    final start = _fmtHm(scheduledAt);
     final mins = protocolItem?.dueAtMinutes;
-    final end = deadlineAt;
-    if (end == null || mins == null || mins <= 0) return start;
-    return '$start - ${_fmtHm(end)}';
+    return operationTimeRange(
+      scheduledAt,
+      mins != null && mins > 0 ? deadlineAt : null,
+    );
   }
 
   String get doseBasisDescription => switch (doseBasisSnapshot.toUpperCase()) {
@@ -743,8 +780,9 @@ class FeedingMedicineMealGroup {
 
   /// Match numbered meals and keep independent operations separate at the same time.
   static List<FeedingMedicineMealGroup> group(
-    List<OperationSchedule> schedules,
-  ) {
+    List<OperationSchedule> schedules, {
+    bool includeEnvironmental = false,
+  }) {
     final groups = <String, FeedingMedicineMealGroup>{};
     final sorted = List<OperationSchedule>.from(schedules)
       ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
@@ -752,18 +790,12 @@ class FeedingMedicineMealGroup {
     for (final schedule in sorted) {
       final isTreatment = schedule.isTreatment;
       final type = schedule.operationType;
-      if (!isTreatment &&
-          type != OperationType.feeding &&
-          type != OperationType.medicine) {
-        continue;
-      }
+      if (!includeEnvironmental && !schedule.belongsToMeal) continue;
 
       final item = schedule.protocolItem;
       final mealNumber = item?.mealNumber;
       final protocolId = item?.protocol?.id;
-      final local = schedule.scheduledAt.toLocal();
-      final time =
-          '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+      final time = operationTimeRange(schedule.scheduledAt, null);
       final identity =
           item?.productionMealId ??
           (mealNumber == null ? schedule.protocolItemId : 'meal:$mealNumber');
@@ -801,6 +833,8 @@ class FeedingMedicineMealGroup {
     ...otherItems,
   ];
 
+  bool get belongsToMeal => allSchedules.any((item) => item.belongsToMeal);
+
   OperationSchedule? get primaryFeeding =>
       feedings.isNotEmpty ? feedings.first : null;
 
@@ -817,17 +851,7 @@ class FeedingMedicineMealGroup {
         latestDeadline = d;
       }
     }
-    if (latestDeadline == null) return time;
-    final localEnd = latestDeadline.toLocal();
-    final endStr =
-        '${localEnd.hour.toString().padLeft(2, '0')}:${localEnd.minute.toString().padLeft(2, '0')}';
-    final localStart = scheduledAt.toLocal();
-    final days = DateTime.utc(localEnd.year, localEnd.month, localEnd.day)
-        .difference(
-          DateTime.utc(localStart.year, localStart.month, localStart.day),
-        )
-        .inDays;
-    return '$time - $endStr${days > 0 ? ' (+$days ngày)' : ''}';
+    return operationTimeRange(scheduledAt, latestDeadline);
   }
 
   bool isOverdueAt(DateTime now) => allSchedules.any((s) => s.isOverdueAt(now));
@@ -858,11 +882,9 @@ class FeedingMedicineMealGroup {
     return latest;
   }
 
-  String get cardTitle {
-    if (mealNumber != null) return 'Cữ $mealNumber';
-    if (isTreatment) return 'Điều trị';
-    return 'Cữ ăn';
-  }
+  String get cardTitle => belongsToMeal
+      ? operationMealTitle(mealNumber: mealNumber, isTreatment: isTreatment)
+      : 'Xử lý môi trường';
 
   String get title =>
       mealNumber != null || isTreatment ? '$cardTitle ($time)' : 'Cữ $time';

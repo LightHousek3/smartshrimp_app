@@ -9,6 +9,7 @@ import 'package:smartshrimp_app/features/auth/presentation/view_models/auth_cont
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/dashboard_widgets.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/technician_overview_cards.dart';
+import 'package:smartshrimp_app/features/home/presentation/widgets/technician_operation_row.dart';
 
 class TechnicianHomePage extends ConsumerWidget {
   const TechnicianHomePage({super.key});

@@ -1,17 +1,39 @@
-# smartshrimp_app
+# SmartShrimp Mobile App
 
-A new Flutter project.
+> Farm Operations Management and Technical Consulting System for Shrimp Farms
 
-## Getting Started
+The SmartShrimp mobile app supports farm owners and technicians in day-to-day farm operations.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- **Farm owners** manage farms, ponds, production cycles, staff assignments, inventory, and harvests. They review and approve production and treatment protocols.
+- **Technicians** record water quality, shrimp health, and material use. They complete assigned tasks, submit disease cases, and communicate with experts.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Technology
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Flutter · Dart · Riverpod · GoRouter · Dio**
+
+## Getting started
+
+Use Flutter with Dart 3.11.5 or later, a running SmartShrimp Backend, and an Android device or emulator.
+
+Copy [the example configuration](config/app.example.json) to `config/app.local.json` and fill in the required values. Set `API_BASE_URL` to the API address reachable from the device, including the `/api/v1` prefix.
+
+```sh
+flutter pub get
+flutter run --dart-define-from-file=config/app.local.json
+```
+
+Run `flutter analyze` to check the app source.
+
+## Project team
+
+**Mentor** — Nguyễn Đình Vinh
+
+**Members**
+
+- Phạm Hải Đăng
+- Nguyễn Thị Kim Soàn
+- Phạm Quốc Tự
+- Liêu Tấn Đạt
+- Cô Thái Bảo

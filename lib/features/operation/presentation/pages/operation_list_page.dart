@@ -265,44 +265,24 @@ class OperationListPage extends ConsumerWidget {
           seasonDetail?.stockingDate ??
           seasonDetail?.assignedAt;
 
-      // 1. Phân loại theo cụm nghiệp vụ:
-      // - Toàn bộ lịch thuộc phác đồ điều trị (isTreatment) hoặc thức ăn/thuốc phác đồ nuôi
-      //   được đưa vào gom nhóm Cữ & Box Điều trị
-      // - Các lịch khoáng & hóa chất thông thường (phác đồ nuôi) hiển thị riêng
-      final mealAndTreatmentSchedules =
-          [...result.schedules, ...result.historicalSchedules]
-              .where(
-                (s) =>
-                    s.isTreatment ||
-                    s.operationType == OperationType.feeding ||
-                    s.operationType == OperationType.medicine,
-              )
-              .toList(growable: false);
-
-      final mineralAndChemicalRaw = result.schedules
-          .where(
-            (s) =>
-                !s.isTreatment &&
-                (s.operationType == OperationType.mineral ||
-                    s.operationType == OperationType.chemical ||
-                    s.operationType == OperationType.other),
-          )
-          .toList(growable: false);
-
-      final allMealGroups = FeedingMedicineMealGroup.group(
-        mealAndTreatmentSchedules,
+      // Group occurrences before applying the display section and status filters.
+      final groups = FeedingMedicineMealGroup.group([
+        ...result.schedules,
+        ...result.historicalSchedules,
+      ], includeEnvironmental: true);
+      final dailySummary = OperationSummary.fromStatuses(
+        groups.map((group) => group.overallStatus),
       );
-      final dailySummary = OperationSummary.fromStatuses([
-        ...allMealGroups.map((group) => group.overallStatus),
-        ...mineralAndChemicalRaw.map((schedule) => schedule.status),
-      ]);
 
       final selectedStatus = OperationStatus.parse(activeTab);
-      final filteredMealGroups = allMealGroups
-          .where((group) => group.overallStatus == selectedStatus)
+      final activeGroups = groups.where(
+        (group) => group.overallStatus == selectedStatus,
+      );
+      final filteredMealGroups = activeGroups
+          .where((group) => group.belongsToMeal)
           .toList(growable: false);
-      final filteredMineralAndChemical = mineralAndChemicalRaw
-          .where((schedule) => schedule.status == selectedStatus)
+      final filteredMineralAndChemical = activeGroups
+          .where((group) => !group.belongsToMeal)
           .toList(growable: false);
 
       final isAllEmpty =
@@ -563,7 +543,7 @@ class OperationListPage extends ConsumerWidget {
                           if (filteredMealGroups.isNotEmpty) ...<Widget>[
                             _buildSectionHeader(
                               svgIcon: AppSvgIconName.calendarDays,
-                              title: 'Cữ ăn & thuốc theo cữ',
+                              title: operationMealSectionTitle,
                               iconColor: _blueFg,
                               iconBg: _blueBg,
                             ),
@@ -592,19 +572,35 @@ class OperationListPage extends ConsumerWidget {
                               .isNotEmpty) ...<Widget>[
                             _buildSectionHeader(
                               svgIcon: AppSvgIconName.chemical,
-                              title: 'Xử lý khoáng / hóa chất',
+                              title: operationEnvironmentSectionTitle(
+                                filteredMineralAndChemical.expand(
+                                  (group) => group.allSchedules.map(
+                                    (schedule) => schedule.operationType,
+                                  ),
+                                ),
+                              ),
                               iconColor: const Color(0xFF0D9488),
                               iconBg: const Color(0xFFE6FFFA),
                             ),
                             const SizedBox(height: 10),
-                            for (final s
+                            for (final group
                                 in filteredMineralAndChemical) ...<Widget>[
-                              OperationScheduleCard(
-                                schedule: s,
-                                onTap: () => context.push(
-                                  '/seasons/$seasonId/operations/${s.id}',
+                              if (group.allSchedules.length == 1)
+                                OperationScheduleCard(
+                                  schedule: group.allSchedules.single,
+                                  onTap: () => context.push(
+                                    '/seasons/$seasonId/operations/${group.allSchedules.single.id}',
+                                  ),
+                                )
+                              else
+                                OperationMealGroupCard(
+                                  key: ValueKey('${activeTab}_${group.key}'),
+                                  group: group,
+                                  onTapDetail: (s) => context.push(
+                                    '/seasons/$seasonId/operations/${s.id}',
+                                    extra: group,
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 10),
                             ],
                           ],

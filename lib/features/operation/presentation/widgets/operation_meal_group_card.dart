@@ -6,6 +6,54 @@ import 'package:smartshrimp_app/features/operation/domain/entities/operation_mod
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_product_thumbnail.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 
+const operationMealSectionTitle = 'Cữ ăn & thuốc theo cữ';
+String operationEnvironmentSectionTitle(Iterable<OperationType> types) =>
+    types.every(
+      (type) => type == OperationType.mineral || type == OperationType.chemical,
+    )
+    ? 'Xử lý khoáng / hóa chất'
+    : 'Xử lý môi trường';
+
+class OperationOccurrenceIcon extends StatelessWidget {
+  const OperationOccurrenceIcon({
+    required this.isTreatment,
+    this.environmental = false,
+    this.size = 36,
+    super.key,
+  });
+
+  final bool isTreatment;
+  final bool environmental;
+  final double size;
+
+  static Color foreground(bool isTreatment, {bool environmental = false}) =>
+      isTreatment
+      ? AppColors.treatmentAccent
+      : environmental
+      ? const Color(0xFF0D9488)
+      : const Color(0xFF1D7AD6);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: isTreatment
+          ? AppColors.treatmentSurface
+          : environmental
+          ? const Color(0xFFE6FFFA)
+          : const Color(0xFFDEEDFD),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: AppSvgIcon(
+      environmental ? AppSvgIconName.chemical : AppSvgIconName.calendarDays,
+      color: foreground(isTreatment, environmental: environmental),
+      size: size * 0.53,
+    ),
+  );
+}
+
 class OperationMealGroupCard extends StatefulWidget {
   const OperationMealGroupCard({
     required this.group,
@@ -23,9 +71,6 @@ class OperationMealGroupCard extends StatefulWidget {
 }
 
 class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
-  static const Color _blueBg = Color(0xFFDEEDFD);
-  static const Color _blueFg = Color(0xFF1D7AD6);
-
   late bool _isExpanded;
 
   @override
@@ -40,8 +85,11 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
     final isTreatment = group.isTreatment;
     final title = group.cardTitle;
 
-    final headerBg = isTreatment ? AppColors.treatmentSurface : _blueBg;
-    final headerFg = isTreatment ? AppColors.treatmentAccent : _blueFg;
+    final environmental = !group.belongsToMeal;
+    final headerFg = OperationOccurrenceIcon.foreground(
+      isTreatment,
+      environmental: environmental,
+    );
 
     final primaryFeeding = group.primaryFeeding;
     final primarySchedule = group.activeSchedules.isNotEmpty
@@ -88,20 +136,9 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: headerBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: AppSvgIcon(
-                          AppSvgIconName.calendarDays,
-                          color: headerFg,
-                          size: 19,
-                        ),
-                      ),
+                    OperationOccurrenceIcon(
+                      isTreatment: isTreatment,
+                      environmental: environmental,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -152,7 +189,9 @@ class _OperationMealGroupCardState extends State<OperationMealGroupCard> {
                                 height: 36,
                                 child: IconButton(
                                   tooltip: _isExpanded
-                                      ? 'Thu gọn cữ'
+                                      ? environmental
+                                            ? 'Thu gọn danh sách vật tư'
+                                            : 'Thu gọn cữ'
                                       : 'Mở danh sách vật tư',
                                   style: IconButton.styleFrom(
                                     padding: EdgeInsets.zero,

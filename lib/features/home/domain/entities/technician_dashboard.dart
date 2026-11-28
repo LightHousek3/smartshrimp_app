@@ -87,6 +87,10 @@ abstract class TechnicianOperation with _$TechnicianOperation {
     required double plannedQuantity,
     required String unit,
     String? productName,
+    String? occurrenceKey,
+    int? mealNumber,
+    String? productionMealId,
+    @Default(false) bool isTreatment,
   }) = _TechnicianOperation;
   factory TechnicianOperation.fromJson(Map<String, dynamic> json) =>
       _$TechnicianOperationFromJson(json);
@@ -184,7 +188,9 @@ abstract class TechnicianDashboard with _$TechnicianDashboard {
         DateTime? previous;
         for (final item in group.items) {
           _strings([item.id, item.operationType, item.unit]);
+          if (item.occurrenceKey case final key?) _strings([key]);
           if (!ids.add(item.id) ||
+              (item.mealNumber != null && item.mealNumber! < 1) ||
               !item.plannedQuantity.isFinite ||
               item.plannedQuantity <= 0 ||
               !item.dueAt.isAfter(item.scheduledAt) ||
@@ -194,6 +200,14 @@ abstract class TechnicianDashboard with _$TechnicianDashboard {
             throw const InvalidResponseException();
           }
           previous = item.scheduledAt;
+        }
+        final occurrenceKeys = group.items
+            .map((item) => item.occurrenceKey)
+            .toSet();
+        if (count != null &&
+            !occurrenceKeys.contains(null) &&
+            count != occurrenceKeys.length) {
+          throw const InvalidResponseException();
         }
       }
       for (final season in value.seasons) {

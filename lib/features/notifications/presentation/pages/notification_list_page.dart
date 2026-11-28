@@ -201,6 +201,7 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
           itemBuilder: (_, index) {
             final notification = page.items[index];
             return _NotificationCard(
+              key: ValueKey(notification.id),
               notification: notification,
               onTap: () => showNotificationDetailSheet(
                 context: context,
@@ -423,7 +424,11 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({required this.notification, required this.onTap});
+  const _NotificationCard({
+    required this.notification,
+    required this.onTap,
+    super.key,
+  });
 
   final AppNotification notification;
   final VoidCallback onTap;
@@ -530,9 +535,7 @@ class _NotificationCard extends StatelessWidget {
                           style: TextStyle(
                             color: unread ? AppColors.ink : AppColors.inkSoft,
                             fontSize: 13,
-                            fontWeight: unread
-                                ? FontWeight.w700
-                                : FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                             height: 1.3,
                           ),
                         ),
