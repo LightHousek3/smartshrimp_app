@@ -331,6 +331,74 @@ void main() {
     expect(find.text('Bạn đã đọc hết'), findsOneWidget);
   });
 
+  testWidgets('reading an item on page two preserves the list and scroll', (
+    tester,
+  ) async {
+    final notifications = List.generate(
+      24,
+      (index) => AppNotification(
+        id: 'older-$index',
+        title: 'Thông báo số $index',
+        type: NotificationType.system,
+        createdAt: DateTime(2026, 9, 20).subtract(Duration(minutes: index)),
+      ),
+    );
+    final repository = _NotificationRepository(extra: notifications);
+    await openNotifications(tester, repository);
+    final scrollable = find.descendant(
+      of: find.byType(CustomScrollView),
+      matching: find.byType(Scrollable),
+    );
+    final target = find.text(notifications[12].title);
+    await tester.scrollUntilVisible(target, 350, scrollable: scrollable);
+    await tester.pumpAndSettle();
+    final position = tester.state<ScrollableState>(scrollable).position;
+    final offset = position.pixels;
+    final pageLoads = repository.pageLoads;
+    expect(offset, greaterThan(0));
+    expect(repository.cursorLoads, greaterThan(0));
+
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(position.pixels, offset);
+    await tester.tap(find.byKey(const Key('close_notification_detail')));
+    await tester.pumpAndSettle();
+
+    expect(target.hitTestable(), findsOneWidget);
+    expect(position.pixels, offset);
+    expect(repository.pageLoads, pageLoads);
+    expect(find.byKey(const Key('notification_unread_older-12')), findsNothing);
+    expect(find.text('24 thông báo chưa đọc'), findsOneWidget);
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('close_notification_detail')));
+    await tester.pumpAndSettle();
+    expect(find.text('24 thông báo chưa đọc'), findsOneWidget);
+    expect(repository.pageLoads, pageLoads);
+  });
+
+  testWidgets(
+    'reading the last unread item updates the filter without a reload',
+    (tester) async {
+      final repository = _NotificationRepository();
+      await openNotifications(tester, repository);
+      await tester.tap(find.text('Chưa đọc'));
+      await tester.pumpAndSettle();
+      final pageLoads = repository.pageLoads;
+
+      await tester.tap(find.text(repository._warning.title));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('close_notification_detail')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(repository._warning.title), findsNothing);
+      expect(find.text('Bạn đã xem hết thông báo'), findsOneWidget);
+      expect(find.text('Bạn đã đọc hết'), findsOneWidget);
+      expect(repository.pageLoads, pageLoads);
+    },
+  );
+
   testWidgets(
     'closing the sheet before the read finishes still clears the dot',
     (tester) async {
@@ -914,14 +982,18 @@ final class _NotificationRepository implements NotificationRepository {
     this.failDetail = false,
     this.readGate,
     this.assignment,
+    this.extra = const [],
   });
 
   final bool failMarkAll;
   bool failDetail;
   final Future<void>? readGate;
   final AppNotification? assignment;
+  final List<AppNotification> extra;
   int detailCalls = 0;
   int markAllCalls = 0;
+  int pageLoads = 0;
+  int cursorLoads = 0;
   bool _allRead = false;
   final _readIds = <String>{};
 
@@ -948,20 +1020,23 @@ final class _NotificationRepository implements NotificationRepository {
     String? cursor,
     int limit = 10,
   }) async {
+    if (limit > 1) pageLoads++;
+    if (cursor != null) cursorLoads++;
     final source = assignment ?? _warning;
-    final warning = _allRead || _readIds.contains(source.id)
-        ? source.copyWith(readAt: DateTime(2026, 9, 27, 7))
-        : source;
-    final readItems = switch (readStatus) {
-      NotificationReadStatus.all => <AppNotification>[warning, _completedTask],
-      NotificationReadStatus.unread => <AppNotification>[
-        if (warning.isUnread) warning,
-      ],
-      NotificationReadStatus.read => <AppNotification>[
-        if (!warning.isUnread) warning,
-        _completedTask,
-      ],
-    };
+    final sourceItems = [source, _completedTask, ...extra];
+    final readItems = sourceItems
+        .map(
+          (item) => item.isUnread && (_allRead || _readIds.contains(item.id))
+              ? item.copyWith(readAt: DateTime(2026, 9, 27, 7))
+              : item,
+        )
+        .where(
+          (item) => switch (readStatus) {
+            NotificationReadStatus.all => true,
+            NotificationReadStatus.unread => item.isUnread,
+            NotificationReadStatus.read => !item.isUnread,
+          },
+        );
     final items = switch (category) {
       NotificationCategory.all => readItems,
       NotificationCategory.action =>
@@ -982,10 +1057,19 @@ final class _NotificationRepository implements NotificationRepository {
             )
             .toList(growable: false),
     };
+    final anchor = sourceItems.indexWhere((item) => item.id == cursor);
+    final eligibleIds = sourceItems
+        .skip(anchor + 1)
+        .map((item) => item.id)
+        .toSet();
+    final remaining = items.where((item) => eligibleIds.contains(item.id));
+    final page = remaining.take(limit).toList();
+    final hasNext = remaining.length > page.length;
     return NotificationPage(
-      items: items,
+      items: page,
       totalResults: items.length,
-      hasNextPage: false,
+      hasNextPage: hasNext,
+      nextCursor: hasNext ? page.last.id : null,
     );
   }
 
@@ -996,9 +1080,9 @@ final class _NotificationRepository implements NotificationRepository {
     if (failDetail) throw const NetworkException();
     final source = assignment ?? _warning;
     _readIds.add(id);
-    return (id == source.id ? source : _completedTask).copyWith(
-      readAt: DateTime(2026, 9, 27, 7),
-    );
+    return [source, _completedTask, ...extra]
+        .firstWhere((item) => item.id == id)
+        .copyWith(readAt: DateTime(2026, 9, 27, 7));
   }
 
   @override

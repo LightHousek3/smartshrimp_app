@@ -5,7 +5,6 @@ import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/home/domain/entities/technician_dashboard.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/dashboard_widgets.dart';
-import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 
@@ -47,16 +46,6 @@ String technicianQuantity(double value) {
   }
   return formatVietnameseNumber(value, decimalPlaces: 9);
 }
-
-String _unit(String value) => switch (value) {
-  'KG' => 'kg',
-  'G' => 'g',
-  'L' => 'L',
-  'ML' => 'mL',
-  'PACK' => 'gói',
-  'BOTTLE' => 'chai',
-  _ => value,
-};
 
 String _waterRange(TechnicianWaterMetric metric) {
   if (metric.min != null && metric.max != null) {
@@ -392,176 +381,6 @@ class _TaskRow extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// Seasons stack vertically. Every row lazily renders all remaining cards for that Vietnam day.
-class TechnicianOperationRow extends StatelessWidget {
-  const TechnicianOperationRow(this.group, {super.key});
-  final TechnicianOperationGroup group;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const AppSvgIcon(
-              AppSvgIconName.pin,
-              size: 15,
-              color: AppColors.ocean,
-            ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${group.pondName} · ${group.farmName}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  Text(
-                    group.seasonName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                group.occurrenceCount == null
-                    ? '${group.items.length} vật tư'
-                    : '${group.occurrenceCount} lượt vận hành',
-                textAlign: TextAlign.end,
-                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 132 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
-          child: ListView.separated(
-            key: Key('daily-operations-${group.seasonId}'),
-            scrollDirection: Axis.horizontal,
-            itemCount: group.items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (_, index) => SizedBox(
-              width:
-                  166 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
-              child: _OperationCard(group.items[index], group.seasonId),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _OperationCard extends StatelessWidget {
-  const _OperationCard(this.item, this.seasonId);
-  final TechnicianOperation item;
-  final String seasonId;
-  @override
-  Widget build(BuildContext context) {
-    final type = OperationType.parse(item.operationType);
-    final icon = switch (type) {
-      OperationType.feeding => AppSvgIconName.shrimpFeed,
-      OperationType.chemical => AppSvgIconName.chemical,
-      OperationType.medicine => AppSvgIconName.medicine,
-      OperationType.mineral => AppSvgIconName.mineral,
-      OperationType.other => AppSvgIconName.document,
-    };
-    final color = type == OperationType.feeding
-        ? dashboardTeal
-        : dashboardPurple;
-    return DashboardCard(
-      padding: const EdgeInsets.all(12),
-      onTap: () => context.push('/seasons/$seasonId/operations/${item.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: .1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: AppSvgIcon(icon, size: 17, color: color),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      technicianTime(item.scheduledAt),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    Text(
-                      'Hạn ${technicianTime(item.dueAt)}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            type == OperationType.medicine ? 'Thuốc' : type.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            item.productName ?? 'Chưa xác định vật tư',
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${technicianQuantity(item.plannedQuantity)} ${_unit(item.unit)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.ocean,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/core/widgets/gradient_button.dart';
 import 'package:smartshrimp_app/core/widgets/sticky_page_header.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
+import 'package:smartshrimp_app/features/operation/domain/entities/operation_execution_explanation.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_execute_sheet.dart';
@@ -24,12 +25,14 @@ class OperationDetailPage extends ConsumerStatefulWidget {
     required this.seasonId,
     required this.scheduleId,
     this.mealGroup,
+    this.occurrenceDate,
     super.key,
   });
 
   final String seasonId;
   final String scheduleId;
   final FeedingMedicineMealGroup? mealGroup;
+  final String? occurrenceDate;
 
   @override
   ConsumerState<OperationDetailPage> createState() =>
@@ -42,6 +45,17 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
   static const _batchLimit = 20;
 
   final Set<String> _expandedScheduleIds = <String>{};
+
+  String? get _linkedDate {
+    final date = widget.occurrenceDate;
+    if (date == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date)) {
+      return null;
+    }
+    final parsed = DateTime.tryParse('${date}T00:00:00Z');
+    return parsed?.toIso8601String().startsWith('${date}T') == true
+        ? date
+        : null;
+  }
 
   @override
   void initState() {
@@ -482,32 +496,6 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
                       ),
                     ],
 
-                    // Lý do chênh lệch (nếu có)
-                    if (isCompleted &&
-                        item.execution?.varianceReason != null &&
-                        item.execution!.varianceReason!.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFDE8EC),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'Lý do chênh lệch: ${item.execution!.varianceReason}',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-
                     // Lý do hủy (nếu lịch đã hủy)
                     if (isCancelled &&
                         item.cancellationReason != null &&
@@ -693,13 +681,19 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final hasDeadline = itemsWithExec.any((s) => s.deadlineAt != null);
     final isLate = itemsWithExec.any((s) => s.wasExecutedLate);
 
-    final reasons = itemsWithExec
-        .where((s) => (s.execution?.varianceReason?.trim().isNotEmpty ?? false))
-        .toList(growable: false);
-
-    final notes = itemsWithExec
-        .where((s) => (s.execution?.note?.trim().isNotEmpty ?? false))
-        .toList(growable: false);
+    final explanations = OperationExecutionExplanation.forOccurrence(
+      itemsWithExec.map(
+        (item) => (
+          id: item.id,
+          material: item.productName,
+          executedAt: item.execution!.executedAt,
+          recordedAt: item.execution!.createdAt,
+          executor: item.execution!.executedBy,
+          note: item.execution!.note,
+          varianceReason: item.execution!.varianceReason,
+        ),
+      ),
+    );
 
     return Container(
       width: double.infinity,
@@ -811,130 +805,45 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
             ),
           ),
 
-          // Lý do chênh lệch (nếu có - đóng khung màu hồng nhạt viền mềm trang nhã)
-          if (reasons.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
-            for (var i = 0; i < reasons.length; i++) ...<Widget>[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFFFECDD3),
-                    width: 0.8,
+          for (final explanation in explanations)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    explanation.title,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Padding(
-                      padding: EdgeInsets.only(top: 1.5),
-                      child: Icon(
-                        Icons.info_outline_rounded,
-                        size: 14,
-                        color: Color(0xFFE11D48),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9F1239),
-                            height: 1.35,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: reasons.length == 1
-                                  ? 'Lý do chênh lệch: '
-                                  : 'Lý do chênh lệch (${reasons[i].productName}): ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            TextSpan(
-                              text: reasons[i].execution!.varianceReason!
-                                  .trim(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (i < reasons.length - 1) const SizedBox(height: 5),
-            ],
-          ],
-
-          // Ghi chú đính kèm (nếu có - đóng khung xám nhạt đồng bộ)
-          if (notes.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 6),
-            for (var i = 0; i < notes.length; i++) ...<Widget>[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7.5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Padding(
-                      padding: EdgeInsets.only(top: 1.5),
-                      child: Icon(
-                        Icons.notes_rounded,
-                        size: 14,
+                  if (explanation.itemCount < itemsWithExec.length)
+                    Text(
+                      explanation.materials,
+                      style: const TextStyle(
                         color: AppColors.inkMuted,
+                        fontSize: 11,
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.inkSoft,
-                            height: 1.35,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: notes.length == 1
-                                  ? 'Ghi chú: '
-                                  : 'Ghi chú (${notes[i].productName}): ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            TextSpan(
-                              text: notes[i].execution!.note!.trim(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  Text(
+                    explanation.text,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 12,
+                      height: 1.35,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (i < notes.length - 1) const SizedBox(height: 5),
-            ],
-          ],
+            ),
         ],
       ),
     );
@@ -952,11 +861,12 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
         allItems.any((e) => e.isTreatment);
     final mealNumber =
         schedule.protocolItem?.mealNumber ?? mealGroup?.mealNumber;
-    final headerTitle = mealNumber != null
-        ? 'Cữ $mealNumber'
-        : isTreatment
-        ? 'Điều trị'
-        : materialCategoryLabel(schedule.operationType);
+    final belongsToMeal = mealGroup?.belongsToMeal ?? schedule.belongsToMeal;
+    final headerTitle = belongsToMeal
+        ? operationMealTitle(mealNumber: mealNumber, isTreatment: isTreatment)
+        : allItems.length == 1
+        ? materialCategoryLabel(schedule.operationType)
+        : 'Xử lý môi trường';
 
     final (iconBg, iconFg) = isTreatment
         ? (AppColors.treatmentSurface, AppColors.treatmentAccent)
@@ -1106,6 +1016,14 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final saved = await OperationExecuteSheet.show(context, schedules: rows);
     if (!mounted || saved != true) return;
     AppNoticeService.success(context, 'Đã ghi nhận thực hiện.');
+    if (_linkedDate case final date?) {
+      ref.invalidate(
+        operationSchedulesOnDateProvider((
+          seasonId: widget.seasonId,
+          date: date,
+        )),
+      );
+    }
     await Future.wait([
       ref.read(operationListProvider(widget.seasonId).notifier).refresh(),
       if (!previewRoute)
@@ -1116,7 +1034,21 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
   @override
   Widget build(BuildContext context) {
     final canWrite = ref.watch(assignedSeasonCanWriteProvider(widget.seasonId));
-    final listAsync = ref.watch(operationListProvider(widget.seasonId));
+    final date = _linkedDate;
+    final selected = date == null
+        ? null
+        : ref.watch(operationDateFilterProvider);
+    final linkedProvider =
+        date != null &&
+            selected?.toIso8601String().startsWith('${date}T') != true
+        ? operationSchedulesOnDateProvider((
+            seasonId: widget.seasonId,
+            date: date,
+          ))
+        : null;
+    final listAsync = linkedProvider == null
+        ? ref.watch(operationListProvider(widget.seasonId))
+        : ref.watch(linkedProvider);
     final preview = widget.mealGroup?.allSchedules
         .where((row) => row.id == widget.scheduleId && row.activatedAt != null)
         .firstOrNull;
@@ -1132,16 +1064,35 @@ class _OperationDetailPageState extends ConsumerState<OperationDetailPage> {
     final effectiveMealGroup =
         (fromList == null
             ? null
-            : FeedingMedicineMealGroup.group(fromList)
+            : FeedingMedicineMealGroup.group(
+                    fromList,
+                    includeEnvironmental: true,
+                  )
                   .where((group) => group.allSchedules.any(matchesTarget))
                   .firstOrNull) ??
         (preview == null ? widget.mealGroup : null);
     // Preview IDs refer to prescription items. A saved occurrence has its own schedule ID.
-    final AsyncValue<OperationSchedule?> state = preview == null
+    final AsyncValue<OperationSchedule?> detail = preview == null
         ? ref.watch(operationDetailProvider(widget.scheduleId))
         : listAsync.whenData((_) => fromList?.where(matchesTarget).firstOrNull);
+    // A dashboard link needs the whole occurrence, even if another date is selected in the list.
+    final state = date == null || detail.hasError
+        ? detail
+        : listAsync.when(
+            data: (_) => detail,
+            loading: () => const AsyncLoading<OperationSchedule?>(),
+            error: (error, stack) =>
+                AsyncError<OperationSchedule?>(error, stack),
+          );
 
     void retry() {
+      if (date != null && listAsync.hasError) {
+        if (linkedProvider == null) {
+          ref.read(operationListProvider(widget.seasonId).notifier).refresh();
+        } else {
+          ref.invalidate(linkedProvider);
+        }
+      }
       if (preview == null) {
         ref.read(operationDetailProvider(widget.scheduleId).notifier).refresh();
       } else {

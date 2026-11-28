@@ -45,6 +45,9 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
 
   final _form = GlobalKey<FormState>();
   late final _items = widget.schedules.map(_ExecutionItem.new).toList();
+  late final _quantities = Listenable.merge(
+    _items.map((item) => item.quantity),
+  );
   late final _earliest = widget.schedules
       .map((row) => row.scheduledAt)
       .reduce((left, right) => left.isAfter(right) ? left : right);
@@ -83,6 +86,13 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
   bool get _checkCurrentStock =>
       DateUtils.isSameDay(_date, _vietnamTime(DateTime.now()));
 
+  bool get _needsVarianceReason => _items.any((item) {
+    final evaluation = item.evaluate();
+    return evaluation.exceedsAllowed &&
+        (!_checkCurrentStock ||
+            !item.schedule.isStockInsufficientFor(evaluation.actual!));
+  });
+
   bool _requiresLateReason(DateTime actual) {
     final activation = _activation;
     return (activation == null || !actual.isBefore(activation)) &&
@@ -93,7 +103,6 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
   void dispose() {
     for (final item in _items) {
       item.quantity.dispose();
-      item.reason.dispose();
     }
     _note.dispose();
     super.dispose();
@@ -165,6 +174,7 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
     final valid = _form.currentState!.validate();
     if (!valid || timeError != null || actual == null) return;
 
+    final explanation = _note.text.trim();
     final entries = <OperationExecuteBatchItem>[];
     for (final item in _items) {
       final evaluation = item.evaluate();
@@ -182,9 +192,9 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
           quantity: quantity,
           actual: actual,
           note: item.schedule.requiresExecutionNote(actual)
-              ? _note.text.trim()
+              ? explanation
               : null,
-          reason: evaluation.exceedsAllowed ? item.reason.text.trim() : null,
+          reason: evaluation.exceedsAllowed ? explanation : null,
         ),
       );
     }
@@ -224,8 +234,6 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
   Widget build(BuildContext context) {
     final inset = MediaQuery.viewInsetsOf(context).bottom;
     final locale = MaterialLocalizations.of(context);
-    final actual = _executedAt;
-    final requiresLateReason = actual != null && _requiresLateReason(actual);
     final enabled =
         !_sending && widget.schedules.every((row) => row.canExecute);
     return PopScope(
@@ -312,36 +320,18 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
                                 ),
                               ),
                             ],
-                            if (_needsNote) ...[
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _note,
-                                enabled: !_sending,
-                                maxLength: 500,
-                                minLines: 2,
-                                maxLines: 3,
-                                decoration: InputDecoration(
-                                  labelText: requiresLateReason
-                                      ? 'Lý do thực hiện quá hạn *'
-                                      : 'Lý do ghi bổ sung *',
-                                  alignLabelWithHint: true,
-                                  border: const OutlineInputBorder(),
-                                ),
-                                validator: (value) =>
-                                    (value?.trim().isEmpty ?? true)
-                                    ? 'Vui lòng nhập lý do.'
-                                    : null,
-                              ),
-                            ],
                             const SizedBox(height: 16),
                             for (var index = 0; index < _items.length; index++)
                               OperationExecuteItemCard(
                                 schedule: _items[index].schedule,
                                 quantityController: _items[index].quantity,
-                                varianceReasonController: _items[index].reason,
                                 checkCurrentStock: _checkCurrentStock,
                                 showDivider: index < _items.length - 1,
                               ),
+                            ListenableBuilder(
+                              listenable: _quantities,
+                              builder: (_, _) => _buildReasonField(),
+                            ),
                           ],
                         ),
                       ),
@@ -365,6 +355,49 @@ class _OperationExecuteSheetState extends ConsumerState<OperationExecuteSheet> {
       ),
     );
   }
+
+  Widget _buildReasonField() {
+    final needsNote = _needsNote;
+    final needsVarianceReason = _needsVarianceReason;
+    if (!needsNote && !needsVarianceReason) return const SizedBox.shrink();
+
+    final actual = _executedAt;
+    final label = switch ((needsNote, needsVarianceReason)) {
+      (true, true) => 'Lý do ghi nhận *',
+      (false, true) => 'Lý do chênh lệch *',
+      _ when actual != null && _requiresLateReason(actual) =>
+        'Lý do thực hiện quá hạn *',
+      _ => 'Lý do ghi bổ sung *',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: TextFormField(
+        key: const Key('operation-execution-reason'),
+        controller: _note,
+        enabled: !_sending,
+        maxLength: 500,
+        minLines: 2,
+        maxLines: 3,
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: needsNote && needsVarianceReason
+              ? 'Nêu lý do về thời điểm thực hiện và lượng dùng.'
+              : null,
+          helperMaxLines: 2,
+          alignLabelWithHint: true,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          final explanation = value?.trim() ?? '';
+          if (needsVarianceReason &&
+              (explanation.isEmpty || explanation == _activationNote)) {
+            return 'Bắt buộc nhập lý do chênh lệch';
+          }
+          return explanation.isEmpty ? 'Vui lòng nhập lý do.' : null;
+        },
+      ),
+    );
+  }
 }
 
 class _ExecutionItem {
@@ -374,7 +407,6 @@ class _ExecutionItem {
   late final quantity = TextEditingController(
     text: formatOperationCompact(schedule.plannedQuantity, maxDecimals: 9),
   );
-  final reason = TextEditingController();
   ({double quantity, DateTime actual, String? note, String? reason})?
   _lastInput;
   String? _requestKey;

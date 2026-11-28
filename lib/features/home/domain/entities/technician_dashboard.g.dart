@@ -140,6 +140,13 @@ _TechnicianOperation _$TechnicianOperationFromJson(Map<String, dynamic> json) =>
         ),
         unit: $checkedConvert('unit', (v) => v as String),
         productName: $checkedConvert('productName', (v) => v as String?),
+        occurrenceKey: $checkedConvert('occurrenceKey', (v) => v as String?),
+        mealNumber: $checkedConvert('mealNumber', (v) => (v as num?)?.toInt()),
+        productionMealId: $checkedConvert(
+          'productionMealId',
+          (v) => v as String?,
+        ),
+        isTreatment: $checkedConvert('isTreatment', (v) => v as bool? ?? false),
       );
       return val;
     });
@@ -154,6 +161,10 @@ Map<String, dynamic> _$TechnicianOperationToJson(
   'plannedQuantity': instance.plannedQuantity,
   'unit': instance.unit,
   'productName': instance.productName,
+  'occurrenceKey': instance.occurrenceKey,
+  'mealNumber': instance.mealNumber,
+  'productionMealId': instance.productionMealId,
+  'isTreatment': instance.isTreatment,
 };
 
 _TechnicianOperationGroup _$TechnicianOperationGroupFromJson(

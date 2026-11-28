@@ -110,6 +110,51 @@ void main() {
   );
 
   testWidgets(
+    'owner sees a shared explanation once and keeps separate recordings',
+    (tester) async {
+      const reason = 'Mưa kéo dài, điều chỉnh lượng thức ăn.';
+      Map<String, dynamic> item(
+        String id,
+        String minute, {
+        bool medicine = false,
+      }) => dayRowJson(status: 'COMPLETED', medicine: medicine)
+        ..addAll({
+          'itemId': id,
+          'scheduleId': id,
+          'productionMealId': 'meal-1',
+          'recordedAt': '2026-06-29T00:$minute:00Z',
+          'productName': id,
+          'note': reason,
+          'varianceReason': medicine ? null : reason,
+        });
+      await harness.open(
+        tester,
+        page: Scaffold(
+          body: SingleChildScrollView(
+            child: ProtocolDayAudit(
+              farmId: 'farm-1',
+              protocolStatus: ProtocolStatus.active,
+              day: ProtocolDay.parse({
+                'day': 1,
+                'rows': [
+                  item('Thức ăn 01', '10'),
+                  item('Thuốc 01', '10', medicine: true),
+                  item('Thức ăn 02', '15'),
+                ],
+              }),
+            ),
+          ),
+        ),
+      );
+      expect(find.text(reason), findsNWidgets(2));
+      expect(find.text('Thức ăn 01, Thuốc 01'), findsOneWidget);
+      expect(find.text('Lý do ghi nhận'), findsNWidgets(2));
+      expect(find.text('Kiểm tra giao dịch kho'), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'DOC badges distinguish unrecorded, done, cancelled and actual issues',
     (tester) async {
       final data = detailJson(status: 'ACTIVE')

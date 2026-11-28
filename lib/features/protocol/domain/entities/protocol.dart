@@ -433,6 +433,7 @@ abstract class ProtocolDayRow with _$ProtocolDayRow {
     String? note,
     String? executorName,
     DateTime? executedAt,
+    DateTime? recordedAt,
     String? cancellationReason,
     DateTime? cancelledAt,
   }) = _ProtocolDayRow;

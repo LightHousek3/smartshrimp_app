@@ -544,6 +544,10 @@ _ProtocolDayRow _$ProtocolDayRowFromJson(
       'executedAt',
       (v) => v == null ? null : DateTime.parse(v as String),
     ),
+    recordedAt: $checkedConvert(
+      'recordedAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
     cancellationReason: $checkedConvert(
       'cancellationReason',
       (v) => v as String?,
@@ -585,6 +589,7 @@ Map<String, dynamic> _$ProtocolDayRowToJson(_ProtocolDayRow instance) =>
       'note': instance.note,
       'executorName': instance.executorName,
       'executedAt': instance.executedAt?.toIso8601String(),
+      'recordedAt': instance.recordedAt?.toIso8601String(),
       'cancellationReason': instance.cancellationReason,
       'cancelledAt': instance.cancelledAt?.toIso8601String(),
     };

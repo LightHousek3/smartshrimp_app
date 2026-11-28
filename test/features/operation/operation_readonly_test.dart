@@ -11,6 +11,65 @@ import 'package:smartshrimp_app/features/operation/presentation/pages/operation_
 import 'package:smartshrimp_app/features/operation/presentation/view_models/operation_controller.dart';
 
 void main() {
+  testWidgets('a recorded meal shows its common reason once', (tester) async {
+    final start = DateTime.utc(2026, 11, 7, 0, 30);
+    final executedAt = start.add(const Duration(minutes: 45));
+    const reason = 'Mưa lớn, giảm lượng thức ăn.';
+    final feedRepo = _Operations(
+      scheduledAt: start,
+      execution: OperationExecution(
+        id: 'feed-execution',
+        actualQuantity: 8,
+        executedAt: executedAt,
+        createdAt: executedAt,
+        executedBy: 'technician',
+        note: reason,
+        varianceReason: reason,
+      ),
+    );
+    final medicine = await _Operations(
+      type: OperationType.medicine,
+      scheduledAt: start,
+      execution: OperationExecution(
+        id: 'medicine-execution',
+        actualQuantity: 10,
+        executedAt: executedAt,
+        createdAt: executedAt,
+        executedBy: 'technician',
+        note: reason,
+      ),
+    ).getSchedule('medicine');
+    final group = FeedingMedicineMealGroup(
+      key: 'meal',
+      mealNumber: 1,
+      time: '07:30',
+      scheduledAt: start,
+      feedings: [await feedRepo.getSchedule('schedule')],
+      medicines: [medicine],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          assignedSeasonCanWriteProvider('season').overrideWithValue(true),
+          operationRepositoryProvider.overrideWithValue(feedRepo),
+        ],
+        child: MaterialApp(
+          home: OperationDetailPage(
+            seasonId: 'season',
+            scheduleId: 'schedule',
+            mealGroup: group,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text(reason), 150);
+    expect(find.text(reason), findsOneWidget);
+    expect(find.textContaining(reason, findRichText: true), findsOneWidget);
+    expect(find.text('Lý do ghi nhận'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final (width, textScale) in [(320.0, 1.0), (168.0, 1.0), (320.0, 1.5)]) {
     testWidgets(
       'completed operation detail fits at $width px with text scale $textScale',
@@ -231,11 +290,13 @@ class _Operations implements OperationRepository {
     this.stock = 100,
     this.unit = 'KG',
     this.execution,
+    this.type = OperationType.feeding,
   });
   final DateTime? scheduledAt;
   final double stock;
   final String unit;
   final OperationExecution? execution;
+  final OperationType type;
 
   @override
   Future<OperationListResult> getSchedules(
@@ -253,7 +314,7 @@ class _Operations implements OperationRepository {
         id: scheduleId,
         seasonId: 'season',
         protocolItemId: 'item',
-        operationType: OperationType.feeding,
+        operationType: type,
         scheduledAt:
             scheduledAt ?? DateTime.now().subtract(const Duration(hours: 1)),
         plannedQuantity: 10,

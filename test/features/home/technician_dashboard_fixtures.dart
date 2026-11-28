@@ -27,10 +27,13 @@ Map<String, dynamic> technicianDashboardJson() => {
         'seasonName': 'Vụ $id',
         'pondName': 'Ao ${id.toUpperCase()}',
         'farmName': 'Trại Cà Mau',
+        'occurrenceCount': 8,
         'items': [
           for (var i = 0; i < 8; i++)
             {
               'id': 'operation-$id-$i',
+              'occurrenceKey': 'occurrence-$id-$i',
+              'mealNumber': i + 1,
               'operationType': 'FEEDING',
               'scheduledAt':
                   '2026-11-08T${(9 + i).toString().padLeft(2, '0')}:00:00Z',

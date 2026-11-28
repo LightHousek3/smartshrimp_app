@@ -27,7 +27,10 @@ class _RealtimeRepository extends CaseFixtureRepository {
 void main() {
   setUpAll(loadAppFonts);
 
-  (NotificationSocket, io.Socket) socketFixture() {
+  (NotificationSocket, io.Socket) socketFixture({
+    void Function()? onChanged,
+    void Function(String, DateTime)? onRead,
+  }) {
     final transport = io.io(
       'http://localhost:1',
       io.OptionBuilder().disableAutoConnect().enableForceNew().build(),
@@ -36,7 +39,8 @@ void main() {
     final realtime = NotificationSocket(
       serverUrl: 'http://localhost:1',
       apiClient: ApiClient(dio, TaskSessionStore()),
-      onChanged: () {},
+      onChanged: onChanged ?? () {},
+      onRead: onRead,
       onSessionExpired: () {},
       socket: transport,
     );
@@ -46,6 +50,28 @@ void main() {
     });
     return (realtime, transport);
   }
+
+  test('a valid notification read bypasses the full inbox refresh', () {
+    final events = <(String, DateTime)>[];
+    var refreshes = 0;
+    final (_, transport) = socketFixture(
+      onChanged: () => refreshes++,
+      onRead: (id, readAt) => events.add((id, readAt)),
+    );
+    final timestamp = DateTime.utc(2026, 11, 28, 2);
+    transport.emitEvent([
+      'notification:read',
+      {'id': 'notice', 'readAt': timestamp.toIso8601String()},
+    ]);
+    expect(events, [('notice', timestamp)]);
+    expect(refreshes, 0);
+
+    transport.emitEvent([
+      'notification:read',
+      {'id': 'legacy'},
+    ]);
+    expect(refreshes, 1);
+  });
 
   test(
     'routes case events, legacy ids and reconnects, ignoring read events',

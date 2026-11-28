@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/auth/domain/entities/auth_account.dart';
@@ -10,7 +11,9 @@ import 'package:smartshrimp_app/features/home/domain/entities/technician_dashboa
 import 'package:smartshrimp_app/features/home/presentation/pages/technician_home_page.dart';
 import 'package:smartshrimp_app/features/home/presentation/view_models/technician_dashboard_controller.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/dashboard_widgets.dart';
+import 'package:smartshrimp_app/features/home/presentation/widgets/technician_operation_row.dart';
 import 'package:smartshrimp_app/features/home/presentation/widgets/technician_overview_cards.dart';
+import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_meal_group_card.dart';
 import 'package:smartshrimp_app/features/task/domain/entities/task_models.dart';
 import 'package:smartshrimp_app/features/task/presentation/widgets/task_ui.dart';
 import 'owner_dashboard_fixtures.dart';
@@ -167,7 +170,7 @@ void main() {
   );
 
   testWidgets(
-    'N: seasons form separate vertical rows and every daily card remains reachable horizontally',
+    'N: a treatment meal appears once and its standalone mineral appears separately',
     (tester) async {
       tester.view.physicalSize = const Size(402, 875);
       tester.view.devicePixelRatio = 1;
@@ -176,13 +179,38 @@ void main() {
       final groups = TechnicianDashboard.parse(
         technicianDashboardJson(),
       ).operationGroups;
+      final first = groups.first;
+      final meal = first.items.first.copyWith(isTreatment: true);
+      final treatment = first.copyWith(
+        occurrenceCount: 2,
+        items: [
+          meal,
+          meal.copyWith(
+            id: 'medicine',
+            operationType: 'MEDICINE',
+            productName: 'Thuốc trong cữ',
+          ),
+          first.items[1].copyWith(
+            operationType: 'MINERAL',
+            mealNumber: null,
+            productionMealId: 'environment-slot',
+            isTreatment: true,
+            productName: 'Zeolite',
+          ),
+        ],
+      );
+      final production = groups[1].copyWith(
+        items: [groups[1].items[1]],
+        occurrenceCount: 1,
+      );
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: Column(
                 children: [
-                  for (final group in groups) TechnicianOperationRow(group),
+                  TechnicianOperationRow(treatment),
+                  TechnicianOperationRow(production),
                 ],
               ),
             ),
@@ -191,34 +219,90 @@ void main() {
       );
       expect(find.byKey(const Key('daily-operations-a')), findsOneWidget);
       expect(find.byKey(const Key('daily-operations-b')), findsOneWidget);
-      expect(
-        tester.getSize(find.byKey(const Key('daily-operations-a'))).height,
-        132,
-      );
+      expect(find.text('2 lượt vận hành'), findsOneWidget);
+      expect(find.text('1 lượt vận hành'), findsOneWidget);
+      expect(find.text('Cữ 1'), findsOneWidget);
+      expect(find.text('Cữ 2'), findsOneWidget);
+      expect(find.text('Thức ăn 0'), findsNothing);
+      expect(find.text('Thuốc trong cữ'), findsNothing);
+      expect(find.text('Xử lý khoáng / hóa chất'), findsOneWidget);
+      expect(find.text('Zeolite'), findsOneWidget);
+      expect(find.byType(DashboardCard), findsNWidgets(3));
+      final icons = tester
+          .widgetList<OperationOccurrenceIcon>(
+            find.byType(OperationOccurrenceIcon),
+          )
+          .toList();
+      expect(icons[0].isTreatment, isTrue);
+      expect(icons[0].environmental, isFalse);
+      expect(icons[1].environmental, isTrue);
+      expect(icons[2].isTreatment, isFalse);
       expect(
         tester.getTopLeft(find.byKey(const Key('daily-operations-b'))).dy,
-        greaterThan(
+        greaterThanOrEqualTo(
           tester.getBottomLeft(find.byKey(const Key('daily-operations-a'))).dy,
         ),
       );
-      await tester.drag(
-        find.byKey(const Key('daily-operations-a')),
-        const Offset(-1600, 0),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Thức ăn 7'), findsWidgets);
       expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'B: summary, tiny doses and separate season rows tolerate large text without overflow',
+    'B: an overnight meal opens its original day and prefers the feeding schedule',
+    (tester) async {
+      final group = TechnicianDashboard.parse(
+        technicianDashboardJson(),
+      ).operationGroups.first;
+      final feed = group.items.first.copyWith(
+        scheduledAt: DateTime.parse('2026-11-07T16:55:00Z'),
+        dueAt: DateTime.parse('2026-11-07T17:25:00Z'),
+      );
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => Scaffold(
+              body: TechnicianOperationRow(
+                group.copyWith(
+                  occurrenceCount: 1,
+                  items: [
+                    feed.copyWith(id: 'medicine', operationType: 'MEDICINE'),
+                    feed,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/seasons/:seasonId/operations/:scheduleId',
+            builder: (_, state) => Scaffold(body: Text(state.uri.toString())),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+      expect(find.text('23:55 - 00:25 (+1 ngày)'), findsOneWidget);
+      await tester.tap(find.text('Cữ 1'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('/seasons/a/operations/${feed.id}?date=2026-11-07'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'B: long pond names and large text keep the occurrence count in the same row',
     (tester) async {
       tester.view.physicalSize = const Size(320, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final data = TechnicianDashboard.parse(technicianDashboardJson());
+      final season = data.operationGroups.first.copyWith(
+        pondName: 'Ao có tên rất dài dùng để kiểm tra kích thước màn hình',
+      );
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
@@ -235,7 +319,7 @@ void main() {
                           openTaskCount: 12345,
                         ),
                       ),
-                      TechnicianOperationRow(data.operationGroups.first),
+                      TechnicianOperationRow(season),
                     ],
                   ),
                 ),
@@ -244,7 +328,13 @@ void main() {
           ),
         ),
       );
-      expect(find.text('0,00001 kg'), findsOneWidget);
+      final count = find.text('8 lượt vận hành');
+      final location = find.text('${season.pondName} · ${season.farmName}');
+      expect(
+        tester.getCenter(count).dy,
+        closeTo(tester.getCenter(location).dy, 1),
+      );
+      expect(tester.getRect(count).right, closeTo(304, 1));
       expect(tester.takeException(), isNull);
     },
   );

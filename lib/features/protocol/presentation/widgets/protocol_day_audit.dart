@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smartshrimp_app/app/theme/app_theme.dart';
 import 'package:smartshrimp_app/core/widgets/app_svg_icon.dart';
 import 'package:smartshrimp_app/features/inventory/presentation/inventory_view_data.dart';
+import 'package:smartshrimp_app/features/operation/domain/entities/operation_execution_explanation.dart';
 import 'package:smartshrimp_app/features/operation/domain/entities/operation_models.dart';
 import 'package:smartshrimp_app/features/operation/presentation/widgets/operation_type_badge.dart';
 import 'package:smartshrimp_app/features/protocol/domain/entities/protocol.dart';
@@ -60,6 +61,30 @@ class ProtocolDayAudit extends StatelessWidget {
           ...groups.entries.map((entry) {
             final current = protocolCurrentRows(entry.value);
             final time = protocolMealTimeRange(entry.key.time, current);
+            final explanationsByItem =
+                <String, List<OperationExecutionExplanation>>{};
+            final explanations = OperationExecutionExplanation.forOccurrence(
+              entry.value
+                  .where(
+                    (row) => row.status == ProtocolOperationStatus.completed,
+                  )
+                  .map(
+                    (row) => (
+                      id: row.scheduleId ?? row.itemId,
+                      material: row.productName,
+                      executedAt: row.executedAt,
+                      recordedAt: row.recordedAt,
+                      executor: row.executorName,
+                      note: row.note,
+                      varianceReason: row.varianceReason,
+                    ),
+                  ),
+            );
+            for (final explanation in explanations) {
+              (explanationsByItem[explanation.firstItemId] ??= []).add(
+                explanation,
+              );
+            }
             return Padding(
               padding: EdgeInsets.only(
                 top: entry.key == groups.keys.first ? 0 : 12,
@@ -87,6 +112,10 @@ class ProtocolDayAudit extends StatelessWidget {
                         farmId: farmId,
                         row: entry.value[index],
                         allowedVariancePct: day.allowedVariancePct,
+                        explanations:
+                            explanationsByItem[entry.value[index].scheduleId ??
+                                entry.value[index].itemId] ??
+                            const [],
                       ),
                     ],
                   ],
@@ -295,10 +324,12 @@ class _ProductAudit extends StatelessWidget {
     required this.farmId,
     required this.row,
     required this.allowedVariancePct,
+    required this.explanations,
   });
   final String farmId;
   final ProtocolDayRow row;
   final double allowedVariancePct;
+  final List<OperationExecutionExplanation> explanations;
   @override
   Widget build(BuildContext context) {
     final (icon, color, background) = switch (row.operationType) {
@@ -323,8 +354,6 @@ class _ProductAudit extends StatelessWidget {
     final planned = row.plannedQuantity;
     final actual = row.actualQuantity;
     final executor = row.executorName?.trim() ?? '';
-    final varianceReason = row.varianceReason?.trim() ?? '';
-    final note = row.note?.trim() ?? '';
     // Percent comparisons require the same unit and product as the frozen plan.
     final comparable =
         planned != null &&
@@ -473,13 +502,11 @@ class _ProductAudit extends StatelessWidget {
           if (row.status == ProtocolOperationStatus.completed &&
               (row.executedAt != null ||
                   executor.isNotEmpty ||
-                  varianceReason.isNotEmpty ||
-                  note.isNotEmpty))
+                  explanations.isNotEmpty))
             _ExecutionAudit(
               executor: executor,
               executedAt: row.executedAt,
-              varianceReason: varianceReason,
-              note: note,
+              explanations: explanations,
             ),
           if (row.status == ProtocolOperationStatus.completed &&
               row.executedAt != null &&
@@ -537,14 +564,12 @@ class _ExecutionAudit extends StatelessWidget {
   const _ExecutionAudit({
     required this.executor,
     required this.executedAt,
-    required this.varianceReason,
-    required this.note,
+    required this.explanations,
   });
 
   final String executor;
   final DateTime? executedAt;
-  final String varianceReason;
-  final String note;
+  final List<OperationExecutionExplanation> explanations;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -591,14 +616,18 @@ class _ExecutionAudit extends StatelessWidget {
               ],
             ],
           ),
-          if (varianceReason.isNotEmpty || note.isNotEmpty) ...[
+          if (explanations.isNotEmpty) ...[
             const Divider(height: 12, color: Color(0xFFCBFBF1)),
-            if (varianceReason.isNotEmpty)
-              _ExecutionDetail('Lý do điều chỉnh lượng dùng', varianceReason),
-            if (varianceReason.isNotEmpty && note.isNotEmpty)
-              const SizedBox(height: 6),
-            if (note.isNotEmpty)
-              _ExecutionDetail('Ghi chú của Kỹ thuật viên', note),
+            for (final (index, explanation) in explanations.indexed) ...[
+              if (index > 0) const SizedBox(height: 6),
+              _ExecutionDetail(
+                explanation.title,
+                explanation.text,
+                materials: explanation.itemCount > 1
+                    ? explanation.materials
+                    : null,
+              ),
+            ],
           ],
         ],
       ),
@@ -607,10 +636,11 @@ class _ExecutionAudit extends StatelessWidget {
 }
 
 class _ExecutionDetail extends StatelessWidget {
-  const _ExecutionDetail(this.title, this.value);
+  const _ExecutionDetail(this.title, this.value, {this.materials});
 
   final String title;
   final String value;
+  final String? materials;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -624,6 +654,11 @@ class _ExecutionDetail extends StatelessWidget {
           color: AppColors.ink,
         ),
       ),
+      if (materials case final value?)
+        Text(
+          value,
+          style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
+        ),
       Text(
         value,
         style: const TextStyle(
